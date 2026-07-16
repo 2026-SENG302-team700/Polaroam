@@ -5,13 +5,12 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import PasswordForm from "$lib/components/password-form.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import DisplayNameForm from "$lib/components/display-name-form.svelte";
-    import CountrySelectForm from "$lib/components/country-select-form.svelte";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-
+    import PasswordForm from "$lib/components/forms/password-form.svelte";
+    import EmailForm from "$lib/components/forms/email-form.svelte";
+    import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
+    import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -47,8 +46,9 @@
             valid = false;
         }
 
-        if (displayName.trim() == '' || displayName.trim().length < 3) {
-            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
+        if (displayName.trim() == "" || displayName.trim().length < 3) {
+            errors.displayName =
+                "Display name cannot be made entirely or mostly out of spaces.";
             valid = false;
         }
 
@@ -75,7 +75,7 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
-        
+
         // Check for empty fields
         if (!email) {
             errors.email = "Email is required.";
@@ -170,14 +170,17 @@
                     errors.password = data.errors.password ?? "";
                     errors.passwordConfirm = data.errors.passwordConfirm ?? "";
                 } else {
-                    addToast(data?.message || "Internal server error occurred.", "error");
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
                 }
-                
+
                 if (errors.password || errors.passwordConfirm) {
                     password = "";
                     passwordConfirm = "";
                 }
-                
+
                 return;
             }
             // set email in local storage for validation page
@@ -206,34 +209,33 @@
         </div>
         <div class="mb-3">
             <DisplayNameForm
-                    bind:displayName
-                    error={errors.displayName}
-                    {loading}
-                    registering={true}
+                bind:displayName
+                error={errors.displayName}
+                {loading}
+                registering={true}
             />
         </div>
         <div class="mb-3">
             <CountrySelectForm
-                    bind:selectedCountryCode
-                    error={errors.country}
-                    {loading}
+                bind:selectedCountryCode
+                error={errors.country}
+                {loading}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                    bind:password
-                    error={errors.password}
-                    {loading}
-                    passConfirm={false}
+                bind:password
+                error={errors.password}
+                {loading}
+                passConfirm={false}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                    bind:password={passwordConfirm}
-                    error={errors.passwordConfirm}
-                    {loading}
-                    passConfirm={true}
-
+                bind:password={passwordConfirm}
+                error={errors.passwordConfirm}
+                {loading}
+                passConfirm={true}
             />
         </div>
         <div>
