@@ -92,7 +92,7 @@ public class UserService : IUserService
         string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var errors = new Dictionary<string, string>();
 
         foreach (var (field, message) in UserCredentialsValidator.ValidateEmail(context, email))
@@ -107,12 +107,12 @@ public class UserService : IUserService
         {
             errors[field] = message;
         }
-        
+
         UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
 
         if (errors.Count > 0)
             throw new MultipleValidationException(errors);
-        
+
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
@@ -256,26 +256,29 @@ public class UserService : IUserService
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return null;
 
+        // trim display name and email to remove whitespace
+        newDisplayName = newDisplayName.Trim();
+
         // Validation
         var errors = new Dictionary<string, string>();
         if (newEmail != user.Email)
         {
             foreach (var (field, message) in UserCredentialsValidator.ValidateEmail(context, newEmail))
             {
-               
+
                 errors[field] = message;
             }
-        }        
+        }
         foreach (var (field, message) in UserCredentialsValidator.ValidateDisplayName(newDisplayName))
         {
             errors[field] = message;
         }
-        
+
         UserCredentialsValidator.ValidateCountry(newCountry);
 
         if (errors.Count > 0)
             throw new MultipleValidationException(errors);
-        
+
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
@@ -379,11 +382,11 @@ public class UserService : IUserService
     {
         // Get user from Id
         User? user = await GetUserByIdAsync(userId);
-        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
-        
+        if (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+
         // validate inputs
         if (!UserCredentialsValidator.ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
-        
+
         // Perform update
         PasswordHasher<User> passwordHasher = new();
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
@@ -407,7 +410,7 @@ public class UserService : IUserService
         {
             throw new MismatchedPasswordException("Passwords do not match");
         }
-        
+
         // validate password is of valid form
         if (!UserCredentialsValidator.CheckPassword(newPassword))
         {
@@ -416,7 +419,7 @@ public class UserService : IUserService
             );
         }
     }
-    
+
     /// <summary>
     /// Validates and performs the request to reset the users password
     /// </summary>
@@ -428,11 +431,11 @@ public class UserService : IUserService
     {
         // Get user from Id
         User? user = await GetUserFromEmailAsync(userEmail);
-        if  (user == null) throw new UnauthorizedAccessException("email didn't match any user");
-        
+        if (user == null) throw new UnauthorizedAccessException("email didn't match any user");
+
         // validate inputs
         ValidateResetPasswordRequest(newPassword, newPasswordConfirm);
-        
+
         // Perform update
         PasswordHasher<User> passwordHasher = new();
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
