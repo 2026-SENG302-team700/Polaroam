@@ -7,9 +7,9 @@
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
     import TitleForm from "$lib/components/title-form.svelte";
-    import DescriptionForm from "$lib/components/description-form.svelte";
+    import DescriptionForm from "$lib/components/forms/description-form.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
