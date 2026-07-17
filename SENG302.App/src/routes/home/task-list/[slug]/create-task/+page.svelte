@@ -77,7 +77,7 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        taskListId: params.slug,
+                        tripId: params.slug,
                         name: name.trim(),
                         description: description.trim(),
                         DueDate: dueDate,
@@ -128,7 +128,7 @@
             loading = true;
             error = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/taskList/${params.slug}` as any),
+                resolve(`/api/trip/${params.slug}` as any),
                 {
                     method: "GET",
                     credentials: "include",

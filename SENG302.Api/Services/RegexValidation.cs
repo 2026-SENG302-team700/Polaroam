@@ -6,7 +6,7 @@ namespace SENG302.Api.Services;
 public class RegexConfig
 {
     public required UserPatterns User { get; set; }
-    public required TaskListPatterns TaskList { get; set; }
+    public required TripPatterns Trip { get; set; }
     public required TaskItemPatterns TaskItem { get; set; }
 }
 
@@ -23,12 +23,12 @@ public class DisplayNamePattern
     public required string Flags { get; set; }
 }
 
-public class TaskListPatterns
+public class TripPatterns
 {
-    public required ListNamePattern Name { get; set; }
+    public required TripTitlePattern Title { get; set; }
 }
 
-public class ListNamePattern
+public class TripTitlePattern
 {
     public required string Pattern { get; set; }
     public required string Flags { get; set; }
@@ -51,7 +51,7 @@ public static class ValidationPatterns
     public static Regex UserPassword { get; private set; }
 
     // Task List Patterns
-    public static Regex TaskListName { get; private set; }
+    public static Regex TripName { get; private set; }
 
     /// <summary>
     /// Returns a set of RegexOptions based on the given flags
@@ -91,8 +91,8 @@ public static class ValidationPatterns
             UserDisplayName = new Regex(config.User.DisplayName.Pattern, setDisplayOptions(config.User.DisplayName.Flags), TimeSpan.FromMilliseconds(200));
             UserPassword = new Regex(config.User.Password, RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
 
-            // Set tasklist patterns
-            TaskListName = new Regex(config.TaskList.Name.Pattern, RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+            // Set trip patterns
+            TripTitle = new Regex(config.Trip.Title.Pattern, RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
         }
         catch (Exception ex)
         {

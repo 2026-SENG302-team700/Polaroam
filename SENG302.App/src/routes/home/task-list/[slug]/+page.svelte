@@ -154,7 +154,7 @@
       loading = true;
       error = "";
       const response = await fetchWithCsrf(
-        resolve(`/api/taskList/${params.slug}` as any),
+        resolve(`/api/trip/${params.slug}` as any),
         {
           method: "GET",
           credentials: "include",

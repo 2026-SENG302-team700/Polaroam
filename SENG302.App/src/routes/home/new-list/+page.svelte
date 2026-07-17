@@ -48,7 +48,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+            const response = await fetchWithCsrf(resolve(`/api/trip`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

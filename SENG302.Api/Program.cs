@@ -228,7 +228,7 @@ public class Program
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
-        services.AddScoped<ITaskListService, TaskListService>();
+        services.AddScoped<ITripService, TripService>();
         services.AddScoped<ITaskItemService, TaskItemService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
 

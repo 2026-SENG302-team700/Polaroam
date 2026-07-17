@@ -3,11 +3,11 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import TasklistItem from "$lib/components/tasklist-item.svelte";
+    //import TripItem from "$lib/components/trip-item.svelte";
 
     let loading = $state(false);
     let error = $state("");
-    let taskLists = $state([]);
+    let trips = $state([]);
 
     onMount(() => {
         fetchLists();
@@ -19,7 +19,7 @@
     async function fetchLists() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+            const response = await fetchWithCsrf(resolve(`/api/trip`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -28,7 +28,7 @@
                 error = "Failed to fetch task lists.";
                 return;
             }
-            taskLists = data;
+            trips = data;
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -53,9 +53,9 @@
             Add Task List
         </button>
     </div>
-    {#if loading && taskLists.length === 0}
+    {#if loading && trips.length === 0}
         <div class="text-center text-muted py-4">Loading task lists...</div>
-    {:else if taskLists.length === 0}
+    {:else if trips.length === 0}
         <div class="text-center text-muted py-4">
             No task lists yet. Create your first task list above!
         </div>
@@ -65,8 +65,8 @@
             style="max-height: 400px;"
         >
             <span class="fs-5 p-2 mb-2"><b>Name</b></span>
-            {#each taskLists as taskList}
-                <TasklistItem {taskList} />
+            {#each trips as trip}
+                <TripItem {trip} />
             {/each}
         </div>
     {/if}
