@@ -1,111 +1,115 @@
-<script lang="ts">
-    import { goto } from "$app/navigation";
+<script>
     import { resolve } from "$app/paths";
-    import TitleForm from "$lib/components/title-form.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
-    import regexPatterns from "../../../../../SENG302.Shared/regexPatterns.json";
+    
+    let searchQuery = $state("");
+    let isOpen = $state(false);
+    let selectedItem = $state("");
+    let items = $state([]);
 
-    let loading = $state(false);
-    let error = $state("");
-    let name = $state("");
-
-    /// <summary>
-    /// Creates a new task list for the user with the given name. Trims and then validates the name
-    /// before sending the request to the backend. If creation is successful, navigates
-    /// back to the home screen. If there is an error, displays the error message.
-    /// </summary>
-    async function createList() {
-        const trimmedName = name.trim();
-
-        const errors = [];
-
-        if (trimmedName == "") {
-            error = "Task list name cannot be empty";
-            return;
-        }
-
-        if (trimmedName.length < 3 || trimmedName.length > 128) {
-            errors.push(
-                "List name is required and must be between 3 and 128 characters long",
-            );
-        }
-
-        const nameRegex = new RegExp(
-            regexPatterns.taskList.name.pattern,
-            regexPatterns.taskList.name.flags,
-        );
-        if (!nameRegex.test(trimmedName)) {
-            errors.push(
-                "List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers",
-            );
-        }
-
-        if (errors.length > 0) {
-            error = errors.join("\n").trim();
-            return;
-        }
-
-        try {
-            loading = true;
-            error = "";
-            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    Name: trimmedName,
-                }),
-                credentials: "include",
-            });
-
-            const data = await response.text();
-            if (!response.ok) {
-                error = data || "Failed to create list.";
-                return;
+    async function handleKeydown(event) {
+        if (event.key === "Enter") {
+            try {
+                const url = new URL(resolve(`/api/geo/search`), window.location.origin);
+                url.searchParams.set("query", searchQuery);
+                
+                const response = await fetchWithCsrf(
+                    url.toString(),
+                    {
+                        method: "GET",
+                    })
+                const data = await response.json();
+                items = data;
+            } catch (err) {
+                console.error("Error fetching data:", err);
             }
-
-            goto(resolve(`/home`));
-        } catch (err) {
-            error = "Failed to create list: " + (err as Error).message;
-        } finally {
-            loading = false;
         }
+    }
+
+    function selectItem(item) {
+        selectedItem = item;
+        searchQuery = item; // Fill input with selected item
+        isOpen = false;     // Hide dropdown after selection
     }
 </script>
 
-<div class="container">
-    <div style="display: flex; flex-direction: row; ">
-        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
-            Name your new task list
-        </h1>
-    </div>
-    <div class="mb-3">
-        <button
-            type="button"
-            class="btn btn-secondary"
-            onclick={() => goto(resolve("/home"))}
-            >Cancel
-        </button>
-    </div>
-    <form onsubmit={createList}>
-        <div class="mb-3">
-            <TitleForm {error} bind:name {loading} type={"list"} />
-        </div>
-        <div>
-            <button
-                type="submit"
-                class="btn btn-primary w-100"
-                disabled={loading}
-            >
-                {loading ? "Creating..." : "Create List"}
-            </button>
-        </div>
-    </form>
+<div class="search-container">
+    <!-- Search Input Field -->
+    <input
+            type="text"
+            placeholder="Search location..."
+            bind:value={searchQuery}
+            onfocus={() => isOpen = true}
+            onblur={() => setTimeout(() => isOpen = false, 200)}
+            onkeydown={handleKeydown}
+    />
+
+    <!-- Dropdown Menu -->
+    {#if isOpen && items.length > 0}
+        <ul class="dropdown-list">
+            {#each items as item}
+                <li>
+                    <button type="button" onclick={() => selectItem(item.name)}>
+                        {item.name}
+                    </button>
+                </li>
+            {/each}
+        </ul>
+    {:else if isOpen}
+        <ul class="dropdown-list no-results">
+            <li>No items found</li>
+        </ul>
+    {/if}
+    
+    <label>{selectedItem}</label>
 </div>
 
 <style>
-    .cursor-pointer {
+    .search-container {
+        position: relative;
+        width: 300px;
+        font-family: sans-serif;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .dropdown-list {
+        position: absolute;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        margin: 4px 0 0 0;
+        padding: 0;
+        list-style: none;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 10;
+    }
+
+    .dropdown-list li button {
+        width: 100%;
+        padding: 10px;
+        text-align: left;
+        background: none;
+        border: none;
         cursor: pointer;
+    }
+
+    .dropdown-list li button:hover {
+        background-color: #f0f0f0;
+    }
+
+    .no-results li {
+        padding: 10px;
+        color: #666;
+        font-style: italic;
     }
 </style>

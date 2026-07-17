@@ -26,6 +26,11 @@ public class GeoService : IGeoService
         };
 
         var response = await _httpClient.GetAsync($"search{q}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"HTTP error! status: {response.StatusCode}");
+        }
         
         var results = await response.Content.ReadFromJsonAsync<List<GeoLocationSearchResult>>();
 
