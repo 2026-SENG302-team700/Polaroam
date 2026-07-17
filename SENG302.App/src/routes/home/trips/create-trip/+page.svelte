@@ -1,4 +1,12 @@
 <script lang="ts">
+    import DescriptionForm from "$lib/components/forms/description-form.svelte";
+    import TitleForm from "$lib/components/forms/title-form.svelte";
+    import Datepicker from "$lib/datepicker/datepicker.svelte";
+
+    let tripName = $state("");
+    let tripDescription = $state("");
+    let error; //use for validation
+
 </script>
 
 <div class="container">
@@ -8,9 +16,12 @@
         </h1>
     </div>
 
-    <div
-        class="card-body d-flex justify-content-between align-items-center"
-    ></div>
+    <div>
+    <TitleForm name={tripName} {error} />
+    <DescriptionForm description={tripDescription} {error}/>
+    <Datepicker />
+    <Datepicker />
+    </div>
 </div>
 
 <style>

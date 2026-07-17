@@ -10,7 +10,7 @@
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import ImageEditor from "$lib/image-editor/image-editor.svelte";
     import CancelButton from "$lib/components/buttons/cancel-button.svelte";
-    import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
+    import DisplayNameForm from "$lib/components/forms/title-form.svelte";
     import EmailForm from "$lib/components/forms/email-form.svelte";
     import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
     import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";

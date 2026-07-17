@@ -5,7 +5,7 @@
   import { onMount } from "svelte";
   import { validateTaskInput } from "$lib/validity/taskValidity";
   import { formatDate } from "$lib/datepicker/formatDate";
-  import TitleForm from "$lib/components/title-form.svelte";
+  import TitleForm from "$lib/components/forms/title-form.svelte";
   import DescriptionForm from "$lib/components/forms/description-form.svelte";
   import DatePicker from "$lib/datepicker/datepicker.svelte";
   import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
