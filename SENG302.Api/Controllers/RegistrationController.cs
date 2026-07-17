@@ -70,10 +70,11 @@ public class RegistrationController : ControllerBase
         
         if (string.IsNullOrWhiteSpace(user.Country))
         {
-            return BadRequest(new
-            {
-                message = "Country is required!"
-            });
+            // return BadRequest(new
+            // {
+            //     message = "Country is required!"
+            // });
+            errors["country"] = "Country is required!";
         }
         
         if (string.IsNullOrWhiteSpace(user.PasswordString))

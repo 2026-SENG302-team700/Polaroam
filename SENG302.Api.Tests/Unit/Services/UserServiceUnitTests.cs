@@ -91,4 +91,24 @@ public class UserServiceUnitTest : BaseUnitTestFixture
         
         Assert.False(user.ProfanityFiltering);
     }
+    
+    [Theory]
+    [InlineData("vlad.nistor.email")]
+    [InlineData("pandya@gmail+!.co#m")]
+    [InlineData(".@gmail.com")]
+    [InlineData("cool..man@gmail.com")]
+    [InlineData("person@yahoo.")]
+    [InlineData("crazy.@gmail.nz")]
+    [InlineData("CrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyy@gmail.com")]
+    [InlineData("man@gmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompany")]
+    [InlineData("froggy@-outlook.com")]
+    [InlineData("froggy@outlook.com-")]
+    [InlineData("crazy@.nz")]
+    [InlineData("abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij@abcdefghijabcdefghijabcdefgh")]
+    public async Task CreateUser_InvalidEmail_ExpectValidationException(string userEmail)
+    {
+        await Should.ThrowAsync<MultipleValidationException>(async () =>
+            await UserServiceUnderTest.CreateNewUserAsync(userEmail, "Test User", "Password123!", "Password123!", "NZ")
+        );
+    }
 }

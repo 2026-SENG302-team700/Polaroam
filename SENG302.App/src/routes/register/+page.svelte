@@ -39,13 +39,21 @@
         };
 
         // Check email format
-        const emailRegex = new RegExp(regexPatterns.user.email);
-        if (!emailRegex.test(email) && email) {
+        try {
+            const emailRegex = new RegExp(regexPatterns.user.email);
+            if (!emailRegex.test(email) && email) {
+                (errors.email =
+                    "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
+                    "error";
+                valid = false;
+            }
+        } catch (e) {
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
                 "error";
             valid = false;
         }
+        
 
         if (displayName.trim() == '' || displayName.trim().length < 3) {
             errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
@@ -138,7 +146,7 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-        if (!validateInputs()) return;
+        // if (!validateInputs()) return;
 
         try {
             loading = true;
@@ -167,6 +175,7 @@
                 if (data?.errors) {
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
+                    errors.country = data.errors.country ?? "";
                     errors.password = data.errors.password ?? "";
                     errors.passwordConfirm = data.errors.passwordConfirm ?? "";
                 } else {
@@ -233,7 +242,6 @@
                     error={errors.passwordConfirm}
                     {loading}
                     passConfirm={true}
-
             />
         </div>
         <div>
