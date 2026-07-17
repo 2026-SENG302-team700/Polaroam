@@ -26,16 +26,8 @@
         taskStatus: "",
     });
 
-    let datePicker: HTMLInputElement | undefined = $state();
-
     onMount(() => {
         GetList();
-
-        if (datePicker)
-            datePicker.addEventListener("invalid", function (event) {
-                event.preventDefault();
-                errors.dueDate = "Please input a valid date";
-            });
     });
 
     /**
@@ -188,7 +180,6 @@
                 <DatePicker
                     bind:value={taskDue}
                     error={errors.dueDate}
-                    bind:date={datePicker}
                     disabled={loading}
                 />
             </div>

@@ -15,7 +15,7 @@
     import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
     import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
     import PasswordForm from "$lib/components/forms/password-form.svelte";
-    import ToggleForm from "$lib/components/toggle-form.svelte";
+    import ToggleForm from "$lib/components/forms/toggle-form.svelte";
 
     let displayName = $state("");
     let email = $state("");
