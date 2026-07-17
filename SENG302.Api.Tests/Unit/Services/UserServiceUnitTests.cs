@@ -105,6 +105,7 @@ public class UserServiceUnitTest : BaseUnitTestFixture
     [InlineData("froggy@outlook.com-")]
     [InlineData("crazy@.nz")]
     [InlineData("abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij@abcdefghijabcdefghijabcdefgh")]
+    [InlineData("shidrl@panfgh")]
     public async Task CreateUser_InvalidEmail_ExpectValidationException(string userEmail)
     {
         await Should.ThrowAsync<MultipleValidationException>(async () =>
