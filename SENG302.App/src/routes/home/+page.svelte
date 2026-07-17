@@ -10,7 +10,7 @@
     let trips = $state([]);
 
     onMount(() => {
-        fetchLists();
+        fetchTrips();
     });
 
     /// <summary>

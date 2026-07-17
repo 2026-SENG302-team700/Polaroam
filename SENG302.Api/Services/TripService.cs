@@ -3,11 +3,13 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Resources.Helpers;
 using System.Reflection;
+using SENG302.Api.Models.Requests;
+
 namespace SENG302.Api.Services;
 
 public interface ITripService
 {
-    Task<Trip> CreateNewTripAsync(string name, int userId);
+    Task<Trip> CreateNewTripAsync(NewTripRequest trip);
     Task<Trip> GetTripByIdAsync(int id, int userId);
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
 }
@@ -41,7 +43,7 @@ public class TripService : ITripService
         var profanityFiltering = new ProfanityFilter.ProfanityFilter();
         foreach (Trip trip in trips)
         {
-            trip.Name = profanityFiltering.CensorString(trip.Name);
+            trip.Title = profanityFiltering.CensorString(trip.Title);
         }
         return trips;
     }
@@ -84,7 +86,7 @@ public class TripService : ITripService
         }
 
         // check for profanity in the name
-        if (ProfanityTools.ContainsProfanity(name, user.ProfanityFiltering))
+        if (ProfanityTools.ContainsProfanity(trip.Title, user.ProfanityFiltering))
         {
             throw new ArgumentException("Trip name cannot contain profanity.");
         }
@@ -122,7 +124,7 @@ public class TripService : ITripService
         if (user?.ProfanityFiltering != true) return trip;
 
         var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        trip.Name = profanityFilter.CensorString(trip.Name);
+        trip.Title = profanityFilter.CensorString(trip.Title);
         return trip;
     }
 

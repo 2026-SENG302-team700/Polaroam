@@ -71,7 +71,7 @@ public class TripController : ControllerBase
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized();
-            await _tripService.CreateNewTripAsync(tripRequest.Name, int.Parse(userIdString));
+            await _tripService.CreateNewTripAsync(tripRequest);
             return Ok("trip created successfully");
         }
         catch (ArgumentException e)

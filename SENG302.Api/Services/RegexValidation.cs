@@ -50,8 +50,8 @@ public static class ValidationPatterns
     public static Regex UserDisplayName { get; private set; }
     public static Regex UserPassword { get; private set; }
 
-    // Task List Patterns
-    public static Regex TripName { get; private set; }
+    // Trip Patterns
+    public static Regex TripTitle { get; private set; }
 
     /// <summary>
     /// Returns a set of RegexOptions based on the given flags

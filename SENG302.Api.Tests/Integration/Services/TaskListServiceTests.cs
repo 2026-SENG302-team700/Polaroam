@@ -1,16 +1,18 @@
+using System.Runtime.InteropServices.JavaScript;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
-public class TaskServiceTests : BaseIntegrationTestFixture
+public class TripServiceTests : BaseIntegrationTestFixture
 {
-    private ITaskListService ServiceUnderTest => ServiceProvider.GetRequiredService<ITaskListService>();
+    private ITripService ServiceUnderTest => ServiceProvider.GetRequiredService<ITripService>();
 
-    public TaskServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
+    public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
     [Theory]
     [InlineData("test", 1)] // Basic Test
@@ -19,7 +21,7 @@ public class TaskServiceTests : BaseIntegrationTestFixture
     [InlineData("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh", 4)] // Name with 128 characters
     [InlineData(" 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 128 characters but whitespace that should be trimmed
     [InlineData("f                  f", 6)] // Lots of spaces but only a few characters at either side
-    public async Task CreateNewTaskList_Success_ReturnList(string name, int userId)
+    public async Task CreateNewTrip_Success_ReturnTrip(string title, int userId)
     {
         // Add a user to the database with the email that we are testing with
         await using var context = DbContextFactory.CreateDbContext();
@@ -32,12 +34,14 @@ public class TaskServiceTests : BaseIntegrationTestFixture
             Country = "Test Country"
         });
         await context.SaveChangesAsync();
+        
+        var tripRequest = new NewTripRequest({UserId = userId, Title = title, StartDate = new DateTime(2026, 7, 12), EndDate = new DateTime(2026, 7, 4)});
 
         // Use the TaskService function to create a new task list with the name and user email
-        var taskList = await ServiceUnderTest.CreateNewTaskListAsync(name, userId);
+        var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest);
 
-        taskList.Name.ShouldBe(name.Trim());
-        taskList.UserId.ShouldBe(userId);
+        trip.Title.ShouldBe(title.Trim());
+        trip.UserId.ShouldBe(userId);
     }
 
     [Theory]

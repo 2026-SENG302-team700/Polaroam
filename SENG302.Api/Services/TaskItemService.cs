@@ -38,7 +38,7 @@ public class TaskItemService : ITaskItemService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         // get all the task
         var tasks = await context.Set<TaskItem>()
-                        .Where(t => context.Set<TaskList>()
+                        .Where(t => context.Set<Trip>()
                         .Any(l => l.Id == t.TaskListId && l.UserId == userId))
                         .OrderBy(t => t.OrderPosition)
                         .ToListAsync();
@@ -94,7 +94,7 @@ public class TaskItemService : ITaskItemService
         
         // gets order position of task attached to a certain user.
         var orderPosition = await context.Set<TaskItem>()
-            .Join(context.Set<TaskList>()
+            .Join(context.Set<Trip>()
                 .Where(tList => tList.UserId == userId), tItem => tItem.TaskListId, tList => tList.Id, (tItem, tList) => tItem.OrderPosition)
             .MaxAsync(tItem => (int?)tItem) + 1 ?? 0;
         

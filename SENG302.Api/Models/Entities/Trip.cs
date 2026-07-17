@@ -18,7 +18,7 @@ public class Trip
     [Required]
     public int UserId { get; set; } // Foreign key to the User that owns this task list
 
-    public int Description { get; set; } = 0;
+    public string Description { get; set; } = string.Empty;
     [Required]
     public DateTime? StartDate { get; set; }
     [Required]
