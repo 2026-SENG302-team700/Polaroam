@@ -9,14 +9,15 @@ public class GeoController : ControllerBase
 {
     private readonly IGeoService _geoService;
     
-    public GeoController()
+    public GeoController(IGeoService geoService)
     {
-        
+        _geoService = geoService;
     }
 
     [HttpGet("search")]
     public async Task<IActionResult> SearchLocationsAsync([FromQuery] string query)
     {
-        
+        var results = await _geoService.GetLocationsAsync(query);
+        return Ok(results);
     }
 }
