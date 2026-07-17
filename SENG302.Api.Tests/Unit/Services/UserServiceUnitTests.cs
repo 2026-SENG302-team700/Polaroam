@@ -6,19 +6,31 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
+using NSubstitute;
+using Microsoft.Extensions.Time.Testing;
 
 namespace SENG302.Api.Tests.Unit.Services;
 
-public class UserServiceUnitTest : BaseUnitTestFixture
+public class UserServiceUnitTest
 {
-    private IUserService UserServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
-    private IDbContextFactory<DatabaseContext> DbFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
-    public UserServiceUnitTest(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
+    private readonly IUserService _userService;
+    private readonly IDbContextFactory<DatabaseContext> _mockDbContextFactory;
+    private readonly IDatabaseContext _mockDatabaseContext;
+    private readonly FakeTimeProvider _fakeTimeProvider;
     
+    public UserServiceUnitTest()
+    {
+        _mockDbContextFactory = Substitute.For<IDbContextFactory<DatabaseContext>>();
+        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        _mockDatabaseContext = Substitute.For<IDatabaseContext>();
+
+        _userService = new UserService(_mockDbContextFactory, _fakeTimeProvider);
+    }
+
     [Fact]
     public async Task CheckUserCredentials_UserDoesNotExist_ExpectDoesNotExistResult()
     {
-        var result = await UserServiceUnderTest.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
+        var result = await _userService.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
         
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.Null(result.user);

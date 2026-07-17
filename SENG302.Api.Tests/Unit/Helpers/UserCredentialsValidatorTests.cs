@@ -6,13 +6,19 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Helpers;
 using Shouldly;
+using Reqnroll.EnvironmentAccess;
+using NSubstitute;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class UserCredentialsValidatorTests :BaseUnitTestFixture
+public class UserCredentialsValidatorTests
 {
-    private IDbContextFactory<DatabaseContext> DbFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
-    public UserCredentialsValidatorTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
+    private readonly IDatabaseContext _mockDatabaseContext;
+
+    public UserCredentialsValidatorTests()
+    {
+        _mockDatabaseContext = Substitute.For<IDatabaseContext>();
+    }
 
     [Theory]
     [InlineData("invalid-email")]
@@ -20,9 +26,9 @@ public class UserCredentialsValidatorTests :BaseUnitTestFixture
     [InlineData("@no-user.com")]
     public async Task ValidateEmail_MalformedFormat_ExpectErrorMessageInErrors(string email)
     {
-        var context = await DbFactory.CreateDbContextAsync();
-        
-        var errors = UserCredentialsValidator.ValidateEmail(context, email);
+        _mockDatabaseContext.EmailExists(email).Returns(false);
+
+        var errors = UserCredentialsValidator.ValidateEmail(_mockDatabaseContext, email);
 
         errors.ShouldNotBeEmpty();
         errors.ShouldHaveSingleItem();
