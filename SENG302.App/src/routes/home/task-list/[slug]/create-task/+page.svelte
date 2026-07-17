@@ -10,6 +10,7 @@
     import CancelButton from "$lib/components/cancel-button.svelte";
     import TitleForm from "$lib/components/title-form.svelte";
     import DescriptionForm from "$lib/components/description-form.svelte";
+    import LocationForm from "$lib/components/location-form.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -18,12 +19,14 @@
     let name = $state("");
     let taskDue = $state(new Date("9999-99-99"));
     let description = $state("");
+    let location = $state("");
     let { params } = $props();
     let errors = $state({
         name: "",
         description: "",
         dueDate: "",
         taskStatus: "",
+        location: "",
     });
 
     let datePicker: HTMLInputElement | undefined = $state();
@@ -174,6 +177,11 @@
             />
         </div>
 
+        <div class="mb-3">
+            <label class="form-label mb-0">Location:</label>
+            <LocationForm />
+        </div>
+        
         <div class="mb-3 d-flex align-items-center gap-2">
             <label class="form-label mb-0">Status:</label>
             <StatusDropdown bind:value={taskStatus} />

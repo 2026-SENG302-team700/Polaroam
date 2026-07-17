@@ -137,6 +137,14 @@ public class Program
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 
+        // Adding HTTP Client for Nominatim API
+        builder.Services.AddHttpClient("nominatim", client =>
+        {
+            client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
+        });
+
+        
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -181,7 +189,7 @@ public class Program
             var tokens = antiforgery.GetAndStoreTokens(context);
             return Results.Ok(new { token = tokens.RequestToken });
         });
-
+        
         app.MapControllers();
 
         if (app.Environment.IsDevelopment())
