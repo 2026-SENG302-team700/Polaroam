@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SENG302.Api.Services;
 
 namespace SENG302.Api.Controllers;
 
@@ -6,6 +7,8 @@ namespace SENG302.Api.Controllers;
 [Route("api/geo")]
 public class GeoController : ControllerBase
 {
+    private readonly IGeoService _geoService;
+    
     public GeoController()
     {
         

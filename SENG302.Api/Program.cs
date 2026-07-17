@@ -136,14 +136,6 @@ public class Program
         builder.Services.AddSingleton(new EmailSettings());
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
-
-        // Adding HTTP Client for Nominatim API
-        builder.Services.AddHttpClient("nominatim", client =>
-        {
-            client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
-        });
-
         
         var app = builder.Build();
 
@@ -203,6 +195,8 @@ public class Program
 
         app.Run();
     }
+    
+    
 
     protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
@@ -239,8 +233,13 @@ public class Program
         services.AddScoped<ITaskListService, TaskListService>();
         services.AddScoped<ITaskItemService, TaskItemService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
+        services.AddHttpClient<IGeoService, GeoService>(client =>
+        {
+            client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
+        });
 
-        // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
+    // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
     }
 
