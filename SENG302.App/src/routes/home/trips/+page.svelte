@@ -17,18 +17,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    .task-item-box {
-        background-color: transparent;
-        transition: background-color 0.2s ease;
-    }
-
-    .task-item-box:hover {
-        background-color: #f8f8f8;
-    }
-</style>

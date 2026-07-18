@@ -1,7 +1,7 @@
 <script lang="ts">
     import CancelButton from "$lib/components/buttons/cancel-button.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
-import DescriptionForm from "$lib/components/forms/description-form.svelte";
+    import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import Datepicker from "$lib/datepicker/datepicker.svelte";
 
@@ -10,49 +10,39 @@ import DescriptionForm from "$lib/components/forms/description-form.svelte";
     let error; //use for validation
     let startDate = $state(new Date());
     let endDate = $state(new Date("9999-03-03"));
-
 </script>
 
 <div class="container max-w-md">
-    <div style="display: flex; flex-direction: row; ">
-        <div>
-            <CancelButton path={"/home/trips"}/>
-        </div>
-        <h1 class="text-center mb-4" style="flex: 1; justify-content: center">
-            Create New Trip
-        </h1>
-    </div>
-
     <div>
-        <TitleForm bind:name={tripName} />
-        <DescriptionForm bind:description={tripDescription}/>
-        <div class="grid grid-cols-2">
+        <div style="display: flex; flex-direction: row;">
             <div>
-                <p>From</p>
-                <Datepicker bind:value={startDate}/>
+                <CancelButton path={"/home/trips"} />
             </div>
-            <div>
-                <p>To</p>
-                <Datepicker bind:value={endDate}/>
-            </div>
+            <h1
+                class="text-center mb-4"
+                style="flex: 1; justify-content: center"
+            >
+                Create New Trip
+            </h1>
         </div>
-        <div class="flex justify-end">
-            <CreationButton text={"Create Trip"}/>
+
+        <div>
+            <TitleForm bind:name={tripName} />
+            <DescriptionForm bind:description={tripDescription} />
+            <div class="grid grid-cols-2">
+                <div>
+                    <p>From</p>
+                    <Datepicker bind:value={startDate} />
+                </div>
+                <div>
+                    <p>To</p>
+                    <Datepicker bind:value={endDate} />
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <CreationButton text={"Create Trip"} />
+            </div>
         </div>
     </div>
+    <div></div>
 </div>
-
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    .task-item-box {
-        background-color: transparent;
-        transition: background-color 0.2s ease;
-    }
-
-    .task-item-box:hover {
-        background-color: #f8f8f8;
-    }
-</style>
