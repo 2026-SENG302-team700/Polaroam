@@ -46,58 +46,6 @@ public class RegistrationController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
-        var errors = new Dictionary<string, string>();
-        
-        if (string.IsNullOrWhiteSpace(user.Email))
-        {
-            errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
-        }
-        
-        var displayName = user.DisplayName.Trim();
-
-        if (string.IsNullOrWhiteSpace(displayName))
-        {
-            errors["displayName"] = "Display name must be between 3 and 64 characters";
-        }
-        
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        var swearList = profanityFilter.DetectAllProfanities(displayName);
-
-        if (swearList.Count > 0)
-        {
-            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
-        }
-        
-        if (string.IsNullOrWhiteSpace(user.Country))
-        {
-            // return BadRequest(new
-            // {
-            //     message = "Country is required!"
-            // });
-            errors["country"] = "Country is required!";
-        }
-        
-        if (string.IsNullOrWhiteSpace(user.PasswordString))
-        {
-            errors["password"] =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-        }
-        
-        if (string.IsNullOrWhiteSpace(user.PasswordConfirm))
-        {
-            errors["passwordConfirm"] = "Passwords do not match";
-        }
-        
-        
-
-        if (errors.Count > 0)
-        {
-            return BadRequest(new BadRequestValidationResponse
-            {
-                Errors = errors
-            });
-        }
-        
         try
         {
             await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordString, user.PasswordConfirm, user.Country);
