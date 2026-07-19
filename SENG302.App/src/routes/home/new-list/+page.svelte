@@ -31,8 +31,8 @@
         }
 
         const nameRegex = new RegExp(
-            regexPatterns.taskList.name.pattern,
-            regexPatterns.taskList.name.flags,
+            regexPatterns.trip.title.pattern,
+            regexPatterns.trip.title.flags,
         );
         if (!nameRegex.test(trimmedName)) {
             errors.push(

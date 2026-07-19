@@ -16,10 +16,10 @@
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
-    async function fetchLists() {
+    async function fetchTrips() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/trip`), {
+            const response = await fetchWithCsrf(resolve(`api/trip`), {
                 method: "GET",
                 credentials: "include",
             });
