@@ -23,11 +23,13 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = listId,
-            Name = "Test List",
-            UserId = userId
+            Title = "Test List",
+            UserId = userId,
+            StartDate = new DateTime(2017, 10, 08), 
+            EndDate = new DateTime(2017, 10, 21)
         });
         await context.SaveChangesAsync();
     }
@@ -174,7 +176,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             Country = "NZ",
             ProfanityFiltering = true
         });
-        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 1, Title = "Test List", UserId = 1, StartDate = new DateTime(2017, 10, 08), EndDate = new DateTime(2017, 10, 21) });
         var task = new TaskItem
         {
             TaskListId = 1,
@@ -206,7 +208,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             Country = "NZ",
             ProfanityFiltering = false
         });
-        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 1, Title = "Test List", UserId = 1, StartDate = new DateTime(2017, 10, 08), EndDate = new DateTime(2017, 10, 21) });
         var task = new TaskItem
         {
             TaskListId = 1,
@@ -238,7 +240,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             Country = "NZ",
             ProfanityFiltering = true
         });
-        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 1, Title = "Test List", UserId = 1, StartDate = new DateTime(2017, 10, 08), EndDate = new DateTime(2017, 10, 21) });
         var task = new TaskItem
         {
             TaskListId = 1,
@@ -270,7 +272,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             Country = "NZ",
             ProfanityFiltering = false
         });
-        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 1, Title = "Test List", UserId = 1, StartDate = new DateTime(2017, 10, 08), EndDate = new DateTime(2017, 10, 21)});
         var task = new TaskItem
         {
             TaskListId = 1,

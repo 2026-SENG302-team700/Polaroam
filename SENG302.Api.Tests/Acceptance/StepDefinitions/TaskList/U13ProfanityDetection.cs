@@ -67,11 +67,13 @@ public class U13ProfanityDetection
     {
         _taskListName = name;
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
-        context.TaskLists.Add(new Models.Entities.TaskList
+        context.Trips.Add(new Models.Entities.Trip
         {
             Id = 1,
-            Name = name,
-            UserId = 1
+            Title = name,
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
     }
@@ -115,9 +117,9 @@ public class U13ProfanityDetection
     {
         var response = await _fixture.HttpClient.GetAsync("/api/taskList");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.TaskList>>();
-        lists!.First().Name.ShouldNotContain("shit");
-        lists.First().Name.ShouldContain("*");
+        var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.Trip>>();
+        lists!.First().Title.ShouldNotContain("shit");
+        lists.First().Title.ShouldContain("*");
     }
 
     [Then(@"the task list name should be displayed as-is")]
@@ -125,8 +127,8 @@ public class U13ProfanityDetection
     {
         var response = await _fixture.HttpClient.GetAsync("/api/taskList");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.TaskList>>();
-        lists!.First().Name.ShouldBe(_taskListName);
+        var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.Trip>>();
+        lists!.First().Title.ShouldBe(_taskListName);
     }
 
     [Then(@"the error message should say {string}")]

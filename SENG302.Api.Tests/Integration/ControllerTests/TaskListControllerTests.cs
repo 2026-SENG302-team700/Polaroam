@@ -12,11 +12,12 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
     public TaskListControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
     [Fact]
-    public async Task CreateTaskList_SuccessfulCreation_ReturnOk()
+    public async Task CreateTrip_SuccessfulCreation_ReturnOk()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -24,20 +25,24 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var data = new NewTaskListRequest
+        var data = new NewTripRequest
         {
-            Name = "Test Task List",
+            UserId = 1,
+            Title = "Test Trip",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         };
-        var message = await HttpClient.PostAsJsonAsync("/api/taskList", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/trip", data);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]
-    public async Task CreateTaskList_ShortName_ReturnBadRequest()
+    public async Task CreateTrip_ShortName_ReturnBadRequest()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -45,11 +50,14 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var data = new NewTaskListRequest
+        var data = new NewTripRequest
         {
-            Name = "ab", // Short name that is less than 3 characters
+            UserId = 1,
+            Title = "Test Trip",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -57,15 +65,18 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task CreateTaskList_NonExistentUser_ReturnBadRequest()
+    public async Task CreateTrip_NonExistentUser_ReturnBadRequest()
     {
         // Test automatically gets userEamil as test@example.com so we dont add this
         // to the db for this test
-        var data = new NewTaskListRequest
+        var data = new NewTripRequest
         {
-            Name = "Valid Task List Name",
+            UserId = 1,
+            Title = "Valid Trip Data",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -78,6 +89,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -85,11 +97,14 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var data = new NewTaskListRequest
+        var data = new NewTripRequest
         {
-            Name = "test!", // Invalid character in name
+            UserId = 1,
+            Title = "Trip!",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -105,6 +120,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         // Add user to DB
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -113,16 +129,19 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         // Create task list for user
-        var data = new NewTaskListRequest
+        var data = new NewTripRequest
         {
-            Name = "Test Task List",
+            UserId = 1,
+            Title = "Test Trip",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
 
         // Fetch task lists for the user
-        response = await HttpClient.GetAsync("/api/taskList");
+        response = await HttpClient.GetAsync("/api/trip");
         response.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
-        TaskList[] taskLists = await response.Content.ReadFromJsonAsync<TaskList[]>() ?? Array.Empty<TaskList>();
-        taskLists.Length.ShouldBe(1);
+        Trip[] trips = await response.Content.ReadFromJsonAsync<Trip[]>() ?? Array.Empty<Trip>();
+        trips.Length.ShouldBe(1);
     }
 }

@@ -15,13 +15,51 @@ public class TripServiceTests : BaseIntegrationTestFixture
     public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
     [Theory]
-    [InlineData("test", 1)] // Basic Test
-    [InlineData("abc", 2)] // Name with exactly 3 characters
-    [InlineData("  xyz  ", 3)] // Name with 3 characters but whitespace that will be trimmed
-    [InlineData("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh", 4)] // Name with 128 characters
-    [InlineData(" 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 128 characters but whitespace that should be trimmed
-    [InlineData("f                  f", 6)] // Lots of spaces but only a few characters at either side
-    public async Task CreateNewTrip_Success_ReturnTrip(string title, int userId)
+    [InlineData("test", 1,  "2026-07-04", "2026-07-12")] // Basic Test
+    [InlineData("abc", 2,  "2026-07-19", "2026-07-29")] // Name with exactly 3 characters
+    [InlineData("  xyz  ", 3,  "2027-07-19", "2027-07-29")] // Name with 3 characters but whitespace that will be trimmed
+    [InlineData("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh", 4,  "2000-01-01", "2000-07-29")] // Name with 128 characters
+    [InlineData(" 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5,  "1999-01-01", "1999-03-20")] // Name with 128 characters but whitespace that should be trimmed
+    [InlineData("f                  f", 6,  "1970-07-19", "1970-07-29")] // Lots of spaces but only a few characters at either side
+    public async Task CreateNewTrip_Success_ReturnTrip(string title, int userId, string stringStartDate, string stringEndDate)
+    {
+        // Add a user to the database with the email that we are testing with
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = userId,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        DateTime startDate = DateTime.Parse(stringStartDate);
+        DateTime endDate = DateTime.Parse(stringEndDate);
+
+        var tripRequest = new NewTripRequest
+        {
+            UserId = userId, Title = title, Description = "Description", StartDate = startDate, EndDate = endDate,
+        };
+        
+        // Use the TaskService function to create a new task list with the name and user email
+        var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest);
+
+        trip.Title.ShouldBe(title.Trim());
+        trip.UserId.ShouldBe(userId);
+        trip.Description.ShouldBe("Description");
+        trip.StartDate.ShouldBe(startDate);
+        trip.EndDate.ShouldBe(endDate);
+    }
+
+    [Theory]
+    [InlineData("Hi", 1)] // Short name that is less than 3 characters
+    [InlineData("Hi!", 2)] // Name with special character
+    [InlineData("                    Hi  ", 3)] // long enough but whitespace should be trimmed, meaning not long enough
+    [InlineData("          ", 4)] // long enough but only whitespace
+    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 129 characters so invalid
+    public async Task CreateNewTrip_InvalidName_ThrowArgumentException(string title, int userId)
     {
         // Add a user to the database with the email that we are testing with
         await using var context = DbContextFactory.CreateDbContext();
@@ -35,41 +73,17 @@ public class TripServiceTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
         
-        var tripRequest = new NewTripRequest({UserId = userId, Title = title, StartDate = new DateTime(2026, 7, 12), EndDate = new DateTime(2026, 7, 4)});
-
-        // Use the TaskService function to create a new task list with the name and user email
-        var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest);
-
-        trip.Title.ShouldBe(title.Trim());
-        trip.UserId.ShouldBe(userId);
-    }
-
-    [Theory]
-    [InlineData("Hi", 1)] // Short name that is less than 3 characters
-    [InlineData("Hi!", 2)] // Name with special character
-    [InlineData("                    Hi  ", 3)] // long enough but whitespace should be trimmed, meaning not long enough
-    [InlineData("          ", 4)] // long enough but only whitespace
-    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 129 characters so invalid
-    public async Task CreateNewTaskList_InvalidName_ThrowArgumentException(string name, int userId)
-    {
-        // Add a user to the database with the email that we are testing with
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
+        var tripRequest = new NewTripRequest
         {
-            Id = userId,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
+            UserId = userId, Title = title, StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+        };
 
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTaskListAsync(name, userId));
+        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest));
     }
 
     [Fact]
-    public async Task GetTaskListsByUserEmailAsync_RetreiveUsersTaskLists_Success()
+    public async Task GetTripByUserEmailAsync_RetreiveUsersTrips_Success()
     {
         await using var context = DbContextFactory.CreateDbContext();
         // Add a user to the database with the email that we are testing with
@@ -84,22 +98,29 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         // Use the TaskService function to retrieve task lists for the user email
-        var taskLists = await ServiceUnderTest.GetTaskListsByUserIdAsync(1);
+        var taskLists = await ServiceUnderTest.GetTripsByUserIdAsync(1);
         taskLists.Count().ShouldBe(0);
 
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
-            Name = "Test Task List",
-            UserId = 1
+            Title = "Test Title",
+            UserId = 1,
+            Description = "Test Description",
+            StartDate = new DateTime(2020, 1, 30),
+            EndDate = new DateTime(2020, 2, 5)
         });
         await context.SaveChangesAsync();
-        var updatedTaskLists = await ServiceUnderTest.GetTaskListsByUserIdAsync(1);
-        updatedTaskLists.Count().ShouldBe(1);
-        updatedTaskLists.First().Name.ShouldBe("Test Task List");
+        var Trips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
+        Trips.Count().ShouldBe(1);
+        Trips.First().Title.ShouldBe("Test Task List");
+        Trips.First().Description.ShouldBe("Test Description");
+        Trips.First().StartDate.ShouldBe( new DateTime(2020, 1, 30));
+        Trips.First().EndDate.ShouldBe( new DateTime(2020, 2, 5));
+        
     }
 
     [Fact]
-    public async Task CreateNewTaskList_ProfanityInNameUserHasFilterOn_ThrowsArgumentException()
+    public async Task CreateNewTaskList_ProfanityInTitleUserHasFilterOn_ThrowsArgumentException()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
@@ -112,9 +133,14 @@ public class TripServiceTests : BaseIntegrationTestFixture
             ProfanityFiltering = true
         });
         await context.SaveChangesAsync();
+        
+        var tripRequest = new NewTripRequest
+        {
+            UserId = 1, Title = "shit list", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+        };
 
         await Should.ThrowAsync<ArgumentException>(
-            async () => await ServiceUnderTest.CreateNewTaskListAsync("shit list", 1)
+            async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest)
         );
     }
 
@@ -132,9 +158,14 @@ public class TripServiceTests : BaseIntegrationTestFixture
             ProfanityFiltering = false,
         });
         await context.SaveChangesAsync();
+        
+        var tripRequest = new NewTripRequest
+        {
+            UserId = 1, Title = "shit list", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+        };
 
-        var taskList = await ServiceUnderTest.CreateNewTaskListAsync("shit list", 1);
+        var taskList = await ServiceUnderTest.CreateNewTripAsync(tripRequest);
         taskList.ShouldNotBeNull();
-        taskList.Name.ShouldBe("shit list");
+        taskList.Title.ShouldBe("shit list");
     }
 }

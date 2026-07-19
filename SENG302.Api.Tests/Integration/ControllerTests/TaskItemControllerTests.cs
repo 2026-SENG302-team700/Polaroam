@@ -25,12 +25,15 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "test tasklist",
-            UserId = 1
+            Title = "test tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
+        
         await context.SaveChangesAsync();
 
         var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
@@ -64,11 +67,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "test tasklist",
-            UserId = 1
+            Title = "test tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
 
@@ -103,11 +108,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             ProfanityFiltering = true,
             
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "test tasklist",
-            UserId = 1
+            Title = "test tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
 
@@ -142,11 +149,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             ProfanityFiltering = true,
             
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "test tasklist",
-            UserId = 1
+            Title = "test tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
 
@@ -176,11 +185,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "test tasklist",
-            UserId = 1
+            Title = "test tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
 
@@ -213,11 +224,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "test tasklist",
-            UserId = 1
+            Title = "test tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
 
@@ -244,11 +257,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "RO"
         });
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "tasklist",
-            UserId = 1
+            Title = "tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         context.TaskItems.Add(new TaskItem
         {
@@ -293,11 +308,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             Country = "RO"
         });
 
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "tasklist",
-            UserId = 1
+            Title = "tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
 
         context.TaskItems.Add(new TaskItem
@@ -337,11 +354,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             Country = "RO"
         });
 
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            Name = "tasklist",
-            UserId = 1
+            Title = "tasklist",
+            UserId = 1,
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
 
         });
 
@@ -375,8 +394,8 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
-        context.TaskLists.Add(new TaskList { Id = 1, Name = "My list", UserId = 1 });
-        context.TaskLists.Add(new TaskList { Id = 2, Name = "Other list", UserId = 2 });
+        context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2 });
         context.TaskItems.Add(new TaskItem { TaskListId = 1, Name = "My task", Description = "", CurrentStatus = CurrentTaskStatus.Todo });
         context.TaskItems.Add(new TaskItem { TaskListId = 2, Name = "Other task", Description = "", CurrentStatus = CurrentTaskStatus.Todo });
         await context.SaveChangesAsync();
@@ -394,7 +413,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
-        context.TaskLists.Add(new TaskList { Id = 1, Name = "My List", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 1, Title = "My List", UserId = 1 });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/taskItem");
@@ -417,11 +436,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
                 Country = "NZ" 
             }
         );                                                                                                                           
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
             {
                 Id = 1, 
-                Name = "test list",
-                UserId = 1
+                Title = "test list",
+                UserId = 1,
+                StartDate = new DateTime(2025, 11, 21), 
+                EndDate = new DateTime(2025, 12, 21)
             }
         );
         context.TaskItems.AddRange(                                                                                               
@@ -460,11 +481,13 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
                 Country = "NZ" 
             }
         );                                                                                                                           
-        context.TaskLists.Add(new TaskList
+        context.Trips.Add(new Trip
             {
                 Id = 1, 
-                Name = "test list", 
-                UserId = 1
+                Title = "test list", 
+                UserId = 1,
+                StartDate = new DateTime(2025, 11, 21), 
+                EndDate = new DateTime(2025, 12, 21)
             }
         );                                             
         context.TaskItems.AddRange(                                                                                               
