@@ -167,8 +167,6 @@ public class UserService : IUserService
     {
         PasswordHasher<User> passwordHasher = new();
 
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         if (!UserCredentialsValidator.CheckEmailFormat(email))
         {
             return new UserVerificationResponse
@@ -178,7 +176,7 @@ public class UserService : IUserService
             };
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+        var user = await GetUserFromEmailAsync(email);
         if (user == null)
         {
             return new UserVerificationResponse

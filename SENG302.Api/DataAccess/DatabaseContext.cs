@@ -35,6 +35,6 @@ public class DatabaseContext : DbContext, IDatabaseContext
     /// <inheritdoc/>
     public bool EmailExists(string email)
     {
-        return Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Count() > 0;
+        return Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Any();
     }
 }
