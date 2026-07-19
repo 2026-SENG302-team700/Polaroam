@@ -129,10 +129,6 @@ public class UserService : IUserService
         
         if (string.IsNullOrWhiteSpace(country))
         {
-            // return BadRequest(new
-            // {
-            //     message = "Country is required!"
-            // });
             errors["country"] = "Country is required!";
         }
         else
