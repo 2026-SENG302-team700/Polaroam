@@ -275,7 +275,7 @@ namespace SENG302.Api.Tests.Acceptance.Features.TaskList
         await testRunner.ThenAsync("I should receive a bad request response", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 34
-        await testRunner.AndAsync("the error message should say \"List name cannot contain profanity.\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+        await testRunner.AndAsync("the error message should say \"Trip name cannot contain profanity.\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

@@ -394,8 +394,8 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1 });
-        context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2 });
+        context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21)});
+        context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
         context.TaskItems.Add(new TaskItem { TaskListId = 1, Name = "My task", Description = "", CurrentStatus = CurrentTaskStatus.Todo });
         context.TaskItems.Add(new TaskItem { TaskListId = 2, Name = "Other task", Description = "", CurrentStatus = CurrentTaskStatus.Todo });
         await context.SaveChangesAsync();
@@ -413,7 +413,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My List", UserId = 1 });
+        context.Trips.Add(new Trip { Id = 1, Title = "My List", UserId = 1, Description = "", StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21)});
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/taskItem");

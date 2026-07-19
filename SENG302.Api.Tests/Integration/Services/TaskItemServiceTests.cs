@@ -28,6 +28,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             Id = listId,
             Title = "Test List",
             UserId = userId,
+            Description = "Test",
             StartDate = new DateTime(2017, 10, 08), 
             EndDate = new DateTime(2017, 10, 21)
         });

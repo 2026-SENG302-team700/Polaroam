@@ -73,11 +73,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
         
-        var tripRequest = new NewTripRequest
+        NewTripRequest tripRequest = new NewTripRequest
         {
-            UserId = userId, Title = title, StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            UserId = userId, Title = title, Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
-
+        
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest));
     }
@@ -98,25 +98,24 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         // Use the TaskService function to retrieve task lists for the user email
-        var taskLists = await ServiceUnderTest.GetTripsByUserIdAsync(1);
-        taskLists.Count().ShouldBe(0);
+        var initialTrips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
+        initialTrips.Count().ShouldBe(0);
 
         context.Trips.Add(new Trip
         {
-            Title = "Test Title",
+            Title = "Test trip title",
             UserId = 1,
             Description = "Test Description",
             StartDate = new DateTime(2020, 1, 30),
             EndDate = new DateTime(2020, 2, 5)
         });
         await context.SaveChangesAsync();
-        var Trips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
-        Trips.Count().ShouldBe(1);
-        Trips.First().Title.ShouldBe("Test Task List");
-        Trips.First().Description.ShouldBe("Test Description");
-        Trips.First().StartDate.ShouldBe( new DateTime(2020, 1, 30));
-        Trips.First().EndDate.ShouldBe( new DateTime(2020, 2, 5));
-        
+        var trips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
+        trips.Count().ShouldBe(1);
+        trips.First().Title.ShouldBe("Test trip title");
+        trips.First().Description.ShouldBe("Test Description");
+        trips.First().StartDate.ShouldBe( new DateTime(2020, 1, 30));
+        trips.First().EndDate.ShouldBe( new DateTime(2020, 2, 5));
     }
 
     [Fact]
@@ -136,7 +135,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         var tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "shit list", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            UserId = 1, Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
 
         await Should.ThrowAsync<ArgumentException>(
@@ -161,7 +160,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         var tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "shit list", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            UserId = 1, Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
 
         var taskList = await ServiceUnderTest.CreateNewTripAsync(tripRequest);

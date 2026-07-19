@@ -5,6 +5,7 @@ using Shouldly;
 using SENG302.Api.Tests.Acceptance.Setup;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions.TaskList;
 
@@ -72,6 +73,7 @@ public class U13ProfanityDetection
             Id = 1,
             Title = name,
             UserId = 1,
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         });
@@ -97,11 +99,15 @@ public class U13ProfanityDetection
     }
 
     [When(@"I create a task list with the name (.*)")]
-    public async Task WhenICreateATaskListWithTheName(string name)
+    public async Task WhenICreateATaskListWithTheName(string title)
     {
-        _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("/api/taskList", new
+        _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("/api/trip", new NewTripRequest
         {
-            name = name.Trim()
+            UserId = 1,
+            Title = title.Trim(),
+            Description = "",
+            StartDate = new DateTime(2019, 05, 10),
+            EndDate = new DateTime(2019, 05, 20)
         });
     }
 
@@ -115,7 +121,7 @@ public class U13ProfanityDetection
     [Then(@"the task list name should be displayed with stars")]
     public async Task ThenTheTaskListNameShouldBeDisplayedWithStars()
     {
-        var response = await _fixture.HttpClient.GetAsync("/api/taskList");
+        var response = await _fixture.HttpClient.GetAsync("/api/trip");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.Trip>>();
         lists!.First().Title.ShouldNotContain("shit");
@@ -125,7 +131,7 @@ public class U13ProfanityDetection
     [Then(@"the task list name should be displayed as-is")]
     public async Task ThenTheTaskListNameShouldBeDisplayedAsIs()
     {
-        var response = await _fixture.HttpClient.GetAsync("/api/taskList");
+        var response = await _fixture.HttpClient.GetAsync("/api/trip");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.Trip>>();
         lists!.First().Title.ShouldBe(_taskListName);

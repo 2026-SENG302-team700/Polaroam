@@ -29,6 +29,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         {
             UserId = 1,
             Title = "Test Trip",
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         };
@@ -37,7 +38,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task CreateTrip_ShortName_ReturnBadRequest()
+    public async Task CreateTrip_ShortTitle_ReturnBadRequest()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
@@ -53,7 +54,8 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         var data = new NewTripRequest
         {
             UserId = 1,
-            Title = "Test Trip",
+            Title = "T",
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         };
@@ -61,7 +63,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("List name is required and must be between 3 and 128 characters long");
+        message.ShouldContain("Trip name is required and must be between 3 and 128 characters long");
     }
 
     [Fact]
@@ -73,6 +75,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         {
             UserId = 1,
             Title = "Valid Trip Data",
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         };
@@ -101,6 +104,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         {
             UserId = 1,
             Title = "Trip!",
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         };
@@ -108,7 +112,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        message.ShouldContain("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
 
     [Fact]
@@ -133,6 +137,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         {
             UserId = 1,
             Title = "Test Trip",
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         };

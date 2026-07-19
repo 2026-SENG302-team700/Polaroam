@@ -31,7 +31,7 @@ Feature: U13 - As Sarah I want task list titles to be moderated so that I can re
         And I am on the create task list form
         When I create a task list with the name <inappropriate-name>
         Then I should receive a bad request response
-        And the error message should say "List name cannot contain profanity."
+        And the error message should say "Trip name cannot contain profanity."
 
         Examples:
             | inappropriate-name |

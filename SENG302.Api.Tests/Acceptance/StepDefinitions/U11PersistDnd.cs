@@ -27,6 +27,7 @@ public class U11PersistDnd
             Id = 1,
             Title = "My Task List",
             UserId = _fixture.CurrentUserId!.Value,
+            Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         });
