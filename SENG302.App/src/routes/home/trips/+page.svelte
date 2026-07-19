@@ -1,6 +1,8 @@
 <script lang="ts">
-    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
+    import AddButton from "$lib/components/buttons/add-button.svelte";
     import SearchForm from "$lib/components/forms/search-form.svelte";
+
+    let trips = [];
 </script>
 
 <div class="container">
@@ -11,9 +13,17 @@
     </div>
 
     <div class="card-body d-flex justify-content-between align-items-center">
-        <NavigationButton text="+" path="/home/trips/create-trip" />
+        <AddButton path="/home/trips/create-trip" />
         <div>
             <SearchForm />
         </div>
     </div>
+    {#each trips as trip, i}
+        {#if i % 3 == 0}
+            <div class="grid grid-cols-3 h-screen">
+                <!-- placeholder -->
+                <div class="border-black border"></div>
+            </div>
+        {/if}
+    {/each}
 </div>

@@ -13,6 +13,7 @@
 </script>
 
 <div class="container max-w-md">
+    <!-- IMPORTANT!! When our UI spike is approved, please go through all used components and change them to use the spiked library -->
     <div>
         <div style="display: flex; flex-direction: row;">
             <div>
