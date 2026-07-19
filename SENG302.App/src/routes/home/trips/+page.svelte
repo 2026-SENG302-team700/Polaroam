@@ -1,6 +1,15 @@
 <script lang="ts">
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import SearchForm from "$lib/components/forms/search-form.svelte";
+    import TripCard from "$lib/components/trip-components/trip-card.svelte";
+
+    let tripObject = {
+        id: 0,
+        Title: "bob",
+        Description: "hello",
+        StartDate: new Date(),
+        EndDate: new Date(),
+    };
 </script>
 
 <div class="container">
@@ -15,5 +24,8 @@
         <div>
             <SearchForm />
         </div>
+    </div>
+    <div>
+        <TripCard {tripObject} />
     </div>
 </div>
