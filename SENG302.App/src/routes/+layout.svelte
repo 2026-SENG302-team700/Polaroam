@@ -1,4 +1,5 @@
 <script lang="ts">
+	import './layout.css';
 	import "bootstrap/dist/css/bootstrap.min.css";
 	import "bootstrap-icons/font/bootstrap-icons.css";
 	import "../app.css";
@@ -7,9 +8,8 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
-	interface Props {
-		children?: import("svelte").Snippet;
-	}
+
+	interface Props { children?: import("svelte").Snippet }
 
 	let { children }: Props = $props();
 
@@ -21,35 +21,32 @@
 </script>
 
 <Toast />
+
 {#key page.url.pathname}
-	<div class="container-fluid bg-light min-vh-footer py-4">
-		{@render children?.()}
-	</div>
+	<div
+		class="container-fluid bg-light min-vh-footer py-4"
+	>{@render children?.()}</div>
+
 	<footer class="footerBar">
 		<div class="footerContent">
 			<button
 				class="btn btn-secondary"
-				onclick={() =>
-					goto(resolve(`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`))}
-			>
-				Content Policy
-			</button>
+				onclick={() => goto(resolve(`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`))}
+			>Content Policy</button>
+
 			<button
 				class="btn btn-secondary"
-				onclick={() =>
-					goto(resolve(`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`))}
-			>
-				Privacy Policy
-			</button>
+				onclick={() => goto(resolve(`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`))}
+			>Privacy Policy</button>
 		</div>
 	</footer>
 {/key}
-	
+
 <style>
 	.min-vh-footer {
 		min-height: 93vh;
 	}
-	
+
 	.footerBar {
 		margin-top: auto;
 		background-color: white;

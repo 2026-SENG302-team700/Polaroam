@@ -1,31 +1,45 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "$lib/csrf";
 
-    let loading = $state(false);
-    let error = $state("");
+    import { Button } from "$lib/components/ui/button";
+    import * as Card from "$lib/components/ui/card";
 </script>
 
-<div class="container">
-    <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
-    <button
-        class="btn btn-primary w-100 mb-3"
-        on:click={() => goto(resolve("/register"))}
-    >
-        Register
-    </button>
-    <button
-        class="btn btn-primary w-100"
-        on:click={() => goto(resolve("/login"))}
-    >
-        Login
-    </button>
-</div>
+<svelte:head>
+    <title>Welcome | Polaroam</title>
+</svelte:head>
 
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-</style>
+<main class="flex min-h-screen items-center justify-center bg-[#f7f3e8] p-6">
+    <Card.Root class="w-full max-w-md">
+        <Card.Header class="text-center">
+            <img
+                src={resolve("/polaroam-logo.png")}
+                alt="Polaroam"
+                class="mx-auto -mb-18 h-60 w-60 object-contain"
+            />
+
+            <Card.Title class="text-3xl font-black tracking-tight">
+                Polaroam
+            </Card.Title>
+
+            <Card.Description class="mt-2 text-base text-black">
+                Sign in to continue or create a new account.
+            </Card.Description>
+        </Card.Header>
+
+        <Card.Content class="flex flex-col gap-4">
+            <Button class="w-full" onclick={() => goto(resolve("/register"))}>
+                Register
+            </Button>
+
+            <Button
+                variant="outline"
+                class="w-full"
+                onclick={() => goto(resolve("/login"))}
+            >
+                Log in
+            </Button>
+        </Card.Content>
+    </Card.Root>
+</main>

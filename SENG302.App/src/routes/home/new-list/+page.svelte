@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import TitleForm from "$lib/components/title-form.svelte";
+    import TitleForm from "$lib/components/forms/title-form.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import regexPatterns from "../../../../../SENG302.Shared/regexPatterns.json";
 
