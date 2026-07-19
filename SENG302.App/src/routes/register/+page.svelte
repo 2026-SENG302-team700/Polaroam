@@ -27,118 +27,13 @@
         passwordConfirm: "",
     });
 
-    function validateInputs(): boolean {
-        let valid = true;
-        // Reset errors
-        errors = {
-            email: "",
-            displayName: "",
-            country: "",
-            password: "",
-            passwordConfirm: "",
-        };
-
-        // Check email format
-        const emailRegex = new RegExp(regexPatterns.user.email);
-        if (!emailRegex.test(email) && email) {
-            (errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
-                "error";
-            valid = false;
-        }
-
-        if (displayName.trim() == '' || displayName.trim().length < 3) {
-            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
-            valid = false;
-        }
-
-        // Check if passwords match
-        if (password !== passwordConfirm && password && passwordConfirm) {
-            errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check display name length
-        if (displayName.length < 3 || displayName.length > 64) {
-            errors.displayName =
-                "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        // Check display name validity
-        const displayNameRegex = new RegExp(
-            regexPatterns.user.displayName.pattern,
-            regexPatterns.user.displayName.flags,
-        );
-        if (!displayNameRegex.test(displayName)) {
-            errors.displayName =
-                "Display name must only include letters, spaces, hyphens or apostrophes.";
-            valid = false;
-        }
-        
-        // Check for empty fields
-        if (!email) {
-            errors.email = "Email is required.";
-            valid = false;
-        }
-
-        if (!displayName) {
-            errors.displayName = "Display name is required.";
-            valid = false;
-        }
-
-        if (!selectedCountryCode) {
-            errors.country = "Please select a country.";
-            valid = false;
-        }
-
-        if (!password) {
-            errors.password = "Password is required.";
-            valid = false;
-        }
-
-        if (!passwordConfirm) {
-            errors.passwordConfirm = "Please confirm your password.";
-            valid = false;
-        }
-
-        // Check if passwords match
-        if (password !== passwordConfirm && password && passwordConfirm) {
-            // actual error stuff
-            errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check password validity
-        const passwordRegex = new RegExp(regexPatterns.user.password);
-        if (!passwordRegex.test(password) && password) {
-            // actual error stuff
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-            password = "";
-            passwordConfirm = "";
-            valid = false;
-        }
-
-        // Check display name length
-        if (
-            (displayName.length < 3 || displayName.length > 64) &&
-            displayName
-        ) {
-            errors.displayName =
-                "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        return valid;
-    }
+    
     /**
      * Handles user registration by sending a POST request to the server with the user's details.
      * Validates that all fields are filled in before making the request. If registration is successful,
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-        if (!validateInputs()) return;
 
         try {
             loading = true;
@@ -167,6 +62,7 @@
                 if (data?.errors) {
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
+                    errors.country = data.errors.country ?? "";
                     errors.password = data.errors.password ?? "";
                     errors.passwordConfirm = data.errors.passwordConfirm ?? "";
                 } else {
@@ -233,7 +129,6 @@
                     error={errors.passwordConfirm}
                     {loading}
                     passConfirm={true}
-
             />
         </div>
         <div>
