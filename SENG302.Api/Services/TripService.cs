@@ -1,3 +1,4 @@
+using System.Globalization;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -71,13 +72,18 @@ public class TripService : ITripService
             throw new ArgumentException("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
         }
 
+        if (trip.Description.Length > 2048)
+        {
+            throw new ArgumentException("Description must be 2048 characters or less");
+        }
+
         // validation start and end date
         // check end date is after start date
         if (trip.EndDate < trip.StartDate)
         {
             throw new ArgumentException("Trip start date must be before trip end date");
         }
-
+        
         var user = await context.Users.Where(u => u.Id == trip.UserId).FirstOrDefaultAsync();
         // Validate user email exists in db
         if (user == null)

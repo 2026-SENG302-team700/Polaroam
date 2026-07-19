@@ -87,7 +87,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task CreateTaskList_InvalidCharactersInName_ReturnBadRequest()
+    public async Task CreateTrip_InvalidCharactersInName_ReturnBadRequest()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
@@ -114,9 +114,10 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         message.ShouldContain("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
-
+    
+        
     [Fact]
-    public async Task FetchTaskListsByUser_SuccessfulFetch_ReturnsTaskLists()
+    public async Task FetchTripsByUser_SuccessfulFetch_ReturnsTaskLists()
     {
         // Create DB
         await using var context = DbContextFactory.CreateDbContext();
