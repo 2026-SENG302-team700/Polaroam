@@ -10,6 +10,10 @@
         StartDate: new Date(),
         EndDate: new Date(),
     };
+    let trips = [];
+    trips.push(tripObject);
+    trips.push(tripObject);
+    trips.push(tripObject);
 </script>
 
 <div class="container">
@@ -25,7 +29,14 @@
             <SearchForm />
         </div>
     </div>
-    <div>
-        <TripCard {tripObject} />
+    <div class="h-20px">
+        {#each trips as trip, i}
+            {#if i % 3 == 0}
+                <div class="grid grid-cols-3 h-screen">
+                    <TripCard {tripObject} />
+                    <div class="border-black border"></div>
+                </div>
+            {/if}
+        {/each}
     </div>
 </div>
