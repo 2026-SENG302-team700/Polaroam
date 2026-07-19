@@ -67,6 +67,35 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreateTrip_StartDateBeforeEndDate_ReturnBadRequest()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        var data = new NewTripRequest
+        {
+            UserId = 1,
+            Title = "Trip test",
+            Description = "Test",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 10, 21)
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        var message = await response.Content.ReadAsStringAsync();
+        
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        message.ShouldContain("Trip start date must be before trip end date");
+    }
+
+    [Fact]
     public async Task CreateTrip_NonExistentUser_ReturnBadRequest()
     {
         // Test automatically gets userEamil as test@example.com so we dont add this

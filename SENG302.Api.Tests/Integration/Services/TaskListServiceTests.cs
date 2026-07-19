@@ -113,6 +113,29 @@ public class TripServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowArgumentException()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        NewTripRequest tripRequest = new NewTripRequest
+        {
+            UserId = 1, Title = "Test trip", Description = "new description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2021-01-07"),
+        };
+        
+        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest));
+    }
+
+    [Fact]
     public async Task GetTripByUserEmailAsync_RetreiveUsersTrips_Success()
     {
         await using var context = DbContextFactory.CreateDbContext();
