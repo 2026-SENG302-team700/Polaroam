@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import TitleForm from "$lib/components/title-form.svelte";
+    import TitleForm from "$lib/components/forms/title-form.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import regexPatterns from "../../../../../SENG302.Shared/regexPatterns.json";
 
@@ -31,8 +31,8 @@
         }
 
         const nameRegex = new RegExp(
-            regexPatterns.taskList.name.pattern,
-            regexPatterns.taskList.name.flags,
+            regexPatterns.trip.title.pattern,
+            regexPatterns.trip.title.flags,
         );
         if (!nameRegex.test(trimmedName)) {
             errors.push(
@@ -48,7 +48,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+            const response = await fetchWithCsrf(resolve(`/api/trip`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

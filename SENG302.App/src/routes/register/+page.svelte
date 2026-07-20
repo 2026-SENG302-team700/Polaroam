@@ -5,13 +5,12 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import PasswordForm from "$lib/components/password-form.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import DisplayNameForm from "$lib/components/display-name-form.svelte";
-    import CountrySelectForm from "$lib/components/country-select-form.svelte";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-
+    import PasswordForm from "$lib/components/forms/password-form.svelte";
+    import EmailForm from "$lib/components/forms/email-form.svelte";
+    import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
+    import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -27,118 +26,12 @@
         passwordConfirm: "",
     });
 
-    function validateInputs(): boolean {
-        let valid = true;
-        // Reset errors
-        errors = {
-            email: "",
-            displayName: "",
-            country: "",
-            password: "",
-            passwordConfirm: "",
-        };
-
-        // Check email format
-        const emailRegex = new RegExp(regexPatterns.user.email);
-        if (!emailRegex.test(email) && email) {
-            (errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
-                "error";
-            valid = false;
-        }
-
-        if (displayName.trim() == '' || displayName.trim().length < 3) {
-            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
-            valid = false;
-        }
-
-        // Check if passwords match
-        if (password !== passwordConfirm && password && passwordConfirm) {
-            errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check display name length
-        if (displayName.length < 3 || displayName.length > 64) {
-            errors.displayName =
-                "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        // Check display name validity
-        const displayNameRegex = new RegExp(
-            regexPatterns.user.displayName.pattern,
-            regexPatterns.user.displayName.flags,
-        );
-        if (!displayNameRegex.test(displayName)) {
-            errors.displayName =
-                "Display name must only include letters, spaces, hyphens or apostrophes.";
-            valid = false;
-        }
-        
-        // Check for empty fields
-        if (!email) {
-            errors.email = "Email is required.";
-            valid = false;
-        }
-
-        if (!displayName) {
-            errors.displayName = "Display name is required.";
-            valid = false;
-        }
-
-        if (!selectedCountryCode) {
-            errors.country = "Please select a country.";
-            valid = false;
-        }
-
-        if (!password) {
-            errors.password = "Password is required.";
-            valid = false;
-        }
-
-        if (!passwordConfirm) {
-            errors.passwordConfirm = "Please confirm your password.";
-            valid = false;
-        }
-
-        // Check if passwords match
-        if (password !== passwordConfirm && password && passwordConfirm) {
-            // actual error stuff
-            errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check password validity
-        const passwordRegex = new RegExp(regexPatterns.user.password);
-        if (!passwordRegex.test(password) && password) {
-            // actual error stuff
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-            password = "";
-            passwordConfirm = "";
-            valid = false;
-        }
-
-        // Check display name length
-        if (
-            (displayName.length < 3 || displayName.length > 64) &&
-            displayName
-        ) {
-            errors.displayName =
-                "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        return valid;
-    }
     /**
      * Handles user registration by sending a POST request to the server with the user's details.
      * Validates that all fields are filled in before making the request. If registration is successful,
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-        if (!validateInputs()) return;
 
         try {
             loading = true;
@@ -167,17 +60,21 @@
                 if (data?.errors) {
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
+                    errors.country = data.errors.country ?? "";
                     errors.password = data.errors.password ?? "";
                     errors.passwordConfirm = data.errors.passwordConfirm ?? "";
                 } else {
-                    addToast(data?.message || "Internal server error occurred.", "error");
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
                 }
-                
+
                 if (errors.password || errors.passwordConfirm) {
                     password = "";
                     passwordConfirm = "";
                 }
-                
+
                 return;
             }
             // set email in local storage for validation page
@@ -206,34 +103,33 @@
         </div>
         <div class="mb-3">
             <DisplayNameForm
-                    bind:displayName
-                    error={errors.displayName}
-                    {loading}
-                    registering={true}
+                bind:displayName
+                error={errors.displayName}
+                {loading}
+                registering={true}
             />
         </div>
         <div class="mb-3">
             <CountrySelectForm
-                    bind:selectedCountryCode
-                    error={errors.country}
-                    {loading}
+                bind:selectedCountryCode
+                error={errors.country}
+                {loading}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                    bind:password
-                    error={errors.password}
-                    {loading}
-                    passConfirm={false}
+                bind:password
+                error={errors.password}
+                {loading}
+                passConfirm={false}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                    bind:password={passwordConfirm}
-                    error={errors.passwordConfirm}
-                    {loading}
-                    passConfirm={true}
-
+                bind:password={passwordConfirm}
+                error={errors.passwordConfirm}
+                {loading}
+                passConfirm={true}
             />
         </div>
         <div>

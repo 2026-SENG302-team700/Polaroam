@@ -6,15 +6,21 @@ namespace SENG302.Api.Models.Entities;
 /// Represents a list of tasks that a user can create. 
 /// Each task list has a name and is associated with a user's email.
 /// </summary>
-public class TaskList
+public class Trip
 {
+    [Required]
     public int Id { get; set; }
 
     [MaxLength(128)]
-    public string Name { get; set; } = string.Empty;
-
+    [MinLength(3)]
+    [Required]
+    public string Title { get; set; } = string.Empty;
+    [Required]
     public int UserId { get; set; } // Foreign key to the User that owns this task list
 
-    public int NextId { get; set; } = 0; // When a task is created, it'll be assigned this Id and this variable will be incremented
-
+    public string Description { get; set; } = string.Empty;
+    [Required]
+    public DateTime? StartDate { get; set; }
+    [Required]
+    public DateTime? EndDate { get; set; }
 }

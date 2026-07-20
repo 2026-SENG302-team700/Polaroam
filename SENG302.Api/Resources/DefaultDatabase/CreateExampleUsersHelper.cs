@@ -64,10 +64,12 @@ public static class CreateExampleUsersHelper
 
             for (int i = 0; i < 20; i++)
             {
-                var taskList = new TaskList
+                var taskList = new Trip
                 {
-                    Name = "Name_" + i.ToString(),
+                    Title = "Name_" + i.ToString(),
                     UserId = user.Id,
+                    StartDate = DateTime.Now,
+                    EndDate = DateTime.Now.AddDays(1),
                 };
 
                 dbContext.Add(taskList);

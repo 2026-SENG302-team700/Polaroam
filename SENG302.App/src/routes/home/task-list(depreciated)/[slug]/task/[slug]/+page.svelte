@@ -5,13 +5,12 @@
   import { onMount } from "svelte";
   import { validateTaskInput } from "$lib/validity/taskValidity";
   import { formatDate } from "$lib/datepicker/formatDate";
-  import TitleForm from "$lib/components/title-form.svelte";
-  import DescriptionForm from "$lib/components/description-form.svelte";
-
+  import TitleForm from "$lib/components/forms/title-form.svelte";
+  import DescriptionForm from "$lib/components/forms/description-form.svelte";
   import DatePicker from "$lib/datepicker/datepicker.svelte";
   import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
     import { addToast } from "$lib/toast/toast.js";
-    import CancelButton from "$lib/components/cancel-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
 
   let loading = $state(false);
   let error = $state("");

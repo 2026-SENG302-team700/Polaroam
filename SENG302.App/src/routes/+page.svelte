@@ -1,31 +1,24 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "$lib/csrf";
 
-    let loading = $state(false);
-    let error = $state("");
 </script>
 
-<div class="container">
-    <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
-    <button
-        class="btn btn-primary w-100 mb-3"
-        on:click={() => goto(resolve("/register"))}
-    >
-        Register
-    </button>
-    <button
-        class="btn btn-primary w-100"
-        on:click={() => goto(resolve("/login"))}
-    >
-        Login
-    </button>
-</div>
+<svelte:head>
+    <title>Welcome | Polaroam</title>
+</svelte:head>
 
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-</style>
+<main class="flex min-h-screen items-center justify-center bg-[#f7f3e8] p-6">
+<button class="w-full" onclick={() => goto(resolve("/register"))}>
+                Register
+</button>
+
+            <button
+                
+                class="w-full"
+                onclick={() => goto(resolve("/login"))}
+            >
+                Log in
+</button>
+    
+</main>

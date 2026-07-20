@@ -7,9 +7,9 @@
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-    import TitleForm from "$lib/components/title-form.svelte";
-    import DescriptionForm from "$lib/components/description-form.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import TitleForm from "$lib/components/forms/title-form.svelte";
+    import DescriptionForm from "$lib/components/forms/description-form.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -26,16 +26,8 @@
         taskStatus: "",
     });
 
-    let datePicker: HTMLInputElement | undefined = $state();
-
     onMount(() => {
         GetList();
-
-        if (datePicker)
-            datePicker.addEventListener("invalid", function (event) {
-                event.preventDefault();
-                errors.dueDate = "Please input a valid date";
-            });
     });
 
     /**
@@ -77,7 +69,7 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        taskListId: params.slug,
+                        tripId: params.slug,
                         name: name.trim(),
                         description: description.trim(),
                         DueDate: dueDate,
@@ -128,7 +120,7 @@
             loading = true;
             error = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/taskList/${params.slug}` as any),
+                resolve(`/api/trip/${params.slug}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -159,7 +151,7 @@
         </h1>
     </div>
     <div class="mb-3">
-        <CancelButton path={`/home/task-list/${params.slug}`} />
+        <CancelButton path={`/home/trip/${params.slug}`} />
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
@@ -188,7 +180,6 @@
                 <DatePicker
                     bind:value={taskDue}
                     error={errors.dueDate}
-                    bind:date={datePicker}
                     disabled={loading}
                 />
             </div>
