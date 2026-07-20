@@ -20,8 +20,8 @@
 >
     <h1>{tripObject.title}</h1>
     <span
-        >{formatDate(tripObject.startDate.toDateString())} - {formatDate(
-            tripObject.endDate.toDateString(),
+        >{formatDate(tripObject.startDate)} - {formatDate(
+            tripObject.endDate,
         )}</span
     >
     <p>{tripObject.description}</p>
@@ -32,5 +32,9 @@
         border-color: black;
         border-style: solid;
         border-width: 2px;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        justify-self: center;
+        width: 98%;
     }
 </style>

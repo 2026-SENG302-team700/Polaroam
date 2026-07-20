@@ -68,7 +68,7 @@
         padding-top: 3px;
         display: grid;
         grid-template-columns: 33% 33% 33%;
-        gap: 3px;
+        align-items: center;
     }
     .no-trips-message {
         width: 50vw;
