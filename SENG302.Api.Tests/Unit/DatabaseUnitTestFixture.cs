@@ -28,6 +28,13 @@ public abstract class DatabaseUnitTestFixture
         _mockDbContextFactory.CreateDbContext().Returns(_ => CreateInMemoryDatabaseContext());
     }
 
+    /// <summary>
+    /// Generates a new database context using the sqllite connection created in the constructor
+    /// Ensures that the database is created
+    /// </summary>
+    /// <returns>
+    /// Returns a new database context
+    /// </returns>
     private DatabaseContext CreateInMemoryDatabaseContext()
     {
         DatabaseContext mockDatabaseContext = new DatabaseContext(_options);
