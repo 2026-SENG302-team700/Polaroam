@@ -1,47 +1,45 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import type { Modal } from "bootstrap";
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "$lib/csrf";
-    import { addToast } from "$lib/toast/toast";
-    import { user } from "$lib/stores/user";
-    import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
-    import ProfilePic from "$lib/profilepic/profilepic.svelte";
-    import ImageEditor from "$lib/image-editor/image-editor.svelte";
-    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
-    import DisplayNameForm from "$lib/components/forms/title-form.svelte";
-    import EmailForm from "$lib/components/forms/email-form.svelte";
-    import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
-    import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
-    import PasswordForm from "$lib/components/forms/password-form.svelte";
-    import ToggleForm from "$lib/components/forms/toggle-form.svelte";
+  import { onMount } from "svelte";
+  import type { Modal } from "bootstrap";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { fetchWithCsrf } from "$lib/csrf";
+  import { addToast } from "$lib/toast/toast";
+  import { user } from "$lib/stores/user";
+  import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
+  import ProfilePic from "$lib/profilepic/profilepic.svelte";
+  import ImageEditor from "$lib/image-editor/image-editor.svelte";
+  import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+  import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
+  import EmailForm from "$lib/components/forms/email-form.svelte";
+  import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
+  import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+  import PasswordForm from "$lib/components/forms/password-form.svelte";
+  import ToggleForm from "$lib/components/forms/toggle-form.svelte";
 
-    let displayName = $state("");
-    let email = $state("");
-    let country = $state("");
-    let files: FileList | null = $state(null);
-    let pfpInput: HTMLInputElement;
-    let modalElement: HTMLElement | undefined = $state();
-    let pfpModalElement: HTMLElement | undefined = $state();
-    let authModal: Modal | undefined;
-    let pfpModal: Modal | undefined;
-    let resendTimer = $state(0);
-    let isSending = $state(false);
-    let currentModalStep = $state("verify");
-    let newPassword = $state("");
-    let confirmPassword = $state("");
-    let oldPassword = $state("");
-    let digit1 = $state("");
-    let digit2 = $state("");
-    let digit3 = $state("");
-    let digit4 = $state("");
-    let digit5 = $state("");
-    let digit6 = $state("");
-    let userCode = $derived(
-        digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
-    );
-    let updatingPassword = $state(false);
+  let displayName = $state("");
+  let email = $state("");
+  let country = $state("");
+  let files: FileList | null = $state(null);
+  let pfpInput: HTMLInputElement;
+  let modalElement: HTMLElement | undefined = $state();
+  let pfpModalElement: HTMLElement | undefined = $state();
+  let authModal: Modal | undefined;
+  let pfpModal: Modal | undefined;
+  let resendTimer = $state(0);
+  let isSending = $state(false);
+  let currentModalStep = $state("verify");
+  let newPassword = $state("");
+  let confirmPassword = $state("");
+  let oldPassword = $state("");
+  let digit1 = $state("");
+  let digit2 = $state("");
+  let digit3 = $state("");
+  let digit4 = $state("");
+  let digit5 = $state("");
+  let digit6 = $state("");
+  let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
+  let updatingPassword = $state(false);
 
   let profanityFiltering = $state(false);
 
@@ -217,42 +215,217 @@
     // trim display name to remove whitespace at the start and end
     displayName = displayName.trim();
 
-        try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
-                method: "PUT",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email,
-                    displayName,
-                    country,
-                    profanityFiltering,
-                }),
-            });
+    // Check Display name length
+    if (displayName.length < 3 || displayName.length > 64) {
+      errors.displayName = "Display name must be between 3 and 64 characters";
+      valid = false;
+    }
 
-            if (response.ok) {
-                addToast("Profile edited successful");
-                const updatedUser = await response.json();
-                user.update((u) => ({
-                    ...u,
-                    displayName: updatedUser.displayName,
-                }));
-                goto(resolve("/home"));
-            } else {
-                const data = await response.json().catch(() => null);
-                if (data?.errors) {
-                    console.log(data.errors);
-                    errors.email = data.errors.email ?? "";
-                    errors.displayName = data.errors.displayName ?? "";
-                } else {
-                    addToast(
-                        data?.message || "Internal server error occurred.",
-                        "error",
-                    );
-                }
-                return;
+    // Display Name format
+    const displayNameRegex = new RegExp(
+      regexPatterns.user.displayName.pattern,
+      regexPatterns.user.displayName.flags,
+    );
+    if (!displayNameRegex.test(displayName)) {
+      errors.displayName =
+        "Display name must only include letters, spaces, hyphens or apostrophes.";
+      valid = false;
+    }
+
+    // Fields not empty
+    if (!email) {
+      errors.email = "Email is required.";
+      valid = false;
+    }
+
+    if (!displayName) {
+      errors.displayName = "Display name is required.";
+      valid = false;
+    }
+
+    return valid;
+  }
+  /// <summary>
+  /// Automatically refocus on the next input box
+  /// </summary>
+  function handleInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    if (input.value && input.nextElementSibling) {
+      (input.nextElementSibling as HTMLInputElement).focus();
+    }
+  }
+  /// <summary>
+  /// Move the focus back one box when backspace is clicked and the input box is empty
+  /// </summary>
+  function handleKeyDown(e: KeyboardEvent) {
+    const input = e.target as HTMLInputElement;
+    if (e.key === "Backspace" && !input.value && input.previousElementSibling) {
+      (input.previousElementSibling as HTMLInputElement).focus();
+    }
+  }
+
+  /// <summary>
+  /// Updates the users information with the provided information
+  /// </summary>
+  async function updateUser() {
+    // Return if error
+    if (!isValid()) return;
+
+    try {
+      const response = await fetchWithCsrf(resolve(`/api/user`), {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          displayName,
+          country,
+          profanityFiltering,
+        }),
+      });
+
+      if (response.ok) {
+        addToast("Profile edited successful");
+        const updatedUser = await response.json();
+        user.update((u) => ({
+          ...u,
+          displayName: updatedUser.displayName,
+        }));
+        goto(resolve("/home"));
+      } else {
+        const data = await response.json().catch(() => null);
+        if (data?.errors) {
+          console.log(data.errors);
+          errors.email = data.errors.email ?? "";
+          errors.displayName = data.errors.displayName ?? "";
+        } else {
+          addToast(data?.message || "Internal server error occurred.", "error");
+        }
+        return;
+      }
+    } catch (err) {
+      addToast((err as Error).message);
+    }
+  }
+
+  /**
+   * Validated the inputs to a change password request and sets the appropriate errors
+   * the new passwords must match and be of the correct form
+   * returns whether result is valid or not
+   */
+  function validateChangePasswordInputs() {
+    clearErrors();
+    var isValid = true;
+
+    // Check not empty
+    if (!oldPassword) {
+      errors.oldPassword = "field is required";
+      isValid = false;
+    }
+    if (!newPassword) {
+      errors.newPassword = "field is required";
+      isValid = false;
+    }
+    if (!confirmPassword) {
+      errors.confirmPassword = "field is required";
+      isValid = false;
+    }
+
+    // checks passwords match
+    if (newPassword !== confirmPassword) {
+      isValid = false;
+      errors.confirmPassword = "Passwords do not match";
+      confirmPassword = "";
+    }
+
+    // check password is valid
+    const passwordRegex = new RegExp(regexPatterns.user.password);
+    if (!passwordRegex.test(newPassword)) {
+      isValid = false;
+      errors.newPassword =
+        "Password must be at least 8 characters long including at least one of each " +
+        "uppercase, lowercase, numbers and special characters";
+      newPassword = "";
+      confirmPassword = "";
+    }
+
+    return isValid;
+  }
+  /**
+   * Check the code the user supplied when the user clicks the verify button. Send a post request to the backend with the provided code.
+   */
+  async function checkCode() {
+    if (userCode.length < 6) return;
+    try {
+      codeError = "";
+      const response = await fetchWithCsrf(
+        resolve(`/api/user/password/update/code/validation`),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            Email: email,
+            Code: userCode,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        codeError = data?.message || `Error ${response.status}: Invalid code.`;
+        digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
+        const firstInput = document.querySelector(
+          "#code-input input",
+        ) as HTMLInputElement;
+        firstInput?.focus();
+      } else {
+        currentModalStep = "update";
+      }
+    } catch (err) {
+      codeError = "Connection error. Please try again later.";
+    }
+  }
+
+  /**
+   * validates the input data and sends a request to the backend to update the users password
+   */
+  async function updatePassword() {
+    const valid = validateChangePasswordInputs();
+
+    updatingPassword = true;
+    try {
+      const response = await fetchWithCsrf(
+        resolve(`/api/user/password/update`),
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            oldPassword: oldPassword,
+            newPassword: newPassword,
+            newPasswordConfirm: confirmPassword,
+          }),
+        },
+      );
+      if (response.ok && valid) {
+        addToast("New password updated successfully");
+        authModal.hide();
+        goto(resolve("/home/profile"));
+        return;
+      }
+
+      const data = await response.json().catch(() => null);
+      if (response.status === 400) {
+        switch (data.message) {
+          case "Old password does not match password on file":
+            if (oldPassword) {
+              errors.oldPassword =
+                "Old password does not match password on file";
             }
             oldPassword = "";
             break;
@@ -353,103 +526,29 @@
     }
   }
 
-    /**
-     * Sends an image to the image editor
-     */
-    async function sendToEditor() {
-        clearErrors();
-        imageEditor.highlightError(false);
-        console.log("recieve file");
-        if (!files || files.length === 0) {
-            return;
-        }
-        if (await imageEditor.validateImg(files[0])) {
-            imageEditor.setImg(files[0]);
-            pfpModal.show();
-        }
-    }
+  /**
+   * Requests backend to change profanity filter on toggle
+   * @param profFilterState Requested state of profanity filter
+   */
+  async function updateProfanityFilter(profFilterState: boolean) {
+    try {
+      const response = await fetchWithCsrf(
+        resolve(`/api/user/profanity-filter`),
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(profFilterState),
+        },
+      );
 
-    /**
-     * Updates the profile picture on the back end
-     * @param imageData the x, y and zoom of the new profile picture
-     * @param imageFile the file to upload
-     */
-    async function updatePfp() {
-        const data = imageEditor.exportData();
-
-        if (!data) {
-            if (!imageError) {
-                imageError = "No file Selected";
-            }
-        }
-        errors.image = imageError;
-
-        if (imageError) {
-            imageEditor.highlightError(true);
-            return;
-        }
-
-        let imageData = data.data;
-        let imageFile = data.file;
-
-        try {
-            const formData = new FormData();
-            formData.append("file", imageFile);
-            formData.append("x", imageData.offsetX.toString());
-            formData.append("y", imageData.offsetY.toString());
-            formData.append("zoom", imageData.zoom.toString());
-
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/pfp` as any),
-                {
-                    method: "PUT",
-                    body: formData,
-                },
-            );
-
-            if (!response.ok) {
-                if (response.status == 500) {
-                    throw new Error("Failed to upload picture");
-                } else {
-                    throw new Error(await response.text());
-                }
-            } else {
-                user.update((u) => ({
-                    ...u,
-                    pfpData: imageData,
-                }));
-                pfpModal.hide();
-            }
-        } catch (err) {
-            errors.image = (err as Error).message;
-            imageEditor.highlightError(true);
-        }
-    }
-
-    /**
-     * Requests backend to change profanity filter on toggle
-     * @param profFilterState Requested state of profanity filter
-     */
-    async function updateProfanityFilter(profFilterState: boolean) {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/profanity-filter`),
-                {
-                    method: "PATCH",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(profFilterState),
-                },
-            );
-
-            if (!response.ok) {
-                addToast("Failed to update profanity filter");
-                profanityFiltering = !profFilterState;
-            }
-        } catch (error) {
-            addToast("Failed to update profanity filter", "error");
-            profanityFiltering = !profFilterState;
-        }
+      if (!response.ok) {
+        addToast("Failed to update profanity filter");
+        profanityFiltering = !profFilterState;
+      }
+    } catch (error) {
+      addToast("Failed to update profanity filter", "error");
+      profanityFiltering = !profFilterState;
     }
   }
 </script>
@@ -459,13 +558,55 @@
     <div class="position-relative d-inline-block">
       <ProfilePic pfpData={$user.pfpData} size="xl" />
 
-            <button
-                type="button"
-                class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                on:click={() => {
-                    pfpInput.value = "";
-                    pfpInput.click();
-                }}
+      <button
+        type="button"
+        class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
+        on:click={() => {
+          pfpInput.value = "";
+          pfpInput.click();
+        }}
+      >
+        <i class="bi bi-pencil-square fs-2"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="container d-flex flex-column flex-md-row">
+    <div class="flex-grow-1 m-3">
+      <form on:submit|preventDefault={updateUser}>
+        <div class="m-3" style="display: flex; ">
+          <CancelButton path={"/home/profile"} />
+          <div class="ms-auto">
+            <AuthenticatorButton buttonType={"update"} />
+          </div>
+        </div>
+        <div class="mb-4">
+          <h5 class="text-muted mb-2">Personal Information</h5>
+          <hr class="mt-0" style="opacity: 0.15;" />
+          <div class="mb-3">
+            <label for="displayName" class="form-label">Display Name</label>
+            <DisplayNameForm
+              bind:displayName
+              error={errors.displayName}
+              registering={false}
+            />
+          </div>
+          <div class="mb-3">
+            <label for="userEmail" class="form-label">Email</label>
+            <EmailForm bind:email error={errors.email} />
+          </div>
+          <div class="mb-3">
+            <label for="country" class="form-label">Country</label>
+            <CountrySelectForm bind:selectedCountryCode={country} />
+          </div>
+        </div>
+        <div class="mb-3"></div>
+        <div class="mt-5 mb-4">
+          <h5 class="text-muted mb-2">Preferences</h5>
+          <hr class="mt-0" style="opacity: 0.15;" />
+          <div class="d-flex align-items-center justify-content-between">
+            <label for="profanityFiltering" class="form-label"
+              >Profanity Censor</label
             >
             <ToggleForm
               id="profanityFiltering"
@@ -474,77 +615,22 @@
             />
           </div>
         </div>
-    </div>
 
-    <div class="container d-flex flex-column flex-md-row">
-        <div class="flex-grow-1 m-3">
-            <form on:submit|preventDefault={updateUser}>
-                <div class="m-3" style="display: flex; ">
-                    <CancelButton path={"/home/profile"} />
-                    <div class="ms-auto">
-                        <AuthenticatorButton buttonType={"update"} />
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <h5 class="text-muted mb-2">Personal Information</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div class="mb-3">
-                        <label for="displayName" class="form-label"
-                            >Display Name</label
-                        >
-                        <DisplayNameForm
-                            bind:displayName
-                            error={errors.displayName}
-                            registering={false}
-                        />
-                    </div>
-                    <div class="mb-3">
-                        <label for="userEmail" class="form-label">Email</label>
-                        <EmailForm bind:email error={errors.email} />
-                    </div>
-                    <div class="mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        <CountrySelectForm bind:selectedCountryCode={country} />
-                    </div>
-                </div>
-                <div class="mb-3"></div>
-                <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Preferences</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
-                        class="d-flex align-items-center justify-content-between"
-                    >
-                        <label for="profanityFiltering" class="form-label"
-                            >Profanity Censor</label
-                        >
-                        <ToggleForm
-                            id="profanityFiltering"
-                            bind:checked={profanityFiltering}
-                            onchange={() =>
-                                updateProfanityFilter(profanityFiltering)}
-                        />
-                    </div>
-                </div>
-
-                <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Account Security</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
-                        class="d-flex align-items-center justify-content-between"
-                    >
-                        <p class="small text-secondary mb-0">
-                            Change your password to keep your account secure.
-                        </p>
-                        <button
-                            type="button"
-                            class="btn btn-outline-primary btn-sm"
-                            on:click={requestPasswordChange}
-                        >
-                            Update Password
-                        </button>
-                    </div>
-                </div>
-            </form>
+        <div class="mt-5 mb-4">
+          <h5 class="text-muted mb-2">Account Security</h5>
+          <hr class="mt-0" style="opacity: 0.15;" />
+          <div class="d-flex align-items-center justify-content-between">
+            <p class="small text-secondary mb-0">
+              Change your password to keep your account secure.
+            </p>
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              on:click={requestPasswordChange}
+            >
+              Update Password
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -632,75 +718,32 @@
               </div>
             {/if}
 
-                        <button
-                            class="btn btn-link btn-sm text-decoration-none"
-                            on:click={requestPasswordChange}
-                            disabled={resendTimer > 0 || isSending}
-                        >
-                            {#if resendTimer > 0}
-                                Resend code in {resendTimer}s
-                            {:else if isSending}
-                                Sending...
-                            {:else}
-                                Resend Code
-                            {/if}
-                        </button>
-                    </div>
-                {:else}
-                    <form on:submit|preventDefault={() => updatePassword()}>
-                        <div class="mb-3">
-                            <label
-                                for="oldPassword"
-                                class="form-label small fw-bold text-secondary"
-                                >Current Password *</label
-                            >
-                            <PasswordForm
-                                bind:password={oldPassword}
-                                error={errors.oldPassword}
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label
-                                for="newPassword"
-                                class="form-label small fw-bold text-secondary"
-                                >New Password *</label
-                            >
-                            <PasswordForm
-                                bind:password={newPassword}
-                                error={errors.newPassword}
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label
-                                for="confirmPassword"
-                                class="form-label small fw-bold text-secondary"
-                                >Confirm New Password *</label
-                            >
-                            <PasswordForm
-                                bind:password={confirmPassword}
-                                error={errors.confirmPassword}
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            class="btn btn-primary w-100 py-2 mt-3"
-                            disabled={updatingPassword}
-                            >{updatingPassword
-                                ? "Updating..."
-                                : "Update Password"}
-                        </button>
-                    </form>
-                {/if}
-                <button
-                    type="button"
-                    class="btn btn-secondary w-100 py-2 mt-3"
-                    aria-label="Close"
-                    on:click={() => {
-                        authModal.hide();
-                        clearErrors();
-                        clearPasswordFields();
-                    }}>Cancel</button
-                >
+            <button
+              class="btn btn-link btn-sm text-decoration-none"
+              on:click={requestPasswordChange}
+              disabled={resendTimer > 0 || isSending}
+            >
+              {#if resendTimer > 0}
+                Resend code in {resendTimer}s
+              {:else if isSending}
+                Sending...
+              {:else}
+                Resend Code
+              {/if}
+            </button>
+          </div>
+        {:else}
+          <form on:submit|preventDefault={() => updatePassword()}>
+            <div class="mb-3">
+              <label
+                for="oldPassword"
+                class="form-label small fw-bold text-secondary"
+                >Current Password *</label
+              >
+              <PasswordForm
+                bind:password={oldPassword}
+                error={errors.oldPassword}
+              />
             </div>
             <div class="mb-3">
               <label
@@ -794,44 +837,18 @@
             <div class="text-danger small mt-1">
               {errors.image}
             </div>
-            <div class="modal-body">
-                <form on:submit|preventDefault={() => updatePfp()}>
-                    <input
-                        accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                        bind:files
-                        bind:this={pfpInput}
-                        id="pfp"
-                        name="pfp"
-                        type="file"
-                        class="d-none"
-                        on:change={async () => {
-                            imageEditor.reset();
-                            clearErrors();
-                            await sendToEditor();
-                            // Reset the value so that if we select the same image a second time the on:change event is triggered
-                            pfpInput.value = "";
-                        }}
-                    />
-                    <ImageEditor bind:this={imageEditor}></ImageEditor>
-                    {#if errors.image}
-                        <div class="text-danger small mt-1">
-                            {errors.image}
-                        </div>
-                    {/if}
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary"
-                            >Submit</button
-                        >
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            on:click={() => pfpModal.hide()}
-                            bind:this={pfpCancelButton}>Cancel</button
-                        >
-                    </div>
-                </form>
-            </div>
-        </div>
+          {/if}
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              on:click={() => pfpModal.hide()}
+              bind:this={pfpCancelButton}>Cancel</button
+            >
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
