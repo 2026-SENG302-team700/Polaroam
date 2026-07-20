@@ -49,6 +49,7 @@
                 error = `Failed to create list: ${data}` || "Failed to create list.";
                 return;  
             }
+            console.log(data);
 
             goto(resolve(`/home`));
         } catch (err) {
@@ -88,7 +89,7 @@
                 </div>
             </div>
             <div class="flex justify-end">
-                <CreationButton trigger={createTrip} text={"Create Trip"} />
+                <CreationButton onClick={createTrip} text={"Create Trip"} />
             </div>
         </div>
     </div>
