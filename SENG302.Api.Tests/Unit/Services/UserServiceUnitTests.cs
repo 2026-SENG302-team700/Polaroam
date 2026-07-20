@@ -122,7 +122,7 @@ public class UserServiceUnitTest : DatabaseUnitTestFixture
     public async Task CreateUser_InvalidEmail_ExpectValidationException(string userEmail)
     {
         await Should.ThrowAsync<MultipleValidationException>(async () =>
-            await UserServiceUnderTest.CreateNewUserAsync(userEmail, "Test User", "Password123!", "Password123!", "NZ")
+            await _userService.CreateNewUserAsync(userEmail, "Test User", "Password123!", "Password123!", "NZ")
         );
     }
 }
