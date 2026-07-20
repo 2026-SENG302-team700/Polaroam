@@ -138,7 +138,6 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-        if (!validateInputs()) return;
 
         try {
             loading = true;
@@ -167,6 +166,7 @@
                 if (data?.errors) {
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
+                    errors.country = data.errors.country ?? "";
                     errors.password = data.errors.password ?? "";
                     errors.passwordConfirm = data.errors.passwordConfirm ?? "";
                 } else {
