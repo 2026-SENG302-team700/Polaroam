@@ -20,9 +20,9 @@ public class TripServiceUnitTest : BaseUnitTestFixture
     {
         var tripRequest = new NewTripRequest
         {
-            UserId = -1, Title = "test trip", Description = "Description", StartDate = new DateTime(2021, 12, 29), EndDate = new DateTime(2022, 12, 31),
+            Title = "test trip", Description = "Description", StartDate = new DateTime(2021, 12, 29), EndDate = new DateTime(2022, 12, 31),
         };
 
-        await Should.ThrowAsync<ArgumentException>(async () => await UserServiceUnderTest.CreateNewTripAsync(tripRequest));
+        await Should.ThrowAsync<ArgumentException>(async () => await UserServiceUnderTest.CreateNewTripAsync(tripRequest, -1));
     }
 }

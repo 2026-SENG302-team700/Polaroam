@@ -27,7 +27,6 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
 
         var data = new NewTripRequest
         {
-            UserId = 1,
             Title = "Test Trip",
             Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
@@ -53,7 +52,6 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
 
         var data = new NewTripRequest
         {
-            UserId = 1,
             Title = "T",
             Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
@@ -82,7 +80,6 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
 
         var data = new NewTripRequest
         {
-            UserId = 1,
             Title = "Trip test",
             Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
@@ -102,7 +99,6 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         // to the db for this test
         var data = new NewTripRequest
         {
-            UserId = 1,
             Title = "Valid Trip Data",
             Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
@@ -131,7 +127,6 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
 
         var data = new NewTripRequest
         {
-            UserId = 1,
             Title = "Trip!",
             Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 
@@ -165,7 +160,6 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         // Create task list for user
         var data = new NewTripRequest
         {
-            UserId = 1,
             Title = "Test Trip",
             Description = "Test",
             StartDate = new DateTime(2025, 11, 21), 

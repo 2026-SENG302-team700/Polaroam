@@ -43,7 +43,7 @@ public class U7001CreateTrip
     {
         NewTripRequest tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "Test trip", Description = "description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            Title = "Test trip", Description = "description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
 
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/trip", tripRequest);

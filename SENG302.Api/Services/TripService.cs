@@ -101,6 +101,7 @@ public class TripService : ITripService
         var newTrip = new Trip()
         {
             Title = trip.Title,
+            UserId = userId,
             Description = trip.Description,
             StartDate = trip.StartDate,
             EndDate = trip.EndDate

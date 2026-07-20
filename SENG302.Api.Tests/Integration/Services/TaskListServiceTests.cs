@@ -40,11 +40,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
 
         var tripRequest = new NewTripRequest
         {
-            UserId = userId, Title = title, Description = "Description", StartDate = startDate, EndDate = endDate,
+            Title = title, Description = "Description", StartDate = startDate, EndDate = endDate,
         };
         
         // Use the TaskService function to create a new task list with the name and user email
-        var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest);
+        var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId);
 
         trip.Title.ShouldBe(title.Trim());
         trip.UserId.ShouldBe(userId);
@@ -75,11 +75,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         NewTripRequest tripRequest = new NewTripRequest
         {
-            UserId = userId, Title = title, Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            Title = title, Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
         
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest));
+        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId));
     }
 
     [Fact]
@@ -105,11 +105,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         NewTripRequest tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "Test trip", Description = description, StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            Title = "Test trip", Description = description, StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
         
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest));
+        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
     }
 
     [Fact]
@@ -128,11 +128,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         NewTripRequest tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "Test trip", Description = "new description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2021-01-07"),
+            Title = "Test trip", Description = "new description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2021-01-07"),
         };
         
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest));
+        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
     }
 
     [Fact]
@@ -188,11 +188,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         var tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
 
         await Should.ThrowAsync<ArgumentException>(
-            async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest)
+            async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1)
         );
     }
 
@@ -213,10 +213,10 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         var tripRequest = new NewTripRequest
         {
-            UserId = 1, Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
 
-        var taskList = await ServiceUnderTest.CreateNewTripAsync(tripRequest);
+        var taskList = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
         taskList.ShouldNotBeNull();
         taskList.Title.ShouldBe("shit list");
     }

@@ -103,7 +103,6 @@ public class U13ProfanityDetection
     {
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("/api/trip", new NewTripRequest
         {
-            UserId = 1,
             Title = title.Trim(),
             Description = "",
             StartDate = new DateTime(2019, 05, 10),
