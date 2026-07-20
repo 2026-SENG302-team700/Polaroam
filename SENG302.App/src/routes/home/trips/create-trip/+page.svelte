@@ -4,12 +4,59 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import Datepicker from "$lib/datepicker/datepicker.svelte";
+    import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
+    import { fetchWithCsrf } from "../../../../lib/csrf";
 
-    let tripName = $state("");
+    let loading = $state(false);
+    let tripTitle = $state("");
     let tripDescription = $state("");
     let error; //use for validation
     let startDate = $state(new Date());
     let endDate = $state(new Date("9999-03-03"));
+
+    async function createTrip() {
+        // trim name and desciption
+        tripTitle = tripTitle.trim();
+        tripDescription = tripDescription.trim();
+
+        error = [];
+
+        // validate information (started but realised this wasnt my task so left it here)
+        if (tripTitle == "") {
+            error = "Trip name"
+        }
+
+        try {
+            loading = true;
+            error = "";
+            const response = await fetchWithCsrf(resolve(`/api/trip`), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    Title: tripTitle,
+                    Description: tripDescription,
+                    StartDate: startDate,
+                    EndDate: endDate
+                }),
+                credentials: "include",
+            });
+
+            const data = await response.text();
+            if (!response.ok) {
+                error = `Failed to create list: ${data}` || "Failed to create list.";
+                return;  
+            }
+
+            goto(resolve(`/home`));
+        } catch (err) {
+            error = "Failed to create trip: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
 </script>
 
 <div class="container max-w-md">
@@ -28,7 +75,7 @@
         </div>
 
         <div>
-            <TitleForm bind:name={tripName} />
+            <TitleForm bind:name={tripTitle} />
             <DescriptionForm bind:description={tripDescription} />
             <div class="grid grid-cols-2">
                 <div>
@@ -41,7 +88,7 @@
                 </div>
             </div>
             <div class="flex justify-end">
-                <CreationButton text={"Create Trip"} />
+                <CreationButton trigger={createTrip} text={"Create Trip"} />
             </div>
         </div>
     </div>

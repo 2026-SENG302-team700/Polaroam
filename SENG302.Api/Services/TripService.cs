@@ -10,7 +10,7 @@ namespace SENG302.Api.Services;
 
 public interface ITripService
 {
-    Task<Trip> CreateNewTripAsync(NewTripRequest trip);
+    Task<Trip> CreateNewTripAsync(NewTripRequest trip, int userId);
     Task<Trip> GetTripByIdAsync(int id, int userId);
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
 }
@@ -50,7 +50,7 @@ public class TripService : ITripService
     }
 
 
-    public async Task<Trip> CreateNewTripAsync(NewTripRequest trip)
+    public async Task<Trip> CreateNewTripAsync(NewTripRequest trip, int userId)
     {
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -84,7 +84,7 @@ public class TripService : ITripService
             throw new ArgumentException("Trip start date must be before trip end date");
         }
         
-        var user = await context.Users.Where(u => u.Id == trip.UserId).FirstOrDefaultAsync();
+        var user = await context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
         // Validate user email exists in db
         if (user == null)
         {
@@ -101,7 +101,6 @@ public class TripService : ITripService
         var newTrip = new Trip()
         {
             Title = trip.Title,
-            UserId = trip.UserId,
             Description = trip.Description,
             StartDate = trip.StartDate,
             EndDate = trip.EndDate
