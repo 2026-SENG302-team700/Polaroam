@@ -43,8 +43,6 @@
     );
     let updatingPassword = $state(false);
 
-    let profanityFiltering = $state(false);
-
   let profanityFiltering = $state(false);
 
   let codeError = $state("");
