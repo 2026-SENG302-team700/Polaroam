@@ -49,7 +49,14 @@ public class TripService : ITripService
         return trips;
     }
 
-
+    /// <summary>
+    /// Create a new trip object and do validation checks to see if the title and description meets valid length
+    /// requirements and if start date is before end date. 
+    /// </summary>
+    /// <param name="trip"></param> 
+    /// <param name="userId"></param>
+    /// <returns>A newly created trip object</returns>
+    /// <exception cref="ArgumentException">Thrown if the field is not valid</exception>
     public async Task<Trip> CreateNewTripAsync(NewTripRequest trip, int userId)
     {
         // Get a database context

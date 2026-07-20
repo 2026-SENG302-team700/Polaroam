@@ -7,9 +7,9 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
-public class TaskListControllerTests : BaseIntegrationTestFixture
+public class TripControllerTests : BaseIntegrationTestFixture
 {
-    public TaskListControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
+    public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
     [Fact]
     public async Task CreateTrip_SuccessfulCreation_ReturnOk()
