@@ -19,7 +19,7 @@
     let name = $state("");
     let taskDue = $state(new Date("9999-99-99"));
     let description = $state("");
-    let location = $state("");
+    let location = $state(null);
     let { params } = $props();
     let errors = $state({
         name: "",
@@ -85,6 +85,7 @@
                         description: description.trim(),
                         DueDate: dueDate,
                         currentStatus: taskStatus,
+                        locationId: location,
                     }),
                     credentials: "include",
                 },
@@ -179,7 +180,7 @@
 
         <div class="mb-3">
             <label class="form-label mb-0">Location:</label>
-            <LocationForm />
+            <LocationForm bind:location error={errors.location} />
         </div>
         
         <div class="mb-3 d-flex align-items-center gap-2">

@@ -31,4 +31,5 @@ public class TaskItem
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
     public DateTimeOffset creationTime { get; set; }
     public int OrderPosition { get; set; }
+    public long? LocationId { get; set; }
 }

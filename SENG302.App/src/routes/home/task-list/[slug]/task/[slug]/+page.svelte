@@ -16,6 +16,7 @@
   let loading = $state(false);
   let error = $state("");
   let taskItem = $state(null);
+  let location = $state("");
   let { params } = $props();
 
   // edit mode variables
@@ -37,6 +38,27 @@
     fetchTaskItem();
   });
 
+  async function fetchLocation() {
+      if (taskItem?.locationId == null) return;
+      try {
+          const response = await fetchWithCsrf(
+              resolve(`/api/geo/location?osmId=${taskItem.locationId}` as any),
+              {
+                  method: "GET",
+                  credentials: "include",
+              },
+          );
+          const data = await response.json();
+          if (!response.ok) {
+              error = data.message || "Failed to fetch location.";
+              return;
+          }
+          location = data?.name ?? "";
+      } catch (err) {
+          error = "Failed to fetch location: " + (err as Error).message;
+      }
+  }
+
   /**
    * Fetches the task item in order
    * to display the information
@@ -57,6 +79,7 @@
         return;
       }
       taskItem = data;
+      await fetchLocation();
     } catch (err) {
       error = "Failed to fetch task lists: " + (err as Error).message;
     } finally {
@@ -243,6 +266,12 @@
           {:else}
             Done
           {/if}
+        {/if}
+      </div>
+      <div class="mb-2">
+        {#if location}
+          <strong>Location:</strong>
+          {location}
         {/if}
       </div>
       <div class="mb-2">

@@ -22,4 +22,6 @@ public class NewTaskItemRequest : ITaskItemRequest
     public required DateTime? DueDate { get; set; }
 
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
+
+    public long? LocationId { get; set; }
 }

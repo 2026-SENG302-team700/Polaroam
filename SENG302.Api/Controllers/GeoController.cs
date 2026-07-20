@@ -20,4 +20,11 @@ public class GeoController : ControllerBase
         var results = await _geoService.GetLocationsAsync(query);
         return Ok(results);
     }
+
+    [HttpGet("location")]
+    public async Task<IActionResult> GetLocationAsync([FromQuery] long osmId)
+    {
+        var result = await _geoService.GetLocationAsync(osmId);
+        return Ok(result);
+    }
 }

@@ -107,7 +107,8 @@ public class TaskItemService : ITaskItemService
             CurrentStatus = taskItem.CurrentStatus,
             DueDate = taskItem.DueDate,
             creationTime = DateTime.UtcNow,
-            OrderPosition = orderPosition
+            OrderPosition = orderPosition,
+            LocationId = taskItem.LocationId
         };
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
