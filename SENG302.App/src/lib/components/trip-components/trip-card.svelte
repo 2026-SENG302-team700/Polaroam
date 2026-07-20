@@ -18,13 +18,13 @@
         }
     }}
 >
-    <h1>{tripObject.Title}</h1>
+    <h1>{tripObject.title}</h1>
     <span
-        >{formatDate(tripObject.StartDate.toDateString())} - {formatDate(
-            tripObject.EndDate.toDateString(),
+        >{formatDate(tripObject.startDate.toDateString())} - {formatDate(
+            tripObject.endDate.toDateString(),
         )}</span
     >
-    <p>{tripObject.Description}</p>
+    <p>{tripObject.description}</p>
 </div>
 
 <style>

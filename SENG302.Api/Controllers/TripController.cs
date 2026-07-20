@@ -30,9 +30,9 @@ public class TripController : ControllerBase
     {
         // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userIdString == null)
+        if (string.IsNullOrEmpty(userIdString))
         {
-            return BadRequest();
+            return Unauthorized();
         }
 
         var trip = await _tripService.GetTripByIdAsync(id, int.Parse(userIdString));
@@ -52,6 +52,7 @@ public class TripController : ControllerBase
     public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Console.WriteLine("\n\n" + "id: " + userIdString + "\n\n");
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 

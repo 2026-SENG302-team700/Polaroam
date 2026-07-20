@@ -34,7 +34,6 @@
      * to display the information
      */
     async function fetchTaskItem() {
-        console.log(params.slug);
         try {
             loading = true;
             const response = await fetchWithCsrf(
