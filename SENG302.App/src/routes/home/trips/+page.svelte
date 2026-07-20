@@ -1,5 +1,5 @@
 <script lang="ts">
-    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
+    import AddButton from "$lib/components/buttons/add-button.svelte";
     import SearchForm from "$lib/components/forms/search-form.svelte";
     import TripCard from "$lib/components/trip-components/trip-card.svelte";
 
@@ -24,7 +24,7 @@
     </div>
 
     <div class="card-body d-flex justify-content-between align-items-center">
-        <NavigationButton text="+" path="/home/trips/create-trip" />
+        <AddButton path="/home/trips/create-trip" />
         <div>
             <SearchForm />
         </div>

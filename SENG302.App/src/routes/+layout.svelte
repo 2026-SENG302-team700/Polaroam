@@ -1,5 +1,4 @@
 <script lang="ts">
-	import './layout.css';
 	import "bootstrap/dist/css/bootstrap.min.css";
 	import "bootstrap-icons/font/bootstrap-icons.css";
 	import "../app.css";

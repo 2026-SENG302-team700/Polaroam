@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Entities;
 
@@ -11,7 +12,7 @@ public class DatabaseContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
-    public DbSet<TaskList> TaskLists { get; set; }
+    public DbSet<Trip> Trips { get; set; }
     
     public DbSet<CustomFile> CustomFiles { get; set; }
     public DbSet<TaskItem> TaskItems { get; set; }

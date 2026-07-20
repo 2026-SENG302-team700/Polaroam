@@ -1,12 +1,20 @@
 <script lang="ts">
-    import Input from "$lib/components/ui/input/input.svelte";
-    import Button from "../ui/button/button.svelte";
-    //import search from "bootstrap-icons/icons";
+    let { query = $bindable(" "), performSearch = $bindable(false) } = $props();
 </script>
 
 <div class="grid grid-cols-5 gap-2">
-    <Input class="col-span-4" type="search" placeholder="search your trips" />
-    <Button size="icon" variant="outline">
-        <img src="" alt="search icon" />
-    </Button>
+    <input
+        class="col-span-4 border-solid border-2"
+        type="search"
+        placeholder="search your trips"
+        bind:value={query}
+    />
+    <button
+        type="button"
+        title="search your trips using the provided query."
+        class="border-solid border-2"
+        onclick={() => (performSearch = true)}
+    >
+        <i class="bi bi-search"></i>
+    </button>
 </div>

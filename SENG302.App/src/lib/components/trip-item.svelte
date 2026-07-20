@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
 
@@ -17,4 +17,6 @@
     }}
 >
     <span class="fs-5">{taskList.name}</span>
-</div>
+</div> -->
+
+<!-- Needs to be rewritten in retro svelte-->

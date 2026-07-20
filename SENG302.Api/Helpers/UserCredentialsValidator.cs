@@ -47,6 +47,7 @@ public class UserCredentialsValidator
         // Gotten from C# docs
         try
         {
+            
             email = Regex.Replace(email, @"(@)(.+)$", DomainMapper,
                                       RegexOptions.None, TimeSpan.FromMilliseconds(200));
 
@@ -72,7 +73,6 @@ public class UserCredentialsValidator
         {
             return false;
         }
-
         try
         {
             return ValidationPatterns.UserEmail.IsMatch(email);
