@@ -25,6 +25,7 @@ public class TripController : ControllerBase
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Trip>> getTrip(int id)
     {
@@ -44,6 +45,7 @@ public class TripController : ControllerBase
     /// </summary>
     /// <param name="userEmail"></param>
     /// <returns></returns>
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
     {
@@ -63,6 +65,7 @@ public class TripController : ControllerBase
     /// </summary>
     /// <param name="tripRequest"></param>
     /// <returns></returns>
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<Trip>> CreateTrip([FromBody] NewTripRequest tripRequest)
     {
@@ -79,4 +82,6 @@ public class TripController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+
+
 }
