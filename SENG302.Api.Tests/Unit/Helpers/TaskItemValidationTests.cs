@@ -5,17 +5,6 @@ namespace SENG302.Api.Tests.Unit.Helpers;
 
 public class TaskItemServiceTests
 {
-    private class FakeTimeProvider : TimeProvider
-    {
-        private readonly DateTimeOffset _utcNow;
-
-        public FakeTimeProvider(DateTimeOffset utcNow)
-        {
-            _utcNow = utcNow;
-        }
-
-        public override DateTimeOffset GetUtcNow() => _utcNow;
-    }
 
     [Theory]
     [InlineData("Test")] // basic test

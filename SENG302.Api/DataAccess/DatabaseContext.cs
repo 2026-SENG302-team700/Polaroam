@@ -6,10 +6,7 @@ namespace SENG302.Api.DataAccess;
 
 public class DatabaseContext : DbContext
 {
-    public DatabaseContext(DbContextOptions options) : base(options)
-    {
-
-    }
+    public DatabaseContext(DbContextOptions options) : base(options) { }
 
     public DbSet<User> Users { get; set; }
     public DbSet<Trip> Trips { get; set; }
