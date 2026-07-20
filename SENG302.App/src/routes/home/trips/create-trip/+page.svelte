@@ -15,6 +15,16 @@
     let startDate = $state(new Date());
     let endDate = $state(new Date("9999-03-03"));
 
+    /**
+     * Validates and submits a new trip to the API, then navigates to it.
+     *
+     * Trims the title/description, POSTs to `/api/trip`, and on success
+     * redirects to `/home/trips/{id}`. On failure, sets `error` with a
+     * message. Toggles `loading` for the duration of the request.
+     *
+     * @async
+     * @returns {Promise<void>}
+     */
     async function createTrip() {
         // trim name and desciption
         tripTitle = tripTitle.trim();
@@ -47,7 +57,7 @@
             const data = await response.json();
             if (!response.ok) {
                 error = `Failed to create list: ${data}` || "Failed to create list.";
-                return;  
+                return;
             }
             console.log(data);
 
