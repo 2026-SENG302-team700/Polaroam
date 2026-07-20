@@ -9,13 +9,13 @@
   import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
   import ProfilePic from "$lib/profilepic/profilepic.svelte";
   import ImageEditor from "$lib/image-editor/image-editor.svelte";
-  import CancelButton from "$lib/components/cancel-button.svelte";
-  import DisplayNameForm from "$lib/components/display-name-form.svelte";
-  import EmailForm from "$lib/components/email-form.svelte";
-  import CountrySelectForm from "$lib/components/country-select-form.svelte";
-  import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-  import PasswordForm from "$lib/components/password-form.svelte";
-  import ToggleForm from "$lib/components/toggle-form.svelte";
+  import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+  import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
+  import EmailForm from "$lib/components/forms/email-form.svelte";
+  import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
+  import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+  import PasswordForm from "$lib/components/forms/password-form.svelte";
+  import ToggleForm from "$lib/components/forms/toggle-form.svelte";
 
   let displayName = $state("");
   let email = $state("");

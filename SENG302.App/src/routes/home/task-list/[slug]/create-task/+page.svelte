@@ -7,9 +7,9 @@
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-    import TitleForm from "$lib/components/title-form.svelte";
-    import DescriptionForm from "$lib/components/description-form.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import TitleForm from "$lib/components/forms/title-form.svelte";
+    import DescriptionForm from "$lib/components/forms/description-form.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -26,16 +26,8 @@
         taskStatus: "",
     });
 
-    let datePicker: HTMLInputElement | undefined = $state();
-
     onMount(() => {
         GetList();
-
-        if (datePicker)
-            datePicker.addEventListener("invalid", function (event) {
-                event.preventDefault();
-                errors.dueDate = "Please input a valid date";
-            });
     });
 
     /**
@@ -188,7 +180,6 @@
                 <DatePicker
                     bind:value={taskDue}
                     error={errors.dueDate}
-                    bind:date={datePicker}
                     disabled={loading}
                 />
             </div>
