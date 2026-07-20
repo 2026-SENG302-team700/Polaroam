@@ -114,11 +114,11 @@ public class UserCredentialsValidator
     /// </summary>
     /// <param name="context">The database - checks to see if email in db already.</param>
     /// <param name="email">E-mail to be validated</param>
-    public static Dictionary<string, string> ValidateEmail(IDatabaseContext context, string email)
+    public static Dictionary<string, string> ValidateEmail(DatabaseContext context, string email)
     {
         var errors = new Dictionary<string, string>();
         
-        if (context.EmailExists(email))
+        if (context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Any())
         {
             errors["email"] = "This email address is already in use by another account";
         }

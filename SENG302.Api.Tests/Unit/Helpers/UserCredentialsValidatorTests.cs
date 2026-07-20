@@ -1,24 +1,11 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Helpers;
 using Shouldly;
-using Reqnroll.EnvironmentAccess;
-using NSubstitute;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class UserCredentialsValidatorTests
+public class UserCredentialsValidatorTests : DatabaseUnitTestFixture
 {
-    private readonly IDatabaseContext _mockDatabaseContext;
-
-    public UserCredentialsValidatorTests()
-    {
-        _mockDatabaseContext = Substitute.For<IDatabaseContext>();
-    }
 
     [Theory]
     [InlineData("invalid-email")]
@@ -26,9 +13,7 @@ public class UserCredentialsValidatorTests
     [InlineData("@no-user.com")]
     public async Task ValidateEmail_MalformedFormat_ExpectErrorMessageInErrors(string email)
     {
-        _mockDatabaseContext.EmailExists(email).Returns(false);
-
-        var errors = UserCredentialsValidator.ValidateEmail(_mockDatabaseContext, email);
+        var errors = UserCredentialsValidator.ValidateEmail(_mockDbContextFactory.CreateDbContext(), email);
 
         errors.ShouldNotBeEmpty();
         errors.ShouldHaveSingleItem();
