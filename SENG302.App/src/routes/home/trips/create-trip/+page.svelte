@@ -44,14 +44,14 @@
                 credentials: "include",
             });
 
-            const data = await response.text();
+            const data = await response.json();
             if (!response.ok) {
                 error = `Failed to create list: ${data}` || "Failed to create list.";
                 return;  
             }
             console.log(data);
 
-            goto(resolve(`/home`));
+            goto(resolve(`/home/trips/${data.id}`));
         } catch (err) {
             error = "Failed to create trip: " + (err as Error).message;
         } finally {
