@@ -1,27 +1,36 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+
 
     let {
         value = $bindable(new Date("0001-01-01")),
         error = "",
         disabled = false,
-        date = $bindable(),
     }: {
         value: Date;
         error?: string;
         disabled?: boolean;
-        date?: HTMLInputElement;
     } = $props();
 
+    let datePicker: HTMLInputElement | undefined = $state();
+
+    onMount(() => {
+        if (datePicker)
+            datePicker.addEventListener("invalid", function (event) {
+                event.preventDefault();
+                error = "Please input a valid date";
+            });
+    });
 
 </script>
 
-<div class="d-flex align-items-center gap-2">
+<div class="d-flex align-items-center gap-2 mb-3">
     <input
         type="date"
         class="form-control w-auto"
         class:is-invalid={error}
         bind:value
-        bind:this={date}
+        bind:this={datePicker}
         {disabled}
     />
     <button
