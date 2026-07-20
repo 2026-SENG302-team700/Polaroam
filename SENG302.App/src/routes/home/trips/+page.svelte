@@ -17,7 +17,7 @@
     async function fetchTrips() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`api/trip` as any), {
+            const response = await fetchWithCsrf(resolve(`api/trip`), {
                 method: "GET",
                 credentials: "include",
             });

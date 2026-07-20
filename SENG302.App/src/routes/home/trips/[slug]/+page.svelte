@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { formatDate } from "$lib/datepicker/formatDate";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -61,9 +60,7 @@
     <NavigationButton path="/home/trips" text="Back" />
     <h1>{tripObject.Title}</h1>
     <p>
-        {formatDate(tripObject.StartDate.toDateString())} - {formatDate(
-            tripObject.EndDate.toDateString(),
-        )}
+        {tripObject.StartDate} - {tripObject.EndDate}
     </p>
     <div class="border-t-2 border-black"></div>
     <span>{tripObject.Description}</span>
