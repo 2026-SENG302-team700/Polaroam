@@ -4,6 +4,7 @@
         error = "",
         loading = false,
         type = "task",
+        
     } = $props();
 </script>
 
@@ -12,7 +13,7 @@
         type="text"
         class="form-control"
         class:is-invalid={error}
-        placeholder={type === "task" ? "Title *" : "Name *"}
+        placeholder={type === "task" || type == "trip" ? "Title *" : "Name *"}
         bind:value={name}
         disabled={loading}
     />

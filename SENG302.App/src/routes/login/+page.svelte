@@ -6,11 +6,11 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-    import PasswordForm from "$lib/components/password-form.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import CodeForm from "$lib/components/code-form.svelte";
+    import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import PasswordForm from "$lib/components/forms/password-form.svelte";
+    import EmailForm from "$lib/components/forms/email-form.svelte";
+    import CodeForm from "$lib/components/forms/code-form.svelte";
 
     let email = $state("");
     let password = $state("");

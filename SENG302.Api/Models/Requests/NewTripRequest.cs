@@ -7,9 +7,6 @@ namespace SENG302.Api.Models.Requests;
 */
 public class NewTripRequest
 {
-
-    public required int UserId { get; set; }
-
     [MaxLength(128)]
     public required string Title { get; set; }
 
