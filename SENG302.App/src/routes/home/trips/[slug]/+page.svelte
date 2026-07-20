@@ -3,18 +3,19 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
+    import { formatDate } from "$lib/datepicker/formatDate.js";
 
     let loading = $state(false);
     let error = $state("");
     let { params } = $props();
 
     let tripObject = $state({
-        Id: 0,
-        Title: "No Title",
-        Description: "No Description",
-        StartDate: new Date(),
-        EndDate: new Date(),
-        UserId: 0,
+        id: 0,
+        title: "No Title",
+        description: "No Description",
+        startDate: "9998-12-31",
+        endDate: "9999-12-31",
+        userId: 0,
     });
 
     let errors = $state({
@@ -33,6 +34,7 @@
      * to display the information
      */
     async function fetchTaskItem() {
+        console.log(params.slug);
         try {
             loading = true;
             const response = await fetchWithCsrf(
@@ -43,6 +45,7 @@
                 },
             );
             const data = await response.json();
+
             if (!response.ok) {
                 error = data.message || "Failed to fetch task lists.";
                 return;
@@ -58,10 +61,10 @@
 
 <div class="container">
     <NavigationButton path="/home/trips" text="Back" />
-    <h1>{tripObject.Title}</h1>
+    <h1>{tripObject.title}</h1>
     <p>
-        {tripObject.StartDate} - {tripObject.EndDate}
+        {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
     </p>
     <div class="border-t-2 border-black"></div>
-    <span>{tripObject.Description}</span>
+    <span>{tripObject.description}</span>
 </div>
