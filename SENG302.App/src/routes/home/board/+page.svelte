@@ -7,7 +7,7 @@
   import type { TaskItem } from "$lib/types.js";
 
   let tasks = $state([]);
-  let taskLists = $state([]);
+  let trips = $state([]);
   let loading = $state(false);
   let error = $state("");
   let boardUndo: (() => Promise<void>) | null = null;
@@ -62,13 +62,13 @@
    */
   async function fetchAllLists() {
     try {
-      const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+      const response = await fetchWithCsrf(resolve(`/api/trip`), {
         method: "GET",
         credentials: "include",
       });
       const data = await response.json();
       if (!response.ok) return;
-      taskLists = data;
+      trips = data;
     } catch (err) {
       console.error("Failed to fetch task lists", err);
     }
@@ -88,6 +88,6 @@
   {:else if tasks.length === 0}
     <div class="text-center text-muted py-4">No tasks found.</div>
   {:else}
-    <TaskBoard {tasks} {taskLists} onUndoReady={(fn) => (boardUndo = fn)} />
+    <TaskBoard {tasks} {trips} onUndoReady={(fn) => (boardUndo = fn)} />
   {/if}
 </div>
