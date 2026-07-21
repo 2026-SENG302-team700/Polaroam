@@ -4,9 +4,6 @@
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
     import { formatDate } from "$lib/datepicker/formatDate.js";
-    import DeleteButton from "$lib/components/buttons/delete-button.svelte";
-    import { goto } from "$app/navigation";
-    import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
 
 
     let loading = $state(false);
@@ -23,14 +20,14 @@
     });
 
     onMount(() => {
-        fetchTrip();
+        fetchTripItem();
     });
 
     /**
-     * Fetches the trip from the backend corresponding 
+     * Fetches the trip item from the backend corresponding 
      * with the slug value being the trip's id
      */
-    async function fetchTrip() {
+    async function fetchTripItem() {
         try {
             loading = true;
             const response = await fetchWithCsrf(
@@ -53,42 +50,10 @@
             loading = false;
         }
     }
-
-    /**
-     * Deletes the trip from the backend corresponding 
-     * with the slug value being the trip's id
-     */
-    async function deleteTrip() {
-        try {
-            loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
-                {
-                    method: "DELETE",
-                    credentials: "include",
-                },
-            );
-
-            const data = await response.text();
-
-            if (data === '') {
-                goto(resolve("/home/trips"));
-            } else {
-                error = data || "Failed to delete trip.";
-            }
-        } catch (err) {
-            error = "Failed to delete trip: " + (err as Error).message;
-        } finally {
-            loading = false;
-        }
-    }
-
 </script>
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
-    <DeleteButton deleteAction={deleteTrip}/>
-    <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
         <div class="trip-head-grid">
              <h1>{tripObject.title}</h1>

@@ -92,41 +92,4 @@ public class TripController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-
-    /// <summary>
-    /// Deletes a trip based on the id provided.
-    /// </summary>
-    /// <param name="id">The id of the trip to delete.</param>
-    /// <returns>
-    /// 400 if the trip does not exist.
-    /// 200 if the trip is deleted successfully.
-    /// </returns>
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult<Trip>> DeleteTrip(int id)
-    {
-        try
-        {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString))
-            {
-                return Unauthorized();
-            }
-            
-            if (!await _tripService.UserHasModifyAccessToTrip(int.Parse(userIdString), id))
-            {
-                return Unauthorized();
-            }
-            
-            await _tripService.DeleteTripByIdAsync(id);
-            return Ok();
-        }
-        catch (ArgumentException)
-        {
-            return BadRequest("Trip does not exist");
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-    }
 }

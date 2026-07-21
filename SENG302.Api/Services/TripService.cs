@@ -12,8 +12,6 @@ public interface ITripService
     Task<Trip> CreateNewTripAsync(NewTripRequest trip, int userId);
     Task<Trip> GetTripByIdAsync(int id, int userId);
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
-    Task DeleteTripByIdAsync(int tripId);
-    Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
 }
 
 public class TripService : ITripService
@@ -122,7 +120,6 @@ public class TripService : ITripService
         }
         var user = await context.Users.FindAsync(userId);
         // check for profanity censor
-        // Jon: Note when this is removed, you should also remove the 'userId' parameter
         if (user?.ProfanityFiltering != true) return trip;
 
         var profanityFilter = new ProfanityFilter.ProfanityFilter();
@@ -132,50 +129,19 @@ public class TripService : ITripService
 
     /// <summary>
     /// Gets a trip by its ID. Returns null if no trip with the given ID exists.
-    /// Also takes a DatabaseContext so the trip that it returns can be modified.
+    /// Also takes a DatabaseContext so the list that it returns can be modified.
     /// </summary>
-    /// <param name="id">The id of the trip we are getting</param>
-    /// <param name="context">The database context, so the trip can be modified</param>
-    /// <returns>The trip we have fetched</returns>
-    /// <exception cref="ArgumentException">If the trip does not exist this exception is thrown</exception>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Trip> GetTripByIdAsync(int id, DatabaseContext context)
     {
         var trip = await context.Set<Trip>().Where(t => t.Id == id).FirstOrDefaultAsync();
         if (trip == null)
         {
-            throw new ArgumentException("Trip with the provided ID does not exist.");
+            throw new ArgumentException("trip with the provided ID does not exist.");
         }
 
         return trip;
-    }
-
-    /// <summary>
-    /// Delete the trip from the database
-    /// </summary>
-    /// <param name="tripId">The id of the trip we are deleting</param>
-    public async Task DeleteTripByIdAsync(int tripId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var trip = await GetTripByIdAsync(tripId, context);
-
-        context.Set<Trip>().Remove(trip);
-        await context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Get if a user has access to a particular trip
-    /// </summary>
-    /// <param name="userId">The id of the user</param>
-    /// <param name="tripId">The id of the trip</param>
-    /// <returns>Whether the user has access to the trip specified</returns>
-    public async Task<bool> UserHasModifyAccessToTrip(int userId, int tripId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var trip = await GetTripByIdAsync(tripId, context);
-
-        return trip.UserId == userId;
     }
 }
 
