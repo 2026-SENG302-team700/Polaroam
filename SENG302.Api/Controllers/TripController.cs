@@ -26,7 +26,7 @@ public class TripController : ControllerBase
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Trip>> getTrip(int id)
+    public async Task<ActionResult<Trip>> GetTrip(int id)
     {
         // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -4,4 +4,4 @@
         = $props();
 </script>
 
-<button class="btn btn-primary bi-trash" title="Delete" onclick={async () => { deleteAction() }}></button>
+<button class="btn btn-danger bi-trash" title="Delete" onclick={async () => { deleteAction() }}></button>
