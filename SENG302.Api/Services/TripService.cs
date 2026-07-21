@@ -77,6 +77,14 @@ public class TripService : ITripService
                 errors[field] = errorList;
             }
         }
+        
+        foreach (var (field, errorList) in TripValidator.ValidateDescription(trip.Description))
+        {
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
+        }
 
         if (errors.Any(e => e.Value.Count > 0))
         {

@@ -13,6 +13,7 @@
     let tripDescription = $state("");
     let errors = $state({
         title: [],
+        description: [],
         generic: ""
     });
 
@@ -65,7 +66,8 @@
             const data = await response.json();
             
             if (!response.ok) {
-                errors = data.errors?.title ?? [];
+                errors.title = data.errors?.title ?? [];
+                errors.description = data.errors?.description ?? [];
                 return;
             }
 
@@ -94,8 +96,8 @@
         </div>
 
         <div>
-            <TitleForm bind:name={tripTitle} errors={errors} />
-            <DescriptionForm bind:description={tripDescription} />
+            <TitleForm bind:name={tripTitle} errors={errors.title} />
+            <DescriptionForm bind:description={tripDescription} errors={errors.description} />
             <div class="date-picker-wrapper">
                 <div>
                     <p>From</p>
