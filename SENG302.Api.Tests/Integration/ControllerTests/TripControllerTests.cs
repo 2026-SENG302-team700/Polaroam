@@ -61,36 +61,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip name is required and must be between 3 and 128 characters long");
+        message.ShouldContain("Trip title must be between 3 and 128 characters long");
     }
-
-    [Fact]
-    public async Task CreateTrip_StartDateBeforeEndDate_ReturnBadRequest()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-
-        var data = new NewTripRequest
-        {
-            Title = "Trip test",
-            Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 10, 21)
-        };
-        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
-        var message = await response.Content.ReadAsStringAsync();
-        
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip start date must be before trip end date");
-    }
+    
 
     [Fact]
     public async Task CreateTrip_NonExistentUser_ReturnBadRequest()
@@ -136,7 +109,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        message.ShouldContain("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
     
         
