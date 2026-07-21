@@ -96,7 +96,7 @@
         <div>
             <TitleForm bind:name={tripTitle} errors={errors} />
             <DescriptionForm bind:description={tripDescription} />
-            <div class="date-picker-wrapper">
+            <div class="date-picker-wrapper d-flex gap-3">
                 <div>
                     <p>From</p>
                     <Datepicker bind:value={startDate} />
