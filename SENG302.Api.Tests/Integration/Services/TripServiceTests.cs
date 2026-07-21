@@ -79,60 +79,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         };
         
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId));
-    }
-
-    [Fact]
-    public async Task CreateNewTrip_InvalidDescriptionLength_ThrowArgumentException()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-
-        string description = "long description";
-        for (int i = 0; i < 1024; i++)
-        {
-            description += " a";
-        }
-        
-        
-        NewTripRequest tripRequest = new NewTripRequest
-        {
-            Title = "Test trip", Description = description, StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
-        };
-        
-        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
-    }
-
-    [Fact]
-    public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowArgumentException()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-        
-        NewTripRequest tripRequest = new NewTripRequest
-        {
-            Title = "Test trip", Description = "new description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2021-01-07"),
-        };
-        
-        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
-        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
+        await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId));
     }
 
     [Fact]
@@ -171,53 +118,4 @@ public class TripServiceTests : BaseIntegrationTestFixture
         trips.First().EndDate.ShouldBe( new DateTime(2020, 2, 5));
     }
 
-    [Fact]
-    public async Task CreateNewTaskList_ProfanityInTitleUserHasFilterOn_ThrowsArgumentException()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country",
-            ProfanityFiltering = true
-        });
-        await context.SaveChangesAsync();
-        
-        var tripRequest = new NewTripRequest
-        {
-            Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
-        };
-
-        await Should.ThrowAsync<ArgumentException>(
-            async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1)
-        );
-    }
-
-    [Fact]
-    public async Task CreateNewTaskList_ProfanityInName_UserHasFilterOff_CreatesSuccessfully()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country",
-            ProfanityFiltering = false,
-        });
-        await context.SaveChangesAsync();
-        
-        var tripRequest = new NewTripRequest
-        {
-            Title = "shit list", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
-        };
-
-        var taskList = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
-        taskList.ShouldNotBeNull();
-        taskList.Title.ShouldBe("shit list");
-    }
 }

@@ -74,7 +74,15 @@ public class TripController : ControllerBase
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
             return Ok(trip);
         }
-        catch (ArgumentException e)
+        catch (MultipleValidationListException e)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = e.Errors
+            });
+        }
+
+        catch (Exception e)
         {
             return BadRequest(e.Message);
         }

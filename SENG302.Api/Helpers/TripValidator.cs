@@ -1,0 +1,58 @@
+using SENG302.Api.Services;
+
+/// <summary>
+/// Class for validating trip data
+/// </summary>
+public class TripValidator
+{
+    /// <summary>
+    /// Checks to see if Title  Length is between 3-64 characters
+    /// </summary>
+    /// <param name="title">String representing the trip title</param>
+    /// <returns>
+    /// True: If title is between 3-128 characters
+    /// False: If title is less than 3 characters or greater than 128 characters
+    /// </returns>
+    public static bool ValidTitleLength(string title)
+    {
+        return !((title.Length < 3) || (title.Length > 128));
+    }
+
+    /// <summary>
+    /// Checks to see if the title characters are valid
+    /// </summary>
+    /// <param name="title">String representing the trips title</param>
+    /// <returns>False if contains chars other than letters, spaces, hyphens, apostrophes, or numbers
+    /// True otherwise</returns>
+    public static bool ValidTitleChars(string title)
+    {
+        return ValidationPatterns.TripTitle.IsMatch(title);
+    }
+
+    /// <summary>
+    /// Validates the trip title by check
+    /// </summary>
+    /// <param name="title"></param>
+    /// <returns></returns>
+    public static Dictionary<string, List<string>> ValidateTitle(string title)
+    {
+        var errors = new Dictionary<string, List<string>>();
+        errors["title"] = new List<string>();
+        if (title.IsWhiteSpace())
+        {
+            errors["title"].Add("Title is required");
+            return errors; // Return early as other errors are irrelevant
+        }
+
+        if (!ValidTitleLength(title))
+        {
+            errors["title"].Add("Trip title must be between 3 and 128 characters long");
+        }
+
+        if (!ValidTitleChars(title))
+        {
+            errors["title"].Add("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        }
+        return errors;
+    }
+}

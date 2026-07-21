@@ -48,3 +48,18 @@ public class MultipleValidationException : Exception
     }
     
 }
+
+/// <summary>
+/// Exception to throw when general, and multiple validation error(s) occur.
+/// Can handle multiple exceptions in the same field
+/// </summary>
+public class MultipleValidationListException : Exception
+{
+    public Dictionary<string, List<string>> Errors { get; }
+
+    public MultipleValidationListException(Dictionary<string, List<string>> errors) : base("validation errors occurred")
+    {
+        Errors = errors;
+    }
+    
+}

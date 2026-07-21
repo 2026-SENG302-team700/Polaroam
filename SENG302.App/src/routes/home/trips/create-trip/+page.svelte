@@ -11,9 +11,24 @@
     let loading = $state(false);
     let tripTitle = $state("");
     let tripDescription = $state("");
-    let error; //use for validation
+    let errors = $state({
+        title: [],
+        generic: ""
+    });
+
     let startDate = $state(new Date());
     let endDate = $state(new Date("9999-03-03"));
+
+    /**
+     * Removes all errors from the form.
+     */
+    function clearErrors() {
+        errors = {
+            title: [],
+            generic: ""
+        };
+    }
+
 
     /**
      * Validates and submits a new trip to the API, then navigates to it.
@@ -30,16 +45,10 @@
         tripTitle = tripTitle.trim();
         tripDescription = tripDescription.trim();
 
-        error = [];
-
-        // validate information (started but realised this wasnt my task so left it here)
-        if (tripTitle == "") {
-            error = "Trip name"
-        }
-
+        clearErrors()
         try {
             loading = true;
-            error = "";
+
             const response = await fetchWithCsrf(resolve(`/api/trip`), {
                 method: "POST",
                 headers: {
@@ -53,13 +62,12 @@
                 }),
                 credentials: "include",
             });
-
             const data = await response.json();
+            
             if (!response.ok) {
-                error = `Failed to create list: ${data}` || "Failed to create list.";
+                errors = data.errors?.title ?? [];
                 return;
             }
-            console.log(data);
 
             goto(resolve(`/home/trips/${data.id}`));
         } catch (err) {
@@ -86,7 +94,7 @@
         </div>
 
         <div>
-            <TitleForm bind:name={tripTitle} />
+            <TitleForm bind:name={tripTitle} errors={errors} />
             <DescriptionForm bind:description={tripDescription} />
             <div class="grid grid-cols-2">
                 <div>
