@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class TripValidatorTests : DatabaseUnitTestFixture
+public class TripValidatorTests
 {
     [Theory]
     [InlineData("ab")]
@@ -47,5 +47,13 @@ public class TripValidatorTests : DatabaseUnitTestFixture
         errors["title"].Count.ShouldBe(2);
         errors["title"].ShouldContain("Trip title must be between 3 and 128 characters long");
         errors["title"].ShouldContain("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+    }
+
+    [Fact]
+    public async Task ValidateTile_Empty_ReturnsFalse()
+    {
+        var errors = TripValidator.ValidateTitle("");
+        errors["title"].Count.ShouldBe(1);
+        errors["title"].ShouldContain("Trip title is required");
     }
 }

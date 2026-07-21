@@ -40,7 +40,7 @@ public class TripValidator
         errors["title"] = new List<string>();
         if (title.IsWhiteSpace())
         {
-            errors["title"].Add("Title is required");
+            errors["title"].Add("Trip title is required");
             return errors; // Return early as other errors are irrelevant
         }
 
