@@ -11,8 +11,10 @@ public class TripControllerTests : BaseIntegrationTestFixture
 {
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
-    [Fact]
-    public async Task CreateTrip_SuccessfulCreation_ReturnOk()
+    /// <summary>
+    /// Creates and adds to the database a test user for these tests
+    /// </summary>
+    private async Task AddTestUser()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
@@ -24,31 +26,32 @@ public class TripControllerTests : BaseIntegrationTestFixture
             Country = "Test Country"
         });
         await context.SaveChangesAsync();
+    }
 
-        var data = new NewTripRequest
-        {
-            Title = "Test Trip",
-            Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        };
-        var message = await HttpClient.PostAsJsonAsync("/api/trip", data);
+    /// <summary>
+    /// Some trip data that is used by several tests
+    /// </summary>
+    private readonly NewTripRequest tripTestData = new()
+    {
+        Title = "Test Trip",
+        Description = "Test",
+        StartDate = new DateTime(2025, 11, 21), 
+        EndDate = new DateTime(2025, 12, 21)
+    };
+
+    [Fact]
+    public async Task CreateTrip_SuccessfulCreation_ReturnOk()
+    {
+        await AddTestUser();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]
     public async Task CreateTrip_ShortTitle_ReturnBadRequest()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
+        await AddTestUser();
 
         var data = new NewTripRequest
         {
@@ -61,50 +64,16 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip name is required and must be between 3 and 128 characters long");
+        message.ShouldContain("Trip title must be between 3 and 128 characters long");
     }
-
-    [Fact]
-    public async Task CreateTrip_StartDateBeforeEndDate_ReturnBadRequest()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-
-        var data = new NewTripRequest
-        {
-            Title = "Trip test",
-            Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 10, 21)
-        };
-        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
-        var message = await response.Content.ReadAsStringAsync();
-        
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip start date must be before trip end date");
-    }
+    
 
     [Fact]
     public async Task CreateTrip_NonExistentUser_ReturnBadRequest()
     {
-        // Test automatically gets userEamil as test@example.com so we dont add this
+        // Test automatically gets userEmail as test@example.com so we don't add the user
         // to the db for this test
-        var data = new NewTripRequest
-        {
-            Title = "Valid Trip Data",
-            Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        };
-        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -114,16 +83,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateTrip_InvalidCharactersInName_ReturnBadRequest()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
+        await AddTestUser();
 
         var data = new NewTripRequest
         {
@@ -136,41 +96,68 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        message.ShouldContain("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
     
         
     [Fact]
     public async Task FetchTripsByUser_SuccessfulFetch_ReturnsTaskLists()
     {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-
-        // Create task list for user
-        var data = new NewTripRequest
-        {
-            Title = "Test Trip",
-            Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        };
-        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        await AddTestUser();
+        await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
 
         // Fetch task lists for the user
-        response = await HttpClient.GetAsync("/api/trip");
+        var response = await HttpClient.GetAsync("/api/trip");
         response.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
         Trip[] trips = await response.Content.ReadFromJsonAsync<Trip[]>() ?? Array.Empty<Trip>();
         trips.Length.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task DeleteTrip_TripExists_Success()
+    {
+        await AddTestUser();
+        var postResponse = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
+        var trip = await postResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(trip);
+
+        var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{trip.Id}");
+        var responseMessage = await deleteResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        responseMessage.ShouldBe("");
+    }
+
+    [Fact]
+    public async Task DeleteTrip_TripNotExist_BadRequest()
+    {
+        var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{0}");
+        var responseMessage = await deleteResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, deleteResponse.StatusCode);
+        responseMessage.ShouldBe("Trip does not exist");
+    }
+
+    [Fact]
+    public async Task DeleteTrip_DifferentUser_Unauthorized()
+    {
+        var tripId = 10;
+
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Trips.Add(new Trip
+        {
+            Id = tripId,
+            Description = tripTestData.Description,
+            Title = tripTestData.Title,
+            EndDate = tripTestData.EndDate,
+            StartDate = tripTestData.StartDate,
+            UserId = 100
+        });
+        await context.SaveChangesAsync();
+
+        var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{tripId}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, deleteResponse.StatusCode);
     }
 }

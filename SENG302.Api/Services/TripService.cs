@@ -3,7 +3,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Resources.Helpers;
-using System.Reflection;
 using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Services;
@@ -11,18 +10,22 @@ namespace SENG302.Api.Services;
 public interface ITripService
 {
     Task<Trip> CreateNewTripAsync(NewTripRequest trip, int userId);
-    Task<Trip> GetTripByIdAsync(int id, int userId);
+    Task<Trip> GetTripByIdAsync(int id);
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
+    Task DeleteTripByIdAsync(int tripId);
+    Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
 }
 
 public class TripService : ITripService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
+    private readonly IUserService _userService;
 
 
-    public TripService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public TripService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IUserService userService)
     {
         _dbContextFactory = dbContextFactory;
+        _userService = userService;
 
     }
 
@@ -37,7 +40,7 @@ public class TripService : ITripService
 
         var trips = await context.Set<Trip>().Where(t => t.UserId == userId).ToListAsync();
 
-        var user = await context.Users.FindAsync(userId);
+        var user = await _userService.GetUserByIdAsync(userId);
         // check for profanity filtering
         if (user?.ProfanityFiltering != true) return trips;
 
@@ -51,9 +54,9 @@ public class TripService : ITripService
 
     /// <summary>
     /// Create a new trip object and do validation checks to see if the title and description meets valid length
-    /// requirements and if start date is before end date. 
+    /// requirements and if start date is before end date.
     /// </summary>
-    /// <param name="trip"></param> 
+    /// <param name="trip"></param>
     /// <param name="userId"></param>
     /// <returns>A newly created trip object</returns>
     /// <exception cref="ArgumentException">Thrown if the field is not valid</exception>
@@ -68,40 +71,26 @@ public class TripService : ITripService
         trip.StartDate = trip.StartDate == DateTime.MinValue ? null : trip.StartDate;
         trip.EndDate = trip.EndDate == DateTime.MinValue ? null : trip.EndDate;
 
-        // Validate name length
-        if (string.IsNullOrEmpty(trip.Title) || trip.Title.Length < 3 || trip.Title.Length > 128)
+        // Validation
+        var errors = new Dictionary<string, List<string>>();
+
+        foreach (var (field, errorList) in TripValidator.ValidateTitle(trip.Title))
         {
-            throw new ArgumentException("Trip name is required and must be between 3 and 128 characters long");
-        }
-        // Validate title characters (only allow letters, numbers, spaces, hyphens, and apostrophes)
-        if (!ValidationPatterns.TripTitle.IsMatch(trip.Title))
-        {
-            throw new ArgumentException("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
         }
 
-        if (trip.Description.Length > 2048)
+        if (errors.Any(e => e.Value.Count > 0))
         {
-            throw new ArgumentException("Description must be 2048 characters or less");
+            throw new MultipleValidationListException(errors);
         }
 
-        // validation start and end date
-        // check end date is after start date
-        if (trip.EndDate < trip.StartDate)
-        {
-            throw new ArgumentException("Trip start date must be before trip end date");
-        }
-
-        var user = await context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
-        // Validate user email exists in db
+        var user = await _userService.GetUserByIdAsync(userId);
         if (user == null)
         {
             throw new ArgumentException("User with the provided id does not exist.");
-        }
-
-        // check for profanity in the name
-        if (ProfanityTools.ContainsProfanity(trip.Title, user.ProfanityFiltering))
-        {
-            throw new ArgumentException("Trip name cannot contain profanity.");
         }
 
         // Create the new trip
@@ -120,42 +109,50 @@ public class TripService : ITripService
 
     /// <summary>
     /// Gets a trip by its ID. Returns null if no trip with the given ID exists.
-    /// </summary>trip
-    /// <param name="id"></param>
-    /// <returns></returns>
-    public async Task<Trip> GetTripByIdAsync(int id, int userId)
+    /// </summary>
+    /// <param name="id">The id of the trip we are getting</param>
+    /// <returns>The trip we have fetched</returns>
+    /// <exception cref="ArgumentException">If the trip does not exist this exception is thrown</exception>
+    public async Task<Trip> GetTripByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var trip = await context.Set<Trip>().Where(t => t.Id == id).FirstOrDefaultAsync();
         if (trip == null)
         {
-            return null;
+            throw new ArgumentException("Trip with the provided ID does not exist.");
         }
-        var user = await context.Users.FindAsync(userId);
-        // check for profanity censor
-        if (user?.ProfanityFiltering != true) return trip;
 
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        trip.Title = profanityFilter.CensorString(trip.Title);
         return trip;
     }
 
     /// <summary>
-    /// Gets a trip by its ID. Returns null if no trip with the given ID exists.
-    /// Also takes a DatabaseContext so the list that it returns can be modified.
+    /// Delete the trip from the database
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    public async Task<Trip> GetTripByIdAsync(int id, DatabaseContext context)
+    /// <param name="tripId">The id of the trip we are deleting</param>
+    public async Task DeleteTripByIdAsync(int tripId)
     {
-        var trip = await context.Set<Trip>().Where(t => t.Id == id).FirstOrDefaultAsync();
-        if (trip == null)
-        {
-            throw new ArgumentException("trip with the provided ID does not exist.");
-        }
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return trip;
+        var trip = await GetTripByIdAsync(tripId);
+
+        context.Set<Trip>().Remove(trip);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Get if a user has access to a particular trip
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="tripId">The id of the trip</param>
+    /// <returns>Whether the user has access to the trip specified</returns>
+    public async Task<bool> UserHasModifyAccessToTrip(int userId, int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await GetTripByIdAsync(tripId);
+
+        return trip.UserId == userId;
     }
 
     /// <summary>
@@ -176,28 +173,8 @@ public class TripService : ITripService
             throw new ArgumentException("trip with the provided ID does not exist.");
         }
 
-        // Validate name length
-        if (!string.IsNullOrEmpty(tripRequest.Title) && (tripRequest.Title.Length < 3 || tripRequest.Title.Length > 128))
-        {
-            throw new ArgumentException("Trip name must be between 3 and 128 characters long");
-        }
-        // Validate title characters only allow letters, numbers, spaces, hyphens, and apostrophes
-        if (!string.IsNullOrEmpty(tripRequest.Title) && !ValidationPatterns.TripTitle.IsMatch(tripRequest.Title))
-        {
-            throw new ArgumentException("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
-        }
+        // TODO: add validation
 
-        if (!string.IsNullOrEmpty(tripRequest.Description) && tripRequest.Description.Length > 2048)
-        {
-            throw new ArgumentException("Description must be 2048 characters or less");
-        }
-
-        // validation start and end date
-        // check end date is after start date
-        if (tripRequest.EndDate < tripRequest.StartDate)
-        {
-            throw new ArgumentException("Trip start date must be before trip end date");
-        }
 
         // Update the trip
         if (!string.IsNullOrEmpty(tripRequest.Title))

@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Requests;
-using SENG302.Api.Filters;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SENG302.Api.Filters;
+using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
+using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -27,17 +27,24 @@ public class TripController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Trip>> getTrip(int id)
+    public async Task<ActionResult<Trip>> GetTrip(int id)
     {
         // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
 
-        var trip = await _tripService.GetTripByIdAsync(id, int.Parse(userIdString));
-        if (trip == null)
+        try
+        {
+            var trip = await _tripService.GetTripByIdAsync(id);
+            return Ok(trip);
+        }
+        catch (ArgumentException)
         {
             return NotFound();
         }
-        return Ok(trip);
     }
 
     /// <summary>
@@ -50,6 +57,7 @@ public class TripController : ControllerBase
     public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Console.WriteLine("\n\n" + "id: " + userIdString + "\n\n");
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
@@ -77,7 +85,52 @@ public class TripController : ControllerBase
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
             return Ok(trip);
         }
-        catch (ArgumentException e)
+        catch (MultipleValidationListException e)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = e.Errors
+            });
+        }
+
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Deletes a trip based on the id provided.
+    /// </summary>
+    /// <param name="id">The id of the trip to delete.</param>
+    /// <returns>
+    /// 400 if the trip does not exist.
+    /// 200 if the trip is deleted successfully.
+    /// </returns>
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult<Trip>> DeleteTrip(int id)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized();
+            }
+            
+            if (!await _tripService.UserHasModifyAccessToTrip(int.Parse(userIdString), id))
+            {
+                return Unauthorized();
+            }
+            
+            await _tripService.DeleteTripByIdAsync(id);
+            return Ok();
+        }
+        catch (ArgumentException)
+        {
+            return BadRequest("Trip does not exist");
+        }
+        catch (Exception e)
         {
             return BadRequest(e.Message);
         }

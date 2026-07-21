@@ -1,8 +1,42 @@
 <script lang="ts">
+    import { resolve } from "$app/paths";
     import AddButton from "$lib/components/buttons/add-button.svelte";
     import SearchForm from "$lib/components/forms/search-form.svelte";
+    import TripCard from "$lib/components/trip-components/trip-card.svelte";
+    import { fetchWithCsrf } from "$lib/csrf";
+    import { onMount } from "svelte";
 
-    let trips = [];
+    let loading = $state(false);
+    let error = $state("");
+    let trips = $state([]);
+
+    onMount(() => {
+        fetchTrips();
+    });
+
+    /**
+     * Fetches all trips corresponding to the user's credentials stored in the browser
+     */
+    async function fetchTrips() {
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(resolve(`/api/trip` as any), {
+                method: "GET",
+                credentials: "include",
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                error = "Failed to fetch task lists.";
+                return;
+            }
+            trips = data;
+        } catch (err) {
+            error = "Failed to fetch task lists: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+        console.log(trips);
+    }
 </script>
 
 <div class="container">
@@ -18,12 +52,33 @@
             <SearchForm />
         </div>
     </div>
-    {#each trips as trip, i}
-        {#if i % 3 == 0}
-            <div class="grid grid-cols-3 h-screen">
-                <!-- placeholder -->
-                <div class="border-black border"></div>
-            </div>
-        {/if}
-    {/each}
+
+    {#if trips.length > 0}
+        <div class="trip-object-wrapper">
+            {#each trips as trip}
+                <TripCard tripObject={trip} />
+            {/each}
+        </div>
+    {:else}
+        <div class="no-trips-message">
+            <p>You have no trips yet! Create one with the "+" button</p>
+        </div>
+    {/if}
 </div>
+
+<style>
+    .trip-object-wrapper {
+        padding-top: 3px;
+        display: grid;
+        grid-template-columns: 33% 33% 33%;
+        align-items: center;
+    }
+    .no-trips-message {
+        width: 50vw;
+        display: flex;
+        flex-direction: row;
+        position: absolute;
+        align-items: center;
+        text-align: center;
+    }
+</style>

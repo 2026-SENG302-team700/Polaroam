@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
-
     let {
         value = $bindable(new Date("0001-01-01")),
         error = "",
@@ -21,10 +20,9 @@
                 error = "Please input a valid date";
             });
     });
-
 </script>
 
-<div class="d-flex align-items-center gap-2 mb-3">
+<div class="date-form-wrapper">
     <input
         type="date"
         class="form-control w-auto"
@@ -40,3 +38,12 @@
         onclick={() => (value = new Date("9999-01-01"))}>Clear</button
     >
 </div>
+
+<style>
+    .date-form-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin-bottom: 20px;
+    }
+</style>
