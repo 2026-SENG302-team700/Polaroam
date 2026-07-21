@@ -58,12 +58,28 @@
     }
 </script>
 
-<div class="container">
+<div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
-    <h1>{tripObject.title}</h1>
-    <p>
-        {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
-    </p>
-    <div class="border-t-2 border-black"></div>
-    <span>{tripObject.description}</span>
+    <div class="trip-page-header">
+        <div class="trip-head-grid">
+             <h1>{tripObject.title}</h1>
+            <p class="date-object">
+                {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
+            </p>
+        </div>     
+        <span>{tripObject.description}</span>
+    </div>
+    
 </div>
+
+<style>
+    .trip-head-grid { 
+        align-items:end;
+        display: flex;
+    }
+    .date-object {
+        margin-left: 10px;
+        bottom: 0;
+    }
+
+</style>
