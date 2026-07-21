@@ -37,7 +37,9 @@
     async function createTask() {
         let dueDate = new Date(taskDue);
         if (dueDate.getFullYear() > 9999) {
-            dueDate = new Date(`9999-${dueDate.getMonth()+1}-${dueDate.getDate()}`);
+            dueDate = new Date(
+                `9999-${dueDate.getMonth() + 1}-${dueDate.getDate()}`,
+            );
         }
 
         if (dueDate.getFullYear() !== 1) {
@@ -153,7 +155,7 @@
     <div class="mb-3">
         <CancelButton path={`/home/trip/${params.slug}`} />
     </div>
-    <form on:submit|preventDefault={createTask}>
+    <form onsubmit={createTask}>
         <div class="mb-3">
             <TitleForm bind:name error={errors.name} {loading} />
         </div>

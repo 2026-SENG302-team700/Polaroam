@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Requests;
-using SENG302.Api.Filters;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SENG302.Api.Filters;
+using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
+using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -30,6 +30,10 @@ public class TripController : ControllerBase
     {
         // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
 
         var trip = await _tripService.GetTripByIdAsync(id, int.Parse(userIdString));
         if (trip == null)
@@ -48,6 +52,7 @@ public class TripController : ControllerBase
     public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Console.WriteLine("\n\n" + "id: " + userIdString + "\n\n");
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 

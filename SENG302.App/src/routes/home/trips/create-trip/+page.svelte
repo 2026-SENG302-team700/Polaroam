@@ -58,7 +58,7 @@
                     Title: tripTitle,
                     Description: tripDescription,
                     StartDate: startDate,
-                    EndDate: endDate
+                    EndDate: endDate,
                 }),
                 credentials: "include",
             });
@@ -96,7 +96,7 @@
         <div>
             <TitleForm bind:name={tripTitle} errors={errors} />
             <DescriptionForm bind:description={tripDescription} />
-            <div class="grid grid-cols-2">
+            <div class="date-picker-wrapper">
                 <div>
                     <p>From</p>
                     <Datepicker bind:value={startDate} />
@@ -111,5 +111,11 @@
             </div>
         </div>
     </div>
-    <div></div>
 </div>
+
+<style>
+    .date-picker-wrapper {
+        display: grid;
+        grid-template-columns: 50% 50%;
+    }
+</style>
