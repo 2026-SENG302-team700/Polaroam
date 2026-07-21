@@ -5,7 +5,6 @@ using SENG302.Api.Models.Requests;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net;
-using System.Net.Http.Json;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
