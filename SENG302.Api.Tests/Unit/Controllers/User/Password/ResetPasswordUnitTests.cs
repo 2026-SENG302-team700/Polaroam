@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
-public class ResetPasswordUnitTests : BaseUnitTestFixture
+public class ResetPasswordUnitTests
 {
     private readonly IUserService _mockUserService;
     private readonly IOneTimeCodeService _mockCodeService;
@@ -22,7 +22,7 @@ public class ResetPasswordUnitTests : BaseUnitTestFixture
     private readonly ResetPasswordController _controller;
     private readonly IAuthenticationService _mockAuthService;
 
-    public ResetPasswordUnitTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
+    public ResetPasswordUnitTests()
     {
         _mockUserService = Substitute.For<IUserService>();
         _mockCodeService = Substitute.For<IOneTimeCodeService>();
@@ -40,8 +40,6 @@ public class ResetPasswordUnitTests : BaseUnitTestFixture
     /// </summary>
     private void SetupForgotPasswordContext(string email, long codeExpirationTime, string code, bool codeExpired)
     {
-
-
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Email, email),
