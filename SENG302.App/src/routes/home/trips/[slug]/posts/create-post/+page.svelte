@@ -19,6 +19,8 @@
         <DatePicker/>
         <SearchForm bind:query={searchQuery} placeholder="Location"/>
         <DescriptionForm/>
-        <CreationButton onClick={createPost} text="Create Post"/>
+        <div class="d-grid">
+            <CreationButton onClick={createPost} text="Create Post" />
+        </div>
     </div>
 </div>
