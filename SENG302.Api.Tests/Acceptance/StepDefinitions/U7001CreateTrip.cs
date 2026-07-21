@@ -79,6 +79,8 @@ public class U7001CreateTrip
             Country = "Test Country"
         });
         
+        _title = "T";
+        
         await context.SaveChangesAsync();
     }
 
