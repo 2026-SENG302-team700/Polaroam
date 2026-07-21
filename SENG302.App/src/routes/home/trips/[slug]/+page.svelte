@@ -19,22 +19,15 @@
         userId: 0,
     });
 
-    let errors = $state({
-        name: "",
-        description: "",
-        dueDate: "",
-        taskStatus: "",
-    });
-
     onMount(() => {
-        fetchTaskItem();
+        fetchTripItem();
     });
 
     /**
-     * Fetches the task item in order
-     * to display the information
+     * Fetches the trip item from the backend corresponding 
+     * with the slug value being the trip's id
      */
-    async function fetchTaskItem() {
+    async function fetchTripItem() {
         try {
             loading = true;
             const response = await fetchWithCsrf(
@@ -47,12 +40,12 @@
             const data = await response.json();
 
             if (!response.ok) {
-                error = data.message || "Failed to fetch task lists.";
+                error = data.message || "Failed to fetch trip.";
                 return;
             }
             tripObject = data;
         } catch (err) {
-            error = "Failed to fetch task lists: " + (err as Error).message;
+            error = "Failed to fetch trip: " + (err as Error).message;
         } finally {
             loading = false;
         }

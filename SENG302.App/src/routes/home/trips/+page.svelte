@@ -14,6 +14,9 @@
         fetchTrips();
     });
 
+    /**
+     * Fetches all trips corresponding to the user's credentials stored in the browser
+     */
     async function fetchTrips() {
         try {
             loading = true;
@@ -52,7 +55,7 @@
 
     {#if trips.length > 0}
         <div class="trip-object-wrapper">
-            {#each trips as trip, i}
+            {#each trips as trip}
                 <TripCard tripObject={trip} />
             {/each}
         </div>
