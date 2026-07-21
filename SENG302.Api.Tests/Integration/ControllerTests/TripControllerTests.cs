@@ -11,6 +11,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
 {
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
+    /// <summary>
+    /// Creates and adds to the database a test user for these tests
+    /// </summary>
     private async Task AddTestUser()
     {
         await using var context = DbContextFactory.CreateDbContext();
@@ -25,6 +28,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Some trip data that is used by several tests
+    /// </summary>
     private readonly NewTripRequest tripTestData = new()
     {
         Title = "Test Trip",
