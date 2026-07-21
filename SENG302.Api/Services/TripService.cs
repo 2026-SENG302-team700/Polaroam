@@ -90,7 +90,7 @@ public class TripService : ITripService
         {
             throw new ArgumentException("Trip start date must be before trip end date");
         }
-        
+
         var user = await context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
         // Validate user email exists in db
         if (user == null)
@@ -157,5 +157,71 @@ public class TripService : ITripService
 
         return trip;
     }
-}
 
+    /// <summary>
+    /// Updates a trip with the given ID and user ID. Validates the title, description, and dates before updating the trip.
+    /// Returns the updated trip if successful, or throws an ArgumentException if validation fails or the
+    /// </summary>
+    /// <param name="tripRequest"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Set<Trip>().Where(t => t.Id == tripRequest.Id).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new ArgumentException("trip with the provided ID does not exist.");
+        }
+
+        // Validate name length
+        if (!string.IsNullOrEmpty(tripRequest.Title) && (tripRequest.Title.Length < 3 || tripRequest.Title.Length > 128))
+        {
+            throw new ArgumentException("Trip name must be between 3 and 128 characters long");
+        }
+        // Validate title characters only allow letters, numbers, spaces, hyphens, and apostrophes
+        if (!string.IsNullOrEmpty(tripRequest.Title) && !ValidationPatterns.TripTitle.IsMatch(tripRequest.Title))
+        {
+            throw new ArgumentException("Trip name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        }
+
+        if (!string.IsNullOrEmpty(tripRequest.Description) && tripRequest.Description.Length > 2048)
+        {
+            throw new ArgumentException("Description must be 2048 characters or less");
+        }
+
+        // validation start and end date
+        // check end date is after start date
+        if (tripRequest.EndDate < tripRequest.StartDate)
+        {
+            throw new ArgumentException("Trip start date must be before trip end date");
+        }
+
+        // check for profanity in the name
+        var user = await context.Users.FindAsync(userId);
+        if (user?.ProfanityFiltering == true && !string.IsNullOrEmpty(tripRequest.Title) && ProfanityTools.ContainsProfanity(tripRequest.Title, user.ProfanityFiltering))
+        {
+            throw new ArgumentException("Trip name cannot contain profanity.");
+        }
+
+        // Update the trip
+        if (!string.IsNullOrEmpty(tripRequest.Title))
+            trip.Title = tripRequest.Title;
+
+        if (!string.IsNullOrEmpty(tripRequest.Description))
+            trip.Description = tripRequest.Description;
+
+        if (tripRequest.StartDate.HasValue)
+            trip.StartDate = tripRequest.StartDate;
+
+        if (tripRequest.EndDate.HasValue)
+            trip.EndDate = tripRequest.EndDate;
+
+        await context.SaveChangesAsync();
+
+        return trip;
+    }
+
+}

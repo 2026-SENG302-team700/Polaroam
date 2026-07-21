@@ -83,5 +83,28 @@ public class TripController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Updates an existing trip with the given ID and new details.
+    /// Validates the new details before updating the trip.
+    /// Returns 404 if no trip with the given ID exists or 200 if the trip is updated successfully.
+    /// Returns 400 if validation fails.
+    /// </summary>
+    /// <param name="tripRequest">Request DTO containing all the updated trip details</param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<Trip>> UpdateTrip([FromBody] UpdateTripRequest tripRequest)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+            return Unauthorized();
+
+        var trip = await _tripService.UpdateTripAsync(tripRequest, int.Parse(userIdString));
+        if (trip == null)
+        {
+            return NotFound();
+        }
+        return Ok(trip);
+    }
 
 }
