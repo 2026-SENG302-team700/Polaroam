@@ -5,6 +5,7 @@
     import { resolve } from "$app/paths";
     import { formatDate } from "$lib/datepicker/formatDate.js";
 
+
     let loading = $state(false);
     let error = $state("");
     let { params } = $props();
@@ -66,8 +67,13 @@
             <p class="date-object">
                 {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
             </p>
-        </div>     
-        <span>{tripObject.description}</span>
+        </div>
+        {#if tripObject.description.length > 0}
+            <span>{tripObject.description}</span>
+        {:else} 
+            <p>No description</p>
+        {/if}
+        
     </div>
     
 </div>
