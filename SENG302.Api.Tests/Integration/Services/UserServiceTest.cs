@@ -83,7 +83,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
             "4365passTOEHKT$%^&$%^", 
             "4365passTOEHKT$%^&$%^",
             "US");
-        var errors = Should.Throw<MultipleValidationException>(async () => 
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () => 
             await ServiceUnderTest.CreateNewUserAsync(
                 "j@whitsend.com", 
                 "Jack Allen",

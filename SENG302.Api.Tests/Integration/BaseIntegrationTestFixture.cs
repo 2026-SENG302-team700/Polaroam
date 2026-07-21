@@ -41,7 +41,6 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         FakeTimeProvider = new FakeTimeProvider(TestNow);
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 

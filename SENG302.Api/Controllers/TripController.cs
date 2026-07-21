@@ -35,12 +35,15 @@ public class TripController : ControllerBase
             return Unauthorized();
         }
 
-        var trip = await _tripService.GetTripByIdAsync(id, int.Parse(userIdString));
-        if (trip == null)
+        try
+        {
+            var trip = await _tripService.GetTripByIdAsync(id);
+            return Ok(trip);
+        }
+        catch (ArgumentException)
         {
             return NotFound();
         }
-        return Ok(trip);
     }
 
     /// <summary>

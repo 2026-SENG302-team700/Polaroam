@@ -10,7 +10,7 @@ namespace SENG302.Api.Services;
 public interface ITripService
 {
     Task<Trip> CreateNewTripAsync(NewTripRequest trip, int userId);
-    Task<Trip> GetTripByIdAsync(int id, int userId);
+    Task<Trip> GetTripByIdAsync(int id);
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
     Task DeleteTripByIdAsync(int tripId);
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
@@ -19,11 +19,13 @@ public interface ITripService
 public class TripService : ITripService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
+    private readonly IUserService _userService;
 
 
-    public TripService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public TripService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IUserService userService)
     {
         _dbContextFactory = dbContextFactory;
+        _userService = userService;
 
     }
 
@@ -38,7 +40,7 @@ public class TripService : ITripService
 
         var trips = await context.Set<Trip>().Where(t => t.UserId == userId).ToListAsync();
 
-        var user = await context.Users.FindAsync(userId);
+        var user = await _userService.GetUserByIdAsync(userId);
         // check for profanity filtering
         if (user?.ProfanityFiltering != true) return trips;
 
@@ -85,8 +87,7 @@ public class TripService : ITripService
             throw new MultipleValidationListException(errors);
         }
 
-        var user = await context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
-        // Validate user email exists in db
+        var user = await _userService.GetUserByIdAsync(userId);
         if (user == null)
         {
             throw new ArgumentException("User with the provided id does not exist.");
@@ -108,38 +109,14 @@ public class TripService : ITripService
 
     /// <summary>
     /// Gets a trip by its ID. Returns null if no trip with the given ID exists.
-    /// </summary>trip
-    /// <param name="id"></param>
-    /// <returns></returns>
-    public async Task<Trip> GetTripByIdAsync(int id, int userId)
+    /// </summary>
+    /// <param name="id">The id of the trip we are getting</param>
+    /// <returns>The trip we have fetched</returns>
+    /// <exception cref="ArgumentException">If the trip does not exist this exception is thrown</exception>
+    public async Task<Trip> GetTripByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var trip = await context.Set<Trip>().Where(t => t.Id == id).FirstOrDefaultAsync();
-        if (trip == null)
-        {
-            return null;
-        }
-        var user = await context.Users.FindAsync(userId);
-        // check for profanity censor
-        // Jon: Note when this is removed, you should also remove the 'userId' parameter
-        if (user?.ProfanityFiltering != true) return trip;
-
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        trip.Title = profanityFilter.CensorString(trip.Title);
-        return trip;
-    }
-
-    /// <summary>
-    /// Gets a trip by its ID. Returns null if no trip with the given ID exists.
-    /// Also takes a DatabaseContext so the trip that it returns can be modified.
-    /// </summary>
-    /// <param name="id">The id of the trip we are getting</param>
-    /// <param name="context">The database context, so the trip can be modified</param>
-    /// <returns>The trip we have fetched</returns>
-    /// <exception cref="ArgumentException">If the trip does not exist this exception is thrown</exception>
-    public async Task<Trip> GetTripByIdAsync(int id, DatabaseContext context)
-    {
         var trip = await context.Set<Trip>().Where(t => t.Id == id).FirstOrDefaultAsync();
         if (trip == null)
         {
@@ -157,7 +134,7 @@ public class TripService : ITripService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var trip = await GetTripByIdAsync(tripId, context);
+        var trip = await GetTripByIdAsync(tripId);
 
         context.Set<Trip>().Remove(trip);
         await context.SaveChangesAsync();
@@ -173,7 +150,7 @@ public class TripService : ITripService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var trip = await GetTripByIdAsync(tripId, context);
+        var trip = await GetTripByIdAsync(tripId);
 
         return trip.UserId == userId;
     }
