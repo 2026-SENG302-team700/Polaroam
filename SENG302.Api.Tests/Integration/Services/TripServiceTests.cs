@@ -59,7 +59,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
     [InlineData("                    Hi  ", 3)] // long enough but whitespace should be trimmed, meaning not long enough
     [InlineData("          ", 4)] // long enough but only whitespace
     [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 129 characters so invalid
-    public async Task CreateNewTrip_InvalidName_ThrowArgumentException(string title, int userId)
+    public async Task CreateNewTrip_InvalidName_ThrowValidationException(string title, int userId)
     {
         // Add a user to the database with the email that we are testing with
         await using var context = DbContextFactory.CreateDbContext();
@@ -80,6 +80,30 @@ public class TripServiceTests : BaseIntegrationTestFixture
         
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId));
+    }
+    
+    [Fact]
+    public async Task CreateNewTrip_LongDescription_ThrowValidationException()
+    {
+        // Add a user to the database with the email that we are testing with
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 0,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        NewTripRequest tripRequest = new NewTripRequest
+        {
+            Title = "test", Description = new string('a', 2049), StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+        };
+        
+        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
     }
 
     [Fact]

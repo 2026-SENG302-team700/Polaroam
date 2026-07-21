@@ -30,10 +30,10 @@ public class TripValidator
     }
 
     /// <summary>
-    /// Validates the trip title by check
+    /// Validates the trip title by checking length and characters
     /// </summary>
     /// <param name="title"></param>
-    /// <returns></returns>
+    /// <returns>A dictionary of fields and lists of their errors</returns>
     public static Dictionary<string, List<string>> ValidateTitle(string title)
     {
         var errors = new Dictionary<string, List<string>>();
@@ -52,6 +52,23 @@ public class TripValidator
         if (!ValidTitleChars(title))
         {
             errors["title"].Add("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        }
+        return errors;
+    }
+    
+    /// <summary>
+    /// Validates the trip title by checking length
+    /// </summary>
+    /// <param name="description"></param>
+    /// <returns>A dictionary of fields and lists of their errors</returns>
+    public static Dictionary<string, List<string>> ValidateDescription(string description)
+    {
+        var errors = new Dictionary<string, List<string>>();
+        errors["description"] = new List<string>();
+        
+        if (description.Length > 2048)
+        {
+            errors["description"].Add("Description must be 2048 characters or less");
         }
         return errors;
     }
