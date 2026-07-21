@@ -16,7 +16,10 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
 {
     private readonly NewTripRequest testTripRequest = new NewTripRequest
     {
-        Title = "test trip", Description = "Description", StartDate = new DateTime(2021, 12, 29), EndDate = new DateTime(2022, 12, 31),
+        Title = "test trip",
+        Description = "Description",
+        StartDate = new DateTime(2021, 12, 29),
+        EndDate = new DateTime(2022, 12, 31),
     };
 
     private readonly ITripService _tripService;
@@ -86,5 +89,29 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         Trip trip = await CreateTestTripWithUserId(userId);
 
         Assert.False(await _tripService.UserHasModifyAccessToTrip(userId + 1, trip.Id));
+    }
+
+    [Fact]
+    public async Task UpdateTrip_ValidRequest_UpdatesTrip()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        var newStartDate = new DateTime(2026, 8, 1);
+        var newEndDate = new DateTime(2026, 8, 10);
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = newStartDate,
+            EndDate = newEndDate
+        };
+
+        var updatedTrip = await _tripService.UpdateTripAsync(request, 1);
+
+        updatedTrip.Title.ShouldBe("Updated trip");
+        updatedTrip.Description.ShouldBe("Updated description");
+        updatedTrip.StartDate.ShouldBe(newStartDate);
+        updatedTrip.EndDate.ShouldBe(newEndDate);
     }
 }

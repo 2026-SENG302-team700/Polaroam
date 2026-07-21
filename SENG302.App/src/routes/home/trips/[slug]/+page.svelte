@@ -7,7 +7,7 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-
+    import EditButton from "$lib/components/buttons/edit-button.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -27,7 +27,7 @@
     });
 
     /**
-     * Fetches the trip from the backend corresponding 
+     * Fetches the trip from the backend corresponding
      * with the slug value being the trip's id
      */
     async function fetchTrip() {
@@ -55,7 +55,7 @@
     }
 
     /**
-     * Deletes the trip from the backend corresponding 
+     * Deletes the trip from the backend corresponding
      * with the slug value being the trip's id
      */
     async function deleteTrip() {
@@ -71,7 +71,7 @@
 
             const data = await response.text();
 
-            if (data === '') {
+            if (data === "") {
                 goto(resolve("/home/trips"));
             } else {
                 error = data || "Failed to delete trip.";
@@ -82,38 +82,37 @@
             loading = false;
         }
     }
-
 </script>
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
-    <DeleteButton deleteAction={deleteTrip}/>
+    <EditButton path={`/home/trips/${params.slug}/edit`} />
+    <DeleteButton deleteAction={deleteTrip} />
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
         <div class="trip-head-grid">
-             <h1>{tripObject.title}</h1>
+            <h1>{tripObject.title}</h1>
             <p class="date-object">
-                {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
+                {formatDate(tripObject.startDate)} - {formatDate(
+                    tripObject.endDate,
+                )}
             </p>
         </div>
         {#if tripObject.description.length > 0}
             <span>{tripObject.description}</span>
-        {:else} 
+        {:else}
             <p>No description</p>
         {/if}
-        
     </div>
-    
 </div>
 
 <style>
-    .trip-head-grid { 
-        align-items:end;
+    .trip-head-grid {
+        align-items: end;
         display: flex;
     }
     .date-object {
         margin-left: 10px;
         bottom: 0;
     }
-
 </style>

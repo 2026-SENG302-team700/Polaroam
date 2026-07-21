@@ -57,6 +57,7 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
+                        Id: Number(params.slug),
                         Title: tripTitle,
                         Description: tripDescription,
                         StartDate: startDate,

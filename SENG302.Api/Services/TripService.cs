@@ -14,6 +14,7 @@ public interface ITripService
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
     Task DeleteTripByIdAsync(int tripId);
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
+    Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
 }
 
 public class TripService : ITripService

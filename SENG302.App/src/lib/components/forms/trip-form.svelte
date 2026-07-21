@@ -8,8 +8,8 @@
     let {
         title = $bindable(""),
         description = $bindable(""),
-        startDate = $bindable(new Date()),
-        endDate = $bindable(new Date("9999-03-03")),
+        startDate = $bindable(null),
+        endDate = $bindable(null),
         heading,
         submitText,
         cancelPath,
@@ -19,8 +19,8 @@
     }: {
         title: string;
         description: string;
-        startDate: Date;
-        endDate: Date;
+        startDate: Date | null;
+        endDate: Date | null;
         heading: string;
         submitText: string;
         cancelPath: string;
