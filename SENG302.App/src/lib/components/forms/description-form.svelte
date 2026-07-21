@@ -1,12 +1,12 @@
 ﻿<script>
-    let {description = $bindable(""), error = "", loading = false } = $props();
+    let {description = $bindable(""), error = "", loading = false, placeholder="Description" } = $props();
 </script>
 
 
 <textarea
         class="form-control mb-3"
         class:is-invalid={error}
-        placeholder="Description"
+        {placeholder}
         bind:value={description}
         disabled={loading}
         
