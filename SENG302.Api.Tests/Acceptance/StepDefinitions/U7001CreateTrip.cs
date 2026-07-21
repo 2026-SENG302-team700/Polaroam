@@ -82,7 +82,7 @@ public class U7001CreateTrip
         await context.SaveChangesAsync();
     }
 
-    [Then(@"I see the error message 'Trip title must be between 3 and 128 characters long")]
+    [Then(@"I see the error message 'Trip title must be between 3 and 128 characters long'")]
     public async Task checkTitleErrorTooShort()
     {
         _lastResponse.ShouldNotBeNull();
