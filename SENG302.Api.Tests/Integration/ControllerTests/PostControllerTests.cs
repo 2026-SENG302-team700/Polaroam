@@ -6,9 +6,9 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
-public class TaskItemControllerTests : BaseIntegrationTestFixture
+public class PostControllerTests : BaseIntegrationTestFixture
 {
-    public TaskItemControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
+    public PostControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
     [Fact]
     public async Task CreateTaskItem_ValidData_Ok()
@@ -36,7 +36,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         
         await context.SaveChangesAsync();
 
-        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new
         {
             taskListId = 1,
             name = "name",
@@ -77,7 +77,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new
         {
             taskListId = 1,
             name = name,
@@ -118,7 +118,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new
         {
             taskListId = 1,
             name,
@@ -159,7 +159,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new
         {
             taskListId = 1,
             name = "name",
@@ -195,7 +195,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var response = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        var response = await HttpClient.PostAsJsonAsync("/api/post", new
         {
             taskListId = 1,
             name = "test",
@@ -205,8 +205,8 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var taskItem = await response.Content.ReadFromJsonAsync<TaskItem>();
-        taskItem!.Description.ShouldBe("");
+        var taskItem = await response.Content.ReadFromJsonAsync<Post>();
+        taskItem!.Content.ShouldBe("");
     }
 
     [Fact]
@@ -234,7 +234,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new
         {
             taskListId = 1,
             name = "test name",
@@ -265,17 +265,17 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         });
-        context.TaskItems.Add(new TaskItem
+        context.Posts.Add(new Post
         {
-            TaskId = 1,
-            TaskListId = 1,
-            Name = "mercedes",
-            Description = "lewis hamilton f1 team",
+            PostId = 1,
+            TripId = 1,
+            Title = "mercedes",
+            Content = "lewis hamilton f1 team",
             CurrentStatus = CurrentTaskStatus.Todo
         });
         await context.SaveChangesAsync();
 
-        var response = await HttpClient.PutAsJsonAsync("/api/taskItem/item/1", new
+        var response = await HttpClient.PutAsJsonAsync("/api/post/item/1", new
         {
             taskId = 1,
             name = "ferrari",
@@ -285,9 +285,9 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var task = await response.Content.ReadFromJsonAsync<TaskItem>();
-        task!.Name.ShouldBe("ferrari");
-        task.Description.ShouldBe("lewis hamilton new f1 team");
+        var task = await response.Content.ReadFromJsonAsync<Post>();
+        task!.Title.ShouldBe("ferrari");
+        task.Content.ShouldBe("lewis hamilton new f1 team");
         task.CurrentStatus.ShouldBe(CurrentTaskStatus.InProgress);
     }
 
@@ -317,19 +317,19 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             EndDate = new DateTime(2025, 12, 21)
         });
 
-        context.TaskItems.Add(new TaskItem
+        context.Posts.Add(new Post
         {
-            TaskId = 1,
-            TaskListId = 1,
-            Name = "goodName",
-            Description = "",
+            PostId = 1,
+            TripId = 1,
+            Title = "goodName",
+            Content = "",
             CurrentStatus = CurrentTaskStatus.Todo
         });
         await context.SaveChangesAsync();
 
 
 
-        var response = await HttpClient.PutAsJsonAsync("/api/taskItem/item/1", new
+        var response = await HttpClient.PutAsJsonAsync("/api/post/item/1", new
         {
             taskId = 1,
             name = badName,
@@ -364,19 +364,19 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
 
         });
 
-        context.TaskItems.Add(new TaskItem
+        context.Posts.Add(new Post
         {
-            TaskId = 1,
-            TaskListId = 1,
-            Name = "goodName",
-            Description = "",
+            PostId = 1,
+            TripId = 1,
+            Title = "goodName",
+            Content = "",
             CurrentStatus = CurrentTaskStatus.Todo
         });
         await context.SaveChangesAsync();
 
 
 
-        var response = await HttpClient.PutAsJsonAsync("/api/taskItem/item/1", new
+        var response = await HttpClient.PutAsJsonAsync("/api/post/item/1", new
         {
             taskId = 1,
             name = "goodName",
@@ -396,16 +396,16 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21)});
         context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.TaskItems.Add(new TaskItem { TaskListId = 1, Name = "My task", Description = "", CurrentStatus = CurrentTaskStatus.Todo });
-        context.TaskItems.Add(new TaskItem { TaskListId = 2, Name = "Other task", Description = "", CurrentStatus = CurrentTaskStatus.Todo });
+        context.Posts.Add(new Post { TripId = 1, Title = "My task", Content = "", CurrentStatus = CurrentTaskStatus.Todo });
+        context.Posts.Add(new Post { TripId = 2, Title = "Other task", Content = "", CurrentStatus = CurrentTaskStatus.Todo });
         await context.SaveChangesAsync();
 
-        var response = await HttpClient.GetAsync("/api/taskItem");
+        var response = await HttpClient.GetAsync("/api/post");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var tasks = await response.Content.ReadFromJsonAsync<List<TaskItem>>();
+        var tasks = await response.Content.ReadFromJsonAsync<List<Post>>();
         tasks!.Count.ShouldBe(1);
-        tasks.First().Name.ShouldBe("My task");
+        tasks.First().Title.ShouldBe("My task");
     }
 
     [Fact]
@@ -416,10 +416,10 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         context.Trips.Add(new Trip { Id = 1, Title = "My List", UserId = 1, Description = "", StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21)});
         await context.SaveChangesAsync();
 
-        var response = await HttpClient.GetAsync("/api/taskItem");
+        var response = await HttpClient.GetAsync("/api/post");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var tasks = await response.Content.ReadFromJsonAsync<List<TaskItem>>();
+        var tasks = await response.Content.ReadFromJsonAsync<List<Post>>();
         tasks!.ShouldBeEmpty();
     }
     
@@ -445,20 +445,20 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
                 EndDate = new DateTime(2025, 12, 21)
             }
         );
-        context.TaskItems.AddRange(                                                                                               
-            new TaskItem 
+        context.Posts.AddRange(                                                                                               
+            new Post 
             { 
-                TaskId = 1, 
-                TaskListId = 1, 
-                Name = "task 1", 
-                Description = ""  
+                PostId = 1, 
+                TripId = 1, 
+                Title = "task 1", 
+                Content = ""  
             },                                                                                                                            
-            new TaskItem
+            new Post
             {
-                TaskId = 2, 
-                TaskListId = 1, 
-                Name = "task 2", 
-                Description = "",
+                PostId = 2, 
+                TripId = 1, 
+                Title = "task 2", 
+                Content = "",
             }
         );                                                                                                                        
         await context.SaveChangesAsync();
@@ -490,30 +490,30 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
                 EndDate = new DateTime(2025, 12, 21)
             }
         );                                             
-        context.TaskItems.AddRange(                                                                                               
-            new TaskItem
+        context.Posts.AddRange(                                                                                               
+            new Post
             {
-                TaskId = 1, 
-                TaskListId = 1, 
-                Name = "task 1",
-                Description = ""
+                PostId = 1, 
+                TripId = 1, 
+                Title = "task 1",
+                Content = ""
             },
-            new TaskItem
+            new Post
             {
-                TaskId = 2, 
-                TaskListId = 1, 
-                Name = "task 2",
-                Description = ""
+                PostId = 2, 
+                TripId = 1, 
+                Title = "task 2",
+                Content = ""
             }  
         );                                                                                                                        
         await context.SaveChangesAsync();                                                                                         
                                                                                                                                 
         await HttpClient.PatchAsJsonAsync("/api/taskItem/order", new List<int> { 2, 1 });                                         
    
-        var getResponse = await HttpClient.GetAsync("/api/taskItem");                                                             
-        var tasks = await getResponse.Content.ReadFromJsonAsync<List<TaskItem>>();
-        tasks[0].TaskId.ShouldBe(2);
-        tasks[1].TaskId.ShouldBe(1);
+        var getResponse = await HttpClient.GetAsync("/api/post");                                                             
+        var tasks = await getResponse.Content.ReadFromJsonAsync<List<Post>>();
+        tasks[0].PostId.ShouldBe(2);
+        tasks[1].PostId.ShouldBe(1);
     }
 
 }

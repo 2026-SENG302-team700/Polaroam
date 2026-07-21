@@ -12,5 +12,5 @@ public class DatabaseContext : DbContext
     public DbSet<Trip> Trips { get; set; }
     
     public DbSet<CustomFile> CustomFiles { get; set; }
-    public DbSet<TaskItem> TaskItems { get; set; }
+    public DbSet<Post> Posts { get; set; }
 }

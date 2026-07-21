@@ -39,26 +39,26 @@ public class U11PersistDnd
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         
-        context.TaskItems.AddRange(
-            new TaskItem
+        context.Posts.AddRange(
+            new Post
             {
-                TaskListId = 1,
-                Name = "Task 1",
-                Description = "",
+                TripId = 1,
+                Title = "Task 1",
+                Content = "",
                 OrderPosition = 1
             },
-            new TaskItem
+            new Post
             {
-                TaskListId = 1,
-                Name = "Task 2",
-                Description = "",
+                TripId = 1,
+                Title = "Task 2",
+                Content = "",
                 OrderPosition = 2
             },
-            new TaskItem
+            new Post
             {
-                TaskListId = 1,
-                Name = "Task 3",
-                Description = "",
+                TripId = 1,
+                Title = "Task 3",
+                Content = "",
                 OrderPosition = 3
             }
         );
@@ -70,9 +70,9 @@ public class U11PersistDnd
     public async Task WhenIReorderTask3ToTheTopOfTheList()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
-        var task1Id = context.TaskItems.Single(t => t.Name == "Task 1").TaskId;                                                   
-        var task2Id = context.TaskItems.Single(t => t.Name == "Task 2").TaskId;                                                   
-        var task3Id = context.TaskItems.Single(t => t.Name == "Task 3").TaskId;
+        var task1Id = context.Posts.Single(t => t.Title == "Task 1").PostId;                                                   
+        var task2Id = context.Posts.Single(t => t.Title == "Task 2").PostId;                                                   
+        var task3Id = context.Posts.Single(t => t.Title == "Task 3").PostId;
         
         _lastResponse = await _fixture.HttpClient.PatchAsJsonAsync("/api/taskItem/order", new List<int> 
         {
@@ -85,10 +85,10 @@ public class U11PersistDnd
     {
         _lastResponse!.StatusCode.ShouldBe(HttpStatusCode.OK);
                                                                                                                                 
-        var response = await _fixture.HttpClient.GetAsync("/api/taskItem");
-        var tasks = await response.Content.ReadFromJsonAsync<List<TaskItem>>();                                                   
-        tasks![0].Name.ShouldBe("Task 3");                                                                                        
-        tasks[1].Name.ShouldBe("Task 1");
-        tasks[2].Name.ShouldBe("Task 2");                                                                                         
+        var response = await _fixture.HttpClient.GetAsync("/api/post");
+        var tasks = await response.Content.ReadFromJsonAsync<List<Post>>();                                                   
+        tasks![0].Title.ShouldBe("Task 3");                                                                                        
+        tasks[1].Title.ShouldBe("Task 1");
+        tasks[2].Title.ShouldBe("Task 2");                                                                                         
     } 
 }

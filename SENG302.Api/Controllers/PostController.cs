@@ -11,13 +11,13 @@ namespace SENG302.Api.Controllers;
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/taskItem")]
-public class TaskItemController : ControllerBase
+[Route("api/post")]
+public class PostController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly ITaskItemService _taskItemService;
 
-    public TaskItemController(ITaskItemService taskItemService, IUserService userService)
+    public PostController(ITaskItemService taskItemService, IUserService userService)
     {
         _taskItemService = taskItemService;
         _userService = userService;
@@ -29,7 +29,7 @@ public class TaskItemController : ControllerBase
     /// <returns>All tasks belonging to that user</returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks()
+    public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -40,7 +40,7 @@ public class TaskItemController : ControllerBase
 
         try
         {
-            var tasks = await _taskItemService.GetAllTaskItemsAsync(int.Parse(userIdString));
+            var tasks = await _taskItemService.GetAllPostsAsync(int.Parse(userIdString));
             return Ok(tasks);
         }
         catch (Exception e)
@@ -57,14 +57,14 @@ public class TaskItemController : ControllerBase
     /// <returns>The list of tasks</returns>
     [Authorize]
     [HttpGet("{listId:int}")]
-    public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasksFromList(int listId = -1)
+    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int listId = -1)
     {
         if (listId < 0)
         {
             return BadRequest("List not provided");
         }
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var taskList = await _taskItemService.GetTaskItemsByListAsync(listId, int.Parse(userIdString));
+        var taskList = await _taskItemService.GetPostsByTripAsync(listId, int.Parse(userIdString));
         return Ok(taskList);
     }
 
@@ -78,18 +78,18 @@ public class TaskItemController : ControllerBase
     /// <returns>The list of tasks</returns>
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItemRequest)
+    public async Task<ActionResult<Post>> CreatePost([FromBody] NewPostRequest postRequest)
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
         try
         {
-            if (ProfanityTools.ContainsProfanity(taskItemRequest.Description, user.ProfanityFiltering))
+            if (ProfanityTools.ContainsProfanity(postRequest.Content, user.ProfanityFiltering))
             {
                 errors["description"] = "Description cannot contain profanity.";
             }
-            if (ProfanityTools.ContainsProfanity(taskItemRequest.Name, user.ProfanityFiltering))
+            if (ProfanityTools.ContainsProfanity(postRequest.Title, user.ProfanityFiltering))
             {
                 errors["name"] = "Name cannot contain profanity.";
             }
@@ -100,7 +100,7 @@ public class TaskItemController : ControllerBase
                     Errors = errors
                 });
             }
-            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest, userId);
+            var response = await _taskItemService.CreateNewPostAsync(postRequest, userId);
             return Ok(response);
 
         }
@@ -116,12 +116,12 @@ public class TaskItemController : ControllerBase
 
     [Authorize]
     [HttpGet("item/{id:int}")]
-    public async Task<ActionResult<TaskItem>> GetTaskItem(int id)
+    public async Task<ActionResult<Post>> GetPost(int id)
     {
         try
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var response = await _taskItemService.GetTaskItemAsync(id, userId);
+            var response = await _taskItemService.GetPostAsync(id, userId);
             return Ok(response);
         }
         catch (Exception e)
@@ -134,27 +134,23 @@ public class TaskItemController : ControllerBase
     /// Given a request to update a task, it will send a request to update that task
     /// to the TaskItem Service
     /// </summary>
-    /// <param name="taskItemUpdates">updated values for a task item</param>
+    /// <param name="postUpdates">updated values for a task item</param>
     /// <returns>
     /// The updated task item if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
     [HttpPut("item/{id:int}")]
-    public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
+    public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
         try
         {
-            if (ProfanityTools.ContainsProfanity(taskItemUpdates.Description, user.ProfanityFiltering))
+            if (ProfanityTools.ContainsProfanity(postUpdates.Content, user.ProfanityFiltering))
             {
                 errors["description"] = "Description cannot contain profanity.";
-            }
-            if (ProfanityTools.ContainsProfanity(taskItemUpdates.Name, user.ProfanityFiltering))
-            {
-                errors["name"] = "Name cannot contain profanity.";
             }
             if (errors.Count > 0)
             {
@@ -164,31 +160,8 @@ public class TaskItemController : ControllerBase
                 });
             }
 
-            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates, userId);
+            var taskItem = await _taskItemService.UpdatePostAsync(postUpdates, userId);
             return Ok(taskItem);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-    }
-    
-    /// <summary>
-    /// Given a request to update the order position of a task, it will ask the task service to re-arrange the positions.
-    /// </summary>
-    /// <param name="orderedIds">A list of task id's in the user's requested order</param>
-    /// <returns>
-    /// OK with no info if updated succesfully
-    /// A bad request if an error occurs reordering task items
-    /// </returns>
-    [Authorize]
-    [HttpPatch("order")]
-    public async Task<ActionResult> OrderTaskItems([FromBody] List<int> orderedIds)
-    {
-        try
-        {
-            await _taskItemService.ReorderTaskItemsAsync(orderedIds);
-            return Ok();
         }
         catch (Exception e)
         {

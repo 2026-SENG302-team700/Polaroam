@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class TaskItemServiceTests
+public class PostServiceTests
 {
 
     [Theory]
@@ -11,7 +11,7 @@ public class TaskItemServiceTests
     [InlineData("Tēst")] // macron
     public void ValidateName_ValidName_ReturnsNothing(string name)
     {
-        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemName(name, false));
+        Should.NotThrow(() => PostValidator.ValidatePostTitle(name, false));
     }
 
     [Theory]
@@ -21,7 +21,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemName(name, false))
+        foreach (var (key, value) in PostValidator.ValidatePostTitle(name, false))
         {
             errors[key] = value;
         }        
@@ -37,7 +37,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDescription(new string('a', 2049), false))
+        foreach (var (key, value) in PostValidator.ValidatePostContent(new string('a', 2049), false))
         {
             errors[key] = value;
         }        
@@ -53,7 +53,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
         
-        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDueDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1))))
+        foreach (var (key, value) in PostValidator.ValidatePostDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1))))
         {
             errors[key] = value;
         }        
@@ -66,7 +66,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
         
-        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))))
+        foreach (var (key, value) in PostValidator.ValidatePostDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))))
         {
             errors[key] = value;
         }        
@@ -80,8 +80,8 @@ public class TaskItemServiceTests
     [Fact]
     public void ValidateCurrentStatus_Valid_NoProblems()
     {
-        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Todo));                            
-        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.InProgress));                      
-        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Done));  
+        Should.NotThrow(() => PostValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Todo));                            
+        Should.NotThrow(() => PostValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.InProgress));                      
+        Should.NotThrow(() => PostValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Done));  
     }
 }

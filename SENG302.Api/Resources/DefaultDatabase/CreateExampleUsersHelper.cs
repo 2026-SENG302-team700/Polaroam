@@ -78,14 +78,13 @@ public static class CreateExampleUsersHelper
 
                 for (int j = 0; j < (i % 10); j++)
                 {
-                    var task = new TaskItem
+                    var task = new Post
                     {
-                        Name = "Task_" + j.ToString(),
-                        TaskListId = taskList.Id,
-                        Description = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
-                        DueDate = DateTime.MaxValue,
+                        Title = "Task_" + j.ToString(),
+                        TripId = taskList.Id,
+                        Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
+                        Date = DateTime.MaxValue,
                         creationTime = DateTimeOffset.Now,
-                        CurrentStatus = (CurrentTaskStatus)(j % 3)
                     };
                     dbContext.Add(task);
                 }
