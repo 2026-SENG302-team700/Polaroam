@@ -159,7 +159,7 @@ public class TripService : ITripService
     }
 
     /// <summary>
-    /// Updates a trip with the given ID and user ID. Validates the title, description, and dates before updating the trip.
+    /// Updates a trip with the given ID, Validates the title, description, and dates before updating the trip.
     /// Returns the updated trip if successful, or throws an ArgumentException if validation fails or the
     /// </summary>
     /// <param name="tripRequest"></param>
@@ -199,13 +199,6 @@ public class TripService : ITripService
             throw new ArgumentException("Trip start date must be before trip end date");
         }
 
-        // check for profanity in the name
-        var user = await context.Users.FindAsync(userId);
-        if (user?.ProfanityFiltering == true && !string.IsNullOrEmpty(tripRequest.Title) && ProfanityTools.ContainsProfanity(tripRequest.Title, user.ProfanityFiltering))
-        {
-            throw new ArgumentException("Trip name cannot contain profanity.");
-        }
-
         // Update the trip
         if (!string.IsNullOrEmpty(tripRequest.Title))
             trip.Title = tripRequest.Title;
@@ -223,5 +216,4 @@ public class TripService : ITripService
 
         return trip;
     }
-
 }
