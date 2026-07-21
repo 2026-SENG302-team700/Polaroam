@@ -66,7 +66,7 @@ public class U7001CreateTrip
     }
     
     [Given(
-        @"Given I am on the create trip form page And I enter a short title")]
+        @"I am on the create trip form page And I enter a short title")]
     public async Task EnterShortTitle()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
