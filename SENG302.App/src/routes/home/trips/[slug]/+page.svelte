@@ -7,6 +7,7 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import AddButton from "$lib/components/buttons/add-button.svelte";
 
 
     let loading = $state(false);
@@ -87,6 +88,7 @@
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
+    <AddButton path="/home/trips/{tripObject.id}/posts/create-post"/>
     <DeleteButton deleteAction={deleteTrip}/>
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
@@ -101,9 +103,7 @@
         {:else} 
             <p>No description</p>
         {/if}
-        
     </div>
-    
 </div>
 
 <style>
