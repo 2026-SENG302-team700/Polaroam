@@ -6,7 +6,7 @@
 <textarea
         class="form-control mb-3"
         class:is-invalid={error}
-        placeholder="Description"
+        placeholder="Content"
         bind:value={description}
         disabled={loading}
         

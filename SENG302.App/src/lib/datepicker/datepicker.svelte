@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
 
     let {
-        value = $bindable(new Date("0001-01-01")),
+        value = $bindable<Date | null>(null),
         error = "",
         disabled = false,
     }: {
@@ -12,7 +12,9 @@
     } = $props();
 
     let datePicker: HTMLInputElement | undefined = $state();
-
+    
+    let inputValue = $state(value ? value.toISOString().slice(0, 10) : "");
+    
     onMount(() => {
         if (datePicker)
             datePicker.addEventListener("invalid", function (event) {
@@ -27,7 +29,7 @@
             type="date"
             class="form-control"
             class:is-invalid={error}
-            bind:value
+            bind:value={inputValue}
             bind:this={datePicker}
             {disabled}
     />

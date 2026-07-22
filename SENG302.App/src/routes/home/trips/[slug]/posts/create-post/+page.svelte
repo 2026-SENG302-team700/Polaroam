@@ -16,7 +16,7 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <TitleForm/>
-        <DatePicker/>
+        <DatePicker value={new Date(Date.now())}/>
         <SearchForm bind:query={searchQuery} placeholder="Location"/>
         <DescriptionForm/>
         <div class="d-grid">
