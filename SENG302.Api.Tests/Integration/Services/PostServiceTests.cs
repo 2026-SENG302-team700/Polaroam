@@ -29,7 +29,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Test List",
             UserId = userId,
             Description = "Test",
-            StartDate = new DateTime(2017, 10, 08), 
+            StartDate = new DateTime(2017, 10, 08),
             EndDate = new DateTime(2017, 10, 21)
         });
         await context.SaveChangesAsync();
@@ -88,7 +88,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New task",
             Content = "Some description",
             Location = "Some location",
-            Date = DateTime.UtcNow,
+            Date = DateTime.UtcNow.AddDays(2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, 1);
@@ -96,7 +96,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.Title.ShouldBe("New task");
         post.TripId.ShouldBe(1);
     }
-    
+
 
     [Fact]
     public async Task GetPostAsync_ValidId_ReturnsTask()
