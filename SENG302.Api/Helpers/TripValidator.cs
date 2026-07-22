@@ -1,3 +1,4 @@
+using System.Net.NetworkInformation;
 using SENG302.Api.Services;
 
 /// <summary>
@@ -72,4 +73,23 @@ public class TripValidator
         }
         return errors;
     }
+
+    public static Dictionary<string, List<string>> ValidateDates(DateTime? startDate, DateTime? endDate)
+    {
+        var errors = new Dictionary<string, List<string>>();
+        errors["dates"] = new List<string>();
+        
+        if (startDate > endDate)
+        {
+            errors["dates"].Add("End date must not be before the start date");
+        }
+
+        if (startDate == null || endDate == null)
+        {
+            errors["dates"].Add("Start Date and End Date cannot be empty!");
+        }
+
+        return errors;
+    }
+    
 }
