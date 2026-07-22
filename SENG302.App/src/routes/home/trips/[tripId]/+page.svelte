@@ -61,7 +61,11 @@
             loading = false;
         }
     }
-    
+
+    /**
+     * Retrieves all posts associated with the trip
+     * from the backend
+     */
     async function fetchPosts() {
         try {
             loading = true;
