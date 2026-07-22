@@ -134,7 +134,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Start Date and End Date cannot be empty!");
+        message.ShouldContain("Dates cannot be empty!");
     }
     
         

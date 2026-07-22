@@ -73,7 +73,13 @@ public class TripValidator
         }
         return errors;
     }
-
+    
+    /// <summary>
+    /// Validates that the start date is before the end dates and that the dates are not null
+    /// </summary>
+    /// <param name="startDate"></param>
+    /// <param name="endDate"></param>
+    /// <returns></returns>
     public static Dictionary<string, List<string>> ValidateDates(DateTime? startDate, DateTime? endDate)
     {
         var errors = new Dictionary<string, List<string>>();
@@ -86,7 +92,7 @@ public class TripValidator
 
         if (startDate == null || endDate == null)
         {
-            errors["dates"].Add("Start Date and End Date cannot be empty!");
+            errors["dates"].Add("Dates cannot be empty!");
         }
 
         return errors;

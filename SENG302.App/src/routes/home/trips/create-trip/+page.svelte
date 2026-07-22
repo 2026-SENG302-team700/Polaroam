@@ -10,6 +10,7 @@
     let errors = $state({
         title: [],
         description: [],
+        date: "",
         generic: "",
     });
 
@@ -23,6 +24,7 @@
         errors = {
             title: [],
             description: [],
+            date: "",
             generic: "",
         };
     }
@@ -66,6 +68,7 @@
             if (!response.ok) {
                 errors.title = data.errors?.title ?? [];
                 errors.description = data.errors?.description ?? [];
+                errors.date = data.errors?.dates ?? "";
                 return;
             }
 
