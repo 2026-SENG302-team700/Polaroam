@@ -12,7 +12,7 @@ public interface IPostService
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId, int userId);
     Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId);
     Task<Post?> GetPostAsync(int id, int userId);
-    Task<Post> UpdatePostAsync(UpdatePostRequest postUpdates, int userId);
+    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId);
 }
 
 
@@ -29,48 +29,33 @@ public class PostService : IPostService
     }
 
     /// <summary>
-    /// Get all the tasks from all the lists and check for censoring
+    /// Get all the posts from all the trips
     /// </summary>
-    /// <returns> an ordered list of all the tasks </returns>
+    /// <returns> an ordered list of all the posts </returns>
     public async Task<IEnumerable<Post>> GetAllPostsAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         // get all the task
-        var tasks = await context.Set<Post>()
+        var posts = await context.Set<Post>()
                         .Where(t => context.Set<Trip>()
                         .Any(l => l.Id == t.TripId && l.UserId == userId))
                         .OrderBy(t => t.Date)
                         .ToListAsync();
-        // get user
-        var user = await context.Users.FindAsync(userId);
         
-        if (user?.ProfanityFiltering != true) return tasks;
-
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        foreach (Post task in tasks)
-        {
-            task.Title = profanityFilter.CensorString(task.Title);
-            task.Content = profanityFilter.CensorString(task.Content);
-        }
-        return tasks;
+        return posts;
     }
 
     /// <summary>
-    /// Adds a new task to the task list given owned by the given user. All parameters
-    /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
-    /// The name of the task must be between 3 and 128 characters, and the description
+    /// Adds a new post to the trip given owned by the given user. All parameters
+    /// must be present (except description), otherwise it fails. 
+    /// The name of the post must be between 3 and 128 characters, and the description
     /// can be up to 2048 characters.
     /// dueDate must be in the future, and currentStatus will be automatically set to
-    /// ToDo if not present.
     /// Returns errors if the profanity filter is on and profanity is found in the text
     /// </summary>
-    /// <param name="user"></param>
-    /// <param name="taskListId"></param>
-    /// <param name="name"></param>
-    /// <param name="dueDate"></param>
-    /// <param name="currentStatus"></param>
-    /// <param name="description"></param>
-    /// <returns>the newly created TaskItem</returns>
+    /// <param name="userId"></param>
+    /// <param name="postRequest"></param>
+    /// <returns>the newly created postItem</returns>
     public async Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -106,30 +91,21 @@ public class PostService : IPostService
     }
 
     /// <summary>
-    /// Gets all task items from the given list.
+    /// Gets all Post items from the given list.
     /// </summary>
     /// <param name="tripId"></param>
     /// <param name="userId"> id of the user making request</param>
-    /// <returns>a list of all tasks found. Empty if no tasks exist.</returns>
+    /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
     public async Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var taskItems = await context.Set<Post>().Where(t => t.TripId == tripId).ToListAsync();
+        var postItems = await context.Set<Post>().Where(t => t.TripId == tripId).ToListAsync();
+        
 
         // check for user profanity status
         var user = await context.Users.FindAsync(userId);
 
-        if (user?.ProfanityFiltering != true) return taskItems;
-
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        
-        foreach (Post task in taskItems)
-        {
-            task.Title = profanityFilter.CensorString(task.Title);
-            task.Content = profanityFilter.CensorString(task.Content);
-        }
-
-        return taskItems;
+        return postItems;
     }
 
     public async Task<Post?> GetPostAsync(int id, int userId)
@@ -137,31 +113,27 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FindAsync(userId);
-        var profanityFiltering = user?.ProfanityFiltering ?? false;
+        var PostItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
+        if (PostItem == null)
+        {
+            return null;
+        }
 
-        var taskItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
+        PostItem.Title = PostItem.Title;
+        PostItem.Content = PostItem.Content;
 
-        if (!profanityFiltering) return taskItem;
-
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        var censoredName = profanityFilter.CensorString(taskItem.Title);
-        var censoredDescription = profanityFilter.CensorString(taskItem.Content);
-
-        taskItem.Title = censoredName;
-        taskItem.Content = censoredDescription;
-
-        return taskItem;
+        return PostItem;
     }
 
     /// <summary>
-    /// Brings in an update task item request from the controller
+    /// Brings in an update Post item request from the controller
     /// Strips the name and modifies the due date to be valid
     /// Validates incoming fields
     /// Updates the content then pushes to DB.
     /// </summary>
-    /// <param name="postUpdates">Incoming Task Item Request</param>
-    /// <returns>The updated task item</returns>
-    public async Task<Post> UpdatePostAsync(UpdatePostRequest postUpdates, int userId)
+    /// <param name="postUpdates">Incoming Post Item Request</param>
+    /// <returns>The updated Post item</returns>
+    public async Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
