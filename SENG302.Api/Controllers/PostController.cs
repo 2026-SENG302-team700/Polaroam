@@ -63,7 +63,11 @@ public class PostController : ControllerBase
         {
             return BadRequest("List not provided");
         }
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You are not allowed to access this Trip's Posts!");
+        }
         var taskList = await _postService.GetPostsByTripAsync(listId, int.Parse(userIdString));
         return Ok(taskList);
     }
