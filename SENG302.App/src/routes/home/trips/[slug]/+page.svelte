@@ -7,10 +7,12 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
 
 
     let loading = $state(false);
     let error = $state("");
+    let deletionModalShown = $state(false);
     let { params } = $props();
 
     let tripObject = $state({
@@ -82,12 +84,20 @@
             loading = false;
         }
     }
+    
+    function showConfirmationModal() {
+        deletionModalShown = true;
+    }
+    
+    function hideConfirmationModal() {
+        deletionModalShown = false;
+    }
 
 </script>
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
-    <DeleteButton deleteAction={deleteTrip}/>
+    <DeleteButton deleteAction={showConfirmationModal}/>
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
         <div class="trip-head-grid">
@@ -101,10 +111,17 @@
         {:else} 
             <p>No description</p>
         {/if}
-        
     </div>
-    
 </div>
+
+<ConfirmationModal
+        bind:show={deletionModalShown}
+        message="Are you sure you want to delete this trip?"
+        option1Text="Delete"
+        option2Text="Do not delete"
+        onOption1={deleteTrip}
+        onOption2={hideConfirmationModal}
+/>
 
 <style>
     .trip-head-grid { 
