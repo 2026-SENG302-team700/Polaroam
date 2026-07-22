@@ -8,7 +8,7 @@
     type TripFormErrors = {
         title: string[];
         description: string[];
-        date: "",
+        date: string;
         generic: string;
     };
 
@@ -54,21 +54,29 @@
     <div class="date-picker-wrapper">
         <div>
             <p>From</p>
-            <Datepicker bind:value={startDate} disabled={loading} error={errors.date} />
+            <Datepicker
+                bind:value={startDate}
+                disabled={loading}
+                error={errors.date}
+            />
         </div>
         <div>
             <p>To</p>
-            <Datepicker bind:value={endDate} disabled={loading} error={errors.date}/>
+            <Datepicker
+                bind:value={endDate}
+                disabled={loading}
+                error={errors.date}
+            />
         </div>
     </div>
     {#if errors.date}
         <div class="invalid-feedback d-block mb-2">
             {errors.date}
         </div>
-        {/if}    
+    {/if}
 
     {#if errors.generic}
-        <div class="alert alert-danger" role="alert" >
+        <div class="alert alert-danger" role="alert">
             {errors.generic}
         </div>
     {/if}
