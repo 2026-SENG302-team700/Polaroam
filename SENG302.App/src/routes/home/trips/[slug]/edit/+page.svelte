@@ -17,6 +17,10 @@
 
     onMount(fetchTrip);
 
+    /**
+     * Fetches the trip from the backend corresponding
+     * with the slug value being the trip's id
+     */
     async function fetchTrip() {
         try {
             loading = true;
@@ -47,6 +51,10 @@
         }
     }
 
+    /**
+     * Updates the trip with the new values from the form.
+     * Sends a PUT request to the backend with the updated trip details.
+     */
     async function updateTrip() {
         try {
             const response = await fetchWithCsrf(
@@ -83,6 +91,13 @@
         }
     }
 
+    /**
+     * Serializes a Date object to a string in the format "YYYY-MM-DDT00:00:00".
+     * If the date is null or invalid, returns null.
+     *
+     * @param {Date | null} date - The date to serialize.
+     * @returns {string | null} The serialized date string or null.
+     */
     function serializeLocalDate(date: Date | null): string | null {
         if (!date || Number.isNaN(date.getTime())) {
             return null;
