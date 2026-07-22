@@ -43,7 +43,7 @@
             type="button"
             class="btn btn-outline-secondary"
             {disabled}
-            onclick={() => (value = new Date("9999-01-01"))}>Clear</button
+            onclick={() => { inputValue = ""; value = null; }}>Clear</button
     >
 </div>
 
