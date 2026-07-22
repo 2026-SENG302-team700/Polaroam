@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7001CreateTrip.feature.ndjson", 4);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7001CreateTrip.feature.ndjson", 6);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -200,6 +200,78 @@ namespace SENG302.Api.Tests.Acceptance.Features
 #line hidden
 #line 11
         await testRunner.ThenAsync("I see the error message \'Trip title must be between 3 and 128 characters long\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC6 -  Cannot create trip with end date before start date")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7001_As Benji I want to be able to create trips So that I have a place to put al" +
+            "l my information relating to the trip. about my workouts.")]
+        [global::Xunit.TraitAttribute("Description", "AC6 -  Cannot create trip with end date before start date")]
+        public async global::System.Threading.Tasks.Task AC6_CannotCreateTripWithEndDateBeforeStartDate()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "2";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC6 -  Cannot create trip with end date before start date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 13
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 14
+        await testRunner.GivenAsync("I am on the create trip form page And I select an end date that is before the sel" +
+                        "ected start date", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 15
+        await testRunner.WhenAsync("I click \'Create Trip\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 16
+        await testRunner.ThenAsync("the trip is not created, And I see an error message \'End date must not be before " +
+                        "the start date\' preserved and displayed in the task description", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC7 - Create trip with long description")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7001_As Benji I want to be able to create trips So that I have a place to put al" +
+            "l my information relating to the trip. about my workouts.")]
+        [global::Xunit.TraitAttribute("Description", "AC7 - Create trip with long description")]
+        public async global::System.Threading.Tasks.Task AC7_CreateTripWithLongDescription()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "3";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC7 - Create trip with long description", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 19
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 20
+        await testRunner.GivenAsync("I am on the create trip form page And I enter a long description", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 21
+        await testRunner.WhenAsync("I click \'Create Trip\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 22
+        await testRunner.ThenAsync("I see the error message \'Description must be 2048 characters or less\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

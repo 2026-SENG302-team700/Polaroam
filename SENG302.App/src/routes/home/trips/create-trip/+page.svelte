@@ -73,7 +73,7 @@
 
             goto(resolve(`/home/trips/${data.id}`));
         } catch (err) {
-            error = "Failed to create trip: " + (err as Error).message;
+            errors.generic = "Failed to create trip: " + (err as Error).message;
         } finally {
             loading = false;
         }
