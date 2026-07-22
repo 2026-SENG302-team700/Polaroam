@@ -16,6 +16,7 @@
     let error = $state("");
     let deletionModalShown = $state(false);
     let { params } = $props();
+    let tripId = params.tripId;
 
     let tripObject = $state({
         id: 0,
@@ -41,7 +42,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.tripId}` as any),
+                resolve(`/api/trip/${tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -65,14 +66,13 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post` as any),
+                resolve(`/api/post/trip/${tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
                 },
             );
             posts = await response.json();
-            console.log(posts);
         }
         catch (err) {
             error = "Failed to fetch posts: " + (err as Error).message;
@@ -90,7 +90,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "DELETE",
                     credentials: "include",

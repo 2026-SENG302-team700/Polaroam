@@ -56,7 +56,7 @@ public class PostController : ControllerBase
     /// <param name="tripId = -1"></param>
     /// <returns>The list of tasks</returns>
     [Authorize]
-    [HttpGet("{tripId:int}")]
+    [HttpGet("trip/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
     {
         if (tripId < 0)
@@ -103,9 +103,14 @@ public class PostController : ControllerBase
         }
 
     }
-
+    
+    /// <summary>
+    /// Gets a specific post by its post-Id
+    /// </summary>
+    /// <param name="id">The desired posts id</param>
+    /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
-    [HttpGet("item/{id:int}")]
+    [HttpGet("/{id:int}")]
     public async Task<ActionResult<Post>> GetPost(int id)
     {
         try
