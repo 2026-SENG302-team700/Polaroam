@@ -15,11 +15,14 @@ public class U7001CreateTrip
     private readonly AcceptanceTestFixture _fixture;
     private HttpResponseMessage? _lastResponse;
     private string _title;
+    private string _description;
 
     public U7001CreateTrip(AcceptanceTestFixture fixture)
     {
         _fixture = fixture;
         _title = "";
+        _description = "";
+        
     }
     
     [Given(
@@ -37,6 +40,7 @@ public class U7001CreateTrip
         });
         
         _title = "Test trip";
+        _description = "Test description";
         
         await context.SaveChangesAsync();
     }
@@ -46,7 +50,7 @@ public class U7001CreateTrip
     {
         NewTripRequest tripRequest = new NewTripRequest
         {
-            Title = _title, Description = "description", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
+            Title = _title, Description = _description, StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2022-01-07"),
         };
 
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/trip", tripRequest);
@@ -64,6 +68,7 @@ public class U7001CreateTrip
         retrievedTrip.Id.ShouldBe(trip.Id);
     }
     
+    // AC 3
     [Given(
         @"I am on the create trip form page And I enter a short title")]
     public async Task EnterShortTitle()
@@ -90,5 +95,33 @@ public class U7001CreateTrip
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var error = await _lastResponse.Content.ReadAsStringAsync();
         error.ShouldContain("Trip title must be between 3 and 128 characters long");
+    }
+    
+    // AC 7
+    [Given(@"I am on the create trip form page And I enter a long description")]
+    public async Task EnterLongDescriptionTitle()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        context.Users.Add(new Models.Entities.User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        
+        _description = new string('a', 2049);
+        
+        await context.SaveChangesAsync();
+    }
+    
+    [Then(@"I see the error message 'Description must be 2048 characters or less'")]
+    public async Task checkDescriptionErrorTooLong()
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain("Description must be 2048 characters or less");
     }
 }
