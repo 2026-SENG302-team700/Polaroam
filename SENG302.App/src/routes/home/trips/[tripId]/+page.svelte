@@ -123,7 +123,7 @@
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
     <AddButton path="/home/trips/{tripObject.id}/posts/create-post"/>
-    <EditButton path={`/home/trips/${params.slug}/edit`} />
+    <EditButton path={`/home/trips/${params.tripId}/edit`} />
     <DeleteButton deleteAction={showConfirmationModal} />
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
