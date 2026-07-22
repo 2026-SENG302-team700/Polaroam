@@ -14,7 +14,7 @@
     });
 
     let startDate = $state(new Date());
-    let endDate = $state(new Date("9999-03-03"));
+    let endDate = $state(new Date());
 
     /**
      * Removes all errors from the form.
@@ -86,7 +86,7 @@
     heading="Create New Trip"
     submitText="Create Trip"
     cancelPath="/home/trips"
-    {error}
+    {errors}
     {loading}
     onSubmit={createTrip}
 />
