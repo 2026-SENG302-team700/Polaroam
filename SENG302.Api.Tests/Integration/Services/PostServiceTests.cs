@@ -9,7 +9,7 @@ namespace SENG302.Api.Tests.Integration.Services;
 
 public class PostServiceTests : BaseIntegrationTestFixture
 {
-    private ITaskItemService ServiceUnderTest => ServiceProvider.GetRequiredService<ITaskItemService>();
+    private IPostService ServiceUnderTest => ServiceProvider.GetRequiredService<IPostService>();
     public PostServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
     private async Task SetupUserAndList(int userId, int listId)

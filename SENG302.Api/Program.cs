@@ -229,7 +229,7 @@ public class Program
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
-        services.AddScoped<ITaskItemService, PostService>();
+        services.AddScoped<IPostService, PostService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.

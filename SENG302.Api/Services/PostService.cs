@@ -6,7 +6,7 @@ using SENG302.Api.Resources.Helpers;
 
 namespace SENG302.Api.Services;
 
-public interface ITaskItemService
+public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId, int userId);
@@ -16,7 +16,7 @@ public interface ITaskItemService
 }
 
 
-public class PostService : ITaskItemService
+public class PostService : IPostService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
@@ -91,16 +91,18 @@ public class PostService : ITaskItemService
         }
         
         // Add task item
-        var newTask = new Post()
+        var newPost = new Post()
         {
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
             creationTime = DateTime.UtcNow,
+            Date = postRequest.Date,
+            Location = postRequest.Location
         };
-        context.Set<Post>().Add(newTask);
+        context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
-        return newTask;
+        return newPost;
     }
 
     /// <summary>

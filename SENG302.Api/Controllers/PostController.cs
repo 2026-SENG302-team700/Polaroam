@@ -15,11 +15,11 @@ namespace SENG302.Api.Controllers;
 public class PostController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly ITaskItemService _taskItemService;
+    private readonly IPostService _postService;
 
-    public PostController(ITaskItemService taskItemService, IUserService userService)
+    public PostController(IPostService postService, IUserService userService)
     {
-        _taskItemService = taskItemService;
+        _postService = postService;
         _userService = userService;
     }
 
@@ -40,7 +40,7 @@ public class PostController : ControllerBase
 
         try
         {
-            var tasks = await _taskItemService.GetAllPostsAsync(int.Parse(userIdString));
+            var tasks = await _postService.GetAllPostsAsync(int.Parse(userIdString));
             return Ok(tasks);
         }
         catch (Exception e)
@@ -64,45 +64,27 @@ public class PostController : ControllerBase
             return BadRequest("List not provided");
         }
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var taskList = await _taskItemService.GetPostsByTripAsync(listId, int.Parse(userIdString));
+        var taskList = await _postService.GetPostsByTripAsync(listId, int.Parse(userIdString));
         return Ok(taskList);
     }
 
     /// <summary>
-    /// Given a task item request object, create a new task item and add it to the db
-    /// Fails if: the task name is too short (characters) or long 128 (characters),
-    /// the description is longer than 2048 characters, the task list doesn't exist,
-    /// the status is not valid or the user is not authorised.
+    /// Given a post request object, create a new Post and add it to the db
     /// </summary>
-    /// <param name="taskItem"></param>
-    /// <returns>The list of tasks</returns>
+    /// <param name="postRequest"></param>
+    /// <returns></returns>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<Post>> CreatePost([FromBody] NewPostRequest postRequest)
     {
-        var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
+        if(user == null) return Unauthorized();
+        
         try
         {
-            if (ProfanityTools.ContainsProfanity(postRequest.Content, user.ProfanityFiltering))
-            {
-                errors["description"] = "Description cannot contain profanity.";
-            }
-            if (ProfanityTools.ContainsProfanity(postRequest.Title, user.ProfanityFiltering))
-            {
-                errors["name"] = "Name cannot contain profanity.";
-            }
-            if (errors.Count > 0)
-            {
-                return BadRequest(new BadRequestValidationResponse
-                {
-                    Errors = errors
-                });
-            }
-            var response = await _taskItemService.CreateNewPostAsync(postRequest, userId);
+            var response = await _postService.CreateNewPostAsync(postRequest, userId);
             return Ok(response);
-
         }
         catch (MultipleValidationException e)
         {
@@ -110,6 +92,10 @@ public class PostController : ControllerBase
             {
                 Errors = e.Errors
             });
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
         }
 
     }
@@ -121,7 +107,7 @@ public class PostController : ControllerBase
         try
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var response = await _taskItemService.GetPostAsync(id, userId);
+            var response = await _postService.GetPostAsync(id, userId);
             return Ok(response);
         }
         catch (Exception e)
@@ -160,7 +146,7 @@ public class PostController : ControllerBase
                 });
             }
 
-            var taskItem = await _taskItemService.UpdatePostAsync(postUpdates, userId);
+            var taskItem = await _postService.UpdatePostAsync(postUpdates, userId);
             return Ok(taskItem);
         }
         catch (Exception e)

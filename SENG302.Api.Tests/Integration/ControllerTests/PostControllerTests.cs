@@ -11,7 +11,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public PostControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
     [Fact]
-    public async Task CreateTaskItem_ValidData_Ok()
+    public async Task CreatePost_ValidData_Ok()
     {
         // Create DB
         await using var context = DbContextFactory.CreateDbContext();
@@ -42,351 +42,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
             name = "name",
             description = "test",
             dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
-            currentTaskStatus = 0
+            location = "France"
         });
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
-
-    [Theory]
-    [InlineData("aa")] // Short - exactly 2 chars
-    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")] // Long - 129 chars
-    [InlineData("")] // No string
-    [InlineData("   ")] // Made up of whitespace
-    [InlineData("Hi ")] // Padded with whitespace
-    public async Task CreateTaskItem_InvalidName_BadRequest(string name)
-    {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "test tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-        await context.SaveChangesAsync();
-
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new
-        {
-            taskListId = 1,
-            name = name,
-            description = "test",
-            dueDate = "2030-01-01",
-            currentTaskStatus = 0
-        });
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Theory]
-    [InlineData("crap")] 
-    [InlineData("in this sentence, crap is present")]
-    [InlineData("Crap")] 
-    public async Task CreateTaskItem_ProfaneNameFilterOn_BadRequest(string name)
-    {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country",
-            ProfanityFiltering = true,
-            
-        });
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "test tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-        await context.SaveChangesAsync();
-
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new
-        {
-            taskListId = 1,
-            name,
-            description = "test",
-            dueDate = "2030-01-01",
-            currentTaskStatus = 0
-        });
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Theory]
-    [InlineData("crap")] 
-    [InlineData("in this sentence, crap is present")]
-    [InlineData("Crap")] 
-    public async Task CreateTaskItem_ProfaneDescriptionFilterOn_BadRequest(string description)
-    {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country",
-            ProfanityFiltering = true,
-            
-        });
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "test tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-        await context.SaveChangesAsync();
-
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new
-        {
-            taskListId = 1,
-            name = "name",
-            description,
-            dueDate = "2030-01-01",
-            currentTaskStatus = 0
-        });
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task CreateTaskItem_NoDescription_DefaultDescriptionSet()
-    {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "test tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.PostAsJsonAsync("/api/post", new
-        {
-            taskListId = 1,
-            name = "test",
-            description = "",
-            dueDate = "2030-01-01",
-            currentTaskStatus = 0
-        });
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var taskItem = await response.Content.ReadFromJsonAsync<Post>();
-        taskItem!.Content.ShouldBe("");
-    }
-
-    [Fact]
-    public async Task CreateTaskItem_PastDate_BadRequest()
-    {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "test tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-        await context.SaveChangesAsync();
-
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new
-        {
-            taskListId = 1,
-            name = "test name",
-            description = "test",
-            dueDate = "2000-01-01",
-            currentTaskStatus = 0
-        });
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task UpdateTaskItem_Valid_ReturnsOkAndUpdatedTaskItem()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "vlad@nistor.email",
-            DisplayName = "Vlad Nistor",
-            PasswordKey = "password",
-            Country = "RO"
-        });
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-        context.Posts.Add(new Post
-        {
-            PostId = 1,
-            TripId = 1,
-            Title = "mercedes",
-            Content = "lewis hamilton f1 team",
-            CurrentStatus = CurrentTaskStatus.Todo
-        });
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.PutAsJsonAsync("/api/post/item/1", new
-        {
-            taskId = 1,
-            name = "ferrari",
-            description = "lewis hamilton new f1 team",
-            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
-            currentStatus = 1
-        });
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var task = await response.Content.ReadFromJsonAsync<Post>();
-        task!.Title.ShouldBe("ferrari");
-        task.Content.ShouldBe("lewis hamilton new f1 team");
-        task.CurrentStatus.ShouldBe(CurrentTaskStatus.InProgress);
-    }
-
-    [Theory]
-    [InlineData("aa")]
-    [InlineData("   ")]
-    [InlineData("aa    ")]
-    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
-    public async Task UpdateTaskItem_InvalidName_ReturnsBadRequest(string badName)
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "vlad@nistor.email",
-            DisplayName = "Vlad Nistor",
-            PasswordKey = "password",
-            Country = "RO"
-        });
-
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-        });
-
-        context.Posts.Add(new Post
-        {
-            PostId = 1,
-            TripId = 1,
-            Title = "goodName",
-            Content = "",
-            CurrentStatus = CurrentTaskStatus.Todo
-        });
-        await context.SaveChangesAsync();
-
-
-
-        var response = await HttpClient.PutAsJsonAsync("/api/post/item/1", new
-        {
-            taskId = 1,
-            name = badName,
-            description = "",
-            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
-            currentStatus = 1
-        });
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task UpdateTaskItem_InvalidDescription_ReturnsBadRequest()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "vlad@nistor.email",
-            DisplayName = "Vlad Nistor",
-            PasswordKey = "password",
-            Country = "RO"
-        });
-
-        context.Trips.Add(new Trip
-        {
-            Id = 1,
-            Title = "tasklist",
-            UserId = 1,
-            StartDate = new DateTime(2025, 11, 21), 
-            EndDate = new DateTime(2025, 12, 21)
-
-        });
-
-        context.Posts.Add(new Post
-        {
-            PostId = 1,
-            TripId = 1,
-            Title = "goodName",
-            Content = "",
-            CurrentStatus = CurrentTaskStatus.Todo
-        });
-        await context.SaveChangesAsync();
-
-
-
-        var response = await HttpClient.PutAsJsonAsync("/api/post/item/1", new
-        {
-            taskId = 1,
-            name = "goodName",
-            description = new string('a', 2049),
-            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
-            currentStatus = 1
-        });
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
+    
 
     [Fact]
     public async Task GetAllTasks_AuthenticatedUser_ReturnsOnlyUsersTask()
@@ -396,8 +56,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21)});
         context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My task", Content = "", CurrentStatus = CurrentTaskStatus.Todo });
-        context.Posts.Add(new Post { TripId = 2, Title = "Other task", Content = "", CurrentStatus = CurrentTaskStatus.Todo });
+        context.Posts.Add(new Post { PostId = 0, TripId = 1, Title = "My task", Content = "", Location = "location 1"});
+        context.Posts.Add(new Post { PostId = 1, TripId = 1, Title = "Ti  tle", Content = "", Location = "location 1" });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
@@ -450,7 +110,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             { 
                 PostId = 1, 
                 TripId = 1, 
-                Title = "task 1", 
+                Title = "task 1",
+                Location = "location 1",
                 Content = ""  
             },                                                                                                                            
             new Post
@@ -459,6 +120,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1, 
                 Title = "task 2", 
                 Content = "",
+                Location = "location 2"
             }
         );                                                                                                                        
         await context.SaveChangesAsync();
@@ -496,6 +158,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 PostId = 1, 
                 TripId = 1, 
                 Title = "task 1",
+                Location = "location 1",
                 Content = ""
             },
             new Post
@@ -503,6 +166,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 PostId = 2, 
                 TripId = 1, 
                 Title = "task 2",
+                Location = "location 2",
                 Content = ""
             }  
         );                                                                                                                        
