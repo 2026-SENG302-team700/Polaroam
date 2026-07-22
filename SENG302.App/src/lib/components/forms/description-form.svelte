@@ -1,18 +1,15 @@
 ﻿<script>
-    let {description = $bindable(""), error = "", loading = false, placeholder="Description" } = $props();
+    import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    let {description = $bindable(""), errors = [], loading = false, placeholder="Description" } = $props();
 </script>
 
 
 <textarea
         class="form-control mb-3"
-        class:is-invalid={error}
+        class:is-invalid={errors.length > 0}
         {placeholder}
         bind:value={description}
         disabled={loading}
         
 ></textarea>
-{#if error}
-    <div class="invalid-feedback">
-        {error}
-    </div>
-{/if}
+<ErrorDisplay errors={errors} />
