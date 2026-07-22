@@ -28,14 +28,11 @@
     }
     
     async function createPost() {
-        console.log("creating post")
-        // trim name and desciption
         title = title.trim();
         content = content.trim();
-
+        
         try {
             loading = true;
-            console.log("sending request")
 
             const response = await fetchWithCsrf(`/api/post`, {
                 method: "POST",
@@ -51,7 +48,6 @@
                 }),
                 credentials: "include",
             });
-            console.log("got response")
             const data = await response.json();
 
             if (!response.ok) {
@@ -76,7 +72,7 @@
         <TitleForm bind:name={title}/>
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
-        <DescriptionForm placeholder="Content" bind:content={content}/>
+        <DescriptionForm placeholder="Content" bind:description={content}/>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

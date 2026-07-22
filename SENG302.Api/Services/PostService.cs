@@ -61,7 +61,6 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FindAsync(userId);
-        var profanityFiltering = user?.ProfanityFiltering ?? false;
 
         // Clean request
         postRequest.Title = postRequest.Title.Trim();

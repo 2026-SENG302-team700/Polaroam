@@ -53,22 +53,22 @@ public class PostController : ControllerBase
     /// Fetches all task items associated to the id of the given list. If
     /// no list is provided, then throw a BadRequest Error.
     /// </summary>
-    /// <param name="listId = -1"></param>
+    /// <param name="tripId = -1"></param>
     /// <returns>The list of tasks</returns>
     [Authorize]
-    [HttpGet("{listId:int}")]
-    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int listId = -1)
+    [HttpGet("{tripId:int}")]
+    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
     {
-        if (listId < 0)
+        if (tripId < 0)
         {
-            return BadRequest("List not provided");
+            return BadRequest("Trip not provided");
         }
         string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
             return Unauthorized("You are not allowed to access this Trip's Posts!");
         }
-        var taskList = await _postService.GetPostsByTripAsync(listId, int.Parse(userIdString));
+        var taskList = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
         return Ok(taskList);
     }
 

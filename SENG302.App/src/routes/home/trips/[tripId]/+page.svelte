@@ -10,6 +10,7 @@
     import AddButton from "$lib/components/buttons/add-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
+    import PostSection from "$lib/components/trip-components/post-section.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -25,8 +26,11 @@
         userId: 0,
     });
 
+    let posts = $state([]);
+
     onMount(() => {
         fetchTrip();
+        fetchPosts();
     });
 
     /**
@@ -53,6 +57,27 @@
         } catch (err) {
             error = "Failed to fetch trip: " + (err as Error).message;
         } finally {
+            loading = false;
+        }
+    }
+    
+    async function fetchPosts() {
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/post` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            posts = await response.json();
+            console.log(posts);
+        }
+        catch (err) {
+            error = "Failed to fetch posts: " + (err as Error).message;
+        }
+        finally {
             loading = false;
         }
     }
@@ -114,6 +139,7 @@
             <p>No description</p>
         {/if}
     </div>
+    <PostSection posts={posts}/>
 </div>
 
 <ConfirmationModal
