@@ -6,7 +6,7 @@
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     
     let title = $state("")
-    let date: Date = $state(new Date())
+    let date = $state(new Date())
     let searchQuery = $state("")
     let content = $state("")
     
@@ -24,8 +24,8 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title}/>
-        <DatePicker bind:value={date} />
-        <SearchForm bind:query={searchQuery} placeholder="Location *"/>
+        <DatePicker bind:value={date}/>
+        <SearchForm bind:query={searchQuery} placeholder="Location"/>
         <DescriptionForm placeholder="Content" bind:content={content}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
