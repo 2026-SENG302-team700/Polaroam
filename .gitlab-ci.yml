@@ -61,6 +61,14 @@ acceptance-tests:
   variables:
     TEST_NAMESPACE: Acceptance
 
+e2e-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: E2E
+  only:
+    - dev
+    - main
+
 coverage-reporting:
   stage: coverage-report
   image: mcr.microsoft.com/dotnet/sdk:10.0
