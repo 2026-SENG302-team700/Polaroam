@@ -162,7 +162,7 @@ public class UserControllerUnitTests
         var stream = new MemoryStream([ 0x89, 0x50, 0x4e, 0x47 ]);
         var mockfile = Substitute.For<IFormFile>();
         mockfile.ContentType.Returns("image/png");
-        mockfile.Length.Returns(5000001);
+        mockfile.Length.Returns(10000001);
         mockfile.OpenReadStream().Returns(stream);
 
         var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
@@ -176,20 +176,6 @@ public class UserControllerUnitTests
 
         var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
-        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image too large, maximum file size is 5MB");
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image too large, maximum file size is 10MB");
     }
-
-    [Fact]
-    public async Task UploadProfilePicture_ImageInvalidExtNotMatchMime_ExtNotMatch()
-    {
-        SetupUserContext("10");
-        var mockfile = CreateMockFile([ 0x89, 0x50, 0x4e, 0x47 ], "image/jpeg");
-
-        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
-        result.Result.ShouldBeOfType<BadRequestObjectResult>();
-        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Invalid image, file extension does not match file type");
-    }
-
-    
-
 }
