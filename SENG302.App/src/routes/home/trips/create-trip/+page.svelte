@@ -7,9 +7,25 @@
     let loading = $state(false);
     let tripTitle = $state("");
     let tripDescription = $state("");
-    let error = $state("");
+    let errors = $state({
+        title: [],
+        description: [],
+        generic: "",
+    });
+
     let startDate = $state(new Date());
     let endDate = $state(new Date("9999-03-03"));
+
+    /**
+     * Removes all errors from the form.
+     */
+    function clearErrors() {
+        errors = {
+            title: [],
+            description: [],
+            generic: "",
+        };
+    }
 
     /**
      * Validates and submits a new trip to the API, then navigates to it.
@@ -26,11 +42,7 @@
         tripTitle = tripTitle.trim();
         tripDescription = tripDescription.trim();
 
-        // validate information (started but realised this wasnt my task so left it here)
-        if (tripTitle == "") {
-            error = "Trip name required";
-            return;
-        }
+        clearErrors();
 
         try {
             loading = true;
@@ -51,15 +63,14 @@
             const data = await response.json();
 
             if (!response.ok) {
-                error =
-                    `Failed to create list: ${data}` ||
-                    "Failed to create list.";
+                errors.title = data.errors?.title ?? [];
+                errors.description = data.errors?.description ?? [];
                 return;
             }
 
             goto(resolve(`/home/trips/${data.id}`));
         } catch (err) {
-            error = "Failed to create trip: " + (err as Error).message;
+            errors.generic = "Failed to create trip: " + (err as Error).message;
         } finally {
             loading = false;
         }

@@ -5,6 +5,12 @@
     import DescriptionForm from "./description-form.svelte";
     import TitleForm from "./title-form.svelte";
 
+    type TripFormErrors = {
+        title: string[];
+        description: string[];
+        generic: string;
+    };
+
     let {
         title = $bindable(""),
         description = $bindable(""),
@@ -13,7 +19,11 @@
         heading,
         submitText,
         cancelPath,
-        error = "",
+        errors = {
+            title: [],
+            description: [],
+            generic: "",
+        },
         loading = false,
         onSubmit,
     }: {
@@ -24,7 +34,7 @@
         heading: string;
         submitText: string;
         cancelPath: string;
-        error?: string;
+        errors?: TripFormErrors;
         loading?: boolean;
         onSubmit: () => void | Promise<void>;
     } = $props();
@@ -36,8 +46,8 @@
         <h1 class="text-center mb-4">{heading}</h1>
     </div>
 
-    <TitleForm bind:name={title} type="trip" {loading} />
-    <DescriptionForm bind:description {loading} />
+    <TitleForm bind:name={title} type="trip" errors={errors.title} {loading} />
+    <DescriptionForm bind:description errors={errors.description} {loading} />
 
     <div class="date-picker-wrapper">
         <div>
@@ -50,8 +60,10 @@
         </div>
     </div>
 
-    {#if error}
-        <div class="alert alert-danger" role="alert">{error}</div>
+    {#if errors.generic}
+        <div class="alert alert-danger" role="alert">
+            {errors.generic}
+        </div>
     {/if}
 
     <div class="flex justify-end">

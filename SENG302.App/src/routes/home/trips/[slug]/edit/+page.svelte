@@ -60,8 +60,8 @@
                         Id: Number(params.slug),
                         Title: tripTitle,
                         Description: tripDescription,
-                        StartDate: startDate,
-                        EndDate: endDate,
+                        StartDate: serializeLocalDate(startDate),
+                        EndDate: serializeLocalDate(endDate),
                     }),
                     credentials: "include",
                 },
@@ -81,6 +81,18 @@
         } finally {
             loading = false;
         }
+    }
+
+    function serializeLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}T00:00:00`;
     }
 </script>
 
