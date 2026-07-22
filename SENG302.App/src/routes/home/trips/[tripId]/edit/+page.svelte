@@ -58,14 +58,14 @@
     async function updateTrip() {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        Id: Number(params.slug),
+                        Id: Number(params.tripId),
                         Title: tripTitle,
                         Description: tripDescription,
                         StartDate: serializeLocalDate(startDate),
@@ -83,7 +83,7 @@
                 return;
             }
 
-            goto(resolve(`/home/trips/${params.slug}`));
+            goto(resolve(`/home/trips/${params.tripId}`));
         } catch (err) {
             error = `Failed to update trip: ${err}` || "Failed to update trip.";
         } finally {
@@ -118,8 +118,8 @@
     bind:endDate
     heading="Edit Trip"
     submitText="Save Changes"
-    cancelPath={`/home/trips/${params.slug}`}
-    {error}
+    cancelPath={`/home/trips/${params.tripId}`}
+    errors={error}
     {loading}
     onSubmit={updateTrip}
 />
