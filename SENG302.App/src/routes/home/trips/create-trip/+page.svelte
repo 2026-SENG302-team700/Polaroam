@@ -1,9 +1,5 @@
 <script lang="ts">
-    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
-    import CreationButton from "$lib/components/buttons/creation-button.svelte";
-    import DescriptionForm from "$lib/components/forms/description-form.svelte";
-    import TitleForm from "$lib/components/forms/title-form.svelte";
-    import Datepicker from "$lib/datepicker/datepicker.svelte";
+    import TripForm from "$lib/components/forms/trip-form.svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "../../../../lib/csrf";
@@ -14,11 +10,12 @@
     let errors = $state({
         title: [],
         description: [],
-        generic: ""
+        date: "",
+        generic: "",
     });
 
     let startDate = $state(new Date());
-    let endDate = $state(new Date("9999-03-03"));
+    let endDate = $state(new Date());
 
     /**
      * Removes all errors from the form.
@@ -26,7 +23,9 @@
     function clearErrors() {
         errors = {
             title: [],
-            generic: ""
+            description: [],
+            date: "",
+            generic: "",
         };
     }
 
@@ -46,7 +45,8 @@
         tripTitle = tripTitle.trim();
         tripDescription = tripDescription.trim();
 
-        clearErrors()
+        clearErrors();
+
         try {
             loading = true;
 
@@ -64,60 +64,32 @@
                 credentials: "include",
             });
             const data = await response.json();
-            
+
             if (!response.ok) {
                 errors.title = data.errors?.title ?? [];
                 errors.description = data.errors?.description ?? [];
+                errors.date = data.errors?.dates ?? "";
                 return;
             }
 
             goto(resolve(`/home/trips/${data.id}`));
         } catch (err) {
-            error = "Failed to create trip: " + (err as Error).message;
+            errors.generic = "Failed to create trip: " + (err as Error).message;
         } finally {
             loading = false;
         }
     }
 </script>
 
-<div class="container max-w-md">
-    <!-- IMPORTANT!! When our UI spike is approved, please go through all used components and change them to use the spiked library -->
-    <div>
-        <div style="display: flex; flex-direction: row;">
-            <div>
-                <CancelButton path={"/home/trips"} />
-            </div>
-            <h1
-                class="text-center mb-4"
-                style="flex: 1; justify-content: center"
-            >
-                Create New Trip
-            </h1>
-        </div>
-
-        <div>
-            <TitleForm bind:name={tripTitle} errors={errors.title} />
-            <DescriptionForm bind:description={tripDescription} errors={errors.description} />
-            <div class="date-picker-wrapper">
-                <div>
-                    <p>From</p>
-                    <Datepicker bind:value={startDate} />
-                </div>
-                <div>
-                    <p>To</p>
-                    <Datepicker bind:value={endDate} />
-                </div>
-            </div>
-            <div class="flex justify-end">
-                <CreationButton onClick={createTrip} text={"Create Trip"} />
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-    .date-picker-wrapper {
-        display: grid;
-        grid-template-columns: 50% 50%;
-    }
-</style>
+<TripForm
+    bind:title={tripTitle}
+    bind:description={tripDescription}
+    bind:startDate
+    bind:endDate
+    heading="Create New Trip"
+    submitText="Create Trip"
+    cancelPath="/home/trips"
+    {errors}
+    {loading}
+    onSubmit={createTrip}
+/>
