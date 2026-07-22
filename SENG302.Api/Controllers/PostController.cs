@@ -101,7 +101,6 @@ public class PostController : ControllerBase
         {
             return BadRequest(e.Message);
         }
-
     }
     
     /// <summary>
@@ -110,7 +109,7 @@ public class PostController : ControllerBase
     /// <param name="id">The desired posts id</param>
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
-    [HttpGet("/{id:int}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Post>> GetPost(int id)
     {
         try

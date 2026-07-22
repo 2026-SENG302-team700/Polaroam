@@ -73,14 +73,15 @@ public class U7004CreatePost
     }
 
     [Then(@"the post is persisted")]
-    public async Task checkPostIsPersisted()
+    public async Task CheckPostIsPersisted()
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var post = _lastResponse.Content.ReadFromJsonAsync<Post>();
-
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.Id}");
         
-        retrievedPost.PostId.ShouldBe(post.Id);
+        var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}");
+        
+        retrievedPost.PostId.ShouldBe(post.PostId);
     }
 }
