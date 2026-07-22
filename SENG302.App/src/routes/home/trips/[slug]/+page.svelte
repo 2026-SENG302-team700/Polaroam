@@ -7,6 +7,7 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import AddButton from "$lib/components/buttons/add-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
 
@@ -29,7 +30,7 @@
     });
 
     /**
-     * Fetches the trip from the backend corresponding
+     * Fetches the trip from the backend corresponding 
      * with the slug value being the trip's id
      */
     async function fetchTrip() {
@@ -57,7 +58,7 @@
     }
 
     /**
-     * Deletes the trip from the backend corresponding
+     * Deletes the trip from the backend corresponding 
      * with the slug value being the trip's id
      */
     async function deleteTrip() {
@@ -96,6 +97,7 @@
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
+    <AddButton path="/home/trips/{tripObject.id}/posts/create-post"/>
     <EditButton path={`/home/trips/${params.slug}/edit`} />
     <DeleteButton deleteAction={showConfirmationModal} />
     <ErrorDisplay errors={[error]} />
@@ -103,9 +105,7 @@
         <div class="trip-head-grid">
             <h1>{tripObject.title}</h1>
             <p class="date-object">
-                {formatDate(tripObject.startDate)} - {formatDate(
-                    tripObject.endDate,
-                )}
+                {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
             </p>
         </div>
         {#if tripObject.description.length > 0}
@@ -126,12 +126,13 @@
 />
 
 <style>
-    .trip-head-grid {
-        align-items: end;
+    .trip-head-grid { 
+        align-items:end;
         display: flex;
     }
     .date-object {
         margin-left: 10px;
         bottom: 0;
     }
+
 </style>
