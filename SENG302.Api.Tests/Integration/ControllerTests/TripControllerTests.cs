@@ -35,7 +35,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         Title = "Test Trip",
         Description = "Test",
-        StartDate = new DateTime(2025, 11, 21),
+        StartDate = new DateTime(2025, 11, 21), 
         EndDate = new DateTime(2025, 12, 21)
     };
 
@@ -57,7 +57,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "T",
             Description = "Test",
-            StartDate = new DateTime(2025, 11, 21),
+            StartDate = new DateTime(2025, 11, 21), 
             EndDate = new DateTime(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
@@ -66,7 +66,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         message.ShouldContain("Trip title must be between 3 and 128 characters long");
     }
-
+    
 
     [Fact]
     public async Task CreateTrip_NonExistentUser_ReturnBadRequest()
@@ -98,8 +98,46 @@ public class TripControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         message.ShouldContain("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
+    
+    [Fact]
+    public async Task CreateTrip_EndDateBeforeStartDate_ReturnBadRequest()
+    {
+        await AddTestUser();
 
+        var data = new NewTripRequest
+        {
+            Title = "Trip!",
+            Description = "Test",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 10, 21)
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        var message = await response.Content.ReadAsStringAsync();
 
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        message.ShouldContain("End date must not be before the start date");
+    }
+    
+    [Fact]
+    public async Task CreateTrip_DatesAreNull_ReturnBadRequest()
+    {
+        await AddTestUser();
+
+        var data = new NewTripRequest
+        {
+            Title = "Trip!",
+            Description = "Test",
+            StartDate = null, 
+            EndDate = null
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        var message = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        message.ShouldContain("Dates cannot be empty!");
+    }
+    
+        
     [Fact]
     public async Task FetchTripsByUser_SuccessfulFetch_ReturnsTaskLists()
     {

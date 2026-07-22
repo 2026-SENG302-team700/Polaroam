@@ -48,6 +48,28 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
     {
         await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
     }
+    
+    [Fact]
+    public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowsArgumentException()
+    {
+        NewTripRequest newTripRequest = new NewTripRequest
+        {
+            Title = "test trip", Description = "Description", StartDate = new DateTime(2022, 12, 29), EndDate = new DateTime(2022, 11, 30),
+        };
+        
+        await Should.ThrowAsync<MultipleValidationListException>(async () => await _tripService.CreateNewTripAsync(newTripRequest, -1));
+    }
+    
+    [Fact]
+    public async Task CreateNewTrip_NullDates_ThrowsArgumentException()
+    {
+        NewTripRequest newTripRequest = new NewTripRequest
+        {
+            Title = "test trip", Description = "Description", StartDate = null, EndDate = null,
+        };
+        
+        await Should.ThrowAsync<MultipleValidationListException>(async () => await _tripService.CreateNewTripAsync(newTripRequest, -1));
+    }
 
     [Fact]
     public async Task CreateNewTrip_TripExists_Success()

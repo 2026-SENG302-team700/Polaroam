@@ -111,6 +111,55 @@ public class TripServiceTests : BaseIntegrationTestFixture
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
     }
+    
+    [Fact]
+    public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowValidationException()
+    {
+        // Add a user to the database with the email that we are testing with
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        NewTripRequest tripRequest = new NewTripRequest
+        {
+            Title = "title", Description = "Test", StartDate = DateTime.Parse("2022-01-01"), EndDate = DateTime.Parse("2021-12-29"),
+        };
+        
+        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
+    }
+    
+    [Fact]
+    public async Task CreateNewTrip_NullDates_ThrowValidationException()
+    {
+        // Add a user to the database with the email that we are testing with
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        NewTripRequest tripRequest = new NewTripRequest
+        {
+            Title = "title", Description = "Test", StartDate = null, EndDate = null,
+        };
+        
+        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
+    }
+
 
     [Fact]
     public async Task GetTripByUserEmailAsync_RetreiveUsersTrips_Success()
