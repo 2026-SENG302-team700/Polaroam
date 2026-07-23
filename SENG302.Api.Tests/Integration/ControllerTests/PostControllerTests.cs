@@ -136,8 +136,6 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         var response = await HttpClient.PutAsync("/api/post/images", content);
         var photoIds = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(photoIds);
-        Debug.WriteLine(photoIds);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         photoIds.ShouldBe("[1]");
         

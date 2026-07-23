@@ -183,7 +183,7 @@ public class PostController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized("You do not have authorisation to change this profile picture!");
+            return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
         
         var userId = int.Parse(userIdString);
@@ -193,6 +193,11 @@ public class PostController : ControllerBase
         {
             return NotFound("User not found");
         }
+
+        var post = await _postService.GetPostAsync(int.Parse(postId), userId);
+        
+        
+        
         
         
         List<int> customFileIds = [];
@@ -200,7 +205,6 @@ public class PostController : ControllerBase
         for (int i = 0; i < files.Count; i++)
         {
             IFormFile file = files[i];
-            Console.WriteLine("\n\n\n\n" + "File " + files + "\n\n\n\n");
             
             if (!ImageValidationTools.IsValidFilesize(file))
             {
