@@ -56,7 +56,7 @@ public class TripValidator
         }
         return errors;
     }
-    
+
     /// <summary>
     /// Validates the trip title by checking length
     /// </summary>
@@ -66,14 +66,14 @@ public class TripValidator
     {
         var errors = new Dictionary<string, List<string>>();
         errors["description"] = new List<string>();
-        
+
         if (description.Length > 2048)
         {
             errors["description"].Add("Description must be 2048 characters or less");
         }
         return errors;
     }
-    
+
     /// <summary>
     /// Validates that the start date is before the end dates and that the dates are not null
     /// </summary>
@@ -84,7 +84,7 @@ public class TripValidator
     {
         var errors = new Dictionary<string, List<string>>();
         errors["dates"] = new List<string>();
-        
+
         if (startDate > endDate)
         {
             errors["dates"].Add("End date must not be before the start date");
@@ -92,10 +92,10 @@ public class TripValidator
 
         if (startDate == null || endDate == null)
         {
-            errors["dates"].Add("Dates cannot be empty!");
+            errors["dates"].Add("Invalid date, date must be formatted DD/MM/YYYY");
         }
 
         return errors;
     }
-    
+
 }

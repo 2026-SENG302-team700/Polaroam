@@ -12,15 +12,7 @@
     } = $props();
 
     let datePicker: HTMLInputElement | undefined = $state();
-    
-    let inputValue = $state(value ? value.toISOString().slice(0, 10) : "");
 
-    $effect(() => {
-        if (inputValue) {
-            value = new Date(inputValue);
-        }
-    });
-    
     onMount(() => {
         if (datePicker)
             datePicker.addEventListener("invalid", function (event) {
@@ -56,18 +48,21 @@
 
 <div class="date-form-wrapper input-group w-auto">
     <input
-            type="date"
-            class="form-control"
-            class:is-invalid={error}
-            bind:value={inputValue}
-            bind:this={datePicker}
-            {disabled}
+        type="date"
+        class="form-control"
+        class:is-invalid={error}
+        value={toInputDate(value)}
+        oninput={handleInput}
+        bind:this={datePicker}
+        {disabled}
     />
     <button
-            type="button"
-            class="btn btn-outline-secondary"
-            {disabled}
-            onclick={() => { inputValue = ""; value = null; }}>Clear</button
+        type="button"
+        class="btn btn-outline-secondary"
+        {disabled}
+        onclick={() => {
+            value = null;
+        }}>Clear</button
     >
 </div>
 

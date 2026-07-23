@@ -82,7 +82,7 @@ public class TripService : ITripService
                 errors[field] = errorList;
             }
         }
-        
+
         foreach (var (field, errorList) in TripValidator.ValidateDescription(trip.Description))
         {
             if (errorList.Count > 0)
@@ -90,7 +90,7 @@ public class TripService : ITripService
                 errors[field] = errorList;
             }
         }
-        
+
         foreach (var (field, errorList) in TripValidator.ValidateDates(trip.StartDate, trip.EndDate))
         {
             if (errorList.Count > 0)
@@ -190,8 +190,24 @@ public class TripService : ITripService
             throw new ArgumentException("trip with the provided ID does not exist.");
         }
 
-        // TODO: add validation
+        var startDate = tripRequest.StartDate ?? trip.StartDate;
+        var endDate = tripRequest.EndDate ?? trip.EndDate;
 
+        var errors = new Dictionary<string, List<string>>();
+
+        // TODO: add other validation
+        foreach (var (field, errorList) in TripValidator.ValidateDates(tripRequest.StartDate, tripRequest.EndDate))
+        {
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
+        }
+
+        if (errors.Any(e => e.Value.Count > 0))
+        {
+            throw new MultipleValidationListException(errors);
+        }
 
         // Update the trip
         if (!string.IsNullOrEmpty(tripRequest.Title))

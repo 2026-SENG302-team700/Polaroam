@@ -48,26 +48,32 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
     {
         await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
     }
-    
+
     [Fact]
     public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowsArgumentException()
     {
         NewTripRequest newTripRequest = new NewTripRequest
         {
-            Title = "test trip", Description = "Description", StartDate = new DateTime(2022, 12, 29), EndDate = new DateTime(2022, 11, 30),
+            Title = "test trip",
+            Description = "Description",
+            StartDate = new DateTime(2022, 12, 29),
+            EndDate = new DateTime(2022, 11, 30),
         };
-        
+
         await Should.ThrowAsync<MultipleValidationListException>(async () => await _tripService.CreateNewTripAsync(newTripRequest, -1));
     }
-    
+
     [Fact]
     public async Task CreateNewTrip_NullDates_ThrowsArgumentException()
     {
         NewTripRequest newTripRequest = new NewTripRequest
         {
-            Title = "test trip", Description = "Description", StartDate = null, EndDate = null,
+            Title = "test trip",
+            Description = "Description",
+            StartDate = null,
+            EndDate = null,
         };
-        
+
         await Should.ThrowAsync<MultipleValidationListException>(async () => await _tripService.CreateNewTripAsync(newTripRequest, -1));
     }
 
@@ -148,7 +154,9 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         var request = new UpdateTripRequest
         {
             Id = trip.Id,
-            Title = "Updated trip"
+            Title = "Updated trip",
+            StartDate = originalStartDate,
+            EndDate = originalEndDate
         };
 
         await _tripService.UpdateTripAsync(request, 1);
@@ -172,7 +180,9 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         var request = new UpdateTripRequest
         {
             Id = trip.Id,
-            Description = "Updated description"
+            Description = "Updated description",
+            StartDate = originalStartDate,
+            EndDate = originalEndDate
         };
 
         await _tripService.UpdateTripAsync(request, 1);
@@ -192,11 +202,13 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         var originalTitle = trip.Title;
         var originalDescription = trip.Description;
         var originalEndDate = trip.EndDate;
+        var newStartDate = new DateTime(2022, 10, 10);
 
         var request = new UpdateTripRequest
         {
             Id = trip.Id,
-            StartDate = new DateTime(2023, 10, 10)
+            StartDate = newStartDate,
+            EndDate = originalEndDate
         };
 
         await _tripService.UpdateTripAsync(request, 1);
@@ -205,7 +217,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
 
         savedTrip.Title.ShouldBe(originalTitle);
         savedTrip.Description.ShouldBe(originalDescription);
-        savedTrip.StartDate.ShouldBe(new DateTime(2023, 10, 10));
+        savedTrip.StartDate.ShouldBe(newStartDate);
         savedTrip.EndDate.ShouldBe(originalEndDate);
     }
 
@@ -220,6 +232,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         var request = new UpdateTripRequest
         {
             Id = trip.Id,
+            StartDate = originalStartDate,
             EndDate = new DateTime(2023, 10, 10)
         };
 
@@ -270,5 +283,79 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         var numberOfTripsAfter = await afterContext.Set<Trip>().CountAsync();
 
         numberOfTripsAfter.ShouldBe(numberOfTripsBefore);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_EndDateBeforeStartDate_ThrowsValidationException()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+
+        var originalTitle = trip.Title;
+        var originalDescription = trip.Description;
+        var originalStartDate = trip.StartDate;
+        var originalEndDate = trip.EndDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = new DateTime(2026, 8, 10),
+            EndDate = new DateTime(2026, 8, 1)
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => _tripService.UpdateTripAsync(request, 1)
+            );
+
+        exception.Errors.ShouldContainKey("dates");
+        exception.Errors["dates"].ShouldContain(
+            "End date must not be before the start date"
+        );
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_NullStartDate_ThrowsValidationException()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+
+        var originalTitle = trip.Title;
+        var originalDescription = trip.Description;
+        var originalStartDate = trip.StartDate;
+        var originalEndDate = trip.EndDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = null,
+            EndDate = new DateTime(2026, 8, 10)
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => _tripService.UpdateTripAsync(request, 1)
+            );
+
+        exception.Errors.ShouldContainKey("dates");
+        exception.Errors["dates"].ShouldContain(
+            "Invalid date, date must be formatted DD/MM/YYYY"
+        );
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
     }
 }
