@@ -56,7 +56,7 @@ public class U7004CreatePost
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
-        _date = DateTime.Parse("2028-01-07");
+        _date = DateTime.Parse("2022-01-07");
 
 
     }

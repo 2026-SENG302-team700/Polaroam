@@ -88,7 +88,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New post",
             Content = "Some description",
             Location = "Some location",
-            Date = DateTime.UtcNow.AddDays(2),
+            Date = DateTime.UtcNow.AddDays(-1)
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request);
