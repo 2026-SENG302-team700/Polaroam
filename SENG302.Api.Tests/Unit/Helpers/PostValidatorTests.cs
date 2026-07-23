@@ -26,4 +26,19 @@ public class PostValidatorTests
         errors.Count.ShouldBe(1);
         errors[0].ShouldContain("Invalid date, date must be formatted ");   
     }
+
+    [Fact]
+    public async Task ValidatePostContent_NoContentDisallowed_ReturnCorrectError()
+    {
+        var errrors = PostValidator.ValidatePostContent("", false);
+        errrors.Count.ShouldBe(1);
+        errrors[0].ShouldContain("Post contains no content, are you sure you want to create post?");
+    }
+    
+    [Fact]
+    public async Task ValidatePostContent_NoContentAllowed_ReturnCorrectError()
+    {
+        var errrors = PostValidator.ValidatePostContent("", true);
+        errrors.Count.ShouldBe(0);
+    }
 }

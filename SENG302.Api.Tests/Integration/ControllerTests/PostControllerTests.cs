@@ -165,4 +165,63 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+    
+    [Fact]
+    public async Task CreatePost_NoContentAndNotAllowed_Ok()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            Location = "France",
+            Date = DateTime.Now,
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+    
+    [Fact]
+    public async Task CreatePost_NoContentAndAllowed_Ok()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            Location = "France",
+            Date = DateTime.Now,
+            NoContentAllowed = true
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
