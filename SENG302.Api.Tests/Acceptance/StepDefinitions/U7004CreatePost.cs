@@ -27,7 +27,7 @@ public class U7004CreatePost
         _location = "";
 
     }
-    
+
     [Given(
         @"I am on the create post form And I enter a valid title, location, date, and optional content")]
     public async Task ValidTripAttributes()
@@ -52,35 +52,41 @@ public class U7004CreatePost
             UserId = 1
         });
         await context.SaveChangesAsync();
-        
+
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
         _date = DateTime.Parse("2028-01-07");
-        
-        
+
+
     }
-    
+
     [When(@"I click 'Create Post'")]
     public async Task CreatePost()
     {
         NewPostRequest postRequest = new NewPostRequest()
         {
-            TripId = 1, Title = _title, Content = _content, Location = _location, Date = _date
+            TripId = 1,
+            Title = _title,
+            Content = _content,
+            Location = _location,
+            Date = _date
         };
 
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/post", postRequest);
     }
 
     [Then(@"the post is persisted")]
-    public async Task checkPostIsPersisted()
+    public async Task CheckPostIsPersisted()
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var post = _lastResponse.Content.ReadFromJsonAsync<Post>();
 
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.Id}");
-        
-        retrievedPost.PostId.ShouldBe(post.Id);
+        var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}");
+
+        retrievedPost.ShouldNotBeNull();
+        retrievedPost.PostId.ShouldBe(post.PostId);
     }
 }

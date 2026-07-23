@@ -23,9 +23,9 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Fetchs all the task items for the current user
+    /// Fetchs all the posts for the current user
     /// </summary>
-    /// <returns>All tasks belonging to that user</returns>
+    /// <returns>All posts belonging to that user</returns>
     [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
@@ -39,8 +39,8 @@ public class PostController : ControllerBase
 
         try
         {
-            var tasks = await _postService.GetAllPostsAsync(int.Parse(userIdString));
-            return Ok(tasks);
+            var posts = await _postService.GetAllPostsAsync(int.Parse(userIdString));
+            return Ok(posts);
         }
         catch (Exception e)
         {
@@ -60,11 +60,11 @@ public class PostController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
-        if(user == null) return Unauthorized();
-        
+        if (user == null) return Unauthorized();
+
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, userId);
+            var response = await _postService.CreateNewPostAsync(postRequest);
             return Ok(response);
         }
         catch (MultipleValidationException e)
@@ -78,22 +78,20 @@ public class PostController : ControllerBase
         {
             return BadRequest(e.Message);
         }
-
     }
-    
+
     /// <summary>
-    /// Gets a specific post by its post-Id
+    /// Gets a specific post by its post id
     /// </summary>
-    /// <param name="id">The desired posts id</param>
+    /// <param name="id">The desired post's id</param>
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
-    [HttpGet("/{id:int}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Post>> GetPost(int id)
     {
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var response = await _postService.GetPostAsync(id, userId);
+            var response = await _postService.GetPostAsync(id);
             return Ok(response);
         }
         catch (Exception e)
@@ -103,16 +101,16 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Given a request to update a task, it will send a request to update that task
-    /// to the TaskItem Service
+    /// Given a request to update a post, it will send a request to update that post
+    /// to the PostService
     /// </summary>
-    /// <param name="postUpdates">updated values for a task item</param>
+    /// <param name="postUpdates">updated values for a post</param>
     /// <returns>
-    /// The updated task item if ok
+    /// The updated post if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
-    [HttpPut("item/{id:int}")]
+    [HttpPut("{id:int}")]
     public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
     {
         var errors = new Dictionary<string, string>();
@@ -126,8 +124,9 @@ public class PostController : ControllerBase
                     Errors = errors
                 });
             }
-            var taskItem = await _postService.UpdatePostAsync(postUpdates, userId);
-            return Ok(taskItem);
+
+            var post = await _postService.UpdatePostAsync(postUpdates);
+            return Ok(post);
         }
         catch (Exception e)
         {

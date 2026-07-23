@@ -12,7 +12,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     private IPostService ServiceUnderTest => ServiceProvider.GetRequiredService<IPostService>();
     public PostServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
-    private async Task SetupUserAndTrip(int userId, int listId)
+    private async Task SetupUserAndTrip(int userId, int tripId)
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
@@ -25,7 +25,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         });
         context.Trips.Add(new Trip
         {
-            Id = listId,
+            Id = tripId,
             Title = "Test List",
             UserId = userId,
             Description = "Test",
@@ -36,7 +36,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task GetAllPostsAsync_NoPosts_returnsEmpty()
+    public async Task GetAllPostsAsync_NoPosts_ReturnsEmpty()
     {
         await SetupUserAndTrip(1, 1);
         var posts = await ServiceUnderTest.GetAllPostsAsync(1);
@@ -44,9 +44,9 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task GetAllPostsAsync_WithTasks_ReturnsOnlyUsersTask()
+    public async Task GetAllPostsAsync_WithPosts_ReturnsOnlyUsersPost()
     {
-        // setup two users and a task
+        // setup two users and a trip
         await SetupUserAndTrip(1, 1);
         await SetupUserAndTrip(2, 2);
 
@@ -54,7 +54,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 1,
-            Title = "User 1 task",
+            Title = "User 1 post",
             Content = "desc",
             Location = "location",
             Date = DateTime.UtcNow,
@@ -63,7 +63,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 2,
-            Title = "User 2 task",
+            Title = "User 2 post",
             Content = "desc",
             Location = "location",
             Date = DateTime.UtcNow,
@@ -74,32 +74,32 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var posts = await ServiceUnderTest.GetAllPostsAsync(1);
 
         posts.Count().ShouldBe(1);
-        posts.First().Title.ShouldBe("User 1 task");
+        posts.First().Title.ShouldBe("User 1 post");
     }
 
     [Fact]
-    public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedTask()
+    public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedPost()
     {
         await SetupUserAndTrip(1, 1);
 
         var request = new NewPostRequest
         {
             TripId = 1,
-            Title = "New task",
+            Title = "New post",
             Content = "Some description",
             Location = "Some location",
             Date = DateTime.UtcNow.AddDays(2),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request);
 
-        post.Title.ShouldBe("New task");
+        post.Title.ShouldBe("New post");
         post.TripId.ShouldBe(1);
     }
 
 
     [Fact]
-    public async Task GetPostAsync_ValidId_ReturnsTask()
+    public async Task GetPostAsync_ValidId_ReturnsPost()
     {
         await SetupUserAndTrip(1, 1);
 
@@ -116,7 +116,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(post);
         await context.SaveChangesAsync();
 
-        var result = await ServiceUnderTest.GetPostAsync(post.PostId, 1);
+        var result = await ServiceUnderTest.GetPostAsync(post.PostId);
 
         result.ShouldNotBeNull();
         result.Title.ShouldBe("Fetch me");
@@ -125,7 +125,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPostAsync_InvalidId_ReturnsNull()
     {
-        var result = await ServiceUnderTest.GetPostAsync(-1, 1);
+        var result = await ServiceUnderTest.GetPostAsync(-1);
         result.ShouldBeNull();
     }
 }

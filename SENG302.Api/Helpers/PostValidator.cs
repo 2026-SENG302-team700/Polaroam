@@ -1,7 +1,8 @@
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Interfaces;
 
-public class PostValidator {
+public class PostValidator
+{
 
     /// <summary>
     /// Checks the due date is valid
@@ -11,13 +12,7 @@ public class PostValidator {
     public static Dictionary<string, string> ValidatePostDate(DateTime? date)
     {
         var errors = new Dictionary<string, string>();
-        DateTime currentTime = DateTime.UtcNow;
-
-        if (date != null && currentTime > date)
-        {
-            errors["dueDate"] = "Invalid due date, date must be in the future";
-        }
-
+        // Body removed, awaiting implementation in a different task.
         return errors;
     }
 
@@ -30,7 +25,8 @@ public class PostValidator {
     /// <param name="post"></param>
     /// <param name="profanityFiltering"></param>
     /// <returns>Dictionary<string, string></returns>
-    public static Dictionary<string, string> ValidatePostFields(IPostRequest postRequest, Post? post = null) {
+    public static Dictionary<string, string> ValidatePostFields(IPostRequest postRequest, Post? post = null)
+    {
         var errors = new Dictionary<string, string>();
 
         foreach (var (key, value) in ValidatePostTitle(postRequest.Title))
@@ -55,7 +51,7 @@ public class PostValidator {
 
 
     /// <summary>
-    /// Checks the task item name is valid, returns nothing if valid
+    /// Checks the post name is valid, returns nothing if valid
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="title">The name being tested</param>
