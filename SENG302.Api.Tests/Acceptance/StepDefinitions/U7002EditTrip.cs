@@ -76,6 +76,76 @@ public class U7002EditTrip
         );
     }
 
+    [When("I update the trip with an end date before the start date")]
+    public async Task WhenIUpdateTheTripWithAnEndDateBeforeTheStartDate()
+    {
+        _originalTrip.ShouldNotBeNull();
+
+        var request = new UpdateTripRequest
+        {
+            Id = _originalTrip.Id,
+            Title = "Invalid updated trip",
+            Description = "This should not be persisted",
+            StartDate = new DateTime(2026, 8, 10),
+            EndDate = new DateTime(2026, 8, 1)
+        };
+
+        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
+            $"api/trip/{_originalTrip.Id}",
+            request
+        );
+    }
+
+    [When("I update the trip with an empty start date")]
+    public async Task WhenIUpdateTheTripWithAnEmptyStartDate()
+    {
+        _originalTrip.ShouldNotBeNull();
+
+        var request = new UpdateTripRequest
+        {
+            Id = _originalTrip.Id,
+            Title = "Invalid updated trip",
+            Description = "This should not be persisted",
+            StartDate = null,
+            EndDate = new DateTime(2026, 8, 10)
+        };
+
+        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
+            $"api/trip/{_originalTrip.Id}",
+            request
+        );
+    }
+
+    [Then("the trip is not updated")]
+    public async Task ThenTheTripIsNotUpdated()
+    {
+        _originalTrip.ShouldNotBeNull();
+        _lastResponse.ShouldNotBeNull();
+
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var savedTrip = await _fixture.HttpClient.GetFromJsonAsync<Trip>(
+            $"api/trip/{_originalTrip.Id}"
+        );
+
+        savedTrip.ShouldNotBeNull();
+        savedTrip.Title.ShouldBe(_originalTrip.Title);
+        savedTrip.Description.ShouldBe(_originalTrip.Description);
+        savedTrip.StartDate.ShouldBe(_originalTrip.StartDate);
+        savedTrip.EndDate.ShouldBe(_originalTrip.EndDate);
+    }
+
+    [Then(@"I see the edit trip error message ""(.*)""")]
+    public async Task ThenISeeTheEditTripErrorMessage(string expectedMessage)
+    {
+        _lastResponse.ShouldNotBeNull();
+
+        var responseBody =
+            await _lastResponse.Content.ReadAsStringAsync();
+
+        responseBody.ShouldContain(expectedMessage);
+    }
+
     [Then("the changes to the trip are persisted")]
     public async Task ThenTheChangesToTheTripArePersisted()
     {

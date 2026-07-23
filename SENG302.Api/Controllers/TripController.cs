@@ -119,12 +119,12 @@ public class TripController : ControllerBase
             {
                 return Unauthorized();
             }
-            
+
             if (!await _tripService.UserHasModifyAccessToTrip(int.Parse(userIdString), id))
             {
                 return Unauthorized();
             }
-            
+
             await _tripService.DeleteTripByIdAsync(id);
             return Ok();
         }
@@ -150,16 +150,30 @@ public class TripController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Trip>> UpdateTrip([FromBody] UpdateTripRequest tripRequest)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-            return Unauthorized();
-
-        var trip = await _tripService.UpdateTripAsync(tripRequest, int.Parse(userIdString));
-        if (trip == null)
+        try
         {
-            return NotFound();
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+                return Unauthorized();
+
+            var trip = await _tripService.UpdateTripAsync(tripRequest, int.Parse(userIdString));
+            if (trip == null)
+            {
+                return NotFound();
+            }
+            return Ok(trip);
         }
-        return Ok(trip);
+        catch (MultipleValidationListException exception)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = exception.Errors
+            });
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(exception.Message);
+        }
     }
 
      /// <summary>
