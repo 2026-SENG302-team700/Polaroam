@@ -14,7 +14,9 @@
     async function getSearchResults(event: KeyboardEvent) {
         if (event.key !== "Enter") return;
         event.preventDefault();
-
+        
+        if (loading) return;
+        
         try {
             loading = true;
             error = "";
@@ -51,15 +53,30 @@
 </script>
 
 <div class="search-container mb-3">
-    <input
-        type="text"
-        class="form-control"
-        class:is-invalid={error}
-        placeholder="Search location..."
-        bind:value={searchQuery}
-        onkeydown={getSearchResults}
-        onblur={() => setTimeout(() => (isOpen = false), 200)}
-    />
+    <div class="input-group">
+        <input
+                type="text"
+                class="form-control"
+                class:is-invalid={error}
+                placeholder="Search location..."
+                bind:value={searchQuery}
+                onkeydown={getSearchResults}
+                onblur={() => setTimeout(() => (isOpen = false), 200)}
+        />
+        <button
+                type="button"
+                title="search your trips using the provided query."
+                class="btn btn-outline-secondary"
+                onclick={getSearchResults}
+        >
+            {#if loading}
+                <div class="spinner-border spinner-border-sm text-primary" role="status" />
+            {:else}
+                 <i class="bi bi-search"></i>
+            {/if}
+            
+    </div>
+    
 
     {#if isOpen && items.length > 0}
         <ul class="dropdown-list">
