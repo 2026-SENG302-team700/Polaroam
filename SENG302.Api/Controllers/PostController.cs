@@ -196,6 +196,7 @@ public class PostController : ControllerBase
         for (int i = 0; i < files.Count; i++)
         {
             IFormFile file = files[i];
+            Console.WriteLine("\n\n" + file + "\n\n");
             
             if (!ImageValidationTools.IsValidFilesize(file))
             {

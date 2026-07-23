@@ -10,6 +10,7 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import ImagePicker from "$lib/components/image-picker.svelte";
     
     let loading = $state(false);
     const tripId = page.params.tripId;
@@ -19,17 +20,46 @@
     let searchQuery = $state("")
     let location = $state("Temporary")
     let content = $state("")
+    let files: FileList | null = $state(null);
     
     let errors = {
         title: [],
         description: [],
         date: [],
         generic: "",
+        image: "",
     }
     
     async function createPost() {
         title = title.trim();
         content = content.trim();
+
+        if (files != null) {
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append("file", files[i]);
+                }
+                const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
+                    method: "PUT",
+                    body: formData,
+                });
+
+                let customImageIds: String[];
+                if (!response.ok) {
+                    if (response.status == 500) {
+                        errors.image = "Failed to upload picture"
+                    } else {
+                        errors.image = await response.text()
+                    }
+                } else {
+                    customImageIds = await response.json()
+                    console.log(customImageIds.toString())
+                }
+            } catch (err) {
+                errors.image = (err as Error).message;
+            }
+        }
         
         try {
             loading = true;
@@ -73,6 +103,7 @@
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
+        <ImagePicker files={files}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

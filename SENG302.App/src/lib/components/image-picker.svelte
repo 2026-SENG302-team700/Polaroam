@@ -20,10 +20,12 @@
         <i class="bi-images"></i>
     </button>
     <input
+            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
             type="file"
             bind:files
             bind:this={pfpInput}
             class="d-none"
+            multiple
     />
 </div>
 
