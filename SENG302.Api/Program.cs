@@ -245,7 +245,7 @@ public class Program
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
-        services.AddScoped<ITaskItemService, TaskItemService>();
+        services.AddScoped<IPostService, PostService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {

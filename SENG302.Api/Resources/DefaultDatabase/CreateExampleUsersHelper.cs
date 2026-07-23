@@ -42,8 +42,8 @@ public static class CreateExampleUsersHelper
 
     /// <summary>
     /// Creates a user John Whitaker, john@example.com
-    /// He has 20 task lists with a varying amount of tasks in each
-    /// Some tasks have a long description
+    /// He has 20 trips with a varying amount of posts in each
+    /// Some posts have a long description
     /// </summary>
     /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_John(DatabaseContext dbContext)
@@ -64,7 +64,7 @@ public static class CreateExampleUsersHelper
 
             for (int i = 0; i < 20; i++)
             {
-                var taskList = new Trip
+                var trip = new Trip
                 {
                     Title = "Name_" + i.ToString(),
                     UserId = user.Id,
@@ -72,22 +72,22 @@ public static class CreateExampleUsersHelper
                     EndDate = DateTime.Now.AddDays(1),
                 };
 
-                dbContext.Add(taskList);
+                dbContext.Add(trip);
 
                 await dbContext.SaveChangesAsync();
 
                 for (int j = 0; j < (i % 10); j++)
                 {
-                    var task = new TaskItem
+                    var post = new Post
                     {
-                        Name = "Task_" + j.ToString(),
-                        TaskListId = taskList.Id,
-                        Description = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
-                        DueDate = DateTime.MaxValue,
+                        Title = "Post_" + j.ToString(),
+                        TripId = trip.Id,
+                        Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
+                        Date = DateTime.MaxValue,
                         creationTime = DateTimeOffset.Now,
-                        CurrentStatus = (CurrentTaskStatus)(j % 3)
+                        Location = "Location_" + j
                     };
-                    dbContext.Add(task);
+                    dbContext.Add(post);
                 }
             }
 

@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7001CreateTrip.feature.ndjson", 5);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7001CreateTrip.feature.ndjson", 6);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -236,7 +236,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
 #line hidden
 #line 16
         await testRunner.ThenAsync("the trip is not created, And I see an error message \'End date must not be before " +
-                        "the start date\' preserved and displayed in the task description", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+                        "the start date\' preserved and displayed in the trip description", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

@@ -8,7 +8,12 @@
     let { params } = $props();
 
     let loading = $state(true);
-    let error = $state("");
+    let errors = $state({
+        title: [],
+        description: [],
+        date: "",
+        generic: "",
+    });
 
     let tripTitle = $state("");
     let tripDescription = $state("");
@@ -18,10 +23,34 @@
     onMount(fetchTrip);
 
     /**
+     * Removes all errors from the form.
+     */
+    function clearErrors() {
+        errors = {
+            title: [],
+            description: [],
+            date: "",
+            generic: "",
+        };
+    }
+
+    /**
+     * Parse date stored within database to the local format
+     * @param dateString the strin value of the date
+     */
+    function parseLocalDate(dateString: string): Date {
+        const datePart = dateString.split("T")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
+
+        return new Date(year, month - 1, day);
+    }
+
+    /**
      * Fetches the trip from the backend corresponding
      * with the slug value being the trip's id
      */
     async function fetchTrip() {
+        clearErrors();
         try {
             loading = true;
 
@@ -35,17 +64,18 @@
 
             const data = await response.json();
             if (!response.ok) {
-                error =
+                errors.generic =
                     `Failed to fetch trip: ${data}` || "Failed to fetch trip.";
                 return;
             }
 
             tripTitle = data.title;
             tripDescription = data.description;
-            startDate = new Date(data.startDate);
-            endDate = new Date(data.endDate);
+            startDate = parseLocalDate(data.startDate);
+            endDate = parseLocalDate(data.endDate);
         } catch (err) {
-            error = `Failed to fetch trip: ${err}` || "Failed to fetch trip.";
+            errors.generic =
+                `Failed to fetch trip: ${err}` || "Failed to fetch trip.";
         } finally {
             loading = false;
         }
@@ -56,16 +86,17 @@
      * Sends a PUT request to the backend with the updated trip details.
      */
     async function updateTrip() {
+        clearErrors();
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        Id: Number(params.slug),
+                        Id: Number(params.tripId),
                         Title: tripTitle,
                         Description: tripDescription,
                         StartDate: serializeLocalDate(startDate),
@@ -77,15 +108,22 @@
 
             const data = await response.json();
             if (!response.ok) {
-                error =
-                    `Failed to update trip: ${data}` ||
-                    "Failed to update trip.";
+                errors.date = data.errors?.dates?.join(" ") ?? "";
+
+                if (!errors.date) {
+                    errors.generic =
+                        typeof data === "string"
+                            ? data
+                            : "Failed to update trip.";
+                }
+
                 return;
             }
 
-            goto(resolve(`/home/trips/${params.slug}`));
+            goto(resolve(`/home/trips/${params.tripId}`));
         } catch (err) {
-            error = `Failed to update trip: ${err}` || "Failed to update trip.";
+            errors.generic =
+                `Failed to update trip: ${err}` || "Failed to update trip.";
         } finally {
             loading = false;
         }
@@ -117,9 +155,9 @@
     bind:startDate
     bind:endDate
     heading="Edit Trip"
-    submitText="Save Changes"
-    cancelPath={`/home/trips/${params.slug}`}
-    {error}
+    submitText="Update Trip"
+    cancelPath={`/home/trips/${params.tripId}`}
+    {errors}
     {loading}
     onSubmit={updateTrip}
 />
