@@ -15,9 +15,12 @@ public class GeoController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> SearchLocationsAsync([FromQuery] string query, CancellationToken cancellationToken)
+    public async Task<IActionResult> SearchLocationsAsync(
+        [FromQuery] string query, 
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage, 
+        CancellationToken cancellationToken)
     {
-        var results = await _geoService.GetLocationsAsync(query, cancellationToken);
+        var results = await _geoService.GetLocationsAsync(query, acceptLanguage, cancellationToken);
         return Ok(results);
     }
 

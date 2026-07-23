@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Localization;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
 public interface IGeoService
 {
-    Task<List<GeoLocationSearchResult>> GetLocationsAsync(string query, CancellationToken cancellationToken);
+    Task<List<GeoLocationSearchResult>> GetLocationsAsync(
+        string query, 
+        string? acceptLanguageHeader, 
+        CancellationToken cancellationToken
+    );
     Task<GeoLocationSearchResult?> GetLocationAsync(long osmId);
 }
 
@@ -18,16 +23,27 @@ public class GeoService : IGeoService
         _httpClient = httpClient;
     }
     
-    public async Task<List<GeoLocationSearchResult>> GetLocationsAsync(string query, CancellationToken cancellationToken)
+    public async Task<List<GeoLocationSearchResult>> GetLocationsAsync(
+        string query, 
+        string? acceptLanguageHeader, 
+        CancellationToken cancellationToken
+        )
     {
         var q = new QueryBuilder
         {
             { "q", query },
             { "format","json" }
         };
-
-        var response = await _httpClient.GetAsync($"search{q}", cancellationToken);
-
+        
+        var request = new HttpRequestMessage(HttpMethod.Get, $"search{q}");
+        
+        if (!string.IsNullOrEmpty(acceptLanguageHeader))
+        {
+            request.Headers.TryAddWithoutValidation("Accept-Language", acceptLanguageHeader);
+        }
+        
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        
         if (!response.IsSuccessStatusCode)
         {
             throw new HttpRequestException($"HTTP error! status: {response.StatusCode}");
