@@ -30,16 +30,14 @@
         image: "",
     }
     
-    async function createPost() {
-        title = title.trim();
-        content = content.trim();
-        console.log("File is null?", files)
+    
+    async function uploadPhotos(postId: number) {
         if (files != null) {
             try {
                 const formData = new FormData();
                 for (let i = 0; i < files.length; i++) {
                     formData.append("files", files[i]);
-                    console.log("files ", files[i])
+                    formData.append("postId", postId.toString())
                 }
                 console.log(formData)
                 const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
@@ -62,6 +60,11 @@
                 errors.image = (err as Error).message;
             }
         }
+    }
+    
+    async function createPost() {
+        title = title.trim();
+        content = content.trim();
         
         try {
             loading = true;
@@ -93,6 +96,10 @@
             errors.generic = "Failed to create trip: " + (err as Error).message;
         } finally {
             loading = false;
+        }
+        
+        if (files != null) {
+            uploadPhotos(1)
         }
     }
 </script>
