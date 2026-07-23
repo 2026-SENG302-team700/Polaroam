@@ -37,6 +37,9 @@ public class Program
 
         // Add authorization service
         builder.Services.AddAuthorization();
+        
+        // Add rate limit handler
+        builder.Services.AddSingleton<NominatimRateLimitingHandler>();
 
 
         if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
@@ -237,7 +240,8 @@ public class Program
         {
             client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
-        });
+        })
+        .AddHttpMessageHandler<NominatimRateLimitingHandler>();
 
     // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
