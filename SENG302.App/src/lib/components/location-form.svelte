@@ -18,7 +18,6 @@
         try {
             loading = true;
             error = "";
-            console.log(Date.now())
             const response = await fetchWithCsrf(
                 resolve(
                     `/api/geo/search?query=${encodeURIComponent(searchQuery.trim())}` as any,
