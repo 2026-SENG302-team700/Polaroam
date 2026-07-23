@@ -12,7 +12,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 [Binding]
 public class U7001CreateTrip
 {
-    
+
     private readonly AcceptanceTestFixture _fixture;
     private HttpResponseMessage? _lastResponse;
     private string _title;
@@ -29,7 +29,7 @@ public class U7001CreateTrip
         _endDate = new DateTime();
 
     }
-    
+
     [Given(
         @"I am on the create trip form page And I enter a valid title, an optional valid description, a valid date range")]
     public async Task ValidTripAttributes()
@@ -43,12 +43,12 @@ public class U7001CreateTrip
             PasswordKey = "password",
             Country = "Test Country"
         });
-        
+
         _title = "Test trip";
         _description = "Test description";
         _startDate = DateTime.Parse("2022-01-01");
         _endDate = DateTime.Parse("2022-01-07");
-        
+
         await context.SaveChangesAsync();
     }
 
@@ -57,7 +57,10 @@ public class U7001CreateTrip
     {
         NewTripRequest tripRequest = new NewTripRequest
         {
-            Title = _title, Description = _description, StartDate = _startDate, EndDate = _endDate,
+            Title = _title,
+            Description = _description,
+            StartDate = _startDate,
+            EndDate = _endDate,
         };
 
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/trip", tripRequest);
@@ -71,10 +74,10 @@ public class U7001CreateTrip
         var trip = _lastResponse.Content.ReadFromJsonAsync<Trip>();
 
         var retrievedTrip = await _fixture.HttpClient.GetFromJsonAsync<Trip>($"api/trip/{trip.Id}");
-        
+
         retrievedTrip.Id.ShouldBe(trip.Id);
     }
-    
+
     [Given(
         @"I am on the create trip form page And I select an end date that is before the selected start date")]
     public async Task InvalidTripEndDateBeforeStartDate()
@@ -88,16 +91,16 @@ public class U7001CreateTrip
             PasswordKey = "password",
             Country = "Test Country"
         });
-        
+
         _title = "Test trip";
         _description = "Test description";
         _startDate = DateTime.Parse("2022-01-09");
         _endDate = DateTime.Parse("2022-01-07");
-        
+
         await context.SaveChangesAsync();
     }
-    
-    [Then(@"the trip is not created, And I see an error message 'End date must not be before the start date' preserved and displayed in the task description")]
+
+    [Then(@"the trip is not created, And I see an error message 'End date must not be before the start date' preserved and displayed in the trip description")]
     public async Task checkDateErrorStartDateBeforeEndDate()
     {
         _lastResponse.ShouldNotBeNull();
@@ -105,7 +108,7 @@ public class U7001CreateTrip
         var error = await _lastResponse.Content.ReadAsStringAsync();
         error.ShouldContain("End date must not be before the start date");
     }
-    
+
     // AC 3
     [Given(
         @"I am on the create trip form page And I enter a short title")]
@@ -120,9 +123,9 @@ public class U7001CreateTrip
             PasswordKey = "password",
             Country = "Test Country"
         });
-        
+
         _title = "T";
-        
+
         await context.SaveChangesAsync();
     }
 
@@ -134,7 +137,7 @@ public class U7001CreateTrip
         var error = await _lastResponse.Content.ReadAsStringAsync();
         error.ShouldContain("Trip title must be between 3 and 128 characters long");
     }
-    
+
     // AC 7
     [Given(@"I am on the create trip form page And I enter a long description")]
     public async Task EnterLongDescriptionTitle()
@@ -148,12 +151,12 @@ public class U7001CreateTrip
             PasswordKey = "password",
             Country = "Test Country"
         });
-        
+
         _description = new string('a', 2049);
-        
+
         await context.SaveChangesAsync();
     }
-    
+
     [Then(@"I see the error message 'Description must be 2048 characters or less'")]
     public async Task checkDescriptionErrorTooLong()
     {
