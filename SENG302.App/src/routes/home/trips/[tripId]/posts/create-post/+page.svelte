@@ -36,6 +36,7 @@
             try {
                 const formData = new FormData();
                 for (let i = 0; i < files.length; i++) {
+                    console.log("File ", files[i])
                     formData.append("files", files[i]);
                     formData.append("postId", postId.toString())
                 }
@@ -96,8 +97,8 @@
 
             goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
-            console.error("Failed to create trip:", err);
-            errors.generic = "Failed to create trip: " + (err as Error).message;
+            console.error("Failed to create post:", err);
+            errors.generic = "Failed to create post: " + (err as Error).message;
         } finally {
             loading = false;
         }

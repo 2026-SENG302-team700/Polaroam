@@ -13,6 +13,7 @@ public interface IPostService
     Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId);
     Task<Post?> GetPostAsync(int id, int userId);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId);
+    Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
 }
 
 
@@ -82,6 +83,7 @@ public class PostService : IPostService
             Content = postRequest.Content,
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
+            PhotoIds = [],
             Location = postRequest.Location
         };
         context.Set<Post>().Add(newPost);
@@ -158,6 +160,34 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
 
+        context.Posts.Update(post);
+        await context.SaveChangesAsync();
+        return post;
+    }
+    
+    /// <summary>
+    /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
+    /// later on
+    /// </summary>
+    /// <param name="photoFileIds">List of the custom file Ids corresponding to the photos</param>
+    /// <param name="postId">The Ids of the post</param>
+    /// <returns></returns>
+    public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
+        
+        if (post == null || postId == null)
+        {
+            return null;
+        }
+        
+        for (int i = 0; i < photoFileIds.Count; i++)
+        {
+            post.PhotoIds.Add(photoFileIds[i]);
+        }
+        
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;

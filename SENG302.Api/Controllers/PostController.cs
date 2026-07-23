@@ -193,7 +193,8 @@ public class PostController : ControllerBase
         {
             return NotFound("User not found");
         }
-
+        
+        
         List<int> customFileIds = [];
         
         for (int i = 0; i < files.Count; i++)
@@ -215,6 +216,9 @@ public class PostController : ControllerBase
             var customFileId = customFile.Id;
             customFileIds.Add(customFileId);
         }
+
+        await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
+        
         
         return Ok(customFileIds);
     }
