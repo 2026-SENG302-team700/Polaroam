@@ -1,6 +1,7 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Responses;
 
 
 namespace SENG302.Api.Services;
@@ -20,12 +21,14 @@ public class PostService : IPostService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly IGeoService _geoService;
 
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IGeoService geoService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        _geoService = geoService;
     }
 
     /// <summary>
@@ -64,11 +67,18 @@ public class PostService : IPostService
 
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
-
         if (errors.Count > 0)
         {
             throw new MultipleValidationException(errors);
         }
+        
+        // Add location
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        if (location == null)
+        {
+            throw new Exception("Location not found");
+        }
+        context.Set<GeoLocationSearchResult>().Add(location);
 
         // Add post
         var newPost = new Post()
@@ -78,7 +88,7 @@ public class PostService : IPostService
             Content = postRequest.Content,
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
-            Location = postRequest.Location
+            OsmId = postRequest.OsmId
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();

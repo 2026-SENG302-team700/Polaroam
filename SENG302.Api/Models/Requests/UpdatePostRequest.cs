@@ -11,10 +11,8 @@ public class UpdatePostRequest : IPostRequest
     public required int Id { get; set; }
     public required int TripId { get; set; }
     public required string Title { get; set; }
-    public string Location { get; set; } = string.Empty;
-
+    public long OsmId { get; set; }
     public string Content { get; set; } = string.Empty;
-
     public required DateTime Date { get; set; }
 
 }

@@ -10,6 +10,7 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import LocationForm from "$lib/components/forms/location-form.svelte";
     
     let loading = $state(false);
     const tripId = page.params.tripId;
@@ -17,7 +18,13 @@
     let title = $state("")
     let date = $state(new Date())
     let searchQuery = $state("")
-    let location = $state("Temporary")
+    let location = $state({
+        osmId : 0,
+        lat : 0,
+        lon : 0,
+        name : "",
+        displayName : "",
+    })
     let content = $state("")
     
     let errors = {
@@ -42,7 +49,7 @@
                 body: JSON.stringify({
                     TripId: Number(tripId),
                     Title: title,
-                    Location: location,
+                    OsmId: location.osmId,
                     Content: content,
                     Date: date,
                 }),
@@ -71,7 +78,7 @@
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title}/>
         <DatePicker bind:value={date}/>
-        <SearchForm bind:query={searchQuery} placeholder="Location *"/>
+        <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
