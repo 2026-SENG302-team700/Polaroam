@@ -105,4 +105,64 @@ public class PostControllerTests : BaseIntegrationTestFixture
         posts.ShouldNotBeNull();
         posts.Count.ShouldBe(1);
     }
+
+    [Fact]
+    public async Task CreatePost_FutureDate_ReturnBadRequest()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            creationTime = DateTimeOffset.UtcNow,
+            Location = "France",
+            Date = DateTime.Now.AddDays(1)
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+    
+    [Fact]
+    public async Task CreatePost_NullDate_ReturnBadRequest()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            creationTime = DateTimeOffset.UtcNow,
+            Location = "France",
+            Date = null
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
 }
