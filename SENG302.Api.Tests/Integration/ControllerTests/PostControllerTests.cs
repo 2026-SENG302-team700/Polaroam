@@ -131,6 +131,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
 
         content.Add(new StringContent("1"), "postId");
+        content.Add(new StringContent("1"), "tripId");
         
         var response = await HttpClient.PutAsync("/api/post/images", content);
         var photoIds = await response.Content.ReadAsStringAsync();
@@ -160,6 +161,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
         
         content.Add(new StringContent("1"), "postId");
+        content.Add(new StringContent("1"), "tripId");
         
         
         var response = await HttpClient.PutAsync("/api/post/images", content);

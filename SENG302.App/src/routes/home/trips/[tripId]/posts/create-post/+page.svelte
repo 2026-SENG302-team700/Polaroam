@@ -27,7 +27,7 @@
         description: [],
         date: [],
         generic: "",
-        image: "",
+        photos: "",
     }
 
     /**
@@ -41,7 +41,8 @@
                 for (let i = 0; i < files.length; i++) {
                     console.log("File ", files[i])
                     formData.append("files", files[i]);
-                    formData.append("postId", postId.toString())
+                    formData.append("postId", postId.toString());
+                    formData.append("tripId", tripId.toString());
                 }
                 
                 const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
@@ -52,16 +53,17 @@
                 let customImageIds: String[];
                 if (!response.ok) {
                     if (response.status == 500) {
-                        errors.image = "Failed to upload picture"
+                        errors.photos = "Failed to upload picture"
                     } else {
-                        errors.image = await response.text()
+                        errors.photos = await response.text()
                     }
                 } else {
                     customImageIds = await response.json()
+                    goto(resolve(`/home/trips/${tripId}`));
                     console.log(customImageIds.toString())
                 }
             } catch (err) {
-                errors.image = (err as Error).message;
+                errors.photos = (err as Error).message;
             }
         }
     }
@@ -99,9 +101,11 @@
             
             if (files != null) {
                 await uploadPhotos(data.postId)
+            } else {
+                goto(resolve(`/home/trips/${tripId}`));
             }
 
-            goto(resolve(`/home/trips/${tripId}`));
+            
         } catch (err) {
             console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;
@@ -120,7 +124,7 @@
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
-        <ImagePicker bind:files></ImagePicker>
+        <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
