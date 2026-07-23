@@ -82,7 +82,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         HttpClient = _webAppFactory.CreateClient();
     }
 
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         // At the start of a test, make sure the database is created fresh
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
@@ -91,7 +91,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         CreateTestDirectory();
     }
 
-    public async Task DisposeAsync()
+    public virtual async Task DisposeAsync()
     {
         // Close and dispose the sqlite connection when tests are done
         await _connection.CloseAsync();

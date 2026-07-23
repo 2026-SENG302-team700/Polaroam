@@ -17,22 +17,22 @@ namespace SENG302.Api.Tests.Acceptance.Features
     
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public partial class U11_AsATipeneIWantToReorderTasksWithinATaskListUsingDragAndDropSoThatICanOrderAndPrioritiseItemsAccordingToMyErrandsLocation_Feature : object, global::Xunit.IClassFixture<U11_AsATipeneIWantToReorderTasksWithinATaskListUsingDragAndDropSoThatICanOrderAndPrioritiseItemsAccordingToMyErrandsLocation_Feature.FixtureData>, global::Xunit.IAsyncLifetime
+    public partial class U7004_AsBenjiIWantToBeAbleToCreatePostsSoThatICanLogKeyMomentsFromSpecificTrips_Feature : object, global::Xunit.IClassFixture<U7004_AsBenjiIWantToBeAbleToCreatePostsSoThatICanLogKeyMomentsFromSpecificTrips_Feature.FixtureData>, global::Xunit.IAsyncLifetime
     {
         
         private global::Reqnroll.ITestRunner testRunner;
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Acceptance/Features", "U11 - As a Tipene I want to reorder tasks within a task list using drag and drop " +
-                "So that I can order and prioritise items according to my errands’ location.", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Acceptance/Features", "U7004_As Benji I want to be able to create posts So that I can log key moments fr" +
+                "om specific trips.", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
         private global::Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
-#line 1 "U11PersistDnd.feature"
+#line 1 "U7004CreatePost.feature"
 #line hidden
         
-        public U11_AsATipeneIWantToReorderTasksWithinATaskListUsingDragAndDropSoThatICanOrderAndPrioritiseItemsAccordingToMyErrandsLocation_Feature(U11_AsATipeneIWantToReorderTasksWithinATaskListUsingDragAndDropSoThatICanOrderAndPrioritiseItemsAccordingToMyErrandsLocation_Feature.FixtureData fixtureData, global::Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public U7004_AsBenjiIWantToBeAbleToCreatePostsSoThatICanLogKeyMomentsFromSpecificTrips_Feature(U7004_AsBenjiIWantToBeAbleToCreatePostsSoThatICanLogKeyMomentsFromSpecificTrips_Feature.FixtureData fixtureData, global::Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U11PersistDnd.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7004CreatePost.feature.ndjson", 3);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -134,16 +134,16 @@ namespace SENG302.Api.Tests.Acceptance.Features
             await this.TestTearDownAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC1 - Reordering a task persists the new order")]
-        [global::Xunit.TraitAttribute("FeatureTitle", "U11 - As a Tipene I want to reorder tasks within a task list using drag and drop " +
-            "So that I can order and prioritise items according to my errands’ location.")]
-        [global::Xunit.TraitAttribute("Description", "AC1 - Reordering a task persists the new order")]
-        public async global::System.Threading.Tasks.Task AC1_ReorderingATaskPersistsTheNewOrder()
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC2 - Create a new post")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7004_As Benji I want to be able to create posts So that I can log key moments fr" +
+            "om specific trips.")]
+        [global::Xunit.TraitAttribute("Description", "AC2 - Create a new post")]
+        public async global::System.Threading.Tasks.Task AC2_CreateANewPost()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "0";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC1 - Reordering a task persists the new order", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC2 - Create a new post", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 3
@@ -157,19 +157,14 @@ namespace SENG302.Api.Tests.Acceptance.Features
             {
                 await this.ScenarioStartAsync();
 #line 4
-        await testRunner.GivenAsync("I am a registered user", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("I am on the create post form And I enter a valid title, location, date, and optio" +
+                        "nal content", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 5
-        await testRunner.GivenAsync("I have a task list", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 6
-        await testRunner.GivenAsync("I have 3 tasks (Task 1, Task 2, Task 3) in order", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
-#line hidden
-#line 7
-        await testRunner.WhenAsync("I reorder Task 3 to the top of the list", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 8
-        await testRunner.ThenAsync("The tasks are returned in the order (Task 3, Task 1, Task 2)", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("the post is persisted", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -182,12 +177,12 @@ namespace SENG302.Api.Tests.Acceptance.Features
             
             async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await U11_AsATipeneIWantToReorderTasksWithinATaskListUsingDragAndDropSoThatICanOrderAndPrioritiseItemsAccordingToMyErrandsLocation_Feature.FeatureSetupAsync();
+                await U7004_AsBenjiIWantToBeAbleToCreatePostsSoThatICanLogKeyMomentsFromSpecificTrips_Feature.FeatureSetupAsync();
             }
             
             async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await U11_AsATipeneIWantToReorderTasksWithinATaskListUsingDragAndDropSoThatICanOrderAndPrioritiseItemsAccordingToMyErrandsLocation_Feature.FeatureTearDownAsync();
+                await U7004_AsBenjiIWantToBeAbleToCreatePostsSoThatICanLogKeyMomentsFromSpecificTrips_Feature.FeatureTearDownAsync();
             }
         }
     }

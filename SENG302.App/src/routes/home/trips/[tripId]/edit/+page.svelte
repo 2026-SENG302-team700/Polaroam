@@ -89,14 +89,14 @@
         clearErrors();
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        Id: Number(params.slug),
+                        Id: Number(params.tripId),
                         Title: tripTitle,
                         Description: tripDescription,
                         StartDate: serializeLocalDate(startDate),
@@ -120,7 +120,7 @@
                 return;
             }
 
-            goto(resolve(`/home/trips/${params.slug}`));
+            goto(resolve(`/home/trips/${params.tripId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -156,7 +156,7 @@
     bind:endDate
     heading="Edit Trip"
     submitText="Update Trip"
-    cancelPath={`/home/trips/${params.slug}`}
+    cancelPath={`/home/trips/${params.tripId}`}
     {errors}
     {loading}
     onSubmit={updateTrip}

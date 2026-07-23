@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace SENG302.Api.Models.Entities;
 
 /// <summary>
-/// Represents a list of tasks that a user can create. 
-/// Each task list has a name and is associated with a user's email.
+/// Represents a trip that a user can create. 
+/// Each trip has a name and is associated with a user's id.
 /// </summary>
 public class Trip
 {
@@ -16,7 +16,7 @@ public class Trip
     [Required]
     public string Title { get; set; } = string.Empty;
     [Required]
-    public int UserId { get; set; } // Foreign key to the User that owns this task list
+    public int UserId { get; set; } // Foreign key to the User that owns this trip
 
     public string Description { get; set; } = string.Empty;
     [Required]
