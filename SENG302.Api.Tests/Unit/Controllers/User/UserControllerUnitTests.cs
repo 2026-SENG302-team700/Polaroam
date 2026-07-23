@@ -12,7 +12,7 @@ using SENG302.Api.Controllers.UserController;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
-public class UserControllerUnitTests : BaseUnitTestFixture
+public class UserControllerUnitTests
 {
     private readonly IUserService _mockUserService;
     private readonly IFileService _mockFileService;
@@ -21,7 +21,7 @@ public class UserControllerUnitTests : BaseUnitTestFixture
     private readonly UserController _controller;
     private readonly  IAuthenticationService _mockAuthService;
     
-    public UserControllerUnitTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
+    public UserControllerUnitTests()
     {
         _mockUserService = Substitute.For<IUserService>();
         _mockFileService = Substitute.For<IFileService>();

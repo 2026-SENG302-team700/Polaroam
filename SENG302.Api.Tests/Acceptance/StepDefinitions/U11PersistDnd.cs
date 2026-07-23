@@ -22,11 +22,14 @@ public class U11PersistDnd
     public async Task GivenIHaveATaskList()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
-        context.TaskLists.Add(new Models.Entities.TaskList
+        context.Trips.Add(new Models.Entities.Trip
         {
             Id = 1,
-            Name = "My Task List",
+            Title = "My Task List",
             UserId = _fixture.CurrentUserId!.Value,
+            Description = "Test",
+            StartDate = new DateTime(2025, 11, 21), 
+            EndDate = new DateTime(2025, 12, 21)
         });
         await context.SaveChangesAsync();
     }

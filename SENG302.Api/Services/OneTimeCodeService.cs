@@ -24,16 +24,14 @@ public enum CodeVerificationResult{
 
 public class OneTimeCodeService : IOneTimeCodeService
 {
-    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
 
     // Static variable representing the time limit for the code to be entered in
     public int TimeoutTimeSeconds { get; } = 300;
     private static int _expectedCodeLength = 6;
 
-    public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public OneTimeCodeService(TimeProvider timeProvider)
     {
-        _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
     }
     
@@ -60,7 +58,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// <returns>int representing amount of seconds since Jan 1st 1970</returns>
     public long GetEpochTime()
     {
-        long epochTimeSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long epochTimeSeconds = _timeProvider.GetUtcNow().ToUnixTimeSeconds();
 
         return epochTimeSeconds;
     }

@@ -107,8 +107,45 @@ public class UserService : IUserService
         {
             errors[field] = message;
         }
+        
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
+        }
+        
 
-        UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            errors["displayName"] = "Display name must be between 3 and 64 characters";
+        }
+        
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var swearList = profanityFilter.DetectAllProfanities(displayName);
+
+        if (swearList.Count > 0)
+        {
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
+        }
+        
+        if (string.IsNullOrWhiteSpace(country))
+        {
+            errors["country"] = "Country is required!";
+        }
+        else
+        {
+            UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
+        }
+        
+        if (string.IsNullOrWhiteSpace(passwordString))
+        {
+            errors["password"] =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+        }
+        
+        if (string.IsNullOrWhiteSpace(passwordConfirm))
+        {
+            errors["passwordConfirm"] = "Passwords do not match";
+        }
 
         if (errors.Count > 0)
             throw new MultipleValidationException(errors);
@@ -167,8 +204,6 @@ public class UserService : IUserService
     {
         PasswordHasher<User> passwordHasher = new();
 
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         if (!UserCredentialsValidator.CheckEmailFormat(email))
         {
             return new UserVerificationResponse
@@ -178,7 +213,7 @@ public class UserService : IUserService
             };
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+        var user = await GetUserFromEmailAsync(email);
         if (user == null)
         {
             return new UserVerificationResponse

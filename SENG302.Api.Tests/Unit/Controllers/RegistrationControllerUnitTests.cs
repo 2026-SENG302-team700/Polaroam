@@ -12,14 +12,14 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
-public class RegistrationControllerUnitTests : BaseUnitTestFixture
+public class RegistrationControllerUnitTests
 {
     private readonly IUserService _mockUserService;
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
     private readonly IEmailService _mockEmailService;
     private readonly RegistrationController _controller;
 
-    public RegistrationControllerUnitTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
+    public RegistrationControllerUnitTests()
     {
         _mockUserService = Substitute.For<IUserService>();
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();

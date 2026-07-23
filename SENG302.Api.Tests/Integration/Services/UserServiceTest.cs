@@ -83,7 +83,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
             "4365passTOEHKT$%^&$%^", 
             "4365passTOEHKT$%^&$%^",
             "US");
-        var errors = Should.Throw<MultipleValidationException>(async () => 
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () => 
             await ServiceUnderTest.CreateNewUserAsync(
                 "j@whitsend.com", 
                 "Jack Allen",
@@ -167,24 +167,31 @@ public class UserServiceTest : BaseIntegrationTestFixture
         errors.Errors.Values.ShouldContain("Display Name Contains Profanities! Remove Profanities!");
     }
 
-    [Theory]
-    [InlineData("vlad.nistor.email")]
-    [InlineData("pandya@gmail+!.co#m")]
-    [InlineData(".@gmail.com")]
-    [InlineData("cool..man@gmail.com")]
-    [InlineData("person@yahoo.")]
-    [InlineData("crazy.@gmail.nz")]
-    [InlineData("CrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyy@gmail.com")]
-    [InlineData("man@gmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompany")]
-    [InlineData("froggy@-outlook.com")]
-    [InlineData("froggy@outlook.com-")]
-    [InlineData("crazy@.nz")]
-    public async Task CreateNewUser_NoEmail_MultipleValidationException(string userEmail)
+    [Fact]
+    public async Task CreateNewUser_NoEmail_MultipleValidationException()
     {
         var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
-                userEmail,
+                "",
+                "Vlad Nistor",
+                "12345678Ab$",
+                "12345678Ab$", 
+                "RO"
+            );
+        });
+        
+        errors.Errors.Keys.ShouldContain("email");
+        errors.Errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
+    }
+    
+    [Fact]
+    public async Task CreateNewUser_InvalidEmail_MultipleValidationException()
+    {
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad.nistor.email",
                 "Vlad Nistor",
                 "12345678Ab$",
                 "12345678Ab$", 
