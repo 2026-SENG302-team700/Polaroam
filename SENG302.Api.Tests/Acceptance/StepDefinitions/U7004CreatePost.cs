@@ -69,7 +69,7 @@ public class U7004CreatePost
             TripId = 1,
             Title = _title,
             Content = _content,
-            Location = _location,
+            OsmId = 292806332,
             Date = _date
         };
 
