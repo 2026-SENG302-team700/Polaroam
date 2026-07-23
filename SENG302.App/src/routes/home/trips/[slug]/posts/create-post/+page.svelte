@@ -4,6 +4,7 @@
     import SearchForm from "$lib/components/forms/search-form.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
+    import LocationForm from "$lib/components/forms/location-form.svelte";
     
     let title = $state("")
     let date = $state(new Date())
@@ -26,6 +27,7 @@
         <TitleForm bind:name={title}/>
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
+        <LocationForm bind:location={searchQuery}/>
         <DescriptionForm placeholder="Content" bind:content={content}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
