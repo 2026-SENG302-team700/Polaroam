@@ -1,6 +1,11 @@
 ﻿<script lang="ts">
-    let files: FileList;
     let pfpInput: HTMLInputElement;
+    
+    let {
+        files,
+    }: {
+        files: FileList | null,
+    } = $props();
 </script>
 
 <div class="d-flex flex-column mb-2">

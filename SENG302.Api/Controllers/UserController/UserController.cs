@@ -212,6 +212,7 @@ public class UserController : ControllerBase
         await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);
         return Ok();
     }
+    
 
     /// <summary>
     /// Gets a user's profile picture and sends it as a form
