@@ -13,22 +13,44 @@
     let searchQuery = $state("")
     let content = $state("")
     let files: FileList | null = $state(null);
+    let errors = $state(
+        {
+            image: "",
+        }
+    )
     
     
     async function createPost() {
         // Code for sending image to backend
         
         if (files != null) {
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append("file", files[i]);
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append("file", files[i]);
+                }
+                const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
+                    method: "PUT",
+                    body: formData,
+                });
+
+                let customImageIds: String[];
+                if (!response.ok) {
+                    if (response.status == 500) {
+                        errors.image = "Failed to upload picture"
+                    } else {
+                        errors.image = await response.text()
+                    }
+                } else {
+                    customImageIds = await response.json()
+                    console.log(customImageIds.toString())
+                }
+            } catch (err) {
+                errors.image = (err as Error).message;
             }
-            const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
-                method: "PUT",
-                body: formData,
-            });
         }
     }
+    
 </script>
 
 

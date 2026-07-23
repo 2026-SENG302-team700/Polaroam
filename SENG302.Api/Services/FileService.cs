@@ -30,7 +30,6 @@ public class FileService : IFileService
             throw new InvalidOperationException("Base path not set");
         }
         Directory.CreateDirectory(_basePath);
-
     }
 
     /// <summary>

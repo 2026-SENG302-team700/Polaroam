@@ -166,6 +166,12 @@ public class PostController : ControllerBase
         }
     }
     
+    /// <summary>
+    /// Takes a list of images and stores them one by one before returning a list of the image ids
+    /// </summary>
+    /// <param name="files"></param>
+    /// <returns>A list of the custom image ids</returns>
+    [Authorize]
     [HttpPut("images")]
     public async Task<ActionResult<CustomFile>> UploadProfilePicture(
         [FromForm] List<IFormFile> files
