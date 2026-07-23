@@ -149,7 +149,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateTime.UtcNow.AddDays(2),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request);
 
         List<int> photoIds = [1, 2];
         var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);

@@ -53,29 +53,6 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Fetches all posts associated to the id of the given trip. If
-    /// no trip is provided, then throw a BadRequest Error.
-    /// </summary>
-    /// <param name="tripId = -1"></param>
-    /// <returns>The list of posts</returns>
-    [Authorize]
-    [HttpGet("trip/{tripId:int}")]
-    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
-    {
-        if (tripId < 0)
-        {
-            return BadRequest("Trip not provided");
-        }
-        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized("You are not allowed to access this Trip's Posts!");
-        }
-        var posts = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
-        return Ok(posts);
-    }
-
-    /// <summary>
     /// Given a post request object, create a new Post and add it to the db
     /// </summary>
     /// <param name="postRequest"></param>
@@ -193,11 +170,12 @@ public class PostController : ControllerBase
             return NotFound("User not found");
         }
 
-        var post = await _postService.GetPostAsync(int.Parse(postId), userId);
-        
-        
-        
-        
+        var ownsPost = await _postService.UserOwnsPost(int.Parse(postId), userId);
+
+        if (ownsPost == false)
+        {
+            return Unauthorized("You do not have authorisation to upload photos to this post!");
+        }
         
         List<int> customFileIds = [];
         
