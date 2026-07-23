@@ -35,13 +35,13 @@ public class PostService : IPostService
     public async Task<IEnumerable<Post>> GetAllPostsAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        // get all the task
+        // get all the posts
         var posts = await context.Set<Post>()
                         .Where(t => context.Set<Trip>()
                         .Any(l => l.Id == t.TripId && l.UserId == userId))
                         .OrderBy(t => t.Date)
                         .ToListAsync();
-        
+
         return posts;
     }
 
@@ -73,8 +73,8 @@ public class PostService : IPostService
         {
             throw new MultipleValidationException(errors);
         }
-        
-        // Add task item
+
+        // Add post
         var newPost = new Post()
         {
             TripId = postRequest.TripId,
@@ -99,7 +99,7 @@ public class PostService : IPostService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var postItems = await context.Set<Post>().Where(t => t.TripId == tripId).ToListAsync();
-        
+
 
         // check for user profanity status
         var user = await context.Users.FindAsync(userId);
@@ -138,12 +138,12 @@ public class PostService : IPostService
 
         var user = await context.Users.FindAsync(userId);
 
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.taskId);
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.PostId);
         if (post == null)
         {
             return null;
         }
-        
+
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
 

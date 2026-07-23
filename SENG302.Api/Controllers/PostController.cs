@@ -24,9 +24,9 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Fetchs all the task items for the current user
+    /// Fetchs all the posts for the current user
     /// </summary>
-    /// <returns>All tasks belonging to that user</returns>
+    /// <returns>All posts belonging to that user</returns>
     [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
@@ -40,8 +40,8 @@ public class PostController : ControllerBase
 
         try
         {
-            var tasks = await _postService.GetAllPostsAsync(int.Parse(userIdString));
-            return Ok(tasks);
+            var posts = await _postService.GetAllPostsAsync(int.Parse(userIdString));
+            return Ok(posts);
         }
         catch (Exception e)
         {
@@ -50,11 +50,11 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Fetches all task items associated to the id of the given list. If
-    /// no list is provided, then throw a BadRequest Error.
+    /// Fetches all posts associated to the id of the given trip. If
+    /// no trip is provided, then throw a BadRequest Error.
     /// </summary>
     /// <param name="tripId = -1"></param>
-    /// <returns>The list of tasks</returns>
+    /// <returns>The list of posts</returns>
     [Authorize]
     [HttpGet("trip/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
@@ -68,8 +68,8 @@ public class PostController : ControllerBase
         {
             return Unauthorized("You are not allowed to access this Trip's Posts!");
         }
-        var taskList = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
-        return Ok(taskList);
+        var posts = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
+        return Ok(posts);
     }
 
     /// <summary>
@@ -83,8 +83,8 @@ public class PostController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
-        if(user == null) return Unauthorized();
-        
+        if (user == null) return Unauthorized();
+
         try
         {
             var response = await _postService.CreateNewPostAsync(postRequest, userId);
@@ -102,7 +102,7 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     /// <summary>
     /// Gets a specific post by its post-Id
     /// </summary>
@@ -125,12 +125,12 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Given a request to update a task, it will send a request to update that task
-    /// to the TaskItem Service
+    /// Given a request to update a post, it will send a request to update that post
+    /// to the PostService
     /// </summary>
-    /// <param name="postUpdates">updated values for a task item</param>
+    /// <param name="postUpdates">updated values for a post</param>
     /// <returns>
-    /// The updated task item if ok
+    /// The updated post if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
@@ -154,8 +154,8 @@ public class PostController : ControllerBase
                 });
             }
 
-            var taskItem = await _postService.UpdatePostAsync(postUpdates, userId);
-            return Ok(taskItem);
+            var post = await _postService.UpdatePostAsync(postUpdates, userId);
+            return Ok(post);
         }
         catch (Exception e)
         {

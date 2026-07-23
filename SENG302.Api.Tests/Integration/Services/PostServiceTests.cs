@@ -46,7 +46,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetAllPostsAsync_WithTasks_ReturnsOnlyUsersTask()
     {
-        // setup two users and a task
+        // setup two users and a trip
         await SetupUserAndTrip(1, 1);
         await SetupUserAndTrip(2, 2);
 
@@ -54,7 +54,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 1,
-            Title = "User 1 task",
+            Title = "User 1 post",
             Content = "desc",
             Location = "location",
             Date = DateTime.UtcNow,
@@ -63,7 +63,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 2,
-            Title = "User 2 task",
+            Title = "User 2 post",
             Content = "desc",
             Location = "location",
             Date = DateTime.UtcNow,
@@ -74,7 +74,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var posts = await ServiceUnderTest.GetAllPostsAsync(1);
 
         posts.Count().ShouldBe(1);
-        posts.First().Title.ShouldBe("User 1 task");
+        posts.First().Title.ShouldBe("User 1 post");
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var request = new NewPostRequest
         {
             TripId = 1,
-            Title = "New task",
+            Title = "New post",
             Content = "Some description",
             Location = "Some location",
             Date = DateTime.UtcNow.AddDays(2),
@@ -93,7 +93,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, 1);
 
-        post.Title.ShouldBe("New task");
+        post.Title.ShouldBe("New post");
         post.TripId.ShouldBe(1);
     }
 

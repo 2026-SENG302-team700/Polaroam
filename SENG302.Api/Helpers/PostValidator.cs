@@ -51,7 +51,7 @@ public class PostValidator
 
 
     /// <summary>
-    /// Checks the task item name is valid, returns nothing if valid
+    /// Checks the post name is valid, returns nothing if valid
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="title">The name being tested</param>

@@ -49,22 +49,22 @@ public class PostControllerTests : BaseIntegrationTestFixture
         // Add two users
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
-        
+
         // Add a trip to each user
         context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
         context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        
+
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My task", Content = "", Location = "location 1" });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", Location = "location 1" });
         context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", Location = "location 1" });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var tasks = await response.Content.ReadFromJsonAsync<List<Post>>();
-        tasks!.Count.ShouldBe(1);
-        tasks.First().Title.ShouldBe("My task");
+        var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
+        posts!.Count.ShouldBe(1);
+        posts.First().Title.ShouldBe("My post");
     }
 
     [Fact]
@@ -72,14 +72,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My List", UserId = 1, Description = "", StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My Trip", UserId = 1, Description = "", StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var tasks = await response.Content.ReadFromJsonAsync<List<Post>>();
-        tasks!.ShouldBeEmpty();
+        var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
+        posts!.ShouldBeEmpty();
     }
 
     [Fact]
@@ -89,13 +89,13 @@ public class PostControllerTests : BaseIntegrationTestFixture
         // Add two users
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
-        
+
         // Add a trip to each user
         context.Trips.Add(new Trip { Id = 1, Title = "My list", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
         context.Trips.Add(new Trip { Id = 2, Title = "Other list", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        
+
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My task", Content = "", Location = "location 1" });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", Location = "location 1" });
         context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", Location = "location 1" });
         await context.SaveChangesAsync();
 
