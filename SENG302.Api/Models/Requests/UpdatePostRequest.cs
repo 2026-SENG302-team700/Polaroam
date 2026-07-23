@@ -8,8 +8,8 @@ namespace SENG302.Api.Models.Entities;
 /// </summary>
 public class UpdatePostRequest : IPostRequest
 {
-    public required int taskId { get; set; }
-    
+    public required int Id { get; set; }
+    public required int TripId { get; set; }
     public required string Title { get; set; }
     public string Location { get; set; } = string.Empty;
 

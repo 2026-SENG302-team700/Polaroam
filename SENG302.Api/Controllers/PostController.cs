@@ -5,7 +5,6 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using SENG302.Api.Resources.Helpers;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -49,29 +48,7 @@ public class PostController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Fetches all task items associated to the id of the given list. If
-    /// no list is provided, then throw a BadRequest Error.
-    /// </summary>
-    /// <param name="tripId = -1"></param>
-    /// <returns>The list of tasks</returns>
-    [Authorize]
-    [HttpGet("trip/{tripId:int}")]
-    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
-    {
-        if (tripId < 0)
-        {
-            return BadRequest("Trip not provided");
-        }
-        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized("You are not allowed to access this Trip's Posts!");
-        }
-        var taskList = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
-        return Ok(taskList);
-    }
-
+   
     /// <summary>
     /// Given a post request object, create a new Post and add it to the db
     /// </summary>
@@ -140,13 +117,8 @@ public class PostController : ControllerBase
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
         try
-        {
-            if (ProfanityTools.ContainsProfanity(postUpdates.Content, user.ProfanityFiltering))
-            {
-                errors["description"] = "Description cannot contain profanity.";
-            }
+        {    
             if (errors.Count > 0)
             {
                 return BadRequest(new BadRequestValidationResponse
@@ -154,7 +126,6 @@ public class PostController : ControllerBase
                     Errors = errors
                 });
             }
-
             var taskItem = await _postService.UpdatePostAsync(postUpdates, userId);
             return Ok(taskItem);
         }

@@ -70,7 +70,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/trip/${tripId}` as any),
+                resolve(`/api/trip/post/${tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",

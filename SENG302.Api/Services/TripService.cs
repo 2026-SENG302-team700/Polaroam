@@ -1,8 +1,6 @@
-using System.Globalization;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using SENG302.Api.Resources.Helpers;
 using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Services;

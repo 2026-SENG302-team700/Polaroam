@@ -14,10 +14,12 @@ namespace SENG302.Api.Controllers;
 public class TripController : ControllerBase
 {
     private readonly ITripService _tripService;
+    private readonly IPostService _postService;
 
-    public TripController(ITripService tripService)
+    public TripController(ITripService tripService,IPostService postService)
     {
         _tripService = tripService;
+        _postService = postService;
     }
 
     /// <summary>
@@ -158,6 +160,29 @@ public class TripController : ControllerBase
             return NotFound();
         }
         return Ok(trip);
+    }
+
+     /// <summary>
+    /// Fetches all posts associated to the id of the given trip. If
+    /// no trip is provided, then throw a BadRequest Error.
+    /// </summary>
+    /// <param name="tripId = -1"></param>
+    /// <returns>The list of tasks</returns>
+    [Authorize]
+    [HttpGet("post/{tripId:int}")]
+    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
+    {
+        if (tripId < 0)
+        {
+            return BadRequest("Trip not provided");
+        }
+        string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You are not allowed to access this Trip's Posts!");
+        }
+        var taskList = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
+        return Ok(taskList);
     }
 
 }
