@@ -1,8 +1,6 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
-using System.Diagnostics;
 
 
 namespace SENG302.Api.Services;
@@ -14,6 +12,7 @@ public interface IPostService
     Task<Post> CreateNewPostAsync(NewPostRequest postRequest);
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
+    Task<bool> UserOwnsPost(int userId, int tripId);
 }
 
 
@@ -137,12 +136,6 @@ public class PostService : IPostService
         if (post == null)
         {
             return null;
-        }
-        
-    
-        if (!await UserOwnsPost(userId,postUpdates.TripId))
-        {
-            throw new UnauthorizedAccessException("You are not authorised to edit this task!");
         }
         
         postUpdates.Title = postUpdates.Title.Trim();

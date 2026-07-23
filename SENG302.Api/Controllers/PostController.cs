@@ -115,6 +115,11 @@ public class PostController : ControllerBase
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        
+        if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
+        {
+            return Unauthorized();
+        }
         try
         {    
             if (errors.Count > 0)
@@ -133,4 +138,5 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+    
 }

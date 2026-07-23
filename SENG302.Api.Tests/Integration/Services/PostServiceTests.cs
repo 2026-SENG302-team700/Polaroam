@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using Shouldly;
 

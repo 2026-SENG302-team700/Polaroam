@@ -181,7 +181,7 @@ public class TripController : ControllerBase
         {
             return Unauthorized("You are not allowed to access this Trip's Posts!");
         }
-        var taskList = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
+        var taskList = await _postService.GetPostsByTripAsync(tripId);
         return Ok(taskList);
     }
 
