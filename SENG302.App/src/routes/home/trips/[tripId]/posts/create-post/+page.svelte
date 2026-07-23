@@ -33,13 +33,15 @@
     async function createPost() {
         title = title.trim();
         content = content.trim();
-
+        console.log("File is null?", files)
         if (files != null) {
             try {
                 const formData = new FormData();
                 for (let i = 0; i < files.length; i++) {
-                    formData.append("file", files[i]);
+                    formData.append("files", files[i]);
+                    console.log("files ", files[i])
                 }
+                console.log(formData)
                 const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
                     method: "PUT",
                     body: formData,
@@ -103,7 +105,7 @@
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
-        <ImagePicker files={files}></ImagePicker>
+        <ImagePicker bind:files></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

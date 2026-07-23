@@ -2,7 +2,7 @@
     let pfpInput: HTMLInputElement;
     
     let {
-        files,
+        files = $bindable(),
     }: {
         files: FileList | null,
     } = $props();

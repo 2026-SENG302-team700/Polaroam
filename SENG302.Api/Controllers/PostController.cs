@@ -173,10 +173,13 @@ public class PostController : ControllerBase
     /// <returns>A list of the custom image ids</returns>
     [Authorize]
     [HttpPut("images")]
-    public async Task<ActionResult<CustomFile>> UploadProfilePicture(
+    public async Task<ActionResult<CustomFile>> UploadPostPhotos(
         [FromForm] List<IFormFile> files
         )
     {
+        Console.WriteLine("\n\n\n\n" + "Files " + files + "\n\n\n\n");
+        Console.WriteLine("Count" + files.Count);
+        
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
@@ -196,7 +199,7 @@ public class PostController : ControllerBase
         for (int i = 0; i < files.Count; i++)
         {
             IFormFile file = files[i];
-            Console.WriteLine("\n\n" + file + "\n\n");
+            Console.WriteLine("\n\n\n\n" + "File " + files + "\n\n\n\n");
             
             if (!ImageValidationTools.IsValidFilesize(file))
             {
