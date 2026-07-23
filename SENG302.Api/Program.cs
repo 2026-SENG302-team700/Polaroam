@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
@@ -39,7 +40,17 @@ public class Program
         builder.Services.AddAuthorization();
         
         // Add rate limit handler
-        builder.Services.AddSingleton<NominatimRateLimitingHandler>();
+        builder.Services.AddSingleton(new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 1,
+            TokensPerPeriod = 1,
+            ReplenishmentPeriod = TimeSpan.FromMilliseconds(1500),
+            AutoReplenishment = true,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 15
+        }));
+        
+        builder.Services.AddTransient<NominatimRateLimitingHandler>();
 
 
         if (builder.Environment.IsProduction() || builder.Environment.IsStaging())

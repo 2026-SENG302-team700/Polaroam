@@ -5,7 +5,7 @@ namespace SENG302.Api.Services;
 
 public interface IGeoService
 {
-    Task<List<GeoLocationSearchResult>> GetLocationsAsync(string query);
+    Task<List<GeoLocationSearchResult>> GetLocationsAsync(string query, CancellationToken cancellationToken);
     Task<GeoLocationSearchResult?> GetLocationAsync(long osmId);
 }
 
@@ -18,7 +18,7 @@ public class GeoService : IGeoService
         _httpClient = httpClient;
     }
     
-    public async Task<List<GeoLocationSearchResult>> GetLocationsAsync(string query)
+    public async Task<List<GeoLocationSearchResult>> GetLocationsAsync(string query, CancellationToken cancellationToken)
     {
         var q = new QueryBuilder
         {
@@ -26,7 +26,7 @@ public class GeoService : IGeoService
             { "format","json" }
         };
 
-        var response = await _httpClient.GetAsync($"search{q}");
+        var response = await _httpClient.GetAsync($"search{q}", cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
