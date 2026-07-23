@@ -57,12 +57,12 @@ public class TripServiceTests : BaseIntegrationTestFixture
     }
 
     [Theory]
-    [InlineData("Hi", 1)] // Short name that is less than 3 characters
-    [InlineData("Hi!", 2)] // Name with special character
+    [InlineData("Hi", 1)] // Short title that is less than 3 characters
+    [InlineData("Hi!", 2)] // Title with special character
     [InlineData("                    Hi  ", 3)] // long enough but whitespace should be trimmed, meaning not long enough
     [InlineData("          ", 4)] // long enough but only whitespace
     [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 129 characters so invalid
-    public async Task CreateNewTrip_InvalidName_ThrowValidationException(string title, int userId)
+    public async Task CreateNewTrip_InvalidTitle_ThrowValidationException(string title, int userId)
     {
         // Add a user to the database with the email that we are testing with
         await using var context = DbContextFactory.CreateDbContext();
@@ -86,6 +86,56 @@ public class TripServiceTests : BaseIntegrationTestFixture
 
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId));
+    }
+
+
+    [Theory]
+    [InlineData("Hi", false)] // Short title that is less than 3 characters
+    [InlineData("Hi!", false)] // Title with special character
+    [InlineData("                    Hi  ", false)] // long enough but whitespace should be trimmed, meaning not long enough
+    [InlineData("          ", false)] // long enough but only whitespace
+    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", false)] // Name with 129 characters so invalid
+    [InlineData("Hai", true)] // lower edge
+    [InlineData("Hello there this is my trip", true)] // generic case
+    [InlineData("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", true)] // 128 so valid
+    public async Task UpdateTrip_VariedTitle_GetExpectedResult(string title, bool expectedResult)
+    {
+        // Add a user to the database with the email that we are testing with
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        NewTripRequest tripRequest = new()
+        {
+            Title = "Trip Title",
+            Description = "Test",
+            StartDate = DateTime.Parse("2022-01-01"),
+            EndDate = DateTime.Parse("2022-01-07"),
+        };
+
+        var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
+
+        UpdateTripRequest updateTripRequest = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = title
+        };
+
+        if (expectedResult == true)
+        {
+            await Should.NotThrowAsync(async () => await ServiceUnderTest.UpdateTripAsync(updateTripRequest, 1));
+        }
+        else
+        {
+            await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.UpdateTripAsync(updateTripRequest, 1));
+        }
     }
 
     [Fact]
@@ -113,6 +163,51 @@ public class TripServiceTests : BaseIntegrationTestFixture
 
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
+    }
+
+    [Theory]
+    [InlineData(0, true)] // empty
+    [InlineData(3, true)] // some
+    [InlineData(2048, true)] // edge
+    [InlineData(2049, false)] // just over
+    [InlineData(3000, false)] // way over
+    public async Task UpdateTrip_DescriptionLengthVaries_GetExpectedResult(int descriptionLength, bool expectedResult)
+    {
+        // Add a user to the database with the email that we are testing with
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        NewTripRequest tripRequest = new NewTripRequest
+        {
+            Title = "test",
+            Description = "Test",//new string('a', 2049),
+            StartDate = DateTime.Parse("2022-01-01"),
+            EndDate = DateTime.Parse("2022-01-07"),
+        };
+
+        Trip trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
+
+        UpdateTripRequest updateTripRequest = new()
+        {
+            Id = trip.Id,
+            Description = new string('a', descriptionLength)
+        };
+
+        if (expectedResult == true)
+        {
+            await Should.NotThrowAsync(async () => await ServiceUnderTest.UpdateTripAsync(updateTripRequest, 1));
+        }
+        else
+        {
+            await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.UpdateTripAsync(updateTripRequest, 1));
+        }
     }
 
     [Fact]

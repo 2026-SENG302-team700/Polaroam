@@ -197,7 +197,7 @@ public class TripService : ITripService
 
         var errors = new Dictionary<string, List<string>>();
 
-        foreach (var (field, errorList) in TripValidator.ValidateDates(tripRequest.StartDate, tripRequest.EndDate))
+        foreach (var (field, errorList) in TripValidator.ValidateDates(startDate, endDate))
         {
             if (errorList.Count > 0)
             {
