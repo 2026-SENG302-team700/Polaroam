@@ -105,7 +105,7 @@ public class PostService : IPostService
     /// <param name="id">the id of the post</param>
     /// <param name="userId"> id of the user making request</param>
     /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
-    public async Task<Post?> GetPostAsync(int id, int userId)
+    public async Task<Post?> GetPostAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
