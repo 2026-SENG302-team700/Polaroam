@@ -55,8 +55,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
 
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", Location = "location 1" });
-        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", Location = "location 1" });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", Location = "location 1" , Date = DateTime.Now});
+        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", Location = "location 1" , Date = DateTime.Now});
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");

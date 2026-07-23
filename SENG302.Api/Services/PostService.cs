@@ -37,12 +37,11 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         // get all the posts
         var posts = await context.Set<Post>()
-                        .Where(t => context.Set<Trip>()
-                        .Any(l => l.Id == t.TripId && l.UserId == userId))
-                        .OrderBy(t => t.Date)
-                        .ToListAsync();
+            .Where(post => context.Set<Trip>()
+                .Any(trip => trip.Id == post.TripId && trip.UserId == userId))
+            .ToListAsync();
 
-        return posts;
+        return posts.OrderBy(post => post.Date);
     }
 
     /// <summary>
