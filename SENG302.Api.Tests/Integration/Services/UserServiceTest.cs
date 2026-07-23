@@ -280,7 +280,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
         await context.SaveChangesAsync();
 
-        // Use the TaskService function to create a new trip with the name and user email
+        // Use the TripService function to create a new trip with the name and user email
         User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
 
         user.OneTimeCode.ShouldBe(code);
@@ -306,7 +306,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
-        // Use the TaskService function to create a new trip with the name and user email
+        // Use the TripService function to create a new trip with the name and user email
         User? user = await ServiceUnderTest.DeleteUserByIdAsync((int)id);
 
         user.Id.ShouldBe((int)id);

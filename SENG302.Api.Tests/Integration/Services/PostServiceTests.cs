@@ -12,7 +12,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     private IPostService ServiceUnderTest => ServiceProvider.GetRequiredService<IPostService>();
     public PostServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
-    private async Task SetupUserAndTrip(int userId, int listId)
+    private async Task SetupUserAndTrip(int userId, int tripId)
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User
@@ -25,7 +25,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         });
         context.Trips.Add(new Trip
         {
-            Id = listId,
+            Id = tripId,
             Title = "Test List",
             UserId = userId,
             Description = "Test",

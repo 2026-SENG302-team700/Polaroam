@@ -90,7 +90,7 @@ public class PostService : IPostService
     }
 
     /// <summary>
-    /// Gets all Post items from the given list.
+    /// Gets all Post items from the given trip.
     /// </summary>
     /// <param name="tripId"></param>
     /// <param name="userId"> id of the user making request</param>
