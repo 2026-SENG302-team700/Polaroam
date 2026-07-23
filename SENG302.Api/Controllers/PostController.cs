@@ -167,11 +167,11 @@ public class PostController : ControllerBase
     }
     
     /// <summary>
-    /// 
+    /// Controller method for uploading photos to a post
     /// </summary>
-    /// <param name="files"></param>
-    /// <param name="postId"></param>
-    /// <returns></returns>
+    /// <param name="files">The photo files being uploaded</param>
+    /// <param name="postId">The id of the post corresponding to the photos being uploaded</param>
+    /// <returns>The ids of the newly create custom files for the photos</returns>
     [Authorize]
     [HttpPut("images")]
     public async Task<ActionResult<CustomFile>> UploadPostPhotos(

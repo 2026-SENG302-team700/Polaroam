@@ -29,8 +29,11 @@
         generic: "",
         image: "",
     }
-    
-    
+
+    /**
+     * Function for uploading photos to the backend for a particular post
+     * @param postId Id of the post
+     */
     async function uploadPhotos(postId: number) {
         if (files != null) {
             try {
@@ -62,7 +65,10 @@
             }
         }
     }
-    
+
+    /**
+     * Function for creating a post
+     */
     async function createPost() {
         title = title.trim();
         content = content.trim();
