@@ -109,8 +109,10 @@
             const data = await response.json();
             if (!response.ok) {
                 errors.date = data.errors?.dates?.join(" ") ?? "";
+                errors.title = data.errors?.title ?? "";
+                errors.description = data.errors?.description ?? "";
 
-                if (!errors.date) {
+                if (data.generic) {
                     errors.generic =
                         typeof data === "string"
                             ? data
