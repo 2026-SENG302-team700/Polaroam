@@ -61,6 +61,40 @@ public class U7004CreatePost
 
     }
 
+    [Given(
+      @"I am on the create post form And I enter a title that is not between 3 and 128 characters")]
+    public async Task GivenIEnterAnInvalidPostTitle()
+    {
+        await using var context =
+            await _fixture.DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Original trip",
+            Description = "Original description",
+            StartDate = new DateTime(2026, 7, 1),
+            EndDate = new DateTime(2026, 7, 10),
+            UserId = 1
+        });
+
+        await context.SaveChangesAsync();
+
+        _title = "ab";
+        _content = "Test content";
+        _location = "Test Location";
+        _date = new DateTime(2026, 7, 5);
+    }
+
     [When(@"I click 'Create Post'")]
     public async Task CreatePost()
     {
@@ -88,5 +122,18 @@ public class U7004CreatePost
 
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(post.PostId);
+    }
+
+    [Then(@"I see the post error message '(.*)'")]
+    public async Task ThenISeeThePostErrorMessage(
+      string expectedMessage)
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var responseBody =
+            await _lastResponse.Content.ReadAsStringAsync();
+
+        responseBody.ShouldContain(expectedMessage);
     }
 }
