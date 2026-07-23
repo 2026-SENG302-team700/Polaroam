@@ -16,5 +16,6 @@ public class UpdatePostRequest : IPostRequest
     public string Content { get; set; } = string.Empty;
 
     public required DateTimeOffset? Date { get; set; }
+    public bool NoContentAllowed { get; set; } = false;
 
 }

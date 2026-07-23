@@ -10,6 +10,7 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     
     let loading = $state(false);
     const tripId = page.params.tripId;
@@ -19,10 +20,13 @@
     let searchQuery = $state("");
     let location = $state("Temporary");
     let content = $state("");
+    let noContentAllowed = $state(false);
+    
+    let showConfirmationModal = $state(false);
     
     let errors = $state({
         title: [],
-        description: [],
+        content: [],
         date: "",
         generic: [],
     });
@@ -45,6 +49,7 @@
                     Location: location,
                     Content: content,
                     Date: date,
+                    NoContentAllowed: noContentAllowed,
                 }),
                 credentials: "include",
             });
@@ -52,6 +57,14 @@
 
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";
+                errors.content = data.errors?.content ?? [];
+                
+                if (errors.content.length === 1 &&
+                    errors.title.length === 0 &&
+                    !errors.date &&
+                    errors.generic.length === 0) {
+                    showConfirmationModal = true;
+                }
                 return;
             }
 
@@ -60,6 +73,7 @@
             errors.generic = ["Failed to create trip"]
         } finally {
             loading = false;
+            noContentAllowed = false;
         }
     }
 </script>
@@ -81,3 +95,16 @@
         </div>
     </div>
 </div>
+
+<ConfirmationModal 
+        bind:show={showConfirmationModal} 
+        message="Post contains no content, are you sure you want to create post?" 
+        option1Text="Create anyway"
+        option2Text="Cancel"
+        onOption1={() => {
+            noContentAllowed = true;
+            showConfirmationModal = false;
+            createPost()
+        }}
+        onOption2={() => showConfirmationModal = false}
+/>

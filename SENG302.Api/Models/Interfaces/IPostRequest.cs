@@ -8,4 +8,5 @@ public interface IPostRequest {
     public  string Content { get; set; }
     public  DateTimeOffset? Date { get; set; }
     public string Location { get; set; }
+    public bool NoContentAllowed { get; set; }
 }

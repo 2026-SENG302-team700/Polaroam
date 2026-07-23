@@ -52,6 +52,7 @@ public class PostValidator
         {
             errors["date"] = ValidatePostDate(postRequest.Date);
         }
+        errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 
         return errors;
     }
@@ -74,17 +75,19 @@ public class PostValidator
     }
 
     /// <summary>
-    /// Checks the description is valid
-    /// adds error to dictionary when error occurs.
+    /// Checks for no content
+    /// if no content exists and no content isn't allowed, return error
     /// </summary>
-    /// <param name="description">The description being tested</param>
-    public static Dictionary<string, string> ValidatePostContent(string description)
+    /// <param name="content">the post content</param>
+    /// <param name="noContentAllowed">tag of whether the post can be created without content</param>
+    /// <returns>The errors</returns>
+    public static List<string> ValidatePostContent(string content, bool noContentAllowed)
     {
-        var errors = new Dictionary<string, string>();
-        if (description.Trim().Length > 2048)
+
+        if (content.Length == 0 && (!noContentAllowed))
         {
-            errors["description"] = "Description must be 2048 characters or less";
+            return ["Post contains no content, are you sure you want to create post?"];
         }
-        return errors;
+        return [];
     }
 }
