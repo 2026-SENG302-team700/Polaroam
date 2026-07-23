@@ -8,7 +8,7 @@
     type TripFormErrors = {
         title: string[];
         description: string[];
-        date: "",
+        date: string;
         generic: string;
     };
 
@@ -40,6 +40,30 @@
         loading?: boolean;
         onSubmit: () => void | Promise<void>;
     } = $props();
+
+    const startDateInvalid = $derived(
+        !startDate || Number.isNaN(startDate.getTime()),
+    );
+
+    const endDateInvalid = $derived(
+        !endDate || Number.isNaN(endDate.getTime()),
+    );
+
+    const dateOrderInvalid = $derived(
+        startDate !== null &&
+            endDate !== null &&
+            !Number.isNaN(startDate.getTime()) &&
+            !Number.isNaN(endDate.getTime()) &&
+            endDate.getTime() < startDate.getTime(),
+    );
+
+    const startDateError = $derived(
+        errors.date && startDateInvalid ? errors.date : "",
+    );
+
+    const endDateError = $derived(
+        errors.date && (endDateInvalid || dateOrderInvalid) ? errors.date : "",
+    );
 </script>
 
 <div class="container max-w-md">
@@ -52,23 +76,31 @@
     <DescriptionForm bind:description errors={errors.description} {loading} />
 
     <div class="date-picker-wrapper">
-        <div>
-            <p>From</p>
-            <Datepicker bind:value={startDate} disabled={loading} error={errors.date} />
+        <div class="date-field">
+            <label for="trip-start-date">From</label>
+            <Datepicker
+                bind:value={startDate}
+                disabled={loading}
+                error={startDateError}
+            />
         </div>
-        <div>
-            <p>To</p>
-            <Datepicker bind:value={endDate} disabled={loading} error={errors.date}/>
+        <div class="date-field">
+            <label for="trip-end-date">To</label>
+            <Datepicker
+                bind:value={endDate}
+                disabled={loading}
+                error={endDateError}
+            />
         </div>
     </div>
     {#if errors.date}
-        <div class="invalid-feedback d-block mb-2">
+        <div class="invalid-feedback d-block date-error">
             {errors.date}
         </div>
-        {/if}    
+    {/if}
 
     {#if errors.generic}
-        <div class="alert alert-danger" role="alert" >
+        <div class="alert alert-danger" role="alert">
             {errors.generic}
         </div>
     {/if}
@@ -91,6 +123,26 @@
 
     .date-picker-wrapper {
         display: grid;
-        grid-template-columns: 50% 50%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        align-items: start;
+    }
+
+    .date-field {
+        min-width: 0;
+    }
+
+    .date-field label {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .date-error {
+        margin-top: -0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .date-picker-wrapper :global(.date-form-wrapper) {
+        margin-bottom: 0.75rem;
     }
 </style>

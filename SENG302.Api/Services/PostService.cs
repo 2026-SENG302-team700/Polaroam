@@ -9,10 +9,11 @@ namespace SENG302.Api.Services;
 public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
-    Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId, int userId);
-    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId);
-    Task<Post?> GetPostAsync(int id, int userId);
-    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId);
+    Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId);
+    Task<Post> CreateNewPostAsync(NewPostRequest postRequest);
+    Task<Post?> GetPostAsync(int id);
+    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
+    Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
 }
 
@@ -52,16 +53,12 @@ public class PostService : IPostService
     /// The name of the post must be between 3 and 128 characters, and the description
     /// can be up to 2048 characters.
     /// dueDate must be in the future, and currentStatus will be automatically set to
-    /// Returns errors if the profanity filter is on and profanity is found in the text
     /// </summary>
-    /// <param name="userId"></param>
     /// <param name="postRequest"></param>
     /// <returns>the newly created postItem</returns>
-    public async Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId)
+    public async Task<Post> CreateNewPostAsync(NewPostRequest postRequest)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var user = await context.Users.FindAsync(userId);
 
         // Clean request
         postRequest.Title = postRequest.Title.Trim();
@@ -95,57 +92,55 @@ public class PostService : IPostService
     /// Gets all Post items from the given trip.
     /// </summary>
     /// <param name="tripId"></param>
-    /// <param name="userId"> id of the user making request</param>
     /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
-    public async Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId, int userId)
+    public async Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var postItems = await context.Set<Post>().Where(t => t.TripId == tripId).ToListAsync();
 
-
-        // check for user profanity status
-        var user = await context.Users.FindAsync(userId);
-
         return postItems;
     }
 
-    public async Task<Post?> GetPostAsync(int id, int userId)
+    /// <summary>
+    /// Given a postId, return the post from the database.
+    /// </summary>
+    /// <param name="id">the id of the post</param>
+    /// <param name="userId"> id of the user making request</param>
+    /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
+    public async Task<Post?> GetPostAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var user = await context.Users.FindAsync(userId);
         var PostItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
         if (PostItem == null)
         {
             return null;
         }
 
-        PostItem.Title = PostItem.Title;
-        PostItem.Content = PostItem.Content;
-
         return PostItem;
     }
 
     /// <summary>
     /// Brings in an update Post item request from the controller
+    /// Calls UserOwnsPost to verify if the user owns the post or not
     /// Strips the name and modifies the due date to be valid
     /// Validates incoming fields
     /// Updates the content then pushes to DB.
     /// </summary>
     /// <param name="postUpdates">Incoming Post Item Request</param>
     /// <returns>The updated Post item</returns>
-    public async Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId)
+    public async Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var user = await context.Users.FindAsync(userId);
+        
 
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.PostId);
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
         if (post == null)
         {
             return null;
         }
-
+        
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
 
@@ -191,6 +186,28 @@ public class PostService : IPostService
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
+    }
+
+    /// <summary>
+    /// Given a userId and the post's tripId, check if the user owns the trip
+    /// /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="tripId"></param>
+    /// <returns>A boolean indicating if the user owns the trip or not</returns>
+    public async Task<bool> UserOwnsPost(int userId, int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var trip = await context.Trips.FirstOrDefaultAsync(u => u.Id == tripId);
+        if (trip == null)
+        {
+            return false;
+        }
+        if (trip.UserId != userId)
+        {
+            return false;
+        }
+        return true;
     }
 }
 

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using Shouldly;
 
@@ -36,7 +35,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task GetAllPostsAsync_NoPosts_returnsEmpty()
+    public async Task GetAllPostsAsync_NoPosts_ReturnsEmpty()
     {
         await SetupUserAndTrip(1, 1);
         var posts = await ServiceUnderTest.GetAllPostsAsync(1);
@@ -44,7 +43,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task GetAllPostsAsync_WithTasks_ReturnsOnlyUsersTask()
+    public async Task GetAllPostsAsync_WithPosts_ReturnsOnlyUsersPost()
     {
         // setup two users and a trip
         await SetupUserAndTrip(1, 1);
@@ -78,7 +77,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedTask()
+    public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedPost()
     {
         await SetupUserAndTrip(1, 1);
 
@@ -91,7 +90,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateTime.UtcNow.AddDays(2),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request);
 
         post.Title.ShouldBe("New post");
         post.TripId.ShouldBe(1);
@@ -99,7 +98,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
 
     [Fact]
-    public async Task GetPostAsync_ValidId_ReturnsTask()
+    public async Task GetPostAsync_ValidId_ReturnsPost()
     {
         await SetupUserAndTrip(1, 1);
 
@@ -116,7 +115,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(post);
         await context.SaveChangesAsync();
 
-        var result = await ServiceUnderTest.GetPostAsync(post.PostId, 1);
+        var result = await ServiceUnderTest.GetPostAsync(post.PostId);
 
         result.ShouldNotBeNull();
         result.Title.ShouldBe("Fetch me");
@@ -125,7 +124,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPostAsync_InvalidId_ReturnsNull()
     {
-        var result = await ServiceUnderTest.GetPostAsync(-1, 1);
+        var result = await ServiceUnderTest.GetPostAsync(-1);
         result.ShouldBeNull();
     }
 
