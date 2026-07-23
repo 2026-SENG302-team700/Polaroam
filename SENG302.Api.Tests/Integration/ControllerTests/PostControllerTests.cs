@@ -99,7 +99,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", Location = "location 1" });
         await context.SaveChangesAsync();
 
-        var response = await HttpClient.GetAsync($"/api/post/trip/{1}");
+        var response = await HttpClient.GetAsync("/api/trip/post/1");
         var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
 
         posts.ShouldNotBeNull();

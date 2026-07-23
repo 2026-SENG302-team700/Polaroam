@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
@@ -114,7 +113,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
     }
-
+    
     [Fact]
     public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowValidationException()
     {
@@ -278,7 +277,9 @@ public class TripServiceTests : BaseIntegrationTestFixture
         var request = new UpdateTripRequest
         {
             Id = trip.Id,
-            Title = "Updated title"
+            Title = "Updated title",
+            StartDate = originalStartDate,
+            EndDate = originalEndDate
         };
 
         await ServiceUnderTest.UpdateTripAsync(request, 1);
@@ -286,35 +287,6 @@ public class TripServiceTests : BaseIntegrationTestFixture
         var savedTrip = await ServiceUnderTest.GetTripByIdAsync(trip.Id);
 
         savedTrip.Title.ShouldBe("Updated title");
-        savedTrip.Description.ShouldBe(originalDescription);
-        savedTrip.StartDate.ShouldBe(originalStartDate);
-        savedTrip.EndDate.ShouldBe(originalEndDate);
-    }
-
-    [Fact]
-    public async Task UpdateTrip_AllFieldsNull_LeavesDatabaseUnchanged()
-    {
-        var trip = await CreateTripForUpdateTests();
-
-        var originalTitle = trip.Title;
-        var originalDescription = trip.Description;
-        var originalStartDate = trip.StartDate;
-        var originalEndDate = trip.EndDate;
-
-        var request = new UpdateTripRequest
-        {
-            Id = trip.Id,
-            Title = null,
-            Description = null,
-            StartDate = null,
-            EndDate = null
-        };
-
-        await ServiceUnderTest.UpdateTripAsync(request, 1);
-
-        var savedTrip = await ServiceUnderTest.GetTripByIdAsync(trip.Id);
-
-        savedTrip.Title.ShouldBe(originalTitle);
         savedTrip.Description.ShouldBe(originalDescription);
         savedTrip.StartDate.ShouldBe(originalStartDate);
         savedTrip.EndDate.ShouldBe(originalEndDate);

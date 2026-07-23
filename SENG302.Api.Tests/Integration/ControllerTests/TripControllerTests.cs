@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using Shouldly;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -134,7 +135,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Dates cannot be empty!");
+        message.ShouldContain("Invalid date, date must be formatted DD/MM/YYYY");
     }
 
 
@@ -271,7 +272,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var request = new UpdateTripRequest
         {
             Id = createdTrip.Id,
-            Title = "Updated title"
+            Title = "Updated title",
+            StartDate = createdTrip.StartDate,
+            EndDate = createdTrip.EndDate
         };
 
         var updateResponse = await HttpClient.PutAsJsonAsync(

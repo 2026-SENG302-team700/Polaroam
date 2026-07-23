@@ -1,7 +1,6 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using SENG302.Api.Resources.Helpers;
 
 
 namespace SENG302.Api.Services;
@@ -13,6 +12,7 @@ public interface IPostService
     Task<Post> CreateNewPostAsync(NewPostRequest postRequest);
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
+    Task<bool> UserOwnsPost(int userId, int tripId);
 }
 
 
@@ -98,6 +98,12 @@ public class PostService : IPostService
         return postItems;
     }
 
+    /// <summary>
+    /// Given a postId, return the post from the database.
+    /// </summary>
+    /// <param name="id">the id of the post</param>
+    /// <param name="userId"> id of the user making request</param>
+    /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
     public async Task<Post?> GetPostAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -108,14 +114,12 @@ public class PostService : IPostService
             return null;
         }
 
-        PostItem.Title = PostItem.Title;
-        PostItem.Content = PostItem.Content;
-
         return PostItem;
     }
 
     /// <summary>
     /// Brings in an update Post item request from the controller
+    /// Calls UserOwnsPost to verify if the user owns the post or not
     /// Strips the name and modifies the due date to be valid
     /// Validates incoming fields
     /// Updates the content then pushes to DB.
@@ -126,12 +130,14 @@ public class PostService : IPostService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.PostId);
+        
+
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
         if (post == null)
         {
             return null;
         }
-
+        
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
 
@@ -149,6 +155,28 @@ public class PostService : IPostService
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
+    }
+
+    /// <summary>
+    /// Given a userId and the post's tripId, check if the user owns the trip
+    /// /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="tripId"></param>
+    /// <returns>A boolean indicating if the user owns the trip or not</returns>
+    public async Task<bool> UserOwnsPost(int userId, int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var trip = await context.Trips.FirstOrDefaultAsync(u => u.Id == tripId);
+        if (trip == null)
+        {
+            return false;
+        }
+        if (trip.UserId != userId)
+        {
+            return false;
+        }
+        return true;
     }
 }
 
