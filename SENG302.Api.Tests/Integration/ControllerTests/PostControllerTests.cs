@@ -68,7 +68,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task GetAllPosts_NoTasks_ReturnsEmptyList()
+    public async Task GetAllPosts_NoPosts_ReturnsEmpty()
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
@@ -101,6 +101,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var response = await HttpClient.GetAsync($"/api/post/trip/{1}");
         var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
+
+        posts.ShouldNotBeNull();
         posts.Count.ShouldBe(1);
     }
 }

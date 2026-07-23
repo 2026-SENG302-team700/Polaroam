@@ -68,7 +68,7 @@ public class PostController : ControllerBase
         {
             return Unauthorized("You are not allowed to access this Trip's Posts!");
         }
-        var posts = await _postService.GetPostsByTripAsync(tripId, int.Parse(userIdString));
+        var posts = await _postService.GetPostsByTripAsync(tripId);
         return Ok(posts);
     }
 
@@ -87,7 +87,7 @@ public class PostController : ControllerBase
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, userId);
+            var response = await _postService.CreateNewPostAsync(postRequest);
             return Ok(response);
         }
         catch (MultipleValidationException e)
@@ -104,9 +104,9 @@ public class PostController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a specific post by its post-Id
+    /// Gets a specific post by its post id
     /// </summary>
-    /// <param name="id">The desired posts id</param>
+    /// <param name="id">The desired post's id</param>
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
     [HttpGet("{id:int}")]
@@ -114,8 +114,7 @@ public class PostController : ControllerBase
     {
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var response = await _postService.GetPostAsync(id, userId);
+            var response = await _postService.GetPostAsync(id);
             return Ok(response);
         }
         catch (Exception e)
@@ -134,18 +133,14 @@ public class PostController : ControllerBase
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
-    [HttpPut("item/{id:int}")]
+    [HttpPut("{id:int}")]
     public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
+
         try
         {
-            if (ProfanityTools.ContainsProfanity(postUpdates.Content, user.ProfanityFiltering))
-            {
-                errors["description"] = "Description cannot contain profanity.";
-            }
             if (errors.Count > 0)
             {
                 return BadRequest(new BadRequestValidationResponse
@@ -154,7 +149,7 @@ public class PostController : ControllerBase
                 });
             }
 
-            var post = await _postService.UpdatePostAsync(postUpdates, userId);
+            var post = await _postService.UpdatePostAsync(postUpdates);
             return Ok(post);
         }
         catch (Exception e)
