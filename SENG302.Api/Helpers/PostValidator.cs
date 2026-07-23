@@ -1,18 +1,37 @@
+using System.Globalization;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Interfaces;
 
 public class PostValidator
 {
+    
+    /// <summary>
+    /// Returns a string representing the date format of the users locale
+    /// </summary>
+    /// <param name="culture"></param>
+    /// <returns>dd/MM/yyyy or similar</returns>
+    public static string GetLocaleDateFormat(CultureInfo? culture = null)
+    {
+        culture ??= CultureInfo.CurrentCulture;
+        string pattern = culture.DateTimeFormat.ShortDatePattern;
+        return pattern;
+    }
 
     /// <summary>
     /// Checks the due date is valid
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="date"></param>
-    public static Dictionary<string, string> ValidatePostDate(DateTime? date)
+    public static List<string> ValidatePostDate(DateTime? date)
     {
-        var errors = new Dictionary<string, string>();
-        // Body removed, awaiting implementation in a different task.
+        var errors = new List<string>();
+        if (date == null)
+        {
+            errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
+            return errors;
+        }
+        
+        if (date > DateTime.Now) errors.Add("Invalid date, date cannot be in the future");
         return errors;
     }
 
@@ -25,25 +44,13 @@ public class PostValidator
     /// <param name="post"></param>
     /// <param name="profanityFiltering"></param>
     /// <returns>Dictionary<string, string></returns>
-    public static Dictionary<string, string> ValidatePostFields(IPostRequest postRequest, Post? post = null)
+    public static Dictionary<string, List<string>> ValidatePostFields(IPostRequest postRequest, Post? post = null)
     {
-        var errors = new Dictionary<string, string>();
+        var errors = new Dictionary<string, List<string>>();
 
-        foreach (var (key, value) in ValidatePostTitle(postRequest.Title))
-        {
-            errors.Add(key, value);
-        }
-
-        foreach (var (key, value) in ValidatePostContent(postRequest.Content))
-        {
-            errors.Add(key, value);
-        }
         if (postRequest != post)
         {
-            foreach (var (key, value) in ValidatePostDate(postRequest.Date))
-            {
-                errors.Add(key, value);
-            }
+            errors["date"] = ValidatePostDate(postRequest.Date);
         }
 
         return errors;

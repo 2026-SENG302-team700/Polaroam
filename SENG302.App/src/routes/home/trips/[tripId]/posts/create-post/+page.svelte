@@ -14,18 +14,18 @@
     let loading = $state(false);
     const tripId = page.params.tripId;
     
-    let title = $state("")
-    let date = $state(new Date())
-    let searchQuery = $state("")
-    let location = $state("Temporary")
-    let content = $state("")
+    let title = $state("");
+    let date = $state(new Date());
+    let searchQuery = $state("");
+    let location = $state("Temporary");
+    let content = $state("");
     
-    let errors = {
+    let errors = $state({
         title: [],
         description: [],
-        date: [],
-        generic: "",
-    }
+        date: "",
+        generic: [],
+    });
     
     async function createPost() {
         title = title.trim();
@@ -51,14 +51,13 @@
             const data = await response.json();
 
             if (!response.ok) {
-                errors.generic = data.message;
+                errors.date = data.errors?.date?.[0] ?? "";
                 return;
             }
 
             goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
-            console.error("Failed to create trip:", err);
-            errors.generic = "Failed to create trip: " + (err as Error).message;
+            errors.generic = ["Failed to create trip"]
         } finally {
             loading = false;
         }
@@ -70,7 +69,10 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title}/>
-        <DatePicker bind:value={date}/>
+        <DatePicker bind:value={date} error={errors.date} />
+        {#if errors.date}
+            <div class="invalid-feedback d-block">{errors.date}</div>
+        {/if}
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
         <MultipleErrorDisplay errors={[errors.generic]}/>

@@ -15,6 +15,6 @@ public class UpdatePostRequest : IPostRequest
 
     public string Content { get; set; } = string.Empty;
 
-    public required DateTime Date { get; set; }
+    public required DateTime? Date { get; set; }
 
 }

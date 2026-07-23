@@ -65,9 +65,9 @@ public class PostService : IPostService
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
-        if (errors.Count > 0)
+        if (errors.Any(e => e.Value.Count > 0))
         {
-            throw new MultipleValidationException(errors);
+            throw new MultipleValidationListException(errors);
         }
 
         // Add post
@@ -139,7 +139,7 @@ public class PostService : IPostService
 
         if (errors.Count > 0)
         {
-            throw new MultipleValidationException(errors);
+            throw new MultipleValidationListException(errors);
         }
 
         post.Title = postUpdates.Title;

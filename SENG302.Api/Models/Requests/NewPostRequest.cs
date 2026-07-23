@@ -14,6 +14,6 @@ public class NewPostRequest : IPostRequest
     public required string Location { get; set; }
     public required string Content { get; set; }
 
-    public DateTime Date { get; set; }
+    public DateTime? Date { get; set; }
 
 }
