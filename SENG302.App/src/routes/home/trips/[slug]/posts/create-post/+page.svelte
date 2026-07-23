@@ -5,6 +5,7 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import ImagePicker from "$lib/components/image-picker.svelte";
+    import { resolve } from "$app/paths";
     import {fetchWithCsrf} from "$lib/csrf";
     
     let title = $state("")
@@ -16,10 +17,17 @@
     
     async function createPost() {
         // Code for sending image to backend
-        const response = await fetchWithCsrf(resolve(`/api/user/pfp` as any), {
-            method: "PUT",
-            body: formData,
-        });
+        
+        if (files != null) {
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append("file", files[i]);
+            }
+            const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
+                method: "PUT",
+                body: formData,
+            });
+        }
     }
 </script>
 

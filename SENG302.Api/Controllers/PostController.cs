@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
+using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
@@ -16,11 +17,13 @@ public class PostController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IPostService _postService;
+    private readonly IFileService _fileService;
 
-    public PostController(IPostService postService, IUserService userService)
+    public PostController(IPostService postService, IUserService userService, IFileService fileService)
     {
         _postService = postService;
         _userService = userService;
+        _fileService = fileService;
     }
 
     /// <summary>
@@ -162,4 +165,48 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+    
+    [HttpPut("images")]
+    public async Task<ActionResult<CustomFile>> UploadProfilePicture(
+        [FromForm] List<IFormFile> files
+        )
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to change this profile picture!");
+        }
+        
+        var userId = int.Parse(userIdString);
+        var user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+
+        List<int> customFileIds = [];
+        
+        for (int i = 0; i < files.Count; i++)
+        {
+            IFormFile file = files[i];
+            
+            if (!ImageValidationTools.IsValidFilesize(file))
+            {
+                return BadRequest("Image too large, maximum file size is 10MB");
+            }
+
+            // implement into one big callback function later.
+            if (!ImageValidationTools.IsValidMimeType(file))
+            {
+                return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+            }
+            var customFile = await _fileService.SaveFileAsync(file, userId);
+            var customFileId = customFile.Id;
+            customFileIds.Add(customFileId);
+        }
+        
+        return Ok(customFileIds);
+    }
+
 }
