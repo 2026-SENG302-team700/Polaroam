@@ -1,7 +1,7 @@
 // Theme variables
 $ink: #686868;
 $paper: #fff8e8;
-$primary-colour: #bebebe;
+$primary-colour: #c8e4f1;
 $danger-colour: #ef6a67;
 $success-colour: #88d498;
 $shadow-small: 3px 3px 0 $ink;
@@ -137,4 +137,10 @@ $font-weight-bold: 700;
 .modal-header,
 .modal-footer {
     border-color: $ink;
+}
+
+.menu-bar {
+    border: 2px solid $ink;
+    border-radius: 0.35rem;
+    box-shadow: $shadow-small;
 }

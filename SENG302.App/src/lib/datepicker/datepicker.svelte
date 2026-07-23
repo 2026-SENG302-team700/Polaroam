@@ -56,19 +56,20 @@
 
 <div class="date-form-wrapper input-group w-auto">
     <input
-            type="date"
-            class="form-control"
-            class:is-invalid={error}
-            bind:value={inputValue}
-            bind:this={datePicker}
-            {disabled}
+        type="date"
+        class="form-control"
+        class:is-invalid={error}
+        bind:value={inputValue}
+        bind:this={datePicker}
+        {disabled}
     />
     <button
-            type="button"
-            class="btn btn-outline-secondary"
-            {disabled}
-            onclick={() => { inputValue = ""; value = null; }}>Clear</button
-    >
+        type="button"
+        class="btn btn-outline-secondary"
+        {disabled}
+        onclick={() => { inputValue = ""; value = null; }}>
+            Clear
+    </button>
 </div>
 
 <style>

@@ -67,7 +67,7 @@
     }
 </script>
 
-<nav class="navBar">
+<nav class="navBar menu-bar">
     <div
         style="display: flex; flex-direction: row; align-items: center; padding-top: 5px; "
     >
@@ -148,9 +148,7 @@
         height: 50px;
         margin-top: 0px;
         padding-top: 0px;
-        box-shadow:
-            1px 5px 4px rgba(214, 213, 210, 0.75),
-            -1px -5px 4px rgba(214, 213, 210, 0.75);
+        
         border-radius: 10px;
         margin-bottom: 20px;
     }
