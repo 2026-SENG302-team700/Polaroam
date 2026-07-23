@@ -3,14 +3,15 @@
     import { fetchWithCsrf } from "$lib/csrf";
 
     let {
-        location = $bindable(""),
+        searchQuery = $bindable(""),
+        location = $bindable({ osmId: 0, lat: 0, lon: 0, name: "", display_name: "" }),
         error = "",
         loading = false
     } = $props();
 
     let isOpen = $state(false);
     let items = $state([]);
-    let searchQuery = $state("");
+    
     async function getSearchResults(event: KeyboardEvent) {
         if (event.key !== "Enter") return;
         event.preventDefault();
@@ -29,7 +30,6 @@
                     credentials: "include",
                 },
             );
-            console.log(Date.now())
 
             const data = await response.json();
             if (!response.ok) {
@@ -46,7 +46,13 @@
     }
 
     function selectItem(item) {
-        location = item.osm_id;
+        location = {
+            osmId: item.osm_id,
+            lat: item.lat,
+            lon: item.lon,
+            name: item.name,
+            displayName: item.display_name,
+        };
         searchQuery = item.name;
         isOpen = false;
     }

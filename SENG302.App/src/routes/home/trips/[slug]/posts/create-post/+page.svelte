@@ -10,12 +10,19 @@
     let date = $state(new Date())
     let searchQuery = $state("")
     let content = $state("")
+    let location = $state({
+        osmId : 0,
+        lat : 0,
+        lon : 0,
+        name : "",
+        displayName : "",
+    })
     
     
     async function createPost() {
         console.log(title)
         console.log(date)
-        console.log(searchQuery)
+        console.log(location)
         console.log(content)
     }
 </script>
@@ -26,8 +33,7 @@
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title}/>
         <DatePicker bind:value={date}/>
-        <SearchForm bind:query={searchQuery} placeholder="Location *"/>
-        <LocationForm bind:location={searchQuery}/>
+        <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:content={content}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
