@@ -167,18 +167,18 @@ public class PostController : ControllerBase
     }
     
     /// <summary>
-    /// Takes a list of images and stores them one by one before returning a list of the image ids
+    /// 
     /// </summary>
     /// <param name="files"></param>
-    /// <returns>A list of the custom image ids</returns>
+    /// <param name="postId"></param>
+    /// <returns></returns>
     [Authorize]
     [HttpPut("images")]
     public async Task<ActionResult<CustomFile>> UploadPostPhotos(
-        [FromForm] List<IFormFile> files
+        [FromForm] List<IFormFile> files,
+        [FromForm] string postId
         )
     {
-        Console.WriteLine("\n\n\n\n" + "Files " + files + "\n\n\n\n");
-        Console.WriteLine("Count" + files.Count);
         
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))

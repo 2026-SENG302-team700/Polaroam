@@ -39,7 +39,7 @@
                     formData.append("files", files[i]);
                     formData.append("postId", postId.toString())
                 }
-                console.log(formData)
+                
                 const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
                     method: "PUT",
                     body: formData,
@@ -89,6 +89,10 @@
                 errors.generic = data.message;
                 return;
             }
+            
+            if (files != null) {
+                await uploadPhotos(data.postId)
+            }
 
             goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
@@ -98,9 +102,6 @@
             loading = false;
         }
         
-        if (files != null) {
-            uploadPhotos(1)
-        }
     }
 </script>
 
