@@ -45,6 +45,7 @@
 		margin-left: 12px;
 		margin-right: 12px;
 		margin-top: auto;
+		margin-bottom: 12px;
 		background-color: white;
 		height: 60px;
 		border-radius: 10px;
