@@ -11,9 +11,6 @@ public interface IFileService
     Task DeleteFileAsync(string fileKey);
     Task<Byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
-    Task WriteFile(IFormFile file, string fileKey);
-    Task<CustomFile> SaveFileEntity(IFormFile file, int ownerId, string fileKey);
-
 }
 
 public class FileService : IFileService
@@ -33,7 +30,6 @@ public class FileService : IFileService
             throw new InvalidOperationException("Base path not set");
         }
         Directory.CreateDirectory(_basePath);
-
     }
 
     /// <summary>

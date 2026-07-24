@@ -7,11 +7,16 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-
+    import AddButton from "$lib/components/buttons/add-button.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import EditButton from "$lib/components/buttons/edit-button.svelte";
+    import PostSection from "$lib/components/trip-components/post-section.svelte";
 
     let loading = $state(false);
     let error = $state("");
+    let deletionModalShown = $state(false);
     let { params } = $props();
+    let tripId = params.tripId;
 
     let tripObject = $state({
         id: 0,
@@ -22,8 +27,11 @@
         userId: 0,
     });
 
+    let posts = $state([]);
+
     onMount(() => {
         fetchTrip();
+        fetchPosts();
     });
 
     /**
@@ -34,7 +42,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -55,6 +63,30 @@
     }
 
     /**
+     * Retrieves all posts associated with the trip
+     * from the backend
+     */
+    async function fetchPosts() {
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/post/${tripId}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            posts = await response.json();
+        }
+        catch (err) {
+            error = "Failed to fetch posts: " + (err as Error).message;
+        }
+        finally {
+            loading = false;
+        }
+    }
+
+    /**
      * Deletes the trip from the backend corresponding 
      * with the slug value being the trip's id
      */
@@ -62,7 +94,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "DELETE",
                     credentials: "include",
@@ -71,7 +103,7 @@
 
             const data = await response.text();
 
-            if (data === '') {
+            if (data === "") {
                 goto(resolve("/home/trips"));
             } else {
                 error = data || "Failed to delete trip.";
@@ -83,28 +115,45 @@
         }
     }
 
+    function showConfirmationModal() {
+        deletionModalShown = true;
+    }
+
+    function hideConfirmationModal() {
+        deletionModalShown = false;
+    }
 </script>
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
-    <DeleteButton deleteAction={deleteTrip}/>
+    <AddButton path="/home/trips/{tripObject.id}/posts/create-post"/>
+    <EditButton path={`/home/trips/${params.tripId}/edit`} />
+    <DeleteButton deleteAction={showConfirmationModal} />
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
         <div class="trip-head-grid">
-             <h1>{tripObject.title}</h1>
+            <h1>{tripObject.title}</h1>
             <p class="date-object">
                 {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
             </p>
         </div>
         {#if tripObject.description.length > 0}
             <span>{tripObject.description}</span>
-        {:else} 
+        {:else}
             <p>No description</p>
         {/if}
-        
     </div>
-    
+    <PostSection posts={posts}/>
 </div>
+
+<ConfirmationModal
+    bind:show={deletionModalShown}
+    message="Are you sure you want to delete this trip?"
+    option1Text="Delete"
+    option2Text="Do not delete"
+    onOption1={deleteTrip}
+    onOption2={hideConfirmationModal}
+/>
 
 <style>
     .trip-head-grid { 

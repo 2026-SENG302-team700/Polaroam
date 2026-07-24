@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using Shouldly;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -35,7 +36,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         Title = "Test Trip",
         Description = "Test",
-        StartDate = new DateTime(2025, 11, 21), 
+        StartDate = new DateTime(2025, 11, 21),
         EndDate = new DateTime(2025, 12, 21)
     };
 
@@ -57,7 +58,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "T",
             Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
+            StartDate = new DateTime(2025, 11, 21),
             EndDate = new DateTime(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
@@ -66,7 +67,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         message.ShouldContain("Trip title must be between 3 and 128 characters long");
     }
-    
+
 
     [Fact]
     public async Task CreateTrip_NonExistentUser_ReturnBadRequest()
@@ -89,7 +90,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateTime(2025, 11, 21), 
+            StartDate = new DateTime(2025, 11, 21),
             EndDate = new DateTime(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
@@ -98,17 +99,55 @@ public class TripControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         message.ShouldContain("Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
-    
-        
+
     [Fact]
-    public async Task FetchTripsByUser_SuccessfulFetch_ReturnsTaskLists()
+    public async Task CreateTrip_EndDateBeforeStartDate_ReturnBadRequest()
+    {
+        await AddTestUser();
+
+        var data = new NewTripRequest
+        {
+            Title = "Trip!",
+            Description = "Test",
+            StartDate = new DateTime(2025, 11, 21),
+            EndDate = new DateTime(2025, 10, 21)
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        var message = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        message.ShouldContain("End date must not be before the start date");
+    }
+
+    [Fact]
+    public async Task CreateTrip_DatesAreNull_ReturnBadRequest()
+    {
+        await AddTestUser();
+
+        var data = new NewTripRequest
+        {
+            Title = "Trip!",
+            Description = "Test",
+            StartDate = null,
+            EndDate = null
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
+        var message = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        message.ShouldContain("Invalid date, date must be formatted DD/MM/YYYY");
+    }
+
+
+    [Fact]
+    public async Task FetchTripsByUser_SuccessfulFetch_ReturnsTrips()
     {
         await AddTestUser();
         await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
 
-        // Fetch task lists for the user
+        // Fetch trips for the user
         var response = await HttpClient.GetAsync("/api/trip");
-        response.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
+        response.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching trips was successful
         Trip[] trips = await response.Content.ReadFromJsonAsync<Trip[]>() ?? Array.Empty<Trip>();
         trips.Length.ShouldBe(1);
     }
@@ -159,5 +198,100 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{tripId}");
 
         Assert.Equal(HttpStatusCode.Unauthorized, deleteResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_ExistingTrip_ReturnsOkAndPersistsChanges()
+    {
+        await AddTestUser();
+
+        var createResponse =
+            await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
+
+        var createdTrip =
+            await createResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(createdTrip);
+
+        var newStartDate = new DateTime(2026, 8, 1);
+        var newEndDate = new DateTime(2026, 8, 10);
+
+        var request = new UpdateTripRequest
+        {
+            Id = createdTrip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = newStartDate,
+            EndDate = newEndDate
+        };
+
+        var updateResponse = await HttpClient.PutAsJsonAsync(
+            $"/api/trip/{createdTrip.Id}",
+            request
+        );
+
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var returnedTrip =
+            await updateResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(returnedTrip);
+        returnedTrip.Title.ShouldBe("Updated trip");
+        returnedTrip.Description.ShouldBe("Updated description");
+        returnedTrip.StartDate.ShouldBe(newStartDate);
+        returnedTrip.EndDate.ShouldBe(newEndDate);
+
+        var getResponse =
+            await HttpClient.GetAsync($"/api/trip/{createdTrip.Id}");
+
+        getResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var savedTrip =
+            await getResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(savedTrip);
+        savedTrip.Title.ShouldBe("Updated trip");
+        savedTrip.Description.ShouldBe("Updated description");
+        savedTrip.StartDate.ShouldBe(newStartDate);
+        savedTrip.EndDate.ShouldBe(newEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_PartialRequest_PreservesUnspecifiedFields()
+    {
+        await AddTestUser();
+
+        var createResponse =
+            await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
+
+        var createdTrip =
+            await createResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(createdTrip);
+
+        var request = new UpdateTripRequest
+        {
+            Id = createdTrip.Id,
+            Title = "Updated title",
+            StartDate = createdTrip.StartDate,
+            EndDate = createdTrip.EndDate
+        };
+
+        var updateResponse = await HttpClient.PutAsJsonAsync(
+            $"/api/trip/{createdTrip.Id}",
+            request
+        );
+
+        updateResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var updatedTrip =
+            await updateResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(updatedTrip);
+        updatedTrip.Title.ShouldBe("Updated title");
+        updatedTrip.Description.ShouldBe(createdTrip.Description);
+        updatedTrip.StartDate.ShouldBe(createdTrip.StartDate);
+        updatedTrip.EndDate.ShouldBe(createdTrip.EndDate);
+        updatedTrip.UserId.ShouldBe(createdTrip.UserId);
     }
 }
