@@ -4,6 +4,8 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net;
+using NSubstitute;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -15,7 +17,7 @@ public class U7004CreatePost
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _content;
-    private DateTime _date;
+    private DateTime? _date;
     private string _location;
 
     public U7004CreatePost(AcceptanceTestFixture fixture)
@@ -27,10 +29,20 @@ public class U7004CreatePost
         _location = "";
 
     }
+    
+    private void SetupGeoMock()
+    {
+        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        {
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
+        });
+    }
 
-    [Given(
-        @"I am on the create post form And I enter a valid title, location, date, and optional content")]
-    public async Task ValidTripAttributes()
+    public async void SetupUserAndTrip()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
@@ -52,13 +64,18 @@ public class U7004CreatePost
             UserId = 1
         });
         await context.SaveChangesAsync();
+    }
+
+    [Given(
+        @"I am on the create post form And I enter a valid title, location, date, and optional content")]
+    public async Task ValidTripAttributes()
+    {
+        SetupUserAndTrip();
 
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
-        _date = DateTime.Parse("2028-01-07");
-
-
+        _date = DateTime.Parse("2022-01-07");
     }
 
     [When(@"I click 'Create Post'")]
@@ -69,10 +86,11 @@ public class U7004CreatePost
             TripId = 1,
             Title = _title,
             Content = _content,
-            Location = _location,
+            OsmId = 292806332,
             Date = _date
         };
-
+        
+        SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/post", postRequest);
     }
 
@@ -88,5 +106,41 @@ public class U7004CreatePost
 
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(post.PostId);
+    }
+    
+    // AC 4
+    [Given(@"I am on the create post form And I enter a miss-formed or null date")]
+    public async Task SetInvalidDate()
+    {
+        SetupUserAndTrip();
+        
+        _date = null;
+    }
+    
+    [Then(@"I see the error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'")]
+    public async Task CheckInvalidDateErrorMessage()
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain("Invalid date, date must be formatted ");
+    }
+    
+    // AC 5
+    [Given(@"I am on the create post form And I enter a date in the future")]
+    public async Task SetFutureDate()
+    {
+        SetupUserAndTrip();
+        
+        _date = DateTime.Now.AddDays(1);
+    }
+    
+    [Then(@"I see an error message 'Invalid date, date cannot be in the future'")]
+    public async Task CheckFutureDateErrorMessage()
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain("Invalid date, date cannot be in the future");
     }
 }
