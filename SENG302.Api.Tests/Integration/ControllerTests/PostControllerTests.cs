@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
@@ -119,5 +120,65 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         posts.ShouldNotBeNull();
         posts.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1});
+        await context.SaveChangesAsync();
+        
+        
+        var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new ByteArrayContent(fileBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/webp");
+        content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
+
+        content.Add(new StringContent("1"), "postId");
+        content.Add(new StringContent("1"), "tripId");
+        
+        var response = await HttpClient.PutAsync("/api/post/images", content);
+        var photoIds = await response.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        photoIds.ShouldBe("[1]");
+        
+    }
+    
+    [Fact]
+    public async Task UploadPostPhotos_InvalidRequest_NotOwnerOfPost()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        await context.SaveChangesAsync();
+        
+        
+        var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new ByteArrayContent(fileBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/webp");
+        content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
+        
+        content.Add(new StringContent("1"), "postId");
+        content.Add(new StringContent("1"), "tripId");
+        
+        
+        var response = await HttpClient.PutAsync("/api/post/images", content);
+        var photoIds = await response.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        photoIds.ShouldContain("You do not have authorisation to upload photos to this post!");
+        
     }
 }

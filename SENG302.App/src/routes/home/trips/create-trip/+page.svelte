@@ -64,7 +64,7 @@
                 credentials: "include",
             });
             const data = await response.json();
-
+            
             if (!response.ok) {
                 errors.title = data.errors?.title ?? [];
                 errors.description = data.errors?.description ?? [];

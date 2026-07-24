@@ -11,6 +11,7 @@
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
+    import ImagePicker from "$lib/components/image-picker.svelte";
     
     let loading = $state(false);
     const tripId = page.params.tripId;
@@ -26,14 +27,57 @@
         displayName : "",
     })
     let content = $state("")
+    let files: FileList | null = $state(null);
     
     let errors = {
         title: [],
         description: [],
         date: [],
         generic: "",
+        photos: "",
     }
-    
+
+    /**
+     * Function for uploading photos to the backend for a particular post
+     * @param postId Id of the post
+     */
+    async function uploadPhotos(postId: number) {
+        if (files != null) {
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    console.log("File ", files[i])
+                    formData.append("files", files[i]);
+                    formData.append("postId", postId.toString());
+                    formData.append("tripId", tripId.toString());
+                }
+                
+                const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
+                    method: "PUT",
+                    body: formData,
+                });
+
+                let customImageIds: String[];
+                if (!response.ok) {
+                    if (response.status == 500) {
+                        errors.photos = "Failed to upload picture"
+                    } else {
+                        errors.photos = await response.text()
+                    }
+                } else {
+                    customImageIds = await response.json()
+                    goto(resolve(`/home/trips/${tripId}`));
+                    console.log(customImageIds.toString())
+                }
+            } catch (err) {
+                errors.photos = (err as Error).message;
+            }
+        }
+    }
+
+    /**
+     * Function for creating a post
+     */
     async function createPost() {
         title = title.trim();
         content = content.trim();
@@ -61,11 +105,16 @@
                 errors.generic = data.message;
                 return;
             }
+            
+            if (files != null) {
+                await uploadPhotos(data.postId)
+            } else {
+                goto(resolve(`/home/trips/${tripId}`));
+            }
 
-            goto(resolve(`/home/trips/${tripId}`));
+            
         } catch (err) {
-            console.error("Failed to create trip:", err);
-            errors.generic = "Failed to create trip: " + (err as Error).message;
+            errors.generic = "Failed to create post: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -80,6 +129,7 @@
         <DatePicker bind:value={date}/>
         <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
+        <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

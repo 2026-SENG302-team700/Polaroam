@@ -142,4 +142,35 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var result = await ServiceUnderTest.GetPostAsync(-1);
         result.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task AddPhotoToPost_InvalidPostId_ReturnsNull()
+    {
+        var result = await ServiceUnderTest.AddPhotosToPost([1, 2], 1);
+        result.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task AddPhotoToPost_ValidRequest_ReturnsPost()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "New post",
+            Content = "Some description",
+            OsmId = 1,
+            Date = DateTime.UtcNow.AddDays(2),
+        };
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(request);
+
+        List<int> photoIds = [1, 2];
+        var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
+        
+        updatedPost.ShouldNotBeNull();
+        updatedPost.PhotoIds.ShouldBe(photoIds);
+        updatedPost.PostId.ShouldBe(post.PostId);
+    }
 }

@@ -2,6 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Resources.Helpers;
 
 
 namespace SENG302.Api.Services;
@@ -14,6 +15,7 @@ public interface IPostService
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
     Task<bool> UserOwnsPost(int userId, int tripId);
+    Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
 }
 
 
@@ -67,6 +69,7 @@ public class PostService : IPostService
 
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
+
         if (errors.Count > 0)
         {
             throw new MultipleValidationException(errors);
@@ -88,6 +91,7 @@ public class PostService : IPostService
             Content = postRequest.Content,
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
+            PhotoIds = [],
             OsmId = postRequest.OsmId
         };
         context.Set<Post>().Add(newPost);
@@ -162,6 +166,34 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
 
+        context.Posts.Update(post);
+        await context.SaveChangesAsync();
+        return post;
+    }
+    
+    /// <summary>
+    /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
+    /// later on
+    /// </summary>
+    /// <param name="photoFileIds">List of the custom file Ids corresponding to the photos</param>
+    /// <param name="postId">The Ids of the post</param>
+    /// <returns></returns>
+    public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
+        
+        if (post == null || postId == null)
+        {
+            return null;
+        }
+        
+        for (int i = 0; i < photoFileIds.Count; i++)
+        {
+            post.PhotoIds.Add(photoFileIds[i]);
+        }
+        
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
