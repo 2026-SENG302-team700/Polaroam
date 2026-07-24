@@ -6,9 +6,7 @@
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
-    import path from "path";
     import AppLogo from "$lib/components/app-logo.svelte";
-    import MenuBar from "$lib/components/menu-bar.svelte";
 
     let pfpUrl: string | null = null;
 

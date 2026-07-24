@@ -5,8 +5,6 @@
 	import Toast from "$lib/toast/toast.svelte";
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
-	import { goto } from "$app/navigation";
-	import { resolve } from "$app/paths";
     import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
 
 	interface Props { children?: import("svelte").Snippet }
