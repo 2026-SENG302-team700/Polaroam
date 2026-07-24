@@ -1,7 +1,8 @@
 // Theme variables
 $ink: #686868;
 $paper: #fff8e8;
-$primary-colour: #c8e4f1;
+$button-hover-colour: #cccccc;
+$primary-colour: #83beda;
 $danger-colour: #ef6a67;
 $success-colour: #88d498;
 $shadow-small: 3px 3px 0 $ink;
@@ -27,8 +28,9 @@ $font-weight-bold: 700;
 // Import Bootstrap
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
-// Global compoents
-.btn {
+// Global components
+.btn,
+.trip-container {
     z-index: 3;
     border-color: $ink;
     font-weight: 700;
@@ -56,6 +58,29 @@ $font-weight-bold: 700;
         box-shadow: none;
         transform: none;
         opacity: 0.55;
+    }
+}
+
+.text {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.nav-link {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    transition:
+        transform $transition-fast,
+        box-shadow $transition-fast,
+        background-color $transition-fast;
+    &:hover {
+        border-radius: 3px;
+        background-color: $button-hover-colour;
+        border-color: $ink;
     }
 }
 
@@ -138,7 +163,6 @@ $font-weight-bold: 700;
 .modal-footer {
     border-color: $ink;
 }
-
 .menu-bar {
     border: 2px solid $ink;
     border-radius: 0.35rem;
