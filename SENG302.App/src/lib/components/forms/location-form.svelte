@@ -16,12 +16,9 @@
      * Gets the search results from the backend
      * @param event - the keyboard event
      */
-    async function getSearchResults(event: KeyboardEvent) {
-        if (event.key !== "Enter") return;
-        event.preventDefault();
-        
+    async function getSearchResults() {
         if (loading) return;
-        
+
         try {
             loading = true;
             error = "";
@@ -50,6 +47,16 @@
     }
 
     /**
+     * Triggers search on Enter key
+     * @param event - the keyboard event
+     */
+    function handleKeydown(event: KeyboardEvent) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        doSearch();
+    }
+
+    /**
      * Sets the selected item to the location object
      * @param item - location object
      */
@@ -74,7 +81,7 @@
                 class:is-invalid={error}
                 placeholder="Search location..."
                 bind:value={searchQuery}
-                onkeydown={getSearchResults}
+                onkeydown={handleKeydown}
                 onblur={() => setTimeout(() => (isOpen = false), 200)}
         />
         <button
@@ -88,7 +95,7 @@
             {:else}
                  <i class="bi bi-search"></i>
             {/if}
-            
+        </button>
     </div>
     
 
