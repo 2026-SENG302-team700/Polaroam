@@ -173,7 +173,7 @@ public class PostController : ControllerBase
                 Headers = new HeaderDictionary(),
                 ContentType = file.MimeType
             };
-
+                                                    
             photos.Add(formFile);
         }
 

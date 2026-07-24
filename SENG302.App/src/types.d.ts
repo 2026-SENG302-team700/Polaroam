@@ -4,3 +4,7 @@ type PfpData = {
     offsetY: number,
     zoom: number
 }
+
+type PostPhotoData = {
+    imageSource: string,
+}

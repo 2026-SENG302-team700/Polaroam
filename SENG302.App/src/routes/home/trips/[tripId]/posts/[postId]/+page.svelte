@@ -30,10 +30,31 @@
         creationTime: "9999-12-31",
         userId: 0,
     });
+    
+    let photos: PostPhotoData[] = $state([]);
 
     onMount(() => {
         fetchPost();
     });
+
+    /**
+     * Fetch Images
+     */
+    async function fetchImages() {
+        loading = true
+        const response = await fetchWithCsrf(
+            resolve(`api/post/${postId}/images` as any),
+            {
+                method: "GET",
+                credentials: "include",
+            }
+        )
+        console.log(response)
+        const blob = await response.blob();
+        console.log(blob)
+         photos.push()
+        
+    }
 
     /**
      * Fetches the post from the backend corresponding
@@ -56,6 +77,7 @@
                 return;
             }
             postObject = data;
+            fetchImages();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
         } finally {
