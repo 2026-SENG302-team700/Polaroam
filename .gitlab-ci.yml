@@ -207,3 +207,6 @@ deploy-production:
       - SENG302.App/build/
   only:
     - tags
+
+include:
+  - local: ".gitlab/workflows/smoke-test.yml"
