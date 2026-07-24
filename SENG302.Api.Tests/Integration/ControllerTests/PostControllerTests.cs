@@ -123,6 +123,129 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreatePost_FutureDate_ReturnBadRequest()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            creationTime = DateTimeOffset.UtcNow,
+            OsmId = 1,
+            Date = DateTime.Now.AddDays(1)
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+    
+    [Fact]
+    public async Task CreatePost_NullDate_ReturnBadRequest()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+        
+        SetupGeoMock();
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            creationTime = DateTimeOffset.UtcNow,
+            OsmId = 1,
+            Date = null
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+    
+    [Fact]
+    public async Task CreatePost_NoContentAndNotAllowed_Ok()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+        
+        SetupGeoMock();
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            OsmId = 1,
+            Date = DateTime.Now,
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+    
+    [Fact]
+    public async Task CreatePost_NoContentAndAllowed_Ok()
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+        
+        SetupGeoMock();
+        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
+        {
+            TripId = 1,
+            Title = "name",
+            Content = "test",
+            OsmId = 1,
+            Date = DateTime.Now,
+            NoContentAllowed = true
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+    
+    [Fact]
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
         await using var context = DbContextFactory.CreateDbContext();

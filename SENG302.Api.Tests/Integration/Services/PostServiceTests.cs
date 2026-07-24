@@ -102,7 +102,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New post",
             Content = "Some description",
             OsmId = 292806332,
-            Date = DateTime.UtcNow.AddDays(2),
+            Date = DateTime.UtcNow.AddDays(-2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request);
@@ -162,7 +162,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New post",
             Content = "Some description",
             OsmId = 1,
-            Date = DateTime.UtcNow.AddDays(2),
+            Date = DateTime.UtcNow.AddDays(-2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request);

@@ -17,7 +17,7 @@ public class U7004CreatePost
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _content;
-    private DateTime _date;
+    private DateTime? _date;
     private string _location;
 
     public U7004CreatePost(AcceptanceTestFixture fixture)
@@ -42,9 +42,7 @@ public class U7004CreatePost
         });
     }
 
-    [Given(
-        @"I am on the create post form And I enter a valid title, location, date, and optional content")]
-    public async Task ValidTripAttributes()
+    public async void SetupUserAndTrip()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
@@ -66,13 +64,18 @@ public class U7004CreatePost
             UserId = 1
         });
         await context.SaveChangesAsync();
+    }
+
+    [Given(
+        @"I am on the create post form And I enter a valid title, location, date, and optional content")]
+    public async Task ValidTripAttributes()
+    {
+        SetupUserAndTrip();
 
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
-        _date = DateTime.Parse("2028-01-07");
-
-
+        _date = DateTime.Parse("2022-01-07");
     }
 
     [When(@"I click 'Create Post'")]
@@ -103,5 +106,41 @@ public class U7004CreatePost
 
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(post.PostId);
+    }
+    
+    // AC 4
+    [Given(@"I am on the create post form And I enter a miss-formed or null date")]
+    public async Task SetInvalidDate()
+    {
+        SetupUserAndTrip();
+        
+        _date = null;
+    }
+    
+    [Then(@"I see the error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'")]
+    public async Task CheckInvalidDateErrorMessage()
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain("Invalid date, date must be formatted ");
+    }
+    
+    // AC 5
+    [Given(@"I am on the create post form And I enter a date in the future")]
+    public async Task SetFutureDate()
+    {
+        SetupUserAndTrip();
+        
+        _date = DateTime.Now.AddDays(1);
+    }
+    
+    [Then(@"I see an error message 'Invalid date, date cannot be in the future'")]
+    public async Task CheckFutureDateErrorMessage()
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain("Invalid date, date cannot be in the future");
     }
 }

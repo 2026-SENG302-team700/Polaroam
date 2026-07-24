@@ -42,12 +42,11 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         // get all the posts
         var posts = await context.Set<Post>()
-                        .Where(t => context.Set<Trip>()
-                        .Any(l => l.Id == t.TripId && l.UserId == userId))
-                        .OrderBy(t => t.Date)
-                        .ToListAsync();
+            .Where(post => context.Set<Trip>()
+                .Any(trip => trip.Id == post.TripId && trip.UserId == userId))
+            .ToListAsync();
 
-        return posts;
+        return posts.OrderBy(post => post.Date);
     }
 
     /// <summary>
@@ -70,9 +69,9 @@ public class PostService : IPostService
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
-        if (errors.Count > 0)
+        if (errors.Any(e => e.Value.Count > 0))
         {
-            throw new MultipleValidationException(errors);
+            throw new MultipleValidationListException(errors);
         }
         
         // Add location
@@ -172,7 +171,7 @@ public class PostService : IPostService
 
         if (errors.Count > 0)
         {
-            throw new MultipleValidationException(errors);
+            throw new MultipleValidationListException(errors);
         }
 
         post.Title = postUpdates.Title;

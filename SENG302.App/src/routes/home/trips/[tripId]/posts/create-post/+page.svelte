@@ -10,6 +10,7 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/image-picker.svelte";
     
@@ -28,14 +29,17 @@
     })
     let content = $state("")
     let files: FileList | null = $state(null);
+    let noContentAllowed = $state(false);
     
-    let errors = {
+    let showConfirmationModal = $state(false);
+    
+    let errors = $state({
         title: [],
-        description: [],
-        date: [],
+        content: [],
+        date: "",
         generic: "",
         photos: "",
-    }
+    });
 
     /**
      * Function for uploading photos to the backend for a particular post
@@ -96,13 +100,22 @@
                     OsmId: location.osmId,
                     Content: content,
                     Date: date,
+                    NoContentAllowed: noContentAllowed,
                 }),
                 credentials: "include",
             });
             const data = await response.json();
 
             if (!response.ok) {
-                errors.generic = data.message;
+                errors.date = data.errors?.date?.[0] ?? "";
+                errors.content = data.errors?.content ?? [];
+                
+                if (errors.content.length === 1 &&
+                    errors.title.length === 0 &&
+                    !errors.date &&
+                    errors.generic.length === 0) {
+                    showConfirmationModal = true;
+                }
                 return;
             }
             
@@ -114,9 +127,10 @@
 
             
         } catch (err) {
-            errors.generic = "Failed to create post: " + (err as Error).message;
+            errors.generic = ["Failed to create trip"]
         } finally {
             loading = false;
+            noContentAllowed = false;
         }
     }
 </script>
@@ -126,7 +140,10 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title}/>
-        <DatePicker bind:value={date}/>
+        <DatePicker bind:value={date} error={errors.date} />
+        {#if errors.date}
+            <div class="invalid-feedback d-block">{errors.date}</div>
+        {/if}
         <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
         <ImagePicker bind:files error={errors.photos}></ImagePicker>
@@ -136,3 +153,16 @@
         </div>
     </div>
 </div>
+
+<ConfirmationModal 
+        bind:show={showConfirmationModal} 
+        message="Post contains no content, are you sure you want to create post?" 
+        option1Text="Create anyway"
+        option2Text="Cancel"
+        onOption1={() => {
+            noContentAllowed = true;
+            showConfirmationModal = false;
+            createPost()
+        }}
+        onOption2={() => showConfirmationModal = false}
+/>

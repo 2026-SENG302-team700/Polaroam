@@ -18,7 +18,7 @@ public class Post
     public required int TripId { get; set; }
     public required string Title { get; set; }
     public string Content { get; set; }
-    public DateTime? Date { get; set; }
+    public DateTimeOffset? Date { get; set; }
     public required long OsmId { get; set; }
     public List<int>? PhotoIds { get; set; } 
     public DateTimeOffset creationTime { get; set; }

@@ -13,6 +13,8 @@ public class UpdatePostRequest : IPostRequest
     public required string Title { get; set; }
     public long OsmId { get; set; }
     public string Content { get; set; } = string.Empty;
-    public required DateTime Date { get; set; }
+
+    public required DateTimeOffset? Date { get; set; }
+    public bool NoContentAllowed { get; set; } = false;
 
 }
