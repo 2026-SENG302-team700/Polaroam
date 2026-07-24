@@ -43,8 +43,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     {
         // check if the tests are being run by GitLab CI
         var configuredUrl = Environment.GetEnvironmentVariable("E2E_BASE_URL");
-        _usesRemoteEnvironment = Environment.GetEnvironmentVariable("GITLAB_CI") == "true"
-            && !string.IsNullOrEmpty(configuredUrl);
+        _usesRemoteEnvironment = !string.IsNullOrEmpty(configuredUrl);
 
         AppBaseUrl = _usesRemoteEnvironment ? configuredUrl!.TrimEnd('/') : "http://localhost:5173";
 
