@@ -1,17 +1,18 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.ObjectPool;
+using SENG302.Api.Constants;
 
 namespace SENG302.Api.Helpers;
 
-public static class ImageTypeValidation
+public static class ImageValidationTools
 {
-    public static string invalidMimeString = "INVALID MIME";
+    public static readonly string InvalidMimeString = "INVALID MIME";
 
     /// <summary>
     /// A list of image types that record which magic numbers correspond to which mime types
     /// </summary>
-    static readonly Dictionary<string, string> imageTypes = new() {
+    static readonly Dictionary<string, string> ImageTypes = new() {
         {"89504e47", "image/png"},
         {"47494638", "image/gif"},
         {"ffd8ffe0", "image/jpeg"},
@@ -39,7 +40,7 @@ public static class ImageTypeValidation
 
         string fileMagicNumber = Convert.ToHexStringLower(magicNumber);
 
-        foreach (var (refrMagicNumber, mimeType) in imageTypes)
+        foreach (var (refrMagicNumber, mimeType) in ImageTypes)
         {
 
             var valid = true;
@@ -64,6 +65,19 @@ public static class ImageTypeValidation
             }
         }
 
-        return invalidMimeString;
+        return InvalidMimeString;
+    }
+
+    public static bool IsValidFilesize(IFormFile file)
+    {
+        return (file.Length <= 10000000);
+    }
+
+    public static bool IsValidMimeType(IFormFile file)
+    {
+        var contentType = file.ContentType;
+        var realContentType = GetRealImageMime(file);
+
+        return !(!MimeTypeSets.Images.Contains(contentType) || realContentType == InvalidMimeString);
     }
 }

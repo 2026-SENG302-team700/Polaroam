@@ -1,8 +1,6 @@
-using System.Globalization;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using SENG302.Api.Resources.Helpers;
 using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Services;
@@ -14,6 +12,7 @@ public interface ITripService
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
     Task DeleteTripByIdAsync(int tripId);
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
+    Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
 }
 
 public class TripService : ITripService
@@ -81,8 +80,16 @@ public class TripService : ITripService
                 errors[field] = errorList;
             }
         }
-        
+
         foreach (var (field, errorList) in TripValidator.ValidateDescription(trip.Description))
+        {
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
+        }
+
+        foreach (var (field, errorList) in TripValidator.ValidateDates(trip.StartDate, trip.EndDate))
         {
             if (errorList.Count > 0)
             {
@@ -162,5 +169,59 @@ public class TripService : ITripService
 
         return trip.UserId == userId;
     }
-}
 
+    /// <summary>
+    /// Updates a trip with the given ID, Validates the title, description, and dates before updating the trip.
+    /// Returns the updated trip if successful, or throws an ArgumentException if validation fails or the
+    /// </summary>
+    /// <param name="tripRequest"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Set<Trip>().Where(t => t.Id == tripRequest.Id).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new ArgumentException("trip with the provided ID does not exist.");
+        }
+
+        var startDate = tripRequest.StartDate ?? trip.StartDate;
+        var endDate = tripRequest.EndDate ?? trip.EndDate;
+
+        var errors = new Dictionary<string, List<string>>();
+
+        // TODO: add other validation
+        foreach (var (field, errorList) in TripValidator.ValidateDates(tripRequest.StartDate, tripRequest.EndDate))
+        {
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
+        }
+
+        if (errors.Any(e => e.Value.Count > 0))
+        {
+            throw new MultipleValidationListException(errors);
+        }
+
+        // Update the trip
+        if (!string.IsNullOrEmpty(tripRequest.Title))
+            trip.Title = tripRequest.Title;
+
+        if (!string.IsNullOrEmpty(tripRequest.Description))
+            trip.Description = tripRequest.Description;
+
+        if (tripRequest.StartDate.HasValue)
+            trip.StartDate = tripRequest.StartDate;
+
+        if (tripRequest.EndDate.HasValue)
+            trip.EndDate = tripRequest.EndDate;
+
+        await context.SaveChangesAsync();
+
+        return trip;
+    }
+}

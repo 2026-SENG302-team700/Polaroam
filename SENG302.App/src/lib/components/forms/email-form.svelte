@@ -5,7 +5,7 @@
 <div class="mb-3">
     <input 
             id="email"
-        type="text"
+        type="email"
         class="form-control"
         class:is-invalid={error}
         autocomplete="email"
