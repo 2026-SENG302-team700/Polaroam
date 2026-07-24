@@ -11,15 +11,24 @@
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import LocationForm from "$lib/components/forms/location-form.svelte";
+    import ImagePicker from "$lib/components/image-picker.svelte";
     
     let loading = $state(false);
     const tripId = page.params.tripId;
     
-    let title = $state("");
-    let date = $state(new Date());
-    let searchQuery = $state("");
-    let location = $state("Temporary");
-    let content = $state("");
+    let title = $state("")
+    let date = $state(new Date())
+    let searchQuery = $state("")
+    let location = $state({
+        osmId : 0,
+        lat : 0,
+        lon : 0,
+        name : "",
+        displayName : "",
+    })
+    let content = $state("")
+    let files: FileList | null = $state(null);
     let noContentAllowed = $state(false);
     
     let showConfirmationModal = $state(false);
@@ -28,9 +37,51 @@
         title: [],
         content: [],
         date: "",
-        generic: [],
+        generic: "",
+        photos: "",
     });
-    
+
+    /**
+     * Function for uploading photos to the backend for a particular post
+     * @param postId Id of the post
+     */
+    async function uploadPhotos(postId: number) {
+        if (files != null) {
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    console.log("File ", files[i])
+                    formData.append("files", files[i]);
+                    formData.append("postId", postId.toString());
+                    formData.append("tripId", tripId.toString());
+                }
+                
+                const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
+                    method: "PUT",
+                    body: formData,
+                });
+
+                let customImageIds: String[];
+                if (!response.ok) {
+                    if (response.status == 500) {
+                        errors.photos = "Failed to upload picture"
+                    } else {
+                        errors.photos = await response.text()
+                    }
+                } else {
+                    customImageIds = await response.json()
+                    goto(resolve(`/home/trips/${tripId}`));
+                    console.log(customImageIds.toString())
+                }
+            } catch (err) {
+                errors.photos = (err as Error).message;
+            }
+        }
+    }
+
+    /**
+     * Function for creating a post
+     */
     async function createPost() {
         title = title.trim();
         content = content.trim();
@@ -46,7 +97,7 @@
                 body: JSON.stringify({
                     TripId: Number(tripId),
                     Title: title,
-                    Location: location,
+                    OsmId: location.osmId,
                     Content: content,
                     Date: date,
                     NoContentAllowed: noContentAllowed,
@@ -67,8 +118,14 @@
                 }
                 return;
             }
+            
+            if (files != null) {
+                await uploadPhotos(data.postId)
+            } else {
+                goto(resolve(`/home/trips/${tripId}`));
+            }
 
-            goto(resolve(`/home/trips/${tripId}`));
+            
         } catch (err) {
             errors.generic = ["Failed to create trip"]
         } finally {
@@ -87,8 +144,9 @@
         {#if errors.date}
             <div class="invalid-feedback d-block">{errors.date}</div>
         {/if}
-        <SearchForm bind:query={searchQuery} placeholder="Location *"/>
+        <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
+        <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

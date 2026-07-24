@@ -4,6 +4,8 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net;
+using NSubstitute;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -26,6 +28,18 @@ public class U7004CreatePost
         _date = new DateTime();
         _location = "";
 
+    }
+    
+    private void SetupGeoMock()
+    {
+        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        {
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
+        });
     }
 
     public async void SetupUserAndTrip()
@@ -72,10 +86,11 @@ public class U7004CreatePost
             TripId = 1,
             Title = _title,
             Content = _content,
-            Location = _location,
+            OsmId = 292806332,
             Date = _date
         };
-
+        
+        SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/post", postRequest);
     }
 

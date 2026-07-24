@@ -7,6 +7,6 @@ public interface IPostRequest {
     public  string Title { get; set; }
     public  string Content { get; set; }
     public  DateTimeOffset? Date { get; set; }
-    public string Location { get; set; }
+    public long OsmId { get; set; }
     public bool NoContentAllowed { get; set; }
 }

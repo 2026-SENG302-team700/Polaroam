@@ -1,6 +1,8 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Responses;
+using SENG302.Api.Resources.Helpers;
 
 
 namespace SENG302.Api.Services;
@@ -13,6 +15,7 @@ public interface IPostService
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
     Task<bool> UserOwnsPost(int userId, int tripId);
+    Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
 }
 
 
@@ -20,12 +23,14 @@ public class PostService : IPostService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly IGeoService _geoService;
 
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IGeoService geoService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        _geoService = geoService;
     }
 
     /// <summary>
@@ -68,19 +73,41 @@ public class PostService : IPostService
         {
             throw new MultipleValidationListException(errors);
         }
+        
+        // Add location
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        if (location == null)
+        {
+            throw new Exception("Location not found");
+        }
+        
 
         // Add post
-        var newPost = new Post()
+        var newPost = new Post
         {
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
-            Location = postRequest.Location
+            PhotoIds = [],
+            OsmId = postRequest.OsmId
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
+
+        context.Set<Location>().Add(new Location
+        {
+            OsmId = postRequest.OsmId,
+            PostId = newPost.PostId,
+            Lat = location.lat,
+            Lon = location.lon,
+            Name = location.name,
+            DisplayName = location.display_name,
+        });
+        
+        await context.SaveChangesAsync();
+        
         return newPost;
     }
 
@@ -151,6 +178,34 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
 
+        context.Posts.Update(post);
+        await context.SaveChangesAsync();
+        return post;
+    }
+    
+    /// <summary>
+    /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
+    /// later on
+    /// </summary>
+    /// <param name="photoFileIds">List of the custom file Ids corresponding to the photos</param>
+    /// <param name="postId">The Ids of the post</param>
+    /// <returns></returns>
+    public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
+        
+        if (post == null || postId == null)
+        {
+            return null;
+        }
+        
+        for (int i = 0; i < photoFileIds.Count; i++)
+        {
+            post.PhotoIds.Add(photoFileIds[i]);
+        }
+        
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 
@@ -34,6 +36,18 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    private void SetupGeoMock()
+    {
+        GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        {
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
+        });
+    }
+
     [Fact]
     public async Task GetAllPostsAsync_NoPosts_ReturnsEmpty()
     {
@@ -55,7 +69,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "User 1 post",
             Content = "desc",
-            Location = "location",
+            OsmId = 292806332,
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -64,7 +78,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 2,
             Title = "User 2 post",
             Content = "desc",
-            Location = "location",
+            OsmId = 292806332,
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -80,14 +94,15 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedPost()
     {
         await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
 
         var request = new NewPostRequest
         {
             TripId = 1,
             Title = "New post",
             Content = "Some description",
-            Location = "Some location",
-            Date = DateTime.UtcNow.AddDays(-1)
+            OsmId = 292806332,
+            Date = DateTime.UtcNow.AddDays(-2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request);
@@ -108,7 +123,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "Fetch me",
             Content = "desc",
-            Location = "location",
+            OsmId = 292806332,
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         };
@@ -126,5 +141,37 @@ public class PostServiceTests : BaseIntegrationTestFixture
     {
         var result = await ServiceUnderTest.GetPostAsync(-1);
         result.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task AddPhotoToPost_InvalidPostId_ReturnsNull()
+    {
+        var result = await ServiceUnderTest.AddPhotosToPost([1, 2], 1);
+        result.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task AddPhotoToPost_ValidRequest_ReturnsPost()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "New post",
+            Content = "Some description",
+            OsmId = 1,
+            Date = DateTime.UtcNow.AddDays(-2),
+        };
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(request);
+
+        List<int> photoIds = [1, 2];
+        var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
+        
+        updatedPost.ShouldNotBeNull();
+        updatedPost.PhotoIds.ShouldBe(photoIds);
+        updatedPost.PostId.ShouldBe(post.PostId);
     }
 }
