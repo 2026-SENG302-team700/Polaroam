@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Playwright;
 using SENG302.Api.Tests.Integration;
 using SENG302.Api.Models.Requests;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace SENG302.Api.Tests.E2E;
 
@@ -17,7 +18,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     protected IPage Page = null!;
     protected string ApiBaseUrl = null!;
     private string _svelteBuildPath = null!;
-    
+
     // Frontend build lock and flag
     private static readonly SemaphoreSlim _buildLock = new(1, 1);
     private static bool _isBuilt = false;
@@ -171,7 +172,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         // If we're in the CI pipeline, assume the build is passed to us 🙏
         if (Environment.GetEnvironmentVariable("GITLAB_CI") == "true")
         {
-            return; 
+            return;
         }
 
         var solutionRoot = GetSolutionRoot();
@@ -183,7 +184,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         {
             return;
         }
-        
+
         // Otherwise we have to actually build the app :sadge:
         // Ensure thread safety across parallel test runners
         await _buildLock.WaitAsync();
@@ -212,8 +213,8 @@ public class E2ETestFixture : BaseIntegrationTestFixture
                         FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "npm",
                         Arguments = OperatingSystem.IsWindows() ? "/c npm ci" : "ci",
                         WorkingDirectory = appPath,
-                        RedirectStandardOutput = !OperatingSystem.IsWindows(),
-                        RedirectStandardError = true,
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
                         UseShellExecute = false,
                         CreateNoWindow = true
                     }
@@ -238,13 +239,13 @@ public class E2ETestFixture : BaseIntegrationTestFixture
                     FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "npm",
                     Arguments = OperatingSystem.IsWindows() ? "/c npm run build" : "run build",
                     WorkingDirectory = appPath,
-                    RedirectStandardOutput = !OperatingSystem.IsWindows(),
-                    RedirectStandardError = true,
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
-            
+
             buildProcess.StartInfo.EnvironmentVariables["CI"] = "true"; // Pretend like its a CI build so npm/vite doesn't complain
             buildProcess.StartInfo.EnvironmentVariables["NODE_ENV"] = "development";
 
@@ -282,7 +283,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     {
         // First register the user via API (easier and faster)
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-    
+
         var registerRequest = new PostUserRequest
         {
             Email = email,
@@ -290,22 +291,21 @@ public class E2ETestFixture : BaseIntegrationTestFixture
             PasswordConfirm = password,
             DisplayName = displayName,
         };
-    
+
         var registerResponse = await HttpClient.PostAsJsonAsync("/api/register", registerRequest);
         registerResponse.EnsureSuccessStatusCode();
-    
+
         // Now login via the UI
-        await Page.GotoAsync($"http://localhost:5173/login");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-    
+        await Page.GotoAsync($"http://localhost:5173/login", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#password").FillAsync(password);
-    
+
         // Click the login button
         await Page.Locator("button[type='submit']").ClickAsync();
 
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-    
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
+
         return email;
     }
 }

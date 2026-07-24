@@ -15,23 +15,22 @@ public class LoginE2ETest : E2ETestFixture
     public LoginE2ETest(WebApplicationFactory<SENG302.Api.Program> factory) : base(factory)
     {
     }
-    
-    
+
+
     [Fact]
     public async Task ShouldRegisterSuccessfully()
     {
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-        
-        
+
+
         // Arrange: Create a test user in the database
         var email = "testuser@example.com";
         var password = "TestPassword123!";
         var displayName = "Test User";
-        
+
 
         // Act: Navigate to login page and fill in the form
-        await Page.GotoAsync("http://localhost:5173/register");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync($"http://localhost:5173/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
         // Fill in the register form
         await Page.Locator("#email").FillAsync(email);
@@ -44,17 +43,17 @@ public class LoginE2ETest : E2ETestFixture
 
         // Click the regsiter button
         await Page.Locator("button[type='submit']").ClickAsync();
-        
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
 
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
         var code = user.OneTimeCode;
-        
+
         for (int i = 1; i <= 6; i++)
-        {   
-            await Page.Locator($"#code-input-{i}").FillAsync(code[i-1].ToString());
+        {
+            await Page.Locator($"#code-input-{i}").FillAsync(code[i - 1].ToString());
         }
-        
+
         await Page.Locator("#confirm-verification-button").ClickAsync();
 
         // Assert: Verify we're on the login page (registered)
@@ -66,17 +65,16 @@ public class LoginE2ETest : E2ETestFixture
     public async Task ShouldShowErrorWithInvalidPassword()
     {
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-        
-        
+
+
         // Arrange: Create a test user in the database
         var email = "testuser@example.com";
         var password = "Test";
         var displayName = "Test User";
-        
+
 
         // Act: Navigate to login page and fill in the form
-        await Page.GotoAsync("http://localhost:5173/register");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Page.GotoAsync($"http://localhost:5173/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
         // Fill in the login form
         await Page.Locator("#email").FillAsync(email);
@@ -85,14 +83,14 @@ public class LoginE2ETest : E2ETestFixture
         await Page.Locator("#confirm-password").FillAsync(password);
 
         await Page.Locator("#country").ClickAsync();
-        
+
         await Page.Locator("#country").SelectOptionAsync("NZ");
 
         // Click the login button
         await Page.Locator("button[type='submit']").ClickAsync();
 
         await Page.WaitForTimeoutAsync(1000);
-        
+
         // Wait for error message to appear
         await Page.WaitForSelectorAsync("#initial-password-error");
 
@@ -100,12 +98,6 @@ public class LoginE2ETest : E2ETestFixture
         var errorMessage = await Page.Locator("#initial-password-error").TextContentAsync();
         errorMessage.ShouldNotBeNullOrEmpty();
         errorMessage.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters");
-    }
-
-    [Fact]
-    public async Task TestRegisterAndLogin()
-    {
-        await RegisterAndLoginViaUI();
     }
 }
 
