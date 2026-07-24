@@ -81,10 +81,10 @@ public class PostService : IPostService
         {
             throw new Exception("Location not found");
         }
-        context.Set<GeoLocationSearchResult>().Add(location);
+        
 
         // Add post
-        var newPost = new Post()
+        var newPost = new Post
         {
             TripId = postRequest.TripId,
             Title = postRequest.Title,
@@ -96,6 +96,19 @@ public class PostService : IPostService
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
+
+        context.Set<Location>().Add(new Location
+        {
+            OsmId = postRequest.OsmId,
+            PostId = newPost.PostId,
+            Lat = location.lat,
+            Lon = location.lon,
+            Name = location.name,
+            DisplayName = location.display_name,
+        });
+        
+        await context.SaveChangesAsync();
+        
         return newPost;
     }
 

@@ -12,5 +12,5 @@ public class DatabaseContext : DbContext
     public DbSet<Trip> Trips { get; set; }
     public DbSet<CustomFile> CustomFiles { get; set; }
     public DbSet<Post> Posts { get; set; }
-    public DbSet<GeoLocationSearchResult> Locations { get; set; }
+    public DbSet<Location> Locations { get; set; }
 }
