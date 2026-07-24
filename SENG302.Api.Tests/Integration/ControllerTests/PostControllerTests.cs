@@ -17,11 +17,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
         {
-            OsmId = 1,
-            Lat = "1",
-            Lon = "1",
-            DisplayName = "Auckland",
-            Name = "Auckland, New Zealand"
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
         });
     }
 
