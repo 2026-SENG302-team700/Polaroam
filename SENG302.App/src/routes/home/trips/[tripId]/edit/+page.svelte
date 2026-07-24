@@ -55,7 +55,7 @@
             loading = true;
 
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
