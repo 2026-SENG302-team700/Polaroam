@@ -18,6 +18,8 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     protected IPage Page = null!;
     protected string ApiBaseUrl = null!;
     private string _svelteBuildPath = null!;
+    protected string AppBaseUrl = null!;
+    private bool _usesRemoteEnvironment;
 
     // Frontend build lock and flag
     private static readonly SemaphoreSlim _buildLock = new(1, 1);
@@ -39,12 +41,19 @@ public class E2ETestFixture : BaseIntegrationTestFixture
 
     public override async Task InitializeAsync()
     {
-        // Build the Svelte app first
-        await BuildSvelteApp();
+        // check if the tests are being run by GitLab CI
+        var configuredUrl = Environment.GetEnvironmentVariable("E2E_BASE_URL");
+        _usesRemoteEnvironment = Environment.GetEnvironmentVariable("GITLAB_CI") == "true"
+            && !string.IsNullOrEmpty(configuredUrl);
 
+        AppBaseUrl = _usesRemoteEnvironment ? configuredUrl!.TrimEnd('/') : "http://localhost:5173";
+
+        // Build the Svelte app first if on localhost
+        if (_usesRemoteEnvironment)
+        {
+            await BuildSvelteApp();
+        }
         await base.InitializeAsync();
-
-        ApiBaseUrl = HttpClient.BaseAddress!.ToString().TrimEnd('/');
 
         // Store the build path for serving static files via Playwright
         var solutionRoot = GetSolutionRoot();
@@ -296,7 +305,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         registerResponse.EnsureSuccessStatusCode();
 
         // Now login via the UI
-        await Page.GotoAsync($"http://localhost:5173/login", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+        await Page.GotoAsync($"{AppBaseUrl}/login", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#password").FillAsync(password);

@@ -5,6 +5,7 @@ stages:
   - coverage-report
   - sonarqube
   - deploy
+  - e2e
 
 # Check that the tag matches the expected 'sprintX.Y' format
 tag-checker:
@@ -61,13 +62,18 @@ acceptance-tests:
   variables:
     TEST_NAMESPACE: Acceptance
 
+# run the e2e tests on staging after deploy
 e2e-tests:
-  extends: .test_template
+  stage: e2e
   variables:
-    TEST_NAMESPACE: E2E
+    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test/"
+    GITLAB_CI: "true"
+  needs:
+    - deploy-staging
+  script:
+    - dotnet test SENG302.Api.Tests/E2E/SENG302.Api.Tests.E2E.csproj --filter "FullyQualifiedName~SENG302.Api.Tests.E2E" --no-restore
   only:
     - dev
-    - main
 
 coverage-reporting:
   stage: coverage-report
@@ -118,6 +124,9 @@ sonarqube-report:
 # During the DevOps workshop in sprint 2 we will cover the deployment configuration below
 deploy-staging:
   stage: deploy
+  environment:
+    name: staging
+    url: https://csse-seng302-team700.canterbury.ac.nz/test/
   script:
     # Build backend api and restart the underlying service
     - dotnet publish SENG302.Api/SENG302.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true

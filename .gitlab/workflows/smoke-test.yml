@@ -8,6 +8,9 @@ on:
 jobs:
   smoke-test:
     runs-on: ubuntu-latest
+    variables:
+      E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test/"
+      GITLAB_CI: "true"
     steps:
       - uses: actions/checkout@v3
 

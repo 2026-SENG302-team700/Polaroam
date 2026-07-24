@@ -30,7 +30,7 @@ public class LoginE2ETest : E2ETestFixture
 
 
         // Act: Navigate to login page and fill in the form
-        await Page.GotoAsync($"http://localhost:5173/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+        await Page.GotoAsync($"{AppBaseUrl}/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
         // Fill in the register form
         await Page.Locator("#email").FillAsync(email);
@@ -58,7 +58,7 @@ public class LoginE2ETest : E2ETestFixture
 
         // Assert: Verify we're on the login page (registered)
         var currentUrl = Page.Url;
-        currentUrl.ShouldBe("http://localhost:5173/login");
+        currentUrl.ShouldBe($"{AppBaseUrl}/login");
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class LoginE2ETest : E2ETestFixture
 
 
         // Act: Navigate to login page and fill in the form
-        await Page.GotoAsync($"http://localhost:5173/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+        await Page.GotoAsync($"{AppBaseUrl}/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
         // Fill in the login form
         await Page.Locator("#email").FillAsync(email);
