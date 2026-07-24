@@ -295,15 +295,16 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         registerResponse.EnsureSuccessStatusCode();
     
         // Now login via the UI
-        await Page.GotoAsync($"http://localhost:5173/register");
+        await Page.GotoAsync($"http://localhost:5173/login");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#password").FillAsync(password);
-        await Page.Locator("button[type='submit']").ClickAsync();
     
-        // Wait for redirect to home page
-        await Page.WaitForURLAsync($"http://localhost/books/");
+        // Click the login button
+        await Page.Locator("button[type='submit']").ClickAsync();
+
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
     
         return email;
     }

@@ -33,21 +33,16 @@ public class LoginE2ETest : E2ETestFixture
         await Page.GotoAsync("http://localhost:5173/register");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Fill in the login form
+        // Fill in the register form
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#display-name-input").FillAsync(displayName);
         await Page.Locator("#initial-password-input").FillAsync(password);
         await Page.Locator("#confirm-password").FillAsync(password);
 
         await Page.Locator("#country").ClickAsync();
-        /*await Page.Locator("#NZ").WaitForAsync(new LocatorWaitForOptions 
-        { 
-            State = WaitForSelectorState.Visible 
-        });
-        await Page.Locator("#NZ").ClickAsync();*/
         await Page.Locator("#country").SelectOptionAsync("NZ");
 
-        // Click the login button
+        // Click the regsiter button
         await Page.Locator("button[type='submit']").ClickAsync();
         
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -62,13 +57,7 @@ public class LoginE2ETest : E2ETestFixture
         
         await Page.Locator("#confirm-verification-button").ClickAsync();
 
-        // If we wanted to wait for navigation to complete to a specific page...
-        // await Page.WaitForURLAsync("http://localhost:5173/login/");
-        
-        // You may instead want to look for elements on the page with something like
-        // await Page.Locator("h1:has-text('Books')").WaitForAsync();
-
-        // Assert: Verify we're on the home page (logged in)
+        // Assert: Verify we're on the login page (registered)
         var currentUrl = Page.Url;
         currentUrl.ShouldBe("http://localhost:5173/login");
     }
@@ -111,6 +100,12 @@ public class LoginE2ETest : E2ETestFixture
         var errorMessage = await Page.Locator("#initial-password-error").TextContentAsync();
         errorMessage.ShouldNotBeNullOrEmpty();
         errorMessage.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters");
+    }
+
+    [Fact]
+    public async Task TestRegisterAndLogin()
+    {
+        await RegisterAndLoginViaUI();
     }
 }
 
