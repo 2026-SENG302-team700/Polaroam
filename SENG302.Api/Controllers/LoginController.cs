@@ -23,8 +23,7 @@ public class LoginController : ControllerBase
         _userService = userService;
         _emailService = emailService;
     }
-
-
+    
     /// <summary>
     /// Check to ensure the provided email and password match a registered user
     /// </summary>

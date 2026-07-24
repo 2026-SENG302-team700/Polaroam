@@ -72,9 +72,9 @@ public class PostController : ControllerBase
             var response = await _postService.CreateNewPostAsync(postRequest);
             return Ok(response);
         }
-        catch (MultipleValidationException e)
+        catch (MultipleValidationListException e)
         {
-            return BadRequest(new BadRequestValidationResponse
+            return BadRequest(new BadRequestValidationListResponse
             {
                 Errors = e.Errors
             });
