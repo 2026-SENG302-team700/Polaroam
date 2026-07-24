@@ -2,6 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SENG302.Api.Models.Responses;
 
+/// <summary>
+/// Names are formatted in snake case to match json response from the nominatim api
+/// </summary>
 public class GeoLocationSearchResult
 {
     [Key]
