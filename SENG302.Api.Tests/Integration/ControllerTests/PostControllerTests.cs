@@ -1,8 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
-using Gherkin.Ast;
 using Microsoft.AspNetCore.Mvc.Testing;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
@@ -10,6 +11,18 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 public class PostControllerTests : BaseIntegrationTestFixture
 {
     public PostControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
+    
+    private void SetupGeoMock()
+    {
+        GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
+        {
+            OsmId = 1,
+            Lat = "1",
+            Lon = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
+        });
+    }
 
     [Fact]
     public async Task CreatePost_ValidData_Ok()
@@ -28,6 +41,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
 
         await context.SaveChangesAsync();
+        
+        SetupGeoMock();
 
         var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
         {
@@ -35,7 +50,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             Title = "name",
             Content = "test",
             creationTime = DateTimeOffset.UtcNow,
-            OsmId = 292806332,
+            OsmId = 1,
             Date = DateTime.Now
         });
         message.StatusCode.ShouldBe(HttpStatusCode.OK);

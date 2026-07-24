@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 
@@ -32,6 +34,18 @@ public class PostServiceTests : BaseIntegrationTestFixture
             EndDate = new DateTime(2017, 10, 21)
         });
         await context.SaveChangesAsync();
+    }
+
+    private void SetupGeoMock()
+    {
+        GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
+        {
+            OsmId = 1,
+            Lat = "1",
+            Lon = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
+        });
     }
 
     [Fact]
@@ -80,6 +94,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedPost()
     {
         await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
 
         var request = new NewPostRequest
         {

@@ -5,9 +5,9 @@ namespace SENG302.Api.Models.Responses;
 public class GeoLocationSearchResult
 {
     [Key]
-    public long osm_id { get; set; }
-    public string lat { get; set; }
-    public string lon { get; set; }
-    public string name { get; set; }
-    public string display_name { get; set; }
+    public required long OsmId { get; set; }
+    public required string Lat { get; set; }
+    public required string Lon { get; set; }
+    public required string Name { get; set; }
+    public required string DisplayName { get; set; }
 }
