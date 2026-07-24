@@ -186,7 +186,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         NewTripRequest tripRequest = new NewTripRequest
         {
             Title = "test",
-            Description = "Test",//new string('a', 2049),
+            Description = "Test",
             StartDate = DateTime.Parse("2022-01-01"),
             EndDate = DateTime.Parse("2022-01-07"),
         };
@@ -199,7 +199,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             Description = new string('a', descriptionLength)
         };
 
-        if (expectedResult == true)
+        if (expectedResult)
         {
             await Should.NotThrowAsync(async () => await ServiceUnderTest.UpdateTripAsync(updateTripRequest, 1));
         }
