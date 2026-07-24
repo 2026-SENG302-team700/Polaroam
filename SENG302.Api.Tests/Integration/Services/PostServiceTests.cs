@@ -38,7 +38,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
     private void SetupGeoMock()
     {
-        GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
+        GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
         {
             OsmId = 1,
             Lat = "1",
