@@ -11,7 +11,11 @@
 
     let isOpen = $state(false);
     let items = $state([]);
-    
+
+    /**
+     * Gets the search results from the backend
+     * @param event - the keyboard event
+     */
     async function getSearchResults(event: KeyboardEvent) {
         if (event.key !== "Enter") return;
         event.preventDefault();
@@ -45,6 +49,10 @@
         }
     }
 
+    /**
+     * Sets the selected item to the location object
+     * @param item - location object
+     */
     function selectItem(item) {
         location = {
             osmId: item.osm_id,
