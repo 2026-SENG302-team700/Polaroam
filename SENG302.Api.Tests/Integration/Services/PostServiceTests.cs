@@ -154,6 +154,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task AddPhotoToPost_ValidRequest_ReturnsPost()
     {
         await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
 
         var request = new NewPostRequest
         {

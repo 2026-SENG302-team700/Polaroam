@@ -23,6 +23,16 @@ public class GeoService : IGeoService
         _httpClient = httpClient;
     }
     
+    /// <summary>
+    /// Accepts a search query and calls the nominatim api to get a list
+    /// of locations that match the query.
+    /// </summary>
+    /// <param name="query">Search Query</param>
+    /// <param name="acceptLanguageHeader">the language for the user</param>
+    /// <param name="cancellationToken">Allows request to be removed from queue when the user
+    /// leaves the page</param>
+    /// <returns>The list of locations</returns>
+    /// <exception cref="HttpRequestException"></exception>
     public async Task<List<GeoLocationSearchResult>> GetLocationsAsync(
         string query, 
         string? acceptLanguageHeader, 
@@ -53,7 +63,13 @@ public class GeoService : IGeoService
 
         return results;
     }
-
+    
+    /// <summary>
+    /// Gets a location from an osm id
+    /// </summary>
+    /// <param name="osmId">The osm id of a location</param>
+    /// <returns>Location information</returns>
+    /// <exception cref="HttpRequestException"></exception>
     public async Task<GeoLocationSearchResult?> GetLocationAsync(long osmId)
     {
         var q = new QueryBuilder
