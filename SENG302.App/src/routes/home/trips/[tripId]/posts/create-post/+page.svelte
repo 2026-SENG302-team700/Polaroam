@@ -11,6 +11,7 @@
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ImagePicker from "$lib/components/image-picker.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
     
     let loading = $state(false);
     const tripId = page.params.tripId;
@@ -124,6 +125,7 @@
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
+        <ImageDisplay images={files}/>
         <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
