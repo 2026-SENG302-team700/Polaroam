@@ -8,3 +8,21 @@ smoke-tests:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $SMOKE_TESTS == "true"'
     - when: never
+
+notify-smoke-test-failure:
+  stage: notify
+  needs:
+    - job: smoke-tests
+      artifacts: false
+  script:
+    - |
+      curl --fail-with-body \
+        --request POST \
+        --header "Content-Type: application/json" \
+        --data "{\"text\":\"Overnight smoke tests failed for **$CI_PROJECT_NAME** on branch **$CI_COMMIT_REF_NAME**. See the [pipeline]($CI_PIPELINE_URL) for information\"}" \
+        "$MATTERMOST_WEBHOOK_URL"
+  when: on_failure
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SMOKE_TESTS == "true"'
+      when: on_failure
+    - when: never
