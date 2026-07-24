@@ -16,6 +16,14 @@ tag-checker:
   only:
     - tags
 
+# reusable template for normal jobs (not scheduled)
+.not-scheduled:
+  except:
+    refs:
+      - schedules
+    variables:
+      - '$SMOKE_TESTS == "true"'
+
 # builds dotnet project for all branches, except dev and main
 # regular builds should not be saved (no artifacts)
 dotnet-build:
@@ -34,11 +42,6 @@ svelte-build:
     - cd SENG302.App
     - npm ci
     - npm run build
-
-# reusable template for normal jobs (not scheduled)
-.not-scheduled:
-  except:
-    - schedules
 
 # Runs the tests for the dotnet project
 # Later (sprint 2) you will add support for coverage collection and SonarQube
