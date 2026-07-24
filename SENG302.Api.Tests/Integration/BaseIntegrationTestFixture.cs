@@ -25,6 +25,8 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     protected IDbContextFactory<DatabaseContext> DbContextFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
 
+    protected IGeoService GeoServiceMock { get; }
+
     // As our tests run, time passes, which can make it difficult to check exactly when something happened.
     // For this reason, we fake (similar to mocking) our time provider, effectively freezing time while we run our tests.
     // Note: This will only work if we remember to use a TimeProvider instead of DateTime.Now or DateTimeOffset.Now in our code.
@@ -40,6 +42,8 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         TestNow = DateTimeOffset.Now;
         FakeTimeProvider = new FakeTimeProvider(TestNow);
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        GeoServiceMock = Substitute.For<IGeoService>();
 
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
@@ -74,6 +78,9 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.AddSingleton<TimeProvider>(FakeTimeProvider);
                 services.AddSingleton<IEmailService>(Substitute.For<IEmailService>());
 
+                services.RemoveAll<IGeoService>();
+                services.AddSingleton(GeoServiceMock);
+
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
             });
@@ -82,7 +89,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         HttpClient = _webAppFactory.CreateClient();
     }
 
-    public async Task InitializeAsync()
+    public virtual async Task InitializeAsync()
     {
         // At the start of a test, make sure the database is created fresh
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
@@ -91,7 +98,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         CreateTestDirectory();
     }
 
-    public async Task DisposeAsync()
+    public virtual async Task DisposeAsync()
     {
         // Close and dispose the sqlite connection when tests are done
         await _connection.CloseAsync();

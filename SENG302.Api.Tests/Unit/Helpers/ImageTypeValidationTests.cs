@@ -29,7 +29,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_ValidImageButJustMime_Success(byte[] bytes, string expectedMime)
     {
         var file = GetMockFile("test", bytes);
-        ImageTypeValidation.GetRealImageMime(file).ShouldBe(expectedMime);
+        ImageValidationTools.GetRealImageMime(file).ShouldBe(expectedMime);
     }
 
     [Theory]
@@ -42,7 +42,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_ValidImage_Success(byte[] bytes, string expectedMime)
     {
         var file = GetMockFile("test", bytes);
-        ImageTypeValidation.GetRealImageMime(file).ShouldBe(expectedMime);
+        ImageValidationTools.GetRealImageMime(file).ShouldBe(expectedMime);
     }
     
     [Theory]
@@ -54,6 +54,6 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_InvalidImage_Fail(byte[] bytes)
     {
         var file = GetMockFile("test", bytes);
-        ImageTypeValidation.GetRealImageMime(file).ShouldBe(ImageTypeValidation.invalidMimeString);
+        ImageValidationTools.GetRealImageMime(file).ShouldBe(ImageValidationTools.InvalidMimeString);
     }
 }

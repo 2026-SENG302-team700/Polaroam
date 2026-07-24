@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
@@ -46,7 +45,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             EndDate = endDate,
         };
 
-        // Use the TaskService function to create a new task list with the name and user email
+        // Use the TripService function to create a new trip with the name and user email
         var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId);
 
         trip.Title.ShouldBe(title.Trim());
@@ -84,7 +83,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             EndDate = DateTime.Parse("2022-01-07"),
         };
 
-        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId));
     }
 
@@ -161,7 +160,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             EndDate = DateTime.Parse("2022-01-07"),
         };
 
-        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
     }
 
@@ -233,7 +232,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             EndDate = DateTime.Parse("2021-12-29"),
         };
 
-        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
     }
 
@@ -260,7 +259,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             EndDate = null,
         };
 
-        // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
+        // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1));
     }
 
@@ -280,7 +279,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        // Use the TaskService function to retrieve task lists for the user email
+        // Use the TripService function to retrieve trips for the user email
         var initialTrips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
         initialTrips.Count().ShouldBe(0);
 

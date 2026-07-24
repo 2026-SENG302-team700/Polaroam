@@ -236,7 +236,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
 #line hidden
 #line 16
         await testRunner.ThenAsync("the trip is not created, And I see an error message \'End date must not be before " +
-                        "the start date\' preserved and displayed in the task description", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+                        "the start date\' preserved and displayed in the trip description", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

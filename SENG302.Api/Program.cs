@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
@@ -37,6 +38,19 @@ public class Program
 
         // Add authorization service
         builder.Services.AddAuthorization();
+        
+        // Add rate limit handler
+        builder.Services.AddSingleton(new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 1,
+            TokensPerPeriod = 1,
+            ReplenishmentPeriod = TimeSpan.FromMilliseconds(1500),
+            AutoReplenishment = true,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 15
+        }));
+        
+        builder.Services.AddTransient<NominatimRateLimitingHandler>();
 
 
         if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
@@ -136,7 +150,7 @@ public class Program
         builder.Services.AddSingleton(new EmailSettings());
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
-
+        
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -181,7 +195,7 @@ public class Program
             var tokens = antiforgery.GetAndStoreTokens(context);
             return Results.Ok(new { token = tokens.RequestToken });
         });
-
+        
         app.MapControllers();
 
         if (app.Environment.IsDevelopment())
@@ -195,6 +209,8 @@ public class Program
 
         app.Run();
     }
+    
+    
 
     protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
@@ -229,10 +245,16 @@ public class Program
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
-        services.AddScoped<ITaskItemService, TaskItemService>();
+        services.AddScoped<IPostService, PostService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
+        services.AddHttpClient<IGeoService, GeoService>(client =>
+        {
+            client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
+        })
+        .AddHttpMessageHandler<NominatimRateLimitingHandler>();
 
-        // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
+    // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
     }
 
