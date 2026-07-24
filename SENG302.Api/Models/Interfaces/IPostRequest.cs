@@ -7,5 +7,5 @@ public interface IPostRequest {
     public  string Title { get; set; }
     public  string Content { get; set; }
     public  DateTime Date { get; set; }
-    public string Location { get; set; }
+    public long OsmId { get; set; }
 }

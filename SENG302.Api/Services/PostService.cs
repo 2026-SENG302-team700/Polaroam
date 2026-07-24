@@ -1,6 +1,7 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Resources.Helpers;
 
 
@@ -22,12 +23,14 @@ public class PostService : IPostService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly IGeoService _geoService;
 
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IGeoService geoService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        _geoService = geoService;
     }
 
     /// <summary>
@@ -71,9 +74,17 @@ public class PostService : IPostService
         {
             throw new MultipleValidationException(errors);
         }
+        
+        // Add location
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        if (location == null)
+        {
+            throw new Exception("Location not found");
+        }
+        
 
         // Add post
-        var newPost = new Post()
+        var newPost = new Post
         {
             TripId = postRequest.TripId,
             Title = postRequest.Title,
@@ -81,10 +92,23 @@ public class PostService : IPostService
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
             PhotoIds = [],
-            Location = postRequest.Location
+            OsmId = postRequest.OsmId
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
+
+        context.Set<Location>().Add(new Location
+        {
+            OsmId = postRequest.OsmId,
+            PostId = newPost.PostId,
+            Lat = location.lat,
+            Lon = location.lon,
+            Name = location.name,
+            DisplayName = location.display_name,
+        });
+        
+        await context.SaveChangesAsync();
+        
         return newPost;
     }
 

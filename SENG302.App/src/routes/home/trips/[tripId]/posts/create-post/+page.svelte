@@ -10,6 +10,7 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/image-picker.svelte";
     
     let loading = $state(false);
@@ -18,7 +19,13 @@
     let title = $state("")
     let date = $state(new Date())
     let searchQuery = $state("")
-    let location = $state("Temporary")
+    let location = $state({
+        osmId : 0,
+        lat : 0,
+        lon : 0,
+        name : "",
+        displayName : "",
+    })
     let content = $state("")
     let files: FileList | null = $state(null);
     
@@ -86,7 +93,7 @@
                 body: JSON.stringify({
                     TripId: Number(tripId),
                     Title: title,
-                    Location: location,
+                    OsmId: location.osmId,
                     Content: content,
                     Date: date,
                 }),
@@ -107,12 +114,10 @@
 
             
         } catch (err) {
-            console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;
         } finally {
             loading = false;
         }
-        
     }
 </script>
 
@@ -122,7 +127,7 @@
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title}/>
         <DatePicker bind:value={date}/>
-        <SearchForm bind:query={searchQuery} placeholder="Location *"/>
+        <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
         <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>

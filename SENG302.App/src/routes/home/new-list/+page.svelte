@@ -82,10 +82,10 @@
     </div>
     <div class="mb-3">
         <button
-            type="button"
-            class="btn btn-secondary"
-            onclick={() => goto(resolve("/home"))}
-            >Cancel
+                type="button"
+                class="btn btn-secondary"
+                onclick={() => goto(resolve("/home"))}
+        >Cancel
         </button>
     </div>
     <form onsubmit={createList}>
@@ -94,9 +94,9 @@
         </div>
         <div>
             <button
-                type="submit"
-                class="btn btn-primary w-100"
-                disabled={loading}
+                    type="submit"
+                    class="btn btn-primary w-100"
+                    disabled={loading}
             >
                 {loading ? "Creating..." : "Create List"}
             </button>
