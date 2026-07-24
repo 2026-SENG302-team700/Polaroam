@@ -7,6 +7,8 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Resources.Helpers;
+using System.Dynamic;
+using SQLitePCL;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -118,13 +120,13 @@ public class PostController : ControllerBase
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        
+
         if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
         {
             return Unauthorized();
         }
         try
-        {    
+        {
             if (errors.Count > 0)
             {
                 return BadRequest(new BadRequestValidationResponse
@@ -141,7 +143,43 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
+    /// <summary>
+    /// Takes a post id and returns all the photos as form files
+    /// </summary>
+    /// <param name="postId">The id of the post</param>
+    /// <returns>The photos as form files</returns>
+    [Authorize]
+    [HttpGet("{postId:int}/images")]
+    public async Task<ActionResult<List<IFormFile>>> GetPostPhotos(int postId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to upload photos to this post!");
+        }
+
+        List<IFormFile> photos = [];
+
+        var post = await _postService.GetPostAsync(postId);
+
+        foreach (int photoId in post?.PhotoIds ?? [])
+        {
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+            var memoryStream = new MemoryStream(bytes);
+            IFormFile formFile = new FormFile(memoryStream, 0, file.FileSize, null, file.OriginalFileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = file.MimeType
+            };
+
+            photos.Add(formFile);
+        }
+
+        return Ok(photos);
+    }
+
     /// <summary>
     /// Controller method for uploading photos to a post
     /// </summary>
@@ -150,19 +188,19 @@ public class PostController : ControllerBase
     /// <returns>The ids of the newly create custom files for the photos</returns>
     [Authorize]
     [HttpPut("images")]
-    public async Task<ActionResult<CustomFile>> UploadPostPhotos(
+    public async Task<ActionResult<List<int>>> UploadPostPhotos(
         [FromForm] List<IFormFile> files,
         [FromForm] string postId,
         [FromForm] string tripId
         )
     {
-        Console.WriteLine($"\n\n PostId: {postId}");
+
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
-        
+
         var userId = int.Parse(userIdString);
         var user = await _userService.GetUserByIdAsync(userId);
 
@@ -172,20 +210,20 @@ public class PostController : ControllerBase
         }
 
         var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
-        
-        
-        
+
+
+
         if (ownsPost == false)
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
-        
+
         List<int> customFileIds = [];
-        
+
         for (int i = 0; i < files.Count; i++)
         {
             IFormFile file = files[i];
-            
+
             if (!ImageValidationTools.IsValidFilesize(file))
             {
                 return BadRequest("Image too large, maximum file size is 10MB");
@@ -202,8 +240,8 @@ public class PostController : ControllerBase
         }
 
         await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
-        
-        
+
+
         return Ok(customFileIds);
     }
 
