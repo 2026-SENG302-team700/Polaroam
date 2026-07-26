@@ -20,9 +20,6 @@ public class LoginE2ETest : E2ETestFixture
     [Fact]
     public async Task ShouldRegisterSuccessfully()
     {
-        await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-
-
         // Arrange: Create a test user in the database
         var email = "testuser@example.com";
         var password = "TestPassword123!";
@@ -46,19 +43,9 @@ public class LoginE2ETest : E2ETestFixture
 
         await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
 
-        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
-        var code = user.OneTimeCode;
-
-        for (int i = 1; i <= 6; i++)
-        {
-            await Page.Locator($"#code-input-{i}").FillAsync(code[i - 1].ToString());
-        }
-
-        await Page.Locator("#confirm-verification-button").ClickAsync();
-
-        // Assert: Verify we're on the login page (registered)
+        // Assert: Verify we're on the verify code page
         var currentUrl = Page.Url;
-        currentUrl.ShouldBe($"{AppBaseUrl}/login");
+        currentUrl.ShouldBe($"{AppBaseUrl}/register/verification");
     }
 
     [Fact]

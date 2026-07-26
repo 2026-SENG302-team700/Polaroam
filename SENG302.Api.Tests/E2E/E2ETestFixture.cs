@@ -48,19 +48,26 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         AppBaseUrl = _usesRemoteEnvironment ? configuredUrl!.TrimEnd('/') : "http://localhost:5173";
 
         // Build the Svelte app first if on localhost
-        if (_usesRemoteEnvironment)
+        if (!_usesRemoteEnvironment)
         {
             await BuildSvelteApp();
         }
         await base.InitializeAsync();
 
-        // Store the build path for serving static files via Playwright
-        var solutionRoot = GetSolutionRoot();
-        _svelteBuildPath = Path.Combine(solutionRoot, "SENG302.App", "build");
+        ApiBaseUrl = HttpClient.BaseAddress!
+            .ToString()
+            .TrimEnd('/');
 
-        if (!Directory.Exists(_svelteBuildPath))
+        // Store the build path for serving static files via Playwright
+        if (!_usesRemoteEnvironment)
         {
-            throw new Exception($"Svelte build directory not found at: {_svelteBuildPath}");
+            var solutionRoot = GetSolutionRoot();
+            _svelteBuildPath = Path.Combine(solutionRoot, "SENG302.App", "build");
+
+            if (!Directory.Exists(_svelteBuildPath))
+            {
+                throw new Exception($"Svelte build directory not found at: {_svelteBuildPath}");
+            }
         }
 
         // Initialize Playwright
@@ -79,82 +86,85 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         Page.PageError += (_, error) => Console.WriteLine($"[Browser Error] {error}");
 
         // Intercept all requests and handle them appropriately
-        await Page.RouteAsync("**/*", async route =>
+        if (!_usesRemoteEnvironment)
         {
-            var request = route.Request;
-            var url = new Uri(request.Url);
-
-            // Handle API requests - forward to test server
-            if (url.AbsolutePath.StartsWith("/api/"))
+            await Page.RouteAsync("**/*", async route =>
             {
-                var apiUrl = $"{ApiBaseUrl}{url.PathAndQuery}";
-                var apiRequest = new HttpRequestMessage(new HttpMethod(request.Method), apiUrl);
+                var request = route.Request;
+                var url = new Uri(request.Url);
 
-                // Copy headers
-                foreach (var header in request.Headers)
+                // Handle API requests - forward to test server
+                if (url.AbsolutePath.StartsWith("/api/"))
                 {
-                    if (header.Key.ToLower() != "host")
+                    var apiUrl = $"{ApiBaseUrl}{url.PathAndQuery}";
+                    var apiRequest = new HttpRequestMessage(new HttpMethod(request.Method), apiUrl);
+
+                    // Copy headers
+                    foreach (var header in request.Headers)
                     {
-                        apiRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        if (header.Key.ToLower() != "host")
+                        {
+                            apiRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        }
                     }
-                }
 
-                // Copy body for POST/PUT
-                if (request.PostDataBuffer != null)
-                {
-                    apiRequest.Content = new ByteArrayContent(request.PostDataBuffer);
-                    if (request.Headers.ContainsKey("content-type"))
+                    // Copy body for POST/PUT
+                    if (request.PostDataBuffer != null)
                     {
-                        apiRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.Headers["content-type"]);
+                        apiRequest.Content = new ByteArrayContent(request.PostDataBuffer);
+                        if (request.Headers.ContainsKey("content-type"))
+                        {
+                            apiRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.Headers["content-type"]);
+                        }
                     }
-                }
 
-                // Make the request to the test server
-                var response = await HttpClient.SendAsync(apiRequest);
+                    // Make the request to the test server
+                    var response = await HttpClient.SendAsync(apiRequest);
 
-                // Return the response
-                var responseBody = await response.Content.ReadAsByteArrayAsync();
-                var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
-
-                await route.FulfillAsync(new RouteFulfillOptions
-                {
-                    Status = (int)response.StatusCode,
-                    Headers = responseHeaders,
-                    BodyBytes = responseBody
-                });
-            }
-            // Handle static file requests
-            else
-            {
-                var path = url.AbsolutePath.TrimStart('/');
-                if (string.IsNullOrEmpty(path)) path = "index.html";
-
-                var filePath = Path.Combine(_svelteBuildPath, path);
-
-                // If file doesn't exist, serve index.html (SPA fallback)
-                if (!File.Exists(filePath))
-                {
-                    filePath = Path.Combine(_svelteBuildPath, "index.html");
-                }
-
-                if (File.Exists(filePath))
-                {
-                    var bytes = await File.ReadAllBytesAsync(filePath);
-                    var contentType = GetContentType(filePath);
+                    // Return the response
+                    var responseBody = await response.Content.ReadAsByteArrayAsync();
+                    var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
 
                     await route.FulfillAsync(new RouteFulfillOptions
                     {
-                        Status = 200,
-                        Headers = new Dictionary<string, string> { { "Content-Type", contentType } },
-                        BodyBytes = bytes
+                        Status = (int)response.StatusCode,
+                        Headers = responseHeaders,
+                        BodyBytes = responseBody
                     });
                 }
+                // Handle static file requests
                 else
                 {
-                    await route.FulfillAsync(new RouteFulfillOptions { Status = 404 });
+                    var path = url.AbsolutePath.TrimStart('/');
+                    if (string.IsNullOrEmpty(path)) path = "index.html";
+
+                    var filePath = Path.Combine(_svelteBuildPath, path);
+
+                    // If file doesn't exist, serve index.html (SPA fallback)
+                    if (!File.Exists(filePath))
+                    {
+                        filePath = Path.Combine(_svelteBuildPath, "index.html");
+                    }
+
+                    if (File.Exists(filePath))
+                    {
+                        var bytes = await File.ReadAllBytesAsync(filePath);
+                        var contentType = GetContentType(filePath);
+
+                        await route.FulfillAsync(new RouteFulfillOptions
+                        {
+                            Status = 200,
+                            Headers = new Dictionary<string, string> { { "Content-Type", contentType } },
+                            BodyBytes = bytes
+                        });
+                    }
+                    else
+                    {
+                        await route.FulfillAsync(new RouteFulfillOptions { Status = 404 });
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private static string GetContentType(string filePath)
