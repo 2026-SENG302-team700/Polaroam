@@ -4,7 +4,7 @@ using SENG302.Api.Models.Interfaces;
 
 public class PostValidator
 {
-    
+
     /// <summary>
     /// Returns a string representing the date format of the users locale
     /// </summary>
@@ -30,7 +30,7 @@ public class PostValidator
             errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
             return errors;
         }
-        
+
         if (date > DateTime.Now) errors.Add("Invalid date, date cannot be in the future");
         return errors;
     }
@@ -48,6 +48,8 @@ public class PostValidator
     {
         var errors = new Dictionary<string, List<string>>();
 
+        errors["location"] = ValidatePostLocation(postRequest.OsmId);
+
         if (postRequest != post)
         {
             errors["date"] = ValidatePostDate(postRequest.Date);
@@ -55,6 +57,21 @@ public class PostValidator
         errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 
         return errors;
+    }
+
+    /// <summary>
+    /// Checks the post location is valid, returns nothing if valid
+    /// </summary>
+    /// <param name="osmId"></param>
+    /// <returns></returns>
+    public static List<string> ValidatePostLocation(long osmId)
+    {
+        if (osmId <= 0)
+        {
+            return ["This isn't a valid location"];
+        }
+
+        return [];
     }
 
 

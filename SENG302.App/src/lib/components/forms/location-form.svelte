@@ -4,13 +4,31 @@
 
     let {
         searchQuery = $bindable(""),
-        location = $bindable({ osmId: 0, lat: 0, lon: 0, name: "", display_name: "" }),
-        error = "",
-        loading = false
+        location = $bindable({
+            osmId: 0,
+            lat: 0,
+            lon: 0,
+            name: "",
+            display_name: "",
+        }),
+        error = $bindable(""),
+        loading = false,
     } = $props();
 
     let isOpen = $state(false);
     let items = $state([]);
+
+    function handleInput() {
+        location = {
+            osmId: 0,
+            lat: 0,
+            lon: 0,
+            name: "",
+            displayName: "",
+        };
+
+        error = "";
+    }
 
     /**
      * Gets the search results from the backend
@@ -69,6 +87,7 @@
             displayName: item.display_name,
         };
         searchQuery = item.name;
+        error = "";
         isOpen = false;
     }
 </script>
@@ -76,36 +95,41 @@
 <div class="search-container mb-3">
     <div class="input-group">
         <input
-                type="text"
-                class="form-control"
-                class:is-invalid={error}
-                placeholder="Search location..."
-                bind:value={searchQuery}
-                onkeydown={handleKeydown}
-                onblur={() => setTimeout(() => (isOpen = false), 200)}
+            type="text"
+            class="form-control"
+            class:is-invalid={Boolean(error)}
+            placeholder="Search location..."
+            bind:value={searchQuery}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
+            onblur={() => setTimeout(() => (isOpen = false), 200)}
         />
         <button
-                type="button"
-                title="search your trips using the provided query."
-                class="btn btn-outline-secondary"
-                onclick={getSearchResults}
+            type="button"
+            title="search your trips using the provided query."
+            class="btn btn-outline-secondary"
+            onclick={getSearchResults}
         >
             {#if loading}
-                <div class="spinner-border spinner-border-sm text-primary" role="status" />
+                <div
+                    class="spinner-border spinner-border-sm text-primary"
+                    role="status"
+                />
             {:else}
-                 <i class="bi bi-search"></i>
+                <i class="bi bi-search"></i>
             {/if}
         </button>
     </div>
-    
 
     {#if isOpen && items.length > 0}
         <ul class="dropdown-list">
             {#each items as item}
                 <li>
                     <button type="button" onclick={() => selectItem(item)}>
-                        {item.name}<br>
-                        <span class="item-display-name">{item.display_name}</span>
+                        {item.name}<br />
+                        <span class="item-display-name"
+                            >{item.display_name}</span
+                        >
                     </button>
                 </li>
             {/each}
@@ -161,7 +185,7 @@
         color: #666;
         font-style: italic;
     }
-    
+
     .item-display-name {
         font-weight: italics;
         color: gray;

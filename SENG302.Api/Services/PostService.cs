@@ -73,14 +73,17 @@ public class PostService : IPostService
         {
             throw new MultipleValidationListException(errors);
         }
-        
+
         // Add location
         var location = await _geoService.GetLocationAsync(postRequest.OsmId);
         if (location == null)
         {
-            throw new Exception("Location not found");
+            throw new MultipleValidationListException(new Dictionary<string, List<string>>
+            {
+                ["location"] = ["This isn't a valid location"]
+            });
         }
-        
+
 
         // Add post
         var newPost = new Post
@@ -105,9 +108,9 @@ public class PostService : IPostService
             Name = location.name,
             DisplayName = location.display_name,
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         return newPost;
     }
 
@@ -156,14 +159,14 @@ public class PostService : IPostService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        
+
 
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
         if (post == null)
         {
             return null;
         }
-        
+
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
 
@@ -182,7 +185,7 @@ public class PostService : IPostService
         await context.SaveChangesAsync();
         return post;
     }
-    
+
     /// <summary>
     /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
     /// later on
@@ -193,19 +196,19 @@ public class PostService : IPostService
     public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
-        
+
         if (post == null || postId == null)
         {
             return null;
         }
-        
+
         for (int i = 0; i < photoFileIds.Count; i++)
         {
             post.PhotoIds.Add(photoFileIds[i]);
         }
-        
+
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
@@ -220,7 +223,7 @@ public class PostService : IPostService
     public async Task<bool> UserOwnsPost(int userId, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var trip = await context.Trips.FirstOrDefaultAsync(u => u.Id == tripId);
         if (trip == null)
         {
