@@ -2,11 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
-using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using SENG302.Api.Resources.Helpers;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -17,13 +15,11 @@ public class PostController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IPostService _postService;
-    private readonly IFileService _fileService;
 
-    public PostController(IPostService postService, IUserService userService, IFileService fileService)
+    public PostController(IPostService postService, IUserService userService)
     {
         _postService = postService;
         _userService = userService;
-        _fileService = fileService;
     }
 
     /// <summary>
@@ -156,7 +152,6 @@ public class PostController : ControllerBase
         [FromForm] string tripId
         )
     {
-        Console.WriteLine($"\n\n PostId: {postId}");
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
@@ -172,39 +167,24 @@ public class PostController : ControllerBase
         }
 
         var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
-        
-        
-        
+
         if (ownsPost == false)
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
-        
-        List<int> customFileIds = [];
-        
-        for (int i = 0; i < files.Count; i++)
+
+        try
         {
-            IFormFile file = files[i];
-            
-            if (!ImageValidationTools.IsValidFilesize(file))
-            {
-                return BadRequest("Image too large, maximum file size is 10MB");
-            }
-
-            // implement into one big callback function later.
-            if (!ImageValidationTools.IsValidMimeType(file))
-            {
-                return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
-            }
-            var customFile = await _fileService.SaveFileAsync(file, userId);
-            var customFileId = customFile.Id;
-            customFileIds.Add(customFileId);
+            var customFileIds = await _postService.UploadPhotosToPostAsync(files, int.Parse(postId), userId);
+            return Ok(customFileIds);
         }
-
-        await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
-        
-        
-        return Ok(customFileIds);
+        catch (MultipleValidationListException e)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = e.Errors
+            });
+        }
     }
 
 }

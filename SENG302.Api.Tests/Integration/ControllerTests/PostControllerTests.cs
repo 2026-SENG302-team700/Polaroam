@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
@@ -168,6 +170,41 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var photoIds = await response.Content.ReadAsStringAsync();
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         photoIds.ShouldContain("You do not have authorisation to upload photos to this post!");
-        
+
+    }
+
+    [Fact]
+    public async Task UploadPostPhotos_InvalidImage_PostIsDeletedAndErrorsReturned()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], Location = "location 1" });
+        await context.SaveChangesAsync();
+
+        // Bytes that do not match the magic number of the claimed content type
+        var fileBytes = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new ByteArrayContent(fileBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        content.Add(fileContent, "files", "fake.png");
+
+        content.Add(new StringContent("1"), "postId");
+        content.Add(new StringContent("1"), "tripId");
+
+        var response = await HttpClient.PutAsync("/api/post/images", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var body = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
+        body.ShouldNotBeNull();
+        body.Errors.ShouldContainKey("photos");
+        body.Errors["photos"].ShouldNotBeEmpty();
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var post = await verifyContext.Posts.FirstOrDefaultAsync(p => p.PostId == 1);
+        post.ShouldBeNull();
     }
 }

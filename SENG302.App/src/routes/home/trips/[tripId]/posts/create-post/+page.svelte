@@ -22,13 +22,13 @@
     let content = $state("")
     let files: FileList | null = $state(null);
     
-    let errors = {
+    let errors = $state({
         title: [],
         description: [],
         date: [],
         generic: "",
-        photos: "",
-    }
+        photos: [],
+    })
 
     /**
      * Function for uploading photos to the backend for a particular post
@@ -52,10 +52,12 @@
 
                 let customImageIds: String[];
                 if (!response.ok) {
-                    if (response.status == 500) {
-                        errors.photos = "Failed to upload picture"
+                    if (response.status == 400) {
+                        const data = await response.json();
+                        errors.photos = data.errors?.photos ?? ["Failed to upload picture"];
                     } else {
-                        errors.photos = await response.text()
+                        const data = await response.json();
+                        errors.photos = data ?? ["Failed to upload picture"];
                     }
                 } else {
                     customImageIds = await response.json()
@@ -63,7 +65,7 @@
                     console.log(customImageIds.toString())
                 }
             } catch (err) {
-                errors.photos = (err as Error).message;
+                errors.photos = [(err as Error).message];
             }
         }
     }
@@ -124,7 +126,7 @@
         <DatePicker bind:value={date}/>
         <SearchForm bind:query={searchQuery} placeholder="Location *"/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
-        <ImagePicker bind:files error={errors.photos}></ImagePicker>
+        <ImagePicker bind:files errors={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

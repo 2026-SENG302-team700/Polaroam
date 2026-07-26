@@ -2,6 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Resources.Helpers;
+using SENG302.Api.Helpers;
 
 
 namespace SENG302.Api.Services;
@@ -15,6 +16,8 @@ public interface IPostService
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
+    Task DeletePostAsync(int postId);
+    Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId);
 }
 
 
@@ -22,12 +25,14 @@ public class PostService : IPostService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly IFileService _fileService;
 
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        _fileService = fileService;
     }
 
     /// <summary>
@@ -186,6 +191,75 @@ public class PostService : IPostService
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
+    }
+
+    /// <summary>
+    /// Deletes a post given its id. Used to roll back a post that was created
+    /// but whose photo upload subsequently failed validation.
+    /// </summary>
+    /// <param name="postId">The id of the post to delete</param>
+    public async Task DeletePostAsync(int postId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.PostId == postId);
+        if (post == null)
+        {
+            return;
+        }
+
+        context.Posts.Remove(post);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Validates and saves photos uploaded for a post, then attaches them to the post.
+    /// Deletes the post if any photo fails validation.
+    /// WARNING: should only be used for attaching photos to NEW posts, not existing posts.
+    /// </summary>
+    /// <param name="files">The photo files being uploaded</param>
+    /// <param name="postId">The id of the post the photos belong to</param>
+    /// <param name="userId">The id of the user uploading the photos</param>
+    /// <returns>The ids of the newly created custom files for the photos</returns>
+    public async Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId)
+    {
+        var validationErrors = new List<string>();
+
+        foreach (var file in files)
+        {
+            if (!ImageValidationTools.IsValidFilesize(file))
+            {
+                validationErrors.Add($"{file.FileName}: Image too large, maximum file size is 10MB");
+                continue;
+            }
+
+            if (!ImageValidationTools.IsValidMimeType(file))
+            {
+                validationErrors.Add($"{file.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+            }
+        }
+
+        if (validationErrors.Count > 0)
+        {
+            await DeletePostAsync(postId);
+            throw new MultipleValidationListException(
+                new Dictionary<string, List<string>> {
+                    { "photos", validationErrors }
+                }
+                );
+        }
+
+        List<int> customFileIds = [];
+
+        foreach (var file in files)
+        {
+            var customFile = await _fileService.SaveFileAsync(file, userId);
+            customFileIds.Add(customFile.Id);
+        }
+
+        await AddPhotosToPost(customFileIds, postId);
+
+        return customFileIds;
     }
 
     /// <summary>

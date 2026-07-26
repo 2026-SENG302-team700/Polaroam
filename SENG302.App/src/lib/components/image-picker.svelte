@@ -1,14 +1,14 @@
-﻿<script lang="ts">
+<script lang="ts">
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     
     let pfpInput: HTMLInputElement;
     
     let {
         files = $bindable(),
-        error = "" 
+        errors = []
     }: {
         files: FileList | null,
-        error: string,
+        errors: string[],
     } = $props();
 </script>
 
@@ -16,7 +16,7 @@
     <button
             type="button"
             class="btn btn-sm btn-primary"
-            class:is-invalid={error.length > 0}
+            class:is-invalid={errors.length > 0}
             on:click={() => {
           pfpInput.value = "";
           pfpInput.click();
@@ -32,6 +32,6 @@
             class="d-none"
             multiple
     />
-    <ErrorDisplay errors={[error]}/>
+    <ErrorDisplay {errors}/>
 </div>
 
