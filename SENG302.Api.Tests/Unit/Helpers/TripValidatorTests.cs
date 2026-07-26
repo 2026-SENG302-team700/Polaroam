@@ -64,12 +64,30 @@ public class TripValidatorTests
         var errors = TripValidator.ValidateDescription(new string('a', 2048));
         errors["description"].Count.ShouldBe(0);
     }
-    
+
     [Fact]
     public async Task ValidateDescription_LongDescription_ReturnsNoErrors()
     {
         var errors = TripValidator.ValidateDescription(new string('a', 2049));
         errors["description"].Count.ShouldBe(1);
         errors["description"].ShouldContain("Description must be 2048 characters or less");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void ValidatePostLocation_InvalidOsmId_ReturnsError(long osmId)
+    {
+        var errors = PostValidator.ValidatePostLocation(osmId);
+
+        errors.ShouldContain("This isn't a valid location");
+    }
+
+    [Fact]
+    public void ValidatePostLocation_ValidOsmId_ReturnsNoErrors()
+    {
+        var errors = PostValidator.ValidatePostLocation(123);
+
+        errors.ShouldBeEmpty();
     }
 }
