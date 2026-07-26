@@ -200,8 +200,8 @@ namespace SENG302.Api.Tests.Acceptance.Features
         await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
-        await testRunner.ThenAsync("I see the post error message \'Title is required and must be between 3 and 128 cha" +
-                        "racters long\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("I see an error message \'Title is required and must be between 3 and 128 character" +
+                        "s long\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -236,8 +236,8 @@ namespace SENG302.Api.Tests.Acceptance.Features
         await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 16
-        await testRunner.ThenAsync("I see the error message \'Invalid date, date must be formatted [INSERT LOCALISED F" +
-                        "ORMAT]\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("I see an error message \'Invalid date, date must be formatted [INSERT LOCALISED FO" +
+                        "RMAT]\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

@@ -142,16 +142,10 @@ public class U7004CreatePost
     {
         await SetupUserAndTrip();
 
+        _title = "Valid post title";
+        _content = "Valid post content";
+        _osmId = 292806332;
         _date = null;
-    }
-
-    [Then(@"I see the error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'")]
-    public async Task CheckInvalidDateErrorMessage()
-    {
-        _lastResponse.ShouldNotBeNull();
-        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var error = await _lastResponse.Content.ReadAsStringAsync();
-        error.ShouldContain("Invalid date, date must be formatted ");
     }
 
     // AC 5
@@ -169,6 +163,15 @@ public class U7004CreatePost
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var error = await _lastResponse.Content.ReadAsStringAsync();
-        error.ShouldContain(expectedMessage);
+
+        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
+        {
+            error.ShouldContain(
+                "Invalid date, date must be formatted ");
+        }
+        else
+        {
+            error.ShouldContain(expectedMessage);
+        }
     }
 }
