@@ -75,9 +75,20 @@ public class U7004CreatePost
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
-        _date = DateTime.Parse("2028-01-07");
+        _date = DateTime.Parse("2025-01-07");
 
 
+    }
+
+    [Given(
+      @"I am on the create post form And I enter a title that is not between 3 and 128 characters")]
+    public async Task GivenIEnterAnInvalidPostTitle()
+    {
+        SetupUserAndTrip();
+
+        _title = "ab";
+        _content = "Test content";
+        _date = new DateTime(2026, 7, 7);
     }
 
     [When(@"I click 'Create Post'")]
