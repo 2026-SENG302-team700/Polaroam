@@ -19,3 +19,8 @@ Feature: U7004_As Benji I want to be able to create posts So that I can log key 
         Given I am on the create post form And I enter a date in the future
         When I click 'Create Post'
         Then I see an error message 'Invalid date, date cannot be in the future'
+
+    Scenario: AC14 - Create post with an invalid location
+        Given I enter location text without selecting a suggested location
+        When I click 'Create Post'
+        Then I see an error message 'This isn't a valid location'

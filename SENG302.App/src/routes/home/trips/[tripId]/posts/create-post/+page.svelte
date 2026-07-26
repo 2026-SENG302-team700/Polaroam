@@ -19,6 +19,7 @@
         content: string[];
         date: string;
         generic: string;
+        location: string;
         photos: string;
     };
 
@@ -28,6 +29,7 @@
             content: [],
             date: "",
             generic: "",
+            location: "",
             photos: "",
         };
     }
@@ -39,7 +41,7 @@
     }
 
     let loading = $state(false);
-    const tripId = page.params.tripId;
+    const tripId = page.params.tripId!;
 
     let title = $state("");
     let date = $state(new Date());
@@ -140,13 +142,15 @@
                 errors.title = data.errors?.title ?? [];
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
+                errors.location = data.errors?.location?.[0] ?? "";
                 errors.generic = data.message ?? "";
 
                 if (
                     errors.content.length === 1 &&
                     errors.title.length === 0 &&
                     !errors.date &&
-                    !errors.generic
+                    !errors.generic &&
+                    !errors.location
                 ) {
                     showConfirmationModal = true;
                 }
@@ -174,7 +178,11 @@
         {#if errors.date}
             <div class="invalid-feedback d-block">{errors.date}</div>
         {/if}
-        <LocationForm bind:searchQuery bind:location />
+        <LocationForm
+            bind:searchQuery
+            bind:location
+            bind:error={errors.location}
+        />
         <DescriptionForm placeholder="Content" bind:description={content} />
         <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />

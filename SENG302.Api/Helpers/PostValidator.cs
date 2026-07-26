@@ -52,6 +52,8 @@ public class PostValidator
             .Values
             .ToList();
 
+        errors["location"] = ValidatePostLocation(postRequest.OsmId);
+
         if (postRequest != post)
         {
             errors["date"] = ValidatePostDate(postRequest.Date);
@@ -59,6 +61,21 @@ public class PostValidator
         errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 
         return errors;
+    }
+
+    /// <summary>
+    /// Checks the post location is valid, returns nothing if valid
+    /// </summary>
+    /// <param name="osmId"></param>
+    /// <returns></returns>
+    public static List<string> ValidatePostLocation(long osmId)
+    {
+        if (osmId <= 0)
+        {
+            return ["This isn't a valid location"];
+        }
+
+        return [];
     }
 
 
