@@ -10,7 +10,33 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import { error } from "node:console";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import LocationForm from "$lib/components/forms/location-form.svelte";
+    import ImagePicker from "$lib/components/image-picker.svelte";
+
+    type PostFormErrors = {
+        title: string[];
+        content: string[];
+        date: string;
+        generic: string;
+        photos: string;
+    };
+
+    function emptyErrors(): PostFormErrors {
+        return {
+            title: [],
+            content: [],
+            date: "",
+            generic: "",
+            photos: "",
+        };
+    }
+
+    let errors = $state<PostFormErrors>(emptyErrors());
+
+    function clearErrors() {
+        errors = emptyErrors();
+    }
 
     let loading = $state(false);
     const tripId = page.params.tripId;
@@ -18,28 +44,62 @@
     let title = $state("");
     let date = $state(new Date());
     let searchQuery = $state("");
-    let location = $state("Temporary");
+    let location = $state({
+        osmId: 0,
+        lat: 0,
+        lon: 0,
+        name: "",
+        displayName: "",
+    });
     let content = $state("");
+    let files: FileList | null = $state(null);
+    let noContentAllowed = $state(false);
 
-    let errors = {
-        title: [] as string[],
-        description: [] as string[],
-        date: [] as string[],
-        generic: "",
-    };
+    let showConfirmationModal = $state(false);
 
     /**
-     * Clear all current errors to start fresh
+     * Function for uploading photos to the backend for a particular post
+     * @param postId Id of the post
      */
-    function clearErrors() {
-        errors.title = [];
-        errors.description = [];
-        errors.date = [];
-        errors.generic = "";
+    async function uploadPhotos(postId: number) {
+        if (files != null) {
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    console.log("File ", files[i]);
+                    formData.append("files", files[i]);
+                    formData.append("postId", postId.toString());
+                    formData.append("tripId", tripId.toString());
+                }
+
+                const response = await fetchWithCsrf(
+                    resolve(`/api/post/images` as any),
+                    {
+                        method: "PUT",
+                        body: formData,
+                    },
+                );
+
+                let customImageIds: String[];
+                if (!response.ok) {
+                    if (response.status == 500) {
+                        errors.photos = "Failed to upload picture";
+                    } else {
+                        errors.photos = await response.text();
+                    }
+                } else {
+                    customImageIds = await response.json();
+                    goto(resolve(`/home/trips/${tripId}`));
+                    console.log(customImageIds.toString());
+                }
+            } catch (err) {
+                errors.photos = (err as Error).message;
+            }
+        }
     }
 
     /**
-     * Create a new post after nessasary validation and trimming is complete.
+     * Function for creating a post
      */
     async function createPost() {
         clearErrors();
@@ -67,32 +127,42 @@
                 body: JSON.stringify({
                     TripId: Number(tripId),
                     Title: title,
-                    Location: location,
+                    OsmId: location.osmId,
                     Content: content,
                     Date: date,
+                    NoContentAllowed: noContentAllowed,
                 }),
                 credentials: "include",
             });
             const data = await response.json();
 
             if (!response.ok) {
-                errors.title = data.errors?.title ? [data.errors.title] : [];
-                // remaining validation
-                const hasFieldErrors = errors.title.length > 0;
+                errors.title = data.errors?.title ?? [];
+                errors.date = data.errors?.date?.[0] ?? "";
+                errors.content = data.errors?.content ?? [];
+                errors.generic = data.message ?? "";
 
-                if (!hasFieldErrors) {
-                    errors.generic = data.message ?? "Failed to create post";
+                if (
+                    errors.content.length === 1 &&
+                    errors.title.length === 0 &&
+                    !errors.date &&
+                    !errors.generic
+                ) {
+                    showConfirmationModal = true;
                 }
-
                 return;
             }
 
-            goto(resolve(`/home/trips/${tripId}`));
+            if (files != null) {
+                await uploadPhotos(data.postId);
+            } else {
+                goto(resolve(`/home/trips/${tripId}`));
+            }
         } catch (err) {
-            console.error("Failed to create trip:", err);
-            errors.generic = "Failed to create trip: " + (err as Error).message;
+            errors.generic = "Failed to create trip";
         } finally {
             loading = false;
+            noContentAllowed = false;
         }
     }
 </script>
@@ -100,12 +170,29 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title} errors={errors.title} {loading} />
-        <DatePicker bind:value={date} />
-        <SearchForm bind:query={searchQuery} placeholder="Location *" />
+        <DatePicker bind:value={date} error={errors.date} />
+        {#if errors.date}
+            <div class="invalid-feedback d-block">{errors.date}</div>
+        {/if}
+        <LocationForm bind:searchQuery bind:location />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <MultipleErrorDisplay errors={[errors.generic]} />
+        <ImagePicker bind:files error={errors.photos}></ImagePicker>
+        <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
         </div>
     </div>
 </div>
+
+<ConfirmationModal
+    bind:show={showConfirmationModal}
+    message="Post contains no content, are you sure you want to create post?"
+    option1Text="Create anyway"
+    option2Text="Cancel"
+    onOption1={() => {
+        noContentAllowed = true;
+        showConfirmationModal = false;
+        createPost();
+    }}
+    onOption2={() => (showConfirmationModal = false)}
+/>

@@ -9,3 +9,13 @@ Feature: U7004_As Benji I want to be able to create posts So that I can log key 
         Given I am on the create post form And I enter a title that is not between 3 and 128 characters
         When I click 'Create Post'
         Then I see the post error message 'Title is required and must be between 3 and 128 characters long'
+
+    Scenario: AC4 - Create Post with invalid date
+        Given I am on the create post form And I enter a miss-formed or null date
+        When I click 'Create Post'
+        Then I see the error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'
+
+    Scenario: AC5 - Create Post with date in the future
+        Given I am on the create post form And I enter a date in the future
+        When I click 'Create Post'
+        Then I see an error message 'Invalid date, date cannot be in the future'
