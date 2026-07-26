@@ -113,7 +113,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
     }
-    
+
     [Fact]
     public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowValidationException()
     {
