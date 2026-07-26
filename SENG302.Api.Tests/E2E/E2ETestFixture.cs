@@ -78,7 +78,10 @@ public class E2ETestFixture : BaseIntegrationTestFixture
             Headless = headless,
             SlowMo = headless ? 0 : 500 // Slow down by 500ms when headed for visibility
         });
-        Context = await _browser.NewContextAsync();
+        Context = await _browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            IgnoreHTTPSErrors = _usesRemoteEnvironment, // Ignore HTTPS errors for the remote environment
+        });
         Page = await Context.NewPageAsync();
 
         // Log console messages and errors for debugging
