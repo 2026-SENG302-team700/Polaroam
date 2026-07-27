@@ -157,7 +157,7 @@ public class PostController : ControllerBase
     /// <returns>The photos as form files</returns>
     [Authorize]
     [HttpGet("{postId:int}/images")]
-    public async Task<ActionResult<List<IFormFile>>> GetPostPhotos(int postId)
+    public async Task<ActionResult<List<PhotoFile>>> GetPostPhotos(int postId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
@@ -169,7 +169,12 @@ public class PostController : ControllerBase
 
         var post = await _postService.GetPostAsync(postId);
 
-        foreach (int photoId in post?.PhotoIds ?? [])
+        if (post == null)
+        {
+            return NotFound("Post not found");
+        }
+
+        foreach (int photoId in post.PhotoIds ?? [])
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
@@ -218,8 +223,6 @@ public class PostController : ControllerBase
 
         var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
 
-
-
         if (ownsPost == false)
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
@@ -248,7 +251,6 @@ public class PostController : ControllerBase
 
         await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
 
-
         return Ok(customFileIds);
     }
 
@@ -276,7 +278,6 @@ public class PostController : ControllerBase
         {
             return NotFound("User not found");
         }
-
         return Ok(user.DisplayName);
     }
 

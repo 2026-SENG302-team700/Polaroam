@@ -18,6 +18,7 @@
     let postId = params.postId;
     
     let displayName = $state("");
+    let locationName = $state("")
 
     let postObject = $state({
         postId: 0,
@@ -38,6 +39,32 @@
         fetchDisplayName();
     });
 
+    
+    async function fetchLocationName() {
+        
+        try {
+            loading = true
+            const response = await fetchWithCsrf(
+                resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            )
+            let location = await response.json();
+            locationName = location.name;
+
+        } catch (err) {
+            error = "Failed to fetch location name: " + (err as Error).message;
+        } finally {
+            loading = false
+        }
+        
+    }
+    
+    /**
+     * Fetch the display name of the user based on the post
+     */
     async function fetchDisplayName() {
         try {
             loading = true
@@ -48,9 +75,8 @@
                     credentials: "include",
                 }
             )
-            console.log(`Response: ${response}`)
             displayName = await response.text();
-            console.log(`Display Name: ${displayName}`)
+            
             
         } catch (err) {
             error = "Failed to fetch post creator: " + (err as Error).message;
@@ -129,8 +155,8 @@
                 return;
             }
             postObject = data;
-            console.log("postObject: " + JSON.stringify(postObject));
-            fetchImages();
+            await fetchImages();
+            await fetchLocationName();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
         } finally {
@@ -189,18 +215,18 @@
 
             <p class="date-object">
                 <i>
-                    {postObject.location}
+                    <strong>Location:</strong>{`  ${locationName}`}
                 </i>
             </p>
 
             <p class="date-object">
-                {formatDate(postObject.date)}
+                <strong>Date:</strong>{`  ${formatDate(postObject.date)}`}
             </p>
+            <p>Posted by <i>{displayName}</i></p>
+            {#if postObject.content.length > 0}
+                <span>{postObject.content}</span>
+            {/if}
         </div>
-        {#if postObject.content.length > 0}
-            <p><i>Posted by {displayName}</i></p>
-            <span>{postObject.content}</span>
-        {/if}
     </div>
     <div class="container-fluid photo-grid mt-5" style="width: 100%;">
         {#if photos.length > 0}
