@@ -237,6 +237,12 @@ public class PostService : IPostService
         return true;
     }
 
+    /// <summary>
+    /// Delete a specific post by its id from the database and remove accociated images along with it.
+    /// </summary>
+    /// <param name="postId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public async Task DeletePostByIdAsync(int postId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();

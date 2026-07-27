@@ -285,6 +285,11 @@ public class PostController : ControllerBase
         return Ok(user.DisplayName);
     }
 
+    /// <summary>
+    /// Endpoint for removing a specific post by its id.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeletePost(int id)
