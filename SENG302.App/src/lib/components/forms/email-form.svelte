@@ -3,7 +3,8 @@
 </script>
 
 <div class="mb-3">
-    <input
+    <input 
+            id="email"
         type="email"
         class="form-control"
         class:is-invalid={error}

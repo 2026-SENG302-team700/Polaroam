@@ -4,6 +4,7 @@
         error = "",
         loading = false,
         passConfirm = false,
+        id = "",
     } = $props();
 
     let showPassword = $state(false);
@@ -12,6 +13,7 @@
 <div class="mb-3">
     <div class="input-group password-group">
         <input
+                id={id}
                 type={showPassword ? "text" : "password"}
                 class="form-control"
                 class:error
@@ -32,7 +34,7 @@
             <i class={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
         </button>
             {#if error}
-        <div class="invalid-feedback">{error}</div>
+        <div id="initial-password-error" class="invalid-feedback">{error}</div>
     {/if}
     </div>
 </div>

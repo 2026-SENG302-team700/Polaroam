@@ -1,8 +1,11 @@
+
 using System.Diagnostics;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Playwright;
 using SENG302.Api.Tests.Integration;
+using SENG302.Api.Models.Requests;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace SENG302.Api.Tests.E2E;
 
@@ -15,7 +18,9 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     protected IPage Page = null!;
     protected string ApiBaseUrl = null!;
     private string _svelteBuildPath = null!;
-    
+    protected string AppBaseUrl = null!;
+    private bool _usesRemoteEnvironment;
+
     // Frontend build lock and flag
     private static readonly SemaphoreSlim _buildLock = new(1, 1);
     private static bool _isBuilt = false;
@@ -36,20 +41,33 @@ public class E2ETestFixture : BaseIntegrationTestFixture
 
     public override async Task InitializeAsync()
     {
-        // Build the Svelte app first
-        await BuildSvelteApp();
+        // check if the tests are being run by GitLab CI
+        var configuredUrl = Environment.GetEnvironmentVariable("E2E_BASE_URL");
+        _usesRemoteEnvironment = !string.IsNullOrEmpty(configuredUrl);
 
+        AppBaseUrl = _usesRemoteEnvironment ? configuredUrl!.TrimEnd('/') : "http://localhost:5173";
+
+        // Build the Svelte app first if on localhost
+        if (!_usesRemoteEnvironment)
+        {
+            await BuildSvelteApp();
+        }
         await base.InitializeAsync();
 
-        ApiBaseUrl = HttpClient.BaseAddress!.ToString().TrimEnd('/');
+        ApiBaseUrl = HttpClient.BaseAddress!
+            .ToString()
+            .TrimEnd('/');
 
         // Store the build path for serving static files via Playwright
-        var solutionRoot = GetSolutionRoot();
-        _svelteBuildPath = Path.Combine(solutionRoot, "SENG302.App", "build");
-
-        if (!Directory.Exists(_svelteBuildPath))
+        if (!_usesRemoteEnvironment)
         {
-            throw new Exception($"Svelte build directory not found at: {_svelteBuildPath}");
+            var solutionRoot = GetSolutionRoot();
+            _svelteBuildPath = Path.Combine(solutionRoot, "SENG302.App", "build");
+
+            if (!Directory.Exists(_svelteBuildPath))
+            {
+                throw new Exception($"Svelte build directory not found at: {_svelteBuildPath}");
+            }
         }
 
         // Initialize Playwright
@@ -60,7 +78,10 @@ public class E2ETestFixture : BaseIntegrationTestFixture
             Headless = headless,
             SlowMo = headless ? 0 : 500 // Slow down by 500ms when headed for visibility
         });
-        Context = await _browser.NewContextAsync();
+        Context = await _browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            IgnoreHTTPSErrors = _usesRemoteEnvironment, // Ignore HTTPS errors for the remote environment
+        });
         Page = await Context.NewPageAsync();
 
         // Log console messages and errors for debugging
@@ -68,82 +89,85 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         Page.PageError += (_, error) => Console.WriteLine($"[Browser Error] {error}");
 
         // Intercept all requests and handle them appropriately
-        await Page.RouteAsync("**/*", async route =>
+        if (!_usesRemoteEnvironment)
         {
-            var request = route.Request;
-            var url = new Uri(request.Url);
-
-            // Handle API requests - forward to test server
-            if (url.AbsolutePath.StartsWith("/api/"))
+            await Page.RouteAsync("**/*", async route =>
             {
-                var apiUrl = $"{ApiBaseUrl}{url.PathAndQuery}";
-                var apiRequest = new HttpRequestMessage(new HttpMethod(request.Method), apiUrl);
+                var request = route.Request;
+                var url = new Uri(request.Url);
 
-                // Copy headers
-                foreach (var header in request.Headers)
+                // Handle API requests - forward to test server
+                if (url.AbsolutePath.StartsWith("/api/"))
                 {
-                    if (header.Key.ToLower() != "host")
+                    var apiUrl = $"{ApiBaseUrl}{url.PathAndQuery}";
+                    var apiRequest = new HttpRequestMessage(new HttpMethod(request.Method), apiUrl);
+
+                    // Copy headers
+                    foreach (var header in request.Headers)
                     {
-                        apiRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        if (header.Key.ToLower() != "host")
+                        {
+                            apiRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                        }
                     }
-                }
 
-                // Copy body for POST/PUT
-                if (request.PostDataBuffer != null)
-                {
-                    apiRequest.Content = new ByteArrayContent(request.PostDataBuffer);
-                    if (request.Headers.ContainsKey("content-type"))
+                    // Copy body for POST/PUT
+                    if (request.PostDataBuffer != null)
                     {
-                        apiRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.Headers["content-type"]);
+                        apiRequest.Content = new ByteArrayContent(request.PostDataBuffer);
+                        if (request.Headers.ContainsKey("content-type"))
+                        {
+                            apiRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.Headers["content-type"]);
+                        }
                     }
-                }
 
-                // Make the request to the test server
-                var response = await HttpClient.SendAsync(apiRequest);
+                    // Make the request to the test server
+                    var response = await HttpClient.SendAsync(apiRequest);
 
-                // Return the response
-                var responseBody = await response.Content.ReadAsByteArrayAsync();
-                var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
-
-                await route.FulfillAsync(new RouteFulfillOptions
-                {
-                    Status = (int)response.StatusCode,
-                    Headers = responseHeaders,
-                    BodyBytes = responseBody
-                });
-            }
-            // Handle static file requests
-            else
-            {
-                var path = url.AbsolutePath.TrimStart('/');
-                if (string.IsNullOrEmpty(path)) path = "index.html";
-
-                var filePath = Path.Combine(_svelteBuildPath, path);
-
-                // If file doesn't exist, serve index.html (SPA fallback)
-                if (!File.Exists(filePath))
-                {
-                    filePath = Path.Combine(_svelteBuildPath, "index.html");
-                }
-
-                if (File.Exists(filePath))
-                {
-                    var bytes = await File.ReadAllBytesAsync(filePath);
-                    var contentType = GetContentType(filePath);
+                    // Return the response
+                    var responseBody = await response.Content.ReadAsByteArrayAsync();
+                    var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
 
                     await route.FulfillAsync(new RouteFulfillOptions
                     {
-                        Status = 200,
-                        Headers = new Dictionary<string, string> { { "Content-Type", contentType } },
-                        BodyBytes = bytes
+                        Status = (int)response.StatusCode,
+                        Headers = responseHeaders,
+                        BodyBytes = responseBody
                     });
                 }
+                // Handle static file requests
                 else
                 {
-                    await route.FulfillAsync(new RouteFulfillOptions { Status = 404 });
+                    var path = url.AbsolutePath.TrimStart('/');
+                    if (string.IsNullOrEmpty(path)) path = "index.html";
+
+                    var filePath = Path.Combine(_svelteBuildPath, path);
+
+                    // If file doesn't exist, serve index.html (SPA fallback)
+                    if (!File.Exists(filePath))
+                    {
+                        filePath = Path.Combine(_svelteBuildPath, "index.html");
+                    }
+
+                    if (File.Exists(filePath))
+                    {
+                        var bytes = await File.ReadAllBytesAsync(filePath);
+                        var contentType = GetContentType(filePath);
+
+                        await route.FulfillAsync(new RouteFulfillOptions
+                        {
+                            Status = 200,
+                            Headers = new Dictionary<string, string> { { "Content-Type", contentType } },
+                            BodyBytes = bytes
+                        });
+                    }
+                    else
+                    {
+                        await route.FulfillAsync(new RouteFulfillOptions { Status = 404 });
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private static string GetContentType(string filePath)
@@ -169,7 +193,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         // If we're in the CI pipeline, assume the build is passed to us 🙏
         if (Environment.GetEnvironmentVariable("GITLAB_CI") == "true")
         {
-            return; 
+            return;
         }
 
         var solutionRoot = GetSolutionRoot();
@@ -181,7 +205,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         {
             return;
         }
-        
+
         // Otherwise we have to actually build the app :sadge:
         // Ensure thread safety across parallel test runners
         await _buildLock.WaitAsync();
@@ -210,8 +234,8 @@ public class E2ETestFixture : BaseIntegrationTestFixture
                         FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "npm",
                         Arguments = OperatingSystem.IsWindows() ? "/c npm ci" : "ci",
                         WorkingDirectory = appPath,
-                        RedirectStandardOutput = !OperatingSystem.IsWindows(),
-                        RedirectStandardError = true,
+                        RedirectStandardOutput = false,
+                        RedirectStandardError = false,
                         UseShellExecute = false,
                         CreateNoWindow = true
                     }
@@ -236,13 +260,13 @@ public class E2ETestFixture : BaseIntegrationTestFixture
                     FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "npm",
                     Arguments = OperatingSystem.IsWindows() ? "/c npm run build" : "run build",
                     WorkingDirectory = appPath,
-                    RedirectStandardOutput = !OperatingSystem.IsWindows(),
-                    RedirectStandardError = true,
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
-            
+
             buildProcess.StartInfo.EnvironmentVariables["CI"] = "true"; // Pretend like its a CI build so npm/vite doesn't complain
             buildProcess.StartInfo.EnvironmentVariables["NODE_ENV"] = "development";
 
@@ -276,34 +300,33 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     /// <summary>
     /// Helper method to register and login a user via the UI
     /// </summary>
-    protected async Task<string> RegisterAndLoginViaUI(string email = "test@example.com", string password = "TestPassword123", string displayName = "Test User", string country = "NZ")
+    protected async Task<string> RegisterAndLoginViaUI(string email = "test@example.com", string password = "TestPassword123", string displayName = "Test User")
     {
         // First register the user via API (easier and faster)
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-    
-        var registerRequest = new SENG302.Api.Models.Requests.PostUserRequest
+
+        var registerRequest = new PostUserRequest
         {
             Email = email,
             PasswordString = password,
             PasswordConfirm = password,
             DisplayName = displayName,
-            Country = country,
         };
-    
-        var registerResponse = await HttpClient.PostAsJsonAsync("/api/Authorization/register", registerRequest);
+
+        var registerResponse = await HttpClient.PostAsJsonAsync("/api/register", registerRequest);
         registerResponse.EnsureSuccessStatusCode();
-    
+
         // Now login via the UI
-        await Page.GotoAsync($"http://localhost/login");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-    
+        await Page.GotoAsync($"{AppBaseUrl}/login", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#password").FillAsync(password);
+
+        // Click the login button
         await Page.Locator("button[type='submit']").ClickAsync();
-    
-        // Wait for redirect to home page
-        await Page.WaitForURLAsync($"http://localhost/home/");
-    
+
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
+
         return email;
     }
 }

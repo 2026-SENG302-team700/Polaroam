@@ -456,7 +456,7 @@
             <EmailForm error={errors.email} {loading} bind:email />
         </div>
         <div class="mb-3">
-            <PasswordForm bind:password error={errors.password} {loading} />
+            <PasswordForm bind:password error={errors.password} {loading} id="password" />
         </div>
         <div class="mb-3">
             <AuthenticatorButton buttonType={"login"} />
