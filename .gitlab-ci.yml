@@ -86,6 +86,9 @@ e2e-tests:
     - 'echo "Testing staging URL: $E2E_BASE_URL"'
     - 'curl -k -I "$E2E_BASE_URL/register"'
     - 'curl -k -L "$E2E_BASE_URL/register" | head -100'
+    - "getent hosts csse-seng302-team700.canterbury.ac.nz"
+    - "getent ahosts csse-seng302-team700.canterbury.ac.nz"
+    - 'curl -k -v "$E2E_BASE_URL/register" -o /dev/null 2>&1 | head -80'
     - dotnet restore SENG302.Api.Tests/SENG302.Api.Tests.csproj
     - dotnet build SENG302.Api.Tests/SENG302.Api.Tests.csproj --no-restore
     - SENG302.Api.Tests/bin/Debug/net10.0/.playwright/node/linux-x64/node SENG302.Api.Tests/bin/Debug/net10.0/.playwright/package/cli.js install chromium
