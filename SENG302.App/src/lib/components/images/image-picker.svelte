@@ -1,23 +1,18 @@
 ﻿<script lang="ts">
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    
-    let pfpInput: HTMLInputElement;
-    let files = <FileList>$state();
-    let {
-        filesList = <File[]>([]),
-        error = "" 
-    }: {
-        filesList: File[],
-        error: string,
-    } = $props();
 
-    
+    let pfpInput: HTMLInputElement;
+    let files: FileList | undefined = $state();
+    let {
+        filesList = $bindable<File[]>([]),
+        error = ""
+    }: { filesList: File[]; error: string } = $props();
+
     function appendImages() {
-        console.log("triggered!")
+        if (!files) return;
         for (const file of files) {
             filesList.push(file);
         }
-        console.log(filesList);
     }
 </script>
 
@@ -45,4 +40,3 @@
     />
     <ErrorDisplay errors={[error]}/>
 </div>
-

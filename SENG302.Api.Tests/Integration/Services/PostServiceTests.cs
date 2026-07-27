@@ -5,6 +5,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -169,9 +170,35 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         List<int> photoIds = [1, 2];
         var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
-        
+
         updatedPost.ShouldNotBeNull();
         updatedPost.PhotoIds.ShouldBe(photoIds);
         updatedPost.PostId.ShouldBe(post.PostId);
+    }
+
+    [Fact]
+    public async Task CreateNewPostAsync_InvalidLocation_ThrowsAndDoesNotPersist()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "Valid title",
+            Content = "Valid content",
+            Date = DateTimeOffset.Now.AddDays(-1),
+            OsmId = 0
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.CreateNewPostAsync(request)
+            );
+
+        exception.Errors["location"]
+            .ShouldContain("This isn't a valid location");
+
+        await using var context = DbContextFactory.CreateDbContext();
+        (await context.Posts.AnyAsync()).ShouldBeFalse();
     }
 }
