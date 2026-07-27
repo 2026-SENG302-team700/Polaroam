@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.NetworkInformation;
 using SENG302.Api.Services;
 
@@ -6,6 +7,18 @@ using SENG302.Api.Services;
 /// </summary>
 public class TripValidator
 {
+    /// <summary>
+    /// Returns a string representing the date format of the users locale
+    /// </summary>
+    /// <param name="culture"></param>
+    /// <returns>dd/MM/yyyy or similar</returns>
+    public static string GetLocaleDateFormat(CultureInfo? culture = null)
+    {
+        culture ??= CultureInfo.CurrentCulture;
+        string pattern = culture.DateTimeFormat.ShortDatePattern;
+        return pattern;
+    }
+
     /// <summary>
     /// Checks to see if Title  Length is between 3-64 characters
     /// </summary>
@@ -39,15 +52,10 @@ public class TripValidator
     {
         var errors = new Dictionary<string, List<string>>();
         errors["title"] = new List<string>();
-        if (title.IsWhiteSpace())
-        {
-            errors["title"].Add("Trip title is required");
-            return errors; // Return early as other errors are irrelevant
-        }
 
-        if (!ValidTitleLength(title))
+        if (!ValidTitleLength(title) || title.IsWhiteSpace())
         {
-            errors["title"].Add("Trip title must be between 3 and 128 characters long");
+            errors["title"].Add("Trip title is required and must be between 3 and 128 characters long");
         }
 
         if (!ValidTitleChars(title))
@@ -92,7 +100,7 @@ public class TripValidator
 
         if (startDate == null || endDate == null)
         {
-            errors["dates"].Add("Invalid date, date must be formatted DD/MM/YYYY");
+            errors["dates"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat()}");
         }
 
         return errors;
