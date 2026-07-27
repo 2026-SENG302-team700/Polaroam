@@ -36,15 +36,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         await context.SaveChangesAsync();
 
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
-        {
-            TripId = 1,
-            Title = "name",
-            Content = "test",
-            creationTime = DateTimeOffset.UtcNow,
-            Location = "France",
-            Date = DateTime.Now
-        });
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("name"), "Title");
+        content.Add(new StringContent("test"), "Content");
+        content.Add(new StringContent("France"), "Location");
+        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
+
+        var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -171,40 +170,5 @@ public class PostControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         photoIds.ShouldContain("You do not have authorisation to upload photos to this post!");
 
-    }
-
-    [Fact]
-    public async Task UploadPostPhotos_InvalidImage_PostIsDeletedAndErrorsReturned()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], Location = "location 1" });
-        await context.SaveChangesAsync();
-
-        // Bytes that do not match the magic number of the claimed content type
-        var fileBytes = new byte[] { 0x00, 0x01, 0x02, 0x03 };
-
-        using var content = new MultipartFormDataContent();
-
-        var fileContent = new ByteArrayContent(fileBytes);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-        content.Add(fileContent, "files", "fake.png");
-
-        content.Add(new StringContent("1"), "postId");
-        content.Add(new StringContent("1"), "tripId");
-
-        var response = await HttpClient.PutAsync("/api/post/images", content);
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-
-        var body = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
-        body.ShouldNotBeNull();
-        body.Errors.ShouldContainKey("photos");
-        body.Errors["photos"].ShouldNotBeEmpty();
-
-        await using var verifyContext = DbContextFactory.CreateDbContext();
-        var post = await verifyContext.Posts.FirstOrDefaultAsync(p => p.PostId == 1);
-        post.ShouldBeNull();
     }
 }

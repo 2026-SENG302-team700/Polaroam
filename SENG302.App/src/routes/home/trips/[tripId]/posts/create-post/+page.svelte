@@ -31,46 +31,6 @@
     })
 
     /**
-     * Function for uploading photos to the backend for a particular post
-     * @param postId Id of the post
-     */
-    async function uploadPhotos(postId: number) {
-        if (files != null) {
-            try {
-                const formData = new FormData();
-                for (let i = 0; i < files.length; i++) {
-                    console.log("File ", files[i])
-                    formData.append("files", files[i]);
-                    formData.append("postId", postId.toString());
-                    formData.append("tripId", tripId.toString());
-                }
-                
-                const response = await fetchWithCsrf(resolve(`/api/post/images` as any), {
-                    method: "PUT",
-                    body: formData,
-                });
-
-                let customImageIds: String[];
-                if (!response.ok) {
-                    if (response.status == 400) {
-                        const data = await response.json();
-                        errors.photos = data.errors?.photos ?? ["Failed to upload picture"];
-                    } else {
-                        const data = await response.json();
-                        errors.photos = data ?? ["Failed to upload picture"];
-                    }
-                } else {
-                    customImageIds = await response.json()
-                    goto(resolve(`/home/trips/${tripId}`));
-                    console.log(customImageIds.toString())
-                }
-            } catch (err) {
-                errors.photos = [(err as Error).message];
-            }
-        }
-    }
-
-    /**
      * Function for creating a post
      */
     async function createPost() {
@@ -80,34 +40,32 @@
         try {
             loading = true;
 
+            const form = new FormData();
+            form.append("TripId", tripId);
+            form.append("Title", title);
+            form.append("Location", location);
+            form.append("Content", content);
+            form.append("Date", date.toISOString());
+            if (files != null) {
+                for (let i = 0; i < files.length; i++) {
+                    form.append("files", files[i]);
+                }
+            }
+            
             const response = await fetchWithCsrf(`/api/post`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    TripId: Number(tripId),
-                    Title: title,
-                    Location: location,
-                    Content: content,
-                    Date: date,
-                }),
+                body: form,
                 credentials: "include",
             });
             const data = await response.json();
 
             if (!response.ok) {
                 errors.generic = data.message;
+                errors.photos = data.errors?.photos ?? [];
                 return;
             }
             
-            if (files != null) {
-                await uploadPhotos(data.postId)
-            } else {
-                goto(resolve(`/home/trips/${tripId}`));
-            }
-
-            
+            goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;

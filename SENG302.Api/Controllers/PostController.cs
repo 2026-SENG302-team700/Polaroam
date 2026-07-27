@@ -52,10 +52,11 @@ public class PostController : ControllerBase
     /// Given a post request object, create a new Post and add it to the db
     /// </summary>
     /// <param name="postRequest"></param>
+    /// <param name="files"></param>
     /// <returns></returns>
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<Post>> CreatePost([FromBody] NewPostRequest postRequest)
+    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
@@ -63,12 +64,12 @@ public class PostController : ControllerBase
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest);
+            var response = await _postService.CreateNewPostAsync(postRequest, files, userId);
             return Ok(response);
         }
-        catch (MultipleValidationException e)
+        catch (MultipleValidationListException e)
         {
-            return BadRequest(new BadRequestValidationResponse
+            return BadRequest(new BadRequestValidationListResponse
             {
                 Errors = e.Errors
             });

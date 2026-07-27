@@ -64,16 +64,14 @@ public class U7004CreatePost
     [When(@"I click 'Create Post'")]
     public async Task CreatePost()
     {
-        NewPostRequest postRequest = new NewPostRequest()
-        {
-            TripId = 1,
-            Title = _title,
-            Content = _content,
-            Location = _location,
-            Date = _date
-        };
+        using var form = new MultipartFormDataContent();
+        form.Add(new StringContent(_title), "Title");
+        form.Add(new StringContent(_content), "Content");
+        form.Add(new StringContent(_location), "Location");
+        form.Add(new StringContent("1"), "TripId");
+        form.Add(new StringContent(_date.ToString("o")), "Date");
 
-        _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/post", postRequest);
+        _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
     }
 
     [Then(@"the post is persisted")]
