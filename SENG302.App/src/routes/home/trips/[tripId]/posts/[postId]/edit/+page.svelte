@@ -20,7 +20,8 @@
     let date = $state(new Date());
     let osmId = $state(0);
     let photoIds = $state([]);
-
+    
+    let confirmationModalShown = $state(false)
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
     let files: FileList | null = $state(null);
@@ -99,18 +100,18 @@
     async function updatePost() {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${params.postId}` as any),
+                resolve(`/api/post/${page.params.postId}` as any),
                 {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        PostId: Number(page.params.postId),
+                        Id: Number(page.params.postId),
                         TripId: Number(page.params.tripId),
                         Title: title,
                         Content: content,
-                        Date: serializeLocalDate(parseLocalDate(date)),
+                        Date: date,
                         OsmId: osmId,
                         NoContentAllowed: noContentAllowed,
                     }),
@@ -131,7 +132,7 @@
                     errors.generic.length === 0 &&
                     errors.location.length === 0
                 ) {
-                    showConfirmationModal = true;
+                    confirmationModalShown = true;
                 }
                 return;
             }
@@ -140,7 +141,7 @@
                 await uploadPhotos(data.postId);
             }
 
-            goto(resolve(`/home/trips/${params.tripId}`));
+            goto(resolve(`/home/trips/${page.params.tripId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -167,19 +168,20 @@
         <ImagePicker bind:files error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
-            <CreationButton onclick={updatePost} text="Create Post" />
+            <CreationButton onClick={updatePost} text="Update Post" />
         </div>
     </div>
 </div>
 
 <ConfirmationModal
+    bind:show={confirmationModalShown}
     message="Post contains no content, are you sure you want to update post?"
     option1Text="Update anyway"
     option2Text="Cancel"
     onOption1={() => {
         noContentAllowed = true;
-        showConfirmationModal = false;
+        confirmationModalShown = false;
         createPost();
     }}
-    onOption2={() => (showConfirmationModal = false)}
+    onOption2={() => (confirmationModalShown = false)}
 />

@@ -117,25 +117,24 @@ public class PostController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
     {
-        var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
         if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
         {
             return Unauthorized();
         }
-        try
-        {    
-            if (errors.Count > 0)
-            {
-                return BadRequest(new BadRequestValidationResponse
-                {
-                    Errors = errors
-                });
-            }
 
+        try
+        {
             var post = await _postService.UpdatePostAsync(postUpdates);
             return Ok(post);
+        }
+        catch (MultipleValidationListException e)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = e.Errors
+            });
         }
         catch (Exception e)
         {

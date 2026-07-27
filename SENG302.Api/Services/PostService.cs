@@ -167,7 +167,7 @@ public class PostService : IPostService
 
         var errors = PostValidator.ValidatePostFields(postUpdates, post);
 
-        if (errors.Count > 0)
+        if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
         }
@@ -175,6 +175,20 @@ public class PostService : IPostService
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
+
+        if (postUpdates.OsmId != post.OsmId)
+        {
+            var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            if (location == null)
+            {
+                throw new MultipleValidationListException(new Dictionary<string, List<string>>
+                {
+                    ["location"] = ["This isn't a valid location"]
+                });
+            }
+            post.OsmId = postUpdates.OsmId;
+            post.LocationName = location.name;
+        }
 
         context.Posts.Update(post);
         await context.SaveChangesAsync();
