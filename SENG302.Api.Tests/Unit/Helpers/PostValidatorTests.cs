@@ -10,7 +10,7 @@ public class PostValidatorTests
         var errors = PostValidator.ValidatePostDate(DateTime.Now.AddDays(-1));
         errors.Count.ShouldBe(0);
     }
-    
+
     [Fact]
     public async Task ValidatePostDate_FutureDate_ReturnCorrectError()
     {
@@ -18,13 +18,13 @@ public class PostValidatorTests
         errors.Count.ShouldBe(1);
         errors.ShouldContain("Invalid date, date cannot be in the future");
     }
-    
+
     [Fact]
     public async Task ValidatePostDate_NullDate_ReturnCorrectError()
     {
         var errors = PostValidator.ValidatePostDate(null);
         errors.Count.ShouldBe(1);
-        errors[0].ShouldContain("Invalid date, date must be formatted ");   
+        errors[0].ShouldContain("Invalid date, date must be formatted ");
     }
 
     [Fact]
@@ -34,11 +34,29 @@ public class PostValidatorTests
         errrors.Count.ShouldBe(1);
         errrors[0].ShouldContain("Post contains no content, are you sure you want to create post?");
     }
-    
+
     [Fact]
     public async Task ValidatePostContent_NoContentAllowed_ReturnCorrectError()
     {
         var errrors = PostValidator.ValidatePostContent("", true);
         errrors.Count.ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void ValidatePostLocation_InvalidOsmId_ReturnsError(long osmId)
+    {
+        var errors = PostValidator.ValidatePostLocation(osmId);
+
+        errors.ShouldContain("This isn't a valid location");
+    }
+
+    [Fact]
+    public void ValidatePostLocation_ValidOsmId_ReturnsNoErrors()
+    {
+        var errors = PostValidator.ValidatePostLocation(123);
+
+        errors.ShouldBeEmpty();
     }
 }

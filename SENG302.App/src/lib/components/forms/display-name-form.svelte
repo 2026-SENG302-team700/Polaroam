@@ -25,6 +25,7 @@
 
 <div class="mb-3">
     <input
+            id="display-name-input"
         type="text"
         class="form-control"
         class:is-invalid={error}

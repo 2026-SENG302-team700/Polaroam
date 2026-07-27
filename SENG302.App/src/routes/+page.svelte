@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
+    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
 </script>
 
@@ -8,17 +7,24 @@
     <title>Welcome | Polaroam</title>
 </svelte:head>
 
-<main class="flex min-h-screen items-center justify-center bg-[#f7f3e8] p-6">
-<button class="w-full" onclick={() => goto(resolve("/register"))}>
-                Register
-</button>
+<main class="landing-page-wrapper">
+    <div class="card text-center" style="width: 30vw; height: 20vh; font-size:x-large;">
+        <div class="card-header">Welcome to Polaroam</div>
+        <div class="card-body" style="display: grid; grid-template-columns: auto; row-gap: 10px;">
+            <NavigationButton path="/register" text="Register"/>
+            <NavigationButton path="/login" text="Log In"/>
+        </div>
+        
+    </div>
 
-            <button
-                
-                class="w-full"
-                onclick={() => goto(resolve("/login"))}
-            >
-                Log in
-</button>
     
 </main>
+
+<style>
+    .landing-page-wrapper {
+        height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>

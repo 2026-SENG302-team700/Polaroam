@@ -2,15 +2,41 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
 
+    type LocationResult = {
+        osmId: number;
+        lat: string;
+        lon: string;
+        name: string;
+        displayName: string;
+    };
+
     let {
         searchQuery = $bindable(""),
-        location = $bindable({ osmId: 0, lat: 0, lon: 0, name: "", display_name: "" }),
-        error = "",
-        loading = false
+        location = $bindable({
+            osmId: 0,
+            lat: 0,
+            lon: 0,
+            name: "",
+            displayName: "",
+        }),
+        error = $bindable(""),
+        loading = false,
     } = $props();
 
     let isOpen = $state(false);
-    let items = $state([]);
+    let items = $state<LocationResult[]>([]);
+
+    function handleInput() {
+        location = {
+            osmId: 0,
+            lat: 0,
+            lon: 0,
+            name: "",
+            displayName: "",
+        };
+
+        error = "";
+    }
 
     /**
      * Gets the search results from the backend
@@ -33,11 +59,21 @@
             );
 
             const data = await response.json();
+
             if (!response.ok) {
-                error = data || "Failed to search locations.";
+                error = "Failed to search locations.";
                 return;
             }
-            items = data;
+
+            items = data.map(
+                (item: any): LocationResult => ({
+                    osmId: item.osm_id,
+                    lat: item.lat,
+                    lon: item.lon,
+                    name: item.name,
+                    displayName: item.display_name,
+                }),
+            );
             isOpen = true;
         } catch (err) {
             error = "Failed to search locations: " + (err as Error).message;
@@ -53,59 +89,64 @@
     function handleKeydown(event: KeyboardEvent) {
         if (event.key !== "Enter") return;
         event.preventDefault();
-        doSearch();
+        getSearchResults();
     }
 
     /**
      * Sets the selected item to the location object
      * @param item - location object
      */
-    function selectItem(item) {
+    function selectItem(item: LocationResult) {
         location = {
-            osmId: item.osm_id,
+            osmId: item.osmId,
             lat: item.lat,
             lon: item.lon,
             name: item.name,
-            displayName: item.display_name,
+            displayName: item.displayName,
         };
         searchQuery = item.name;
+        error = "";
         isOpen = false;
     }
 </script>
 
 <div class="search-container mb-3">
-    <div class="input-group">
+    <div class="input-group" style="gap:2px;">
         <input
-                type="text"
-                class="form-control"
-                class:is-invalid={error}
-                placeholder="Search location..."
-                bind:value={searchQuery}
-                onkeydown={handleKeydown}
-                onblur={() => setTimeout(() => (isOpen = false), 200)}
+            type="text"
+            class="form-control"
+            class:is-invalid={Boolean(error)}
+            placeholder="Search location..."
+            bind:value={searchQuery}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
+            onblur={() => setTimeout(() => (isOpen = false), 200)}
         />
         <button
-                type="button"
-                title="search your trips using the provided query."
-                class="btn btn-outline-secondary"
-                onclick={getSearchResults}
+            type="button"
+            title="search your trips using the provided query."
+            class="btn btn-outline-secondary"
+            onclick={getSearchResults}
         >
             {#if loading}
-                <div class="spinner-border spinner-border-sm text-primary" role="status" />
+                <div
+                    class="spinner-border spinner-border-sm text-primary"
+                    role="status"
+                />
             {:else}
-                 <i class="bi bi-search"></i>
+                <i class="bi bi-search"></i>
             {/if}
         </button>
     </div>
-    
 
     {#if isOpen && items.length > 0}
         <ul class="dropdown-list">
             {#each items as item}
                 <li>
                     <button type="button" onclick={() => selectItem(item)}>
-                        {item.name}<br>
-                        <span class="item-display-name">{item.display_name}</span>
+                        {item.name}<br />
+                        <span class="item-display-name">{item.displayName}</span
+                        >
                     </button>
                 </li>
             {/each}
@@ -161,7 +202,7 @@
         color: #666;
         font-style: italic;
     }
-    
+
     .item-display-name {
         font-weight: italics;
         color: gray;

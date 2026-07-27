@@ -17,7 +17,7 @@
 >
     <option value="">Select Country *</option>
     {#each countries as country}
-        <option value={country.code}>
+        <option id={country.code} value={country.code}>
             {country.name}
         </option>
     {/each}

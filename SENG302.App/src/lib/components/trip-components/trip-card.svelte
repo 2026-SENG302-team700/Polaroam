@@ -34,10 +34,10 @@
 <style>
     .trip-container {
 
-        border: 5px solid grey ;
-        border-radius: 5px;
-        margin-top: 3px;
-        margin-bottom: 3px;
+        border: 2px solid #686868;
+        border-radius: 10px;
+        margin-top: 4px;
+        margin-bottom: 4px;
         justify-self: center;
         width: 98%;
         display: grid;
@@ -45,6 +45,7 @@
     }
 
     .trip-image {
+        border-radius: 8px;
         aspect-ratio: 1 / 1;
         display: block;
         object-fit: cover;

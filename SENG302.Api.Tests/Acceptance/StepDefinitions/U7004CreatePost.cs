@@ -19,6 +19,7 @@ public class U7004CreatePost
     private string _content;
     private DateTime? _date;
     private string _location;
+    private long _osmId;
 
     public U7004CreatePost(AcceptanceTestFixture fixture)
     {
@@ -27,9 +28,9 @@ public class U7004CreatePost
         _content = "";
         _date = new DateTime();
         _location = "";
-
+        _osmId = 292806332;
     }
-    
+
     private void SetupGeoMock()
     {
         _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
@@ -42,7 +43,7 @@ public class U7004CreatePost
         });
     }
 
-    public async void SetupUserAndTrip()
+    public async Task SetupUserAndTrip()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
@@ -70,12 +71,39 @@ public class U7004CreatePost
         @"I am on the create post form And I enter a valid title, location, date, and optional content")]
     public async Task ValidTripAttributes()
     {
-        SetupUserAndTrip();
+        await SetupUserAndTrip();
 
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
+        _date = DateTime.Parse("2025-01-07");
+
+
+    }
+
+    [Given(
+      @"I am on the create post form And I enter a title that is not between 3 and 128 characters")]
+    public async Task GivenIEnterAnInvalidPostTitle()
+    {
+        await SetupUserAndTrip();
+
+        _title = "ab";
+        _content = "Test content";
         _date = DateTime.Parse("2022-01-07");
+    }
+
+    [Given(@"I enter location text without selecting a suggested location")]
+    public async Task GivenIEnterLocationTextWithoutSelectingLocation()
+    {
+        await SetupUserAndTrip();
+
+        _title = "Valid post title";
+        _content = "Valid post content";
+        _date = DateTimeOffset.Now.AddDays(-1).DateTime;
+
+        // Text was entered, but no search result was selected.
+        _location = "Made up location";
+        _osmId = 0;
     }
 
     [When(@"I click 'Create Post'")]
@@ -86,10 +114,10 @@ public class U7004CreatePost
             TripId = 1,
             Title = _title,
             Content = _content,
-            OsmId = 292806332,
+            OsmId = _osmId,
             Date = _date
         };
-        
+
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/post", postRequest);
     }
@@ -107,40 +135,43 @@ public class U7004CreatePost
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(post.PostId);
     }
-    
+
     // AC 4
     [Given(@"I am on the create post form And I enter a miss-formed or null date")]
     public async Task SetInvalidDate()
     {
-        SetupUserAndTrip();
-        
+        await SetupUserAndTrip();
+
+        _title = "Valid post title";
+        _content = "Valid post content";
+        _osmId = 292806332;
         _date = null;
     }
-    
-    [Then(@"I see the error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'")]
-    public async Task CheckInvalidDateErrorMessage()
-    {
-        _lastResponse.ShouldNotBeNull();
-        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var error = await _lastResponse.Content.ReadAsStringAsync();
-        error.ShouldContain("Invalid date, date must be formatted ");
-    }
-    
+
     // AC 5
     [Given(@"I am on the create post form And I enter a date in the future")]
     public async Task SetFutureDate()
     {
-        SetupUserAndTrip();
-        
+        await SetupUserAndTrip();
+
         _date = DateTime.Now.AddDays(1);
     }
-    
-    [Then(@"I see an error message 'Invalid date, date cannot be in the future'")]
-    public async Task CheckFutureDateErrorMessage()
+
+    [Then(@"I see an error message '(.*)'")]
+    public async Task CheckFutureDateErrorMessage(string expectedMessage)
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var error = await _lastResponse.Content.ReadAsStringAsync();
-        error.ShouldContain("Invalid date, date cannot be in the future");
+
+        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
+        {
+            error.ShouldContain(
+                "Invalid date, date must be formatted ");
+        }
+        else
+        {
+            error.ShouldContain(expectedMessage);
+        }
     }
 }
