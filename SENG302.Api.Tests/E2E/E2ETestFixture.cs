@@ -329,6 +329,34 @@ public class E2ETestFixture : BaseIntegrationTestFixture
 
         return email;
     }
+
+    /// <summary>
+    /// Take a screenshot of any failed to tests so it is easy to diagnose what failed.
+    /// </summary>
+    /// <param name="testName"></param>
+    /// <returns></returns>
+    protected async Task CaptureFailureAsync(string testName)
+    {
+        var artifactDirectory = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "playwright-artifacts"
+        );
+
+        Directory.CreateDirectory(artifactDirectory);
+
+        await Page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(artifactDirectory, $"{testName}.png"),
+            FullPage = true
+        });
+
+        await File.WriteAllTextAsync(
+            Path.Combine(artifactDirectory, $"{testName}.html"),
+            await Page.ContentAsync()
+        );
+
+        Console.WriteLine($"Playwright diagnostics saved to {artifactDirectory}");
+    }
 }
 
 // Helper record for CSRF token response

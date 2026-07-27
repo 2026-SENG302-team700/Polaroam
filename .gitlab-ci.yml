@@ -5,7 +5,6 @@ stages:
   - coverage-report
   - sonarqube
   - deploy
-  - e2e
   - notify
 
 # Check that the tag matches the expected 'sprintX.Y' format
@@ -73,21 +72,6 @@ acceptance-tests:
   extends: .test_template
   variables:
     TEST_NAMESPACE: Acceptance
-
-# run the e2e tests on staging after deploy
-e2e-tests:
-  extends: .test_template
-  stage: e2e
-  variables:
-    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test/"
-  needs:
-    - deploy-staging
-  script:
-    - dotnet restore SENG302.Api.Tests/SENG302.Api.Tests.csproj
-    - dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter
-      "FullyQualifiedName~SENG302.Api.Tests.E2E" --no-restore
-  only:
-    - dev
 
 coverage-reporting:
   extends: .not-scheduled

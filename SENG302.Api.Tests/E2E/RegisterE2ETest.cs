@@ -20,73 +20,88 @@ public class LoginE2ETest : E2ETestFixture
     [Fact]
     public async Task ShouldRegisterSuccessfully()
     {
-        // Arrange: Create a test user in the database
-        var email = "testuser@example.com";
-        var password = "TestPassword123!";
-        var displayName = "Test User";
+        try
+        {
+            // Arrange: Create a test user in the database
+            var email = "testuser@example.com";
+            var password = "TestPassword123!";
+            var displayName = "Test User";
 
 
-        // Act: Navigate to login page and fill in the form
-        await Page.GotoAsync($"{AppBaseUrl}/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+            // Act: Navigate to login page and fill in the form
+            await Page.GotoAsync($"{AppBaseUrl}/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
-        // Fill in the register form
-        await Page.Locator("#email").FillAsync(email);
-        await Page.Locator("#display-name-input").FillAsync(displayName);
-        await Page.Locator("#initial-password-input").FillAsync(password);
-        await Page.Locator("#confirm-password").FillAsync(password);
+            // Fill in the register form
+            await Page.Locator("#email").FillAsync(email);
+            await Page.Locator("#display-name-input").FillAsync(displayName);
+            await Page.Locator("#initial-password-input").FillAsync(password);
+            await Page.Locator("#confirm-password").FillAsync(password);
 
-        await Page.Locator("#country").ClickAsync();
-        await Page.Locator("#country").SelectOptionAsync("NZ");
+            await Page.Locator("#country").ClickAsync();
+            await Page.Locator("#country").SelectOptionAsync("NZ");
 
-        // Click the regsiter button
-        await Page.Locator("button[type='submit']").ClickAsync();
+            // Click the regsiter button
+            await Page.Locator("button[type='submit']").ClickAsync();
 
-        await Page.WaitForTimeoutAsync(1000);
+            await Page.WaitForTimeoutAsync(1000);
 
-        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
+            await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
 
-        // Assert: Verify we're on the verify code page
-        var currentUrl = Page.Url;
-        currentUrl.ShouldBe($"{AppBaseUrl}/register/verification");
+            // Assert: Verify we're on the verify code page
+            var currentUrl = Page.Url;
+            currentUrl.ShouldBe($"{AppBaseUrl}/register/verification");
+        }
+        catch
+        {
+            await CaptureFailureAsync(nameof(ShouldRegisterSuccessfully));
+            throw;
+        }
     }
 
     [Fact]
     public async Task ShouldShowErrorWithInvalidPassword()
     {
-        await using var dbContext = await DbContextFactory.CreateDbContextAsync();
+        try
+        {
+            await using var dbContext = await DbContextFactory.CreateDbContextAsync();
+
+            // Arrange: Create a test user in the database
+            var email = "testuser@example.com";
+            var password = "Test";
+            var displayName = "Test User";
 
 
-        // Arrange: Create a test user in the database
-        var email = "testuser@example.com";
-        var password = "Test";
-        var displayName = "Test User";
+            // Act: Navigate to login page and fill in the form
+            await Page.GotoAsync($"{AppBaseUrl}/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
 
+            // Fill in the login form
+            await Page.Locator("#email").FillAsync(email);
+            await Page.Locator("#display-name-input").FillAsync(displayName);
+            await Page.Locator("#initial-password-input").FillAsync(password);
+            await Page.Locator("#confirm-password").FillAsync(password);
 
-        // Act: Navigate to login page and fill in the form
-        await Page.GotoAsync($"{AppBaseUrl}/register", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+            await Page.Locator("#country").ClickAsync();
 
-        // Fill in the login form
-        await Page.Locator("#email").FillAsync(email);
-        await Page.Locator("#display-name-input").FillAsync(displayName);
-        await Page.Locator("#initial-password-input").FillAsync(password);
-        await Page.Locator("#confirm-password").FillAsync(password);
+            await Page.Locator("#country").SelectOptionAsync("NZ");
 
-        await Page.Locator("#country").ClickAsync();
+            // Click the login button
+            await Page.Locator("button[type='submit']").ClickAsync();
 
-        await Page.Locator("#country").SelectOptionAsync("NZ");
+            await Page.WaitForTimeoutAsync(1000);
 
-        // Click the login button
-        await Page.Locator("button[type='submit']").ClickAsync();
+            // Wait for error message to appear
+            await Page.WaitForSelectorAsync("#initial-password-error");
 
-        await Page.WaitForTimeoutAsync(1000);
-
-        // Wait for error message to appear
-        await Page.WaitForSelectorAsync("#initial-password-error");
-
-        // Assert: Verify error message is displayed
-        var errorMessage = await Page.Locator("#initial-password-error").TextContentAsync();
-        errorMessage.ShouldNotBeNullOrEmpty();
-        errorMessage.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters");
+            // Assert: Verify error message is displayed
+            var errorMessage = await Page.Locator("#initial-password-error").TextContentAsync();
+            errorMessage.ShouldNotBeNullOrEmpty();
+            errorMessage.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters");
+        }
+        catch
+        {
+            await CaptureFailureAsync(nameof(ShouldShowErrorWithInvalidPassword));
+            throw;
+        }
     }
 }
 
