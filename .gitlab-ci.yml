@@ -5,6 +5,7 @@ stages:
   - coverage-report
   - sonarqube
   - deploy
+  - notify
 
 # Check that the tag matches the expected 'sprintX.Y' format
 tag-checker:
