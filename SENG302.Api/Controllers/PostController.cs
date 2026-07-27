@@ -7,6 +7,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Resources.Helpers;
+using Org.BouncyCastle.Bcpg.Sig;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -118,13 +119,13 @@ public class PostController : ControllerBase
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        
+
         if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
         {
             return Unauthorized();
         }
         try
-        {    
+        {
             if (errors.Count > 0)
             {
                 return BadRequest(new BadRequestValidationResponse
@@ -141,7 +142,7 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
     /// <summary>
     /// Controller method for uploading photos to a post
     /// </summary>
@@ -162,7 +163,7 @@ public class PostController : ControllerBase
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
-        
+
         var userId = int.Parse(userIdString);
         var user = await _userService.GetUserByIdAsync(userId);
 
@@ -172,20 +173,20 @@ public class PostController : ControllerBase
         }
 
         var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
-        
-        
-        
+
+
+
         if (ownsPost == false)
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
-        
+
         List<int> customFileIds = [];
-        
+
         for (int i = 0; i < files.Count; i++)
         {
             IFormFile file = files[i];
-            
+
             if (!ImageValidationTools.IsValidFilesize(file))
             {
                 return BadRequest("Image too large, maximum file size is 10MB");
@@ -202,9 +203,45 @@ public class PostController : ControllerBase
         }
 
         await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
-        
-        
+
+
         return Ok(customFileIds);
+    }
+
+    [Authorize]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeletePost(int id)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var post = await _postService.GetPostAsync(id);
+
+        if (post == null)
+        {
+            return NotFound("Post does not exist");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _postService.DeletePostByIdAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return NotFound(exception.Message);
+        }
     }
 
 }
