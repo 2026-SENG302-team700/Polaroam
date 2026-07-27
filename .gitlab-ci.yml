@@ -79,7 +79,7 @@ e2e-tests:
   extends: .test_template
   stage: e2e
   variables:
-    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test/"
+    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test"
   needs:
     - deploy-staging
   script:
