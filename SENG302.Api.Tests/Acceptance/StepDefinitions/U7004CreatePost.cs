@@ -43,7 +43,7 @@ public class U7004CreatePost
         });
     }
 
-    public async void SetupUserAndTrip()
+    public async Task SetupUserAndTrip()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
@@ -71,18 +71,31 @@ public class U7004CreatePost
         @"I am on the create post form And I enter a valid title, location, date, and optional content")]
     public async Task ValidTripAttributes()
     {
-        SetupUserAndTrip();
+        await SetupUserAndTrip();
 
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
+        _date = DateTime.Parse("2025-01-07");
+
+
+    }
+
+    [Given(
+      @"I am on the create post form And I enter a title that is not between 3 and 128 characters")]
+    public async Task GivenIEnterAnInvalidPostTitle()
+    {
+        await SetupUserAndTrip();
+
+        _title = "ab";
+        _content = "Test content";
         _date = DateTime.Parse("2022-01-07");
     }
 
     [Given(@"I enter location text without selecting a suggested location")]
     public async Task GivenIEnterLocationTextWithoutSelectingLocation()
     {
-        SetupUserAndTrip();
+        await SetupUserAndTrip();
 
         _title = "Valid post title";
         _content = "Valid post content";
@@ -127,25 +140,19 @@ public class U7004CreatePost
     [Given(@"I am on the create post form And I enter a miss-formed or null date")]
     public async Task SetInvalidDate()
     {
-        SetupUserAndTrip();
+        await SetupUserAndTrip();
 
+        _title = "Valid post title";
+        _content = "Valid post content";
+        _osmId = 292806332;
         _date = null;
-    }
-
-    [Then(@"I see the error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'")]
-    public async Task CheckInvalidDateErrorMessage()
-    {
-        _lastResponse.ShouldNotBeNull();
-        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var error = await _lastResponse.Content.ReadAsStringAsync();
-        error.ShouldContain("Invalid date, date must be formatted ");
     }
 
     // AC 5
     [Given(@"I am on the create post form And I enter a date in the future")]
     public async Task SetFutureDate()
     {
-        SetupUserAndTrip();
+        await SetupUserAndTrip();
 
         _date = DateTime.Now.AddDays(1);
     }
@@ -156,6 +163,15 @@ public class U7004CreatePost
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var error = await _lastResponse.Content.ReadAsStringAsync();
-        error.ShouldContain(expectedMessage);
+
+        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
+        {
+            error.ShouldContain(
+                "Invalid date, date must be formatted ");
+        }
+        else
+        {
+            error.ShouldContain(expectedMessage);
+        }
     }
 }

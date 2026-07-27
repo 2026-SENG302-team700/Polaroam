@@ -3,10 +3,8 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import SearchForm from "$lib/components/forms/search-form.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
@@ -14,8 +12,40 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/image-picker.svelte";
 
+    type PostFormErrors = {
+        title: string[];
+        content: string[];
+        date: string;
+        generic: string;
+        location: string;
+        photos: string;
+    };
+
+    /**
+     * returns an empty PostFormErrors object
+     */
+    function emptyErrors(): PostFormErrors {
+        return {
+            title: [],
+            content: [],
+            date: "",
+            generic: "",
+            location: "",
+            photos: "",
+        };
+    }
+
+    let errors = $state<PostFormErrors>(emptyErrors());
+
+    /**
+     * refreshes the PostFormErrors object
+     */
+    function clearErrors() {
+        errors = emptyErrors();
+    }
+
     let loading = $state(false);
-    const tripId = page.params.tripId;
+    const tripId = page.params.tripId!;
 
     let title = $state("");
     let date = $state(new Date());
@@ -32,15 +62,6 @@
     let noContentAllowed = $state(false);
 
     let showConfirmationModal = $state(false);
-
-    let errors = $state({
-        title: [],
-        content: [],
-        date: "",
-        location: "",
-        generic: "",
-        photos: "",
-    });
 
     /**
      * Function for uploading photos to the backend for a particular post
@@ -87,8 +108,19 @@
      * Function for creating a post
      */
     async function createPost() {
+        clearErrors();
+
         title = title.trim();
         content = content.trim();
+
+        // validation the title
+        if (title.length < 3 || title.length > 128) {
+            errors.title = [
+                "Title is required and must be between 3 and 128 characters long",
+            ];
+
+            return;
+        }
 
         try {
             loading = true;
@@ -111,15 +143,18 @@
             const data = await response.json();
 
             if (!response.ok) {
+                errors.title = data.errors?.title ?? [];
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
+                errors.generic = data.message ?? "";
 
                 if (
                     errors.content.length === 1 &&
                     errors.title.length === 0 &&
                     !errors.date &&
-                    errors.generic.length === 0
+                    !errors.generic &&
+                    !errors.location
                 ) {
                     showConfirmationModal = true;
                 }
@@ -132,7 +167,7 @@
                 goto(resolve(`/home/trips/${tripId}`));
             }
         } catch (err) {
-            errors.generic = ["Failed to create trip"];
+            errors.generic = "Failed to create trip";
         } finally {
             loading = false;
             noContentAllowed = false;
@@ -142,7 +177,7 @@
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
-        <TitleForm bind:name={title} />
+        <TitleForm bind:name={title} errors={errors.title} {loading} />
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}
             <div class="invalid-feedback d-block">{errors.date}</div>
@@ -154,7 +189,7 @@
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
         <ImagePicker bind:files error={errors.photos}></ImagePicker>
-        <MultipleErrorDisplay errors={[errors.generic]} />
+        <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
         </div>

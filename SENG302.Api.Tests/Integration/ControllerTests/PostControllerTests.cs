@@ -247,6 +247,58 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreatePost_InvalidTitleLength_ReturnsBadRequestAndDoesNotPersist()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "test@example.com",
+                DisplayName = "Test User",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                Title = "Test trip",
+                Description = "Test description",
+                UserId = 1,
+                StartDate = new DateTime(2026, 7, 1),
+                EndDate = new DateTime(2026, 7, 10)
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "ab",
+            Content = "Some content",
+            OsmId = 1,
+            Date = new DateTime(2026, 7, 5)
+        };
+
+        var response = await HttpClient.PostAsJsonAsync("/api/post", request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        responseBody.ShouldContain("Title is required and must be between 3 and 128 characters long");
+
+        await using var context2 = DbContextFactory.CreateDbContext();
+
+        var postExists =
+            await context2.Posts.AnyAsync();
+
+        postExists.ShouldBeFalse();
+    }
+    
+    [Fact]
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
         await using var context = DbContextFactory.CreateDbContext();
