@@ -164,7 +164,6 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await Should.ThrowAsync<MultipleValidationListException>(async () => await ServiceUnderTest.CreateNewTripAsync(tripRequest, 0));
     }
 
-<<<<<<< HEAD
     [Theory]
     [InlineData(0, true)] // empty
     [InlineData(3, true)] // some
@@ -210,8 +209,6 @@ public class TripServiceTests : BaseIntegrationTestFixture
         }
     }
 
-=======
->>>>>>> efbf4ed9170e33493ca74a710030756a7daf6053
     [Fact]
     public async Task CreateNewTrip_EndDateBeforeStartDate_ThrowValidationException()
     {
