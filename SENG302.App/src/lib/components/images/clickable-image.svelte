@@ -14,12 +14,17 @@
 
 
 <div class="clickable-image-wrapper">
-    <img src={URL.createObjectURL(image)} onclick={clicked} alt="Image" class="img-thumbnail w-100" style="aspect-ratio: 1; object-fit: cover;" />
+    <img src={URL.createObjectURL(image)} onclick={clicked} alt="Image" class="img-thumbnail clickable-image" />
 </div>
 {#if enlarged} 
-<FullscreenImage {image} />
+<FullscreenImage {image} bind:enlarged />
 {/if}
 
 <style>
-
+ .img-thumbnail {
+    width: 100%;
+    cursor: pointer;
+    aspect-ratio: 1; 
+    object-fit: cover;
+ }
 </style>

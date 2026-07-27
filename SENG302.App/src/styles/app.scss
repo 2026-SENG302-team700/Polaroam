@@ -168,3 +168,13 @@ $font-weight-bold: 700;
     border-radius: 0.35rem;
     box-shadow: $shadow-small;
 }
+
+.clickable-image {
+    transition: transform $transition-fast;
+    &:hover {
+        transform: scale(0.95);
+    }
+    &:focus {
+        transform: scale(0.6);
+    }
+}
