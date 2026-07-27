@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using SENG302.Api.Models.Entities;
@@ -200,5 +201,39 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         await using var context = DbContextFactory.CreateDbContext();
         (await context.Posts.AnyAsync()).ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(129)]
+    public async Task CreateNewPostAsync_InvalidTitle_ThrowsValidationExceptionAndDoesNotPersist(int titleLength)
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = new string('a', titleLength),
+            Content = "SOme content",
+            OsmId = 1,
+            Date = DateTime.UtcNow.AddDays(-2),
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.CreateNewPostAsync(request)
+            );
+
+        exception.Errors.ShouldContainKey("title");
+        exception.Errors["title"].ShouldContain(
+            "Title is required and must be between 3 and 128 characters long"
+        );
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var postExists = await context.Posts.AnyAsync();
+
+        postExists.ShouldBeFalse();
     }
 }

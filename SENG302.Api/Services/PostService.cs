@@ -132,7 +132,6 @@ public class PostService : IPostService
     /// Given a postId, return the post from the database.
     /// </summary>
     /// <param name="id">the id of the post</param>
-    /// <param name="userId"> id of the user making request</param>
     /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
     public async Task<Post?> GetPostAsync(int id)
     {

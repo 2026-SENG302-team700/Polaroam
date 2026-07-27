@@ -561,7 +561,7 @@
       <button
         type="button"
         class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-        on:click={() => {
+        onclick={() => {
           pfpInput.value = "";
           pfpInput.click();
         }}
@@ -573,7 +573,7 @@
 
   <div class="container d-flex flex-column flex-md-row">
     <div class="flex-grow-1 m-3">
-      <form on:submit|preventDefault={updateUser}>
+      <form onsubmit={updateUser}>
         <div class="m-3" style="display: flex; ">
           <CancelButton path={"/home/profile"} />
           <div class="ms-auto">
@@ -626,7 +626,7 @@
             <button
               type="button"
               class="btn btn-outline-primary btn-sm"
-              on:click={requestPasswordChange}
+              onclick={requestPasswordChange}
             >
               Update Password
             </button>
@@ -666,48 +666,48 @@
                 class="form-control form-control-lg text-center"
                 maxlength="1"
                 bind:value={digit1}
-                on:input={handleInput}
-                on:keydown={handleKeyDown}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
               />
               <input
                 type="text"
                 class="form-control form-control-lg text-center"
                 maxlength="1"
                 bind:value={digit2}
-                on:input={handleInput}
-                on:keydown={handleKeyDown}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
               />
               <input
                 type="text"
                 class="form-control form-control-lg text-center"
                 maxlength="1"
                 bind:value={digit3}
-                on:input={handleInput}
-                on:keydown={handleKeyDown}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
               />
               <input
                 type="text"
                 class="form-control form-control-lg text-center"
                 maxlength="1"
                 bind:value={digit4}
-                on:input={handleInput}
-                on:keydown={handleKeyDown}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
               />
               <input
                 type="text"
                 class="form-control form-control-lg text-center"
                 maxlength="1"
                 bind:value={digit5}
-                on:input={handleInput}
-                on:keydown={handleKeyDown}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
               />
               <input
                 type="text"
                 class="form-control form-control-lg text-center"
                 maxlength="1"
                 bind:value={digit6}
-                on:input={handleInput}
-                on:keydown={handleKeyDown}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
               />
             </div>
 
@@ -720,7 +720,7 @@
 
             <button
               class="btn btn-link btn-sm text-decoration-none"
-              on:click={requestPasswordChange}
+              onclick={requestPasswordChange}
               disabled={resendTimer > 0 || isSending}
             >
               {#if resendTimer > 0}
@@ -733,7 +733,7 @@
             </button>
           </div>
         {:else}
-          <form on:submit|preventDefault={() => updatePassword()}>
+          <form onsubmit={() => updatePassword()}>
             <div class="mb-3">
               <label
                 for="oldPassword"
@@ -779,7 +779,7 @@
           type="button"
           class="btn btn-secondary w-100 py-2 mt-3"
           aria-label="Close"
-          on:click={() => {
+          onclick={() => {
             authModal.hide();
             clearErrors();
             clearPasswordFields();
@@ -810,12 +810,12 @@
         <button
           type="button"
           class="btn-close"
-          on:click={() => pfpModal.hide()}
+          onclick={() => pfpModal.hide()}
           aria-label="Close"
         ></button>
       </div>
       <div class="modal-body">
-        <form on:submit|preventDefault={() => updatePfp()}>
+        <form onsubmit={() => updatePfp()}>
           <input
             accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
             bind:files
@@ -824,7 +824,7 @@
             name="pfp"
             type="file"
             class="d-none"
-            on:change={async () => {
+            onchange={async () => {
               imageEditor.reset();
               clearErrors();
               await sendToEditor();
@@ -843,7 +843,7 @@
             <button
               type="button"
               class="btn btn-secondary"
-              on:click={() => pfpModal.hide()}
+              onclick={() => pfpModal.hide()}
               bind:this={pfpCancelButton}>Cancel</button
             >
           </div>
