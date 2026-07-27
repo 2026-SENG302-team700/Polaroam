@@ -2,6 +2,14 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
 
+    type LocationResult = {
+        osmId: number;
+        lat: string;
+        lon: string;
+        name: string;
+        displayName: string;
+    };
+
     let {
         searchQuery = $bindable(""),
         location = $bindable({
@@ -9,14 +17,14 @@
             lat: 0,
             lon: 0,
             name: "",
-            display_name: "",
+            displayName: "",
         }),
         error = $bindable(""),
         loading = false,
     } = $props();
 
     let isOpen = $state(false);
-    let items = $state([]);
+    let items = $state<LocationResult[]>([]);
 
     function handleInput() {
         location = {
@@ -51,11 +59,21 @@
             );
 
             const data = await response.json();
+
             if (!response.ok) {
-                error = data || "Failed to search locations.";
+                error = "Failed to search locations.";
                 return;
             }
-            items = data;
+
+            items = data.map(
+                (item: any): LocationResult => ({
+                    osmId: item.osm_id,
+                    lat: item.lat,
+                    lon: item.lon,
+                    name: item.name,
+                    displayName: item.display_name,
+                }),
+            );
             isOpen = true;
         } catch (err) {
             error = "Failed to search locations: " + (err as Error).message;
@@ -71,20 +89,20 @@
     function handleKeydown(event: KeyboardEvent) {
         if (event.key !== "Enter") return;
         event.preventDefault();
-        doSearch();
+        getSearchResults();
     }
 
     /**
      * Sets the selected item to the location object
      * @param item - location object
      */
-    function selectItem(item) {
+    function selectItem(item: LocationResult) {
         location = {
-            osmId: item.osm_id,
+            osmId: item.osmId,
             lat: item.lat,
             lon: item.lon,
             name: item.name,
-            displayName: item.display_name,
+            displayName: item.displayName,
         };
         searchQuery = item.name;
         error = "";
@@ -127,8 +145,7 @@
                 <li>
                     <button type="button" onclick={() => selectItem(item)}>
                         {item.name}<br />
-                        <span class="item-display-name"
-                            >{item.display_name}</span
+                        <span class="item-display-name">{item.displayName}</span
                         >
                     </button>
                 </li>
