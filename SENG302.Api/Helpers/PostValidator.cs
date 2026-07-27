@@ -48,6 +48,10 @@ public class PostValidator
     {
         var errors = new Dictionary<string, List<string>>();
 
+        errors["title"] = ValidatePostTitle(postRequest.Title)
+            .Values
+            .ToList();
+
         errors["location"] = ValidatePostLocation(postRequest.OsmId);
 
         if (postRequest != post)
@@ -86,7 +90,7 @@ public class PostValidator
         var postTitle = title.Trim();
         if (postTitle.Length < 3 || postTitle.Length > 128)
         {
-            errors["name"] = "Title is required and must be between 3 and 128 characters long";
+            errors["title"] = "Title is required and must be between 3 and 128 characters long";
         }
         return errors;
     }
