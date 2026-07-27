@@ -53,6 +53,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             Content = "test",
             creationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
+            LocationName = "Christchurch",
             Date = DateTime.Now
         });
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -72,8 +73,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
 
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332 });
-        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
@@ -112,8 +113,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
 
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332 });
-        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/trip/post/1");
@@ -149,6 +150,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             Content = "test",
             creationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
+            LocationName = "Christchurch",
             Date = DateTime.Now.AddDays(1)
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -180,6 +182,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             Content = "test",
             creationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
+            LocationName = "Christchurch",
             Date = null
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -305,7 +308,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
 
@@ -351,7 +354,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var content = await CreateImageContent();
@@ -370,7 +373,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
         
         var response = await HttpClient.GetAsync("/api/post/1/user");
@@ -387,7 +390,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
         
         var response = await HttpClient.GetAsync("/api/post/2/user");
@@ -404,7 +407,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
         
         var content = await CreateImageContent();
@@ -431,7 +434,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch" });
         await context.SaveChangesAsync();
         
         var content = await CreateImageContent();
