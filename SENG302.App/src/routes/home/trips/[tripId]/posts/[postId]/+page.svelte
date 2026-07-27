@@ -16,6 +16,8 @@
 
     let { params } = $props();
     let postId = params.postId;
+    
+    let displayName = $state("");
 
     let postObject = $state({
         postId: 0,
@@ -25,35 +27,85 @@
         content: "Content",
         date: "9999-12-31",
         photoIds: [],
-        //osmId: 0,
-        location: "No Location",
+        osmId: 0,
         creationTime: "9999-12-31",
-        userId: 0,
     });
     
     let photos: PostPhotoData[] = $state([]);
 
     onMount(() => {
         fetchPost();
+        fetchDisplayName();
     });
+
+    async function fetchDisplayName() {
+        try {
+            loading = true
+            const response = await fetchWithCsrf(
+                resolve(`/api/post/${postId}/user` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            )
+            console.log(`Response: ${response}`)
+            displayName = await response.text();
+            console.log(`Display Name: ${displayName}`)
+            
+        } catch (err) {
+            error = "Failed to fetch post creator: " + (err as Error).message;
+        } finally {
+            loading = false
+        }
+    }
+    
+    /**
+     * Converts a Base64String representing an image from backend into a image blob which can then be transformed
+     * into a image url
+     * @param base64
+     * @param contentType
+     * @constructor
+     */
+    function ConvertBase64ToBlob(base64: string, contentType: string) {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], {type: contentType});
+        
+    }
 
     /**
      * Fetch Images
      */
     async function fetchImages() {
-        loading = true
-        const response = await fetchWithCsrf(
-            resolve(`api/post/${postId}/images` as any),
-            {
-                method: "GET",
-                credentials: "include",
+        try {
+            loading = true
+            const response = await fetchWithCsrf(
+                resolve(`/api/post/${postId}/images` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
+            )
+            let responsePhotos = await response.json();
+
+            if (!response.ok) {
+                error = await response.text() || "Failed to fetch images.";
             }
-        )
-        console.log(response)
-        const blob = await response.blob();
-        console.log(blob)
-         photos.push()
-        
+
+            responsePhotos.map(p => {
+                let blob = ConvertBase64ToBlob(p.base64String, p.contentType)
+                let url = URL.createObjectURL(blob);
+                photos.push({imageSource: url})
+            })
+        } catch (err) {
+            error = "Failed to fetch images: " + (err as Error).message;
+        } finally {
+            loading = false
+        }
     }
 
     /**
@@ -77,6 +129,7 @@
                 return;
             }
             postObject = data;
+            console.log("postObject: " + JSON.stringify(postObject));
             fetchImages();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
@@ -131,7 +184,7 @@
     <DeleteButton deleteAction={showConfirmationModal} />
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
-        <div class="trip-head-grid">
+        <div class="post-head-grid">
             <h1>{postObject.title}</h1>
 
             <p class="date-object">
@@ -145,8 +198,21 @@
             </p>
         </div>
         {#if postObject.content.length > 0}
-            <p><i>Posted at {postObject.creationTime}</i></p>
+            <p><i>Posted by {displayName}</i></p>
             <span>{postObject.content}</span>
+        {/if}
+    </div>
+    <div class="container-fluid photo-grid mt-5" style="width: 100%;">
+        {#if photos.length > 0}
+            {#each Array(Math.floor(photos.length/3)+1) as _, i}
+                {#each photos.slice(i*3, i*3+3) as photo}
+                    <img
+                            class="post-img"
+                            alt="profile"
+                            src={photo.imageSource}
+                    />
+                {/each}
+            {/each}
         {/if}
     </div>
 </div>
@@ -161,12 +227,26 @@
 />
 
 <style>
-    .trip-head-grid {
-        align-items: end;
+    .post-head-grid {
         display: flex;
+        flex-direction: column;
     }
     .date-object {
         margin-left: 10px;
         bottom: 0;
+    }
+
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        width: 60%;
+    }
+
+    .post-img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 8px;
     }
 </style>

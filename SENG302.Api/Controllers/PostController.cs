@@ -8,6 +8,8 @@ using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Resources.Helpers;
 using System.Dynamic;
+using Org.BouncyCastle.Bcpg;
+using SENG302.Api.Models.Responses;
 using SQLitePCL;
 namespace SENG302.Api.Controllers;
 
@@ -20,12 +22,15 @@ public class PostController : ControllerBase
     private readonly IUserService _userService;
     private readonly IPostService _postService;
     private readonly IFileService _fileService;
+    private readonly ITripService _tripService;
 
-    public PostController(IPostService postService, IUserService userService, IFileService fileService)
+    public PostController(IPostService postService, IUserService userService, IFileService fileService, ITripService tripService)
     {
         _postService = postService;
         _userService = userService;
         _fileService = fileService;
+        _tripService = tripService;
+
     }
 
     /// <summary>
@@ -143,6 +148,7 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+    
 
     /// <summary>
     /// Takes a post id and returns all the photos as form files
@@ -159,7 +165,7 @@ public class PostController : ControllerBase
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
 
-        List<IFormFile> photos = [];
+        List<PhotoFile> photos = [];
 
         var post = await _postService.GetPostAsync(postId);
 
@@ -167,14 +173,15 @@ public class PostController : ControllerBase
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-            var memoryStream = new MemoryStream(bytes);
-            IFormFile formFile = new FormFile(memoryStream, 0, file.FileSize, null, file.OriginalFileName)
+            
+            var responseFile =  new PhotoFile
             {
-                Headers = new HeaderDictionary(),
-                ContentType = file.MimeType
+                FileName = "photo",
+                ContentType = file.MimeType,
+                Base64String = Convert.ToBase64String(bytes),
             };
-                                                    
-            photos.Add(formFile);
+            photos.Add(responseFile);
+
         }
 
         return Ok(photos);
@@ -243,6 +250,34 @@ public class PostController : ControllerBase
 
 
         return Ok(customFileIds);
+    }
+
+    /// <summary>
+    /// Returns the users display name from the post id so that it can be displayed with a trip
+    /// </summary>
+    /// <param name="postId"></param>
+    /// <returns></returns>
+    [HttpGet("{postId:int}/user")]
+    public async Task<ActionResult<User>> GetUserNameByPost(int postId)
+    {
+        var post = await _postService.GetPostAsync(postId);
+
+        if (post == null)
+        {
+            return NotFound("Post not found!");
+        }
+        var tripId = post.TripId;
+
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+
+        var user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+
+        return Ok(user.DisplayName);
     }
 
 }

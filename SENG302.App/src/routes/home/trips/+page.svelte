@@ -35,7 +35,6 @@
         } finally {
             loading = false;
         }
-        console.log(trips);
     }
 </script>
 
