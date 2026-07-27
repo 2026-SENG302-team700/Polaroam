@@ -94,7 +94,8 @@ public class PostService : IPostService
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
             PhotoIds = [],
-            OsmId = postRequest.OsmId
+            OsmId = postRequest.OsmId,
+            LocationName = location.name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -136,14 +137,8 @@ public class PostService : IPostService
     public async Task<Post?> GetPostAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var PostItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
-        if (PostItem == null)
-        {
-            return null;
-        }
-
-        return PostItem;
+        var postItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
+        return postItem;
     }
 
     /// <summary>

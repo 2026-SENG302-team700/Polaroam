@@ -3,6 +3,8 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    
+    import { uploadPhotos } from "$lib/posts/images";
 
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
@@ -42,46 +44,7 @@
         photos: "",
     });
 
-    /**
-     * Function for uploading photos to the backend for a particular post
-     * @param postId Id of the post
-     */
-    async function uploadPhotos(postId: number) {
-        if (files != null) {
-            try {
-                const formData = new FormData();
-                for (let i = 0; i < files.length; i++) {
-                    console.log("File ", files[i]);
-                    formData.append("files", files[i]);
-                    formData.append("postId", postId.toString());
-                    formData.append("tripId", tripId.toString());
-                }
-
-                const response = await fetchWithCsrf(
-                    resolve(`/api/post/images` as any),
-                    {
-                        method: "PUT",
-                        body: formData,
-                    },
-                );
-
-                let customImageIds: String[];
-                if (!response.ok) {
-                    if (response.status == 500) {
-                        errors.photos = "Failed to upload picture";
-                    } else {
-                        errors.photos = await response.text();
-                    }
-                } else {
-                    customImageIds = await response.json();
-                    goto(resolve(`/home/trips/${tripId}`));
-                    console.log(customImageIds.toString());
-                }
-            } catch (err) {
-                errors.photos = (err as Error).message;
-            }
-        }
-    }
+    
 
     /**
      * Function for creating a post
@@ -119,7 +82,8 @@
                     errors.content.length === 1 &&
                     errors.title.length === 0 &&
                     !errors.date &&
-                    errors.generic.length === 0
+                    errors.generic.length === 0 &&
+                    errors.location.length === 0
                 ) {
                     showConfirmationModal = true;
                 }
@@ -128,9 +92,10 @@
 
             if (files != null) {
                 await uploadPhotos(data.postId);
-            } else {
-                goto(resolve(`/home/trips/${tripId}`));
             }
+            
+            goto(resolve(`/home/trips/${tripId}`));
+
         } catch (err) {
             errors.generic = ["Failed to create trip"];
         } finally {

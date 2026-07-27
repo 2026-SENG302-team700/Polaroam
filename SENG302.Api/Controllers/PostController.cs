@@ -94,8 +94,9 @@ public class PostController : ControllerBase
     {
         try
         {
-            var response = await _postService.GetPostAsync(id);
-            return Ok(response);
+            var post = await _postService.GetPostAsync(id);
+            if (post == null) return NotFound();
+            return Ok(post);
         }
         catch (Exception e)
         {
@@ -156,7 +157,6 @@ public class PostController : ControllerBase
         [FromForm] string tripId
         )
     {
-        Console.WriteLine($"\n\n PostId: {postId}");
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
