@@ -14,8 +14,9 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     protected IBrowserContext Context = null!;
     protected IPage Page = null!;
     protected string ApiBaseUrl = null!;
+    protected string AppBaseUrl { get; private set; } = null!;
     private string _svelteBuildPath = null!;
-    
+
     // Frontend build lock and flag
     private static readonly SemaphoreSlim _buildLock = new(1, 1);
     private static bool _isBuilt = false;
@@ -42,6 +43,13 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         await base.InitializeAsync();
 
         ApiBaseUrl = HttpClient.BaseAddress!.ToString().TrimEnd('/');
+
+        var configuredUrl =
+            Environment.GetEnvironmentVariable("E2E_BASE_URL");
+
+        AppBaseUrl = string.IsNullOrWhiteSpace(configuredUrl)
+            ? "http://localhost"
+            : configuredUrl.TrimEnd('/');
 
         // Store the build path for serving static files via Playwright
         var solutionRoot = GetSolutionRoot();
@@ -169,7 +177,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         // If we're in the CI pipeline, assume the build is passed to us 🙏
         if (Environment.GetEnvironmentVariable("GITLAB_CI") == "true")
         {
-            return; 
+            return;
         }
 
         var solutionRoot = GetSolutionRoot();
@@ -181,7 +189,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
         {
             return;
         }
-        
+
         // Otherwise we have to actually build the app :sadge:
         // Ensure thread safety across parallel test runners
         await _buildLock.WaitAsync();
@@ -242,7 +250,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
                     CreateNoWindow = true
                 }
             };
-            
+
             buildProcess.StartInfo.EnvironmentVariables["CI"] = "true"; // Pretend like its a CI build so npm/vite doesn't complain
             buildProcess.StartInfo.EnvironmentVariables["NODE_ENV"] = "development";
 
@@ -280,7 +288,7 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     {
         // First register the user via API (easier and faster)
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-    
+
         var registerRequest = new SENG302.Api.Models.Requests.PostUserRequest
         {
             Email = email,
@@ -289,21 +297,21 @@ public class E2ETestFixture : BaseIntegrationTestFixture
             DisplayName = displayName,
             Country = country,
         };
-    
+
         var registerResponse = await HttpClient.PostAsJsonAsync("/api/Authorization/register", registerRequest);
         registerResponse.EnsureSuccessStatusCode();
-    
+
         // Now login via the UI
         await Page.GotoAsync($"http://localhost/login");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-    
+
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#password").FillAsync(password);
         await Page.Locator("button[type='submit']").ClickAsync();
-    
+
         // Wait for redirect to home page
         await Page.WaitForURLAsync($"http://localhost/home/");
-    
+
         return email;
     }
 }
