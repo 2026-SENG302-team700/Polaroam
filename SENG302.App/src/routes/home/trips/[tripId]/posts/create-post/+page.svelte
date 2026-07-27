@@ -3,10 +3,8 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import SearchForm from "$lib/components/forms/search-form.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
@@ -23,6 +21,9 @@
         photos: string;
     };
 
+    /**
+     * returns an empty PostFormErrors object
+     */
     function emptyErrors(): PostFormErrors {
         return {
             title: [],
@@ -36,6 +37,9 @@
 
     let errors = $state<PostFormErrors>(emptyErrors());
 
+    /**
+     * refreshes the PostFormErrors object
+     */
     function clearErrors() {
         errors = emptyErrors();
     }
