@@ -8,6 +8,10 @@ using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Resources.Helpers;
 using Org.BouncyCastle.Bcpg.Sig;
+using System.Dynamic;
+using Org.BouncyCastle.Bcpg;
+using SENG302.Api.Models.Responses;
+using SQLitePCL;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -19,12 +23,15 @@ public class PostController : ControllerBase
     private readonly IUserService _userService;
     private readonly IPostService _postService;
     private readonly IFileService _fileService;
+    private readonly ITripService _tripService;
 
-    public PostController(IPostService postService, IUserService userService, IFileService fileService)
+    public PostController(IPostService postService, IUserService userService, IFileService fileService, ITripService tripService)
     {
         _postService = postService;
         _userService = userService;
         _fileService = fileService;
+        _tripService = tripService;
+
     }
 
     /// <summary>
@@ -143,6 +150,49 @@ public class PostController : ControllerBase
         }
     }
 
+
+    /// <summary>
+    /// Takes a post id and returns all the photos as form files
+    /// </summary>
+    /// <param name="postId">The id of the post</param>
+    /// <returns>The photos as form files</returns>
+    [Authorize]
+    [HttpGet("{postId:int}/images")]
+    public async Task<ActionResult<List<PhotoFile>>> GetPostPhotos(int postId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to upload photos to this post!");
+        }
+
+        List<PhotoFile> photos = [];
+
+        var post = await _postService.GetPostAsync(postId);
+
+        if (post == null)
+        {
+            return NotFound("Post not found");
+        }
+
+        foreach (int photoId in post.PhotoIds ?? [])
+        {
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+
+            var responseFile = new PhotoFile
+            {
+                FileName = "photo",
+                ContentType = file.MimeType,
+                Base64String = Convert.ToBase64String(bytes),
+            };
+            photos.Add(responseFile);
+
+        }
+
+        return Ok(photos);
+    }
+
     /// <summary>
     /// Controller method for uploading photos to a post
     /// </summary>
@@ -151,13 +201,13 @@ public class PostController : ControllerBase
     /// <returns>The ids of the newly create custom files for the photos</returns>
     [Authorize]
     [HttpPut("images")]
-    public async Task<ActionResult<CustomFile>> UploadPostPhotos(
+    public async Task<ActionResult<List<int>>> UploadPostPhotos(
         [FromForm] List<IFormFile> files,
         [FromForm] string postId,
         [FromForm] string tripId
         )
     {
-        Console.WriteLine($"\n\n PostId: {postId}");
+
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
@@ -206,6 +256,33 @@ public class PostController : ControllerBase
 
 
         return Ok(customFileIds);
+    }
+
+    /// <summary>
+    /// Returns the users display name from the post id so that it can be displayed with a trip
+    /// </summary>
+    /// <param name="postId"></param>
+    /// <returns></returns>
+    [HttpGet("{postId:int}/user")]
+    public async Task<ActionResult<User>> GetUserNameByPost(int postId)
+    {
+        var post = await _postService.GetPostAsync(postId);
+
+        if (post == null)
+        {
+            return NotFound("Post not found!");
+        }
+        var tripId = post.TripId;
+
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+
+        var user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+        return Ok(user.DisplayName);
     }
 
     [Authorize]
