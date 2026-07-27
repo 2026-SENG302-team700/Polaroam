@@ -53,7 +53,13 @@ public class TripValidator
         var errors = new Dictionary<string, List<string>>();
         errors["title"] = new List<string>();
 
-        if (!ValidTitleLength(title) || title.IsWhiteSpace())
+        if (title.IsWhiteSpace())
+        {
+            errors["title"].Add("Trip title is required and must be between 3 and 128 characters long");
+            return errors;
+        }
+
+        if (!ValidTitleLength(title))
         {
             errors["title"].Add("Trip title is required and must be between 3 and 128 characters long");
         }
