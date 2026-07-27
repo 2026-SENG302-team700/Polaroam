@@ -118,6 +118,7 @@
         </div>
         <div class="mb-3">
             <PasswordForm
+                id="initial-password-input"    
                 bind:password
                 error={errors.password}
                 {loading}
@@ -126,7 +127,8 @@
         </div>
         <div class="mb-3">
             <PasswordForm
-                bind:password={passwordConfirm}
+                    id="confirm-password"
+                    bind:password={passwordConfirm}
                 error={errors.passwordConfirm}
                 {loading}
                 passConfirm={true}
