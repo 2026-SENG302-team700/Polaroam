@@ -8,6 +8,9 @@
         error = ""
     }: { filesList: File[]; error: string } = $props();
 
+    /**
+     * Added the selected files to the given file list
+     */
     function appendImages() {
         if (!files) return;
         for (const file of files) {

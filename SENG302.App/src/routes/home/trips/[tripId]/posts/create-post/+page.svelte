@@ -10,6 +10,7 @@
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
 
     type PostFormErrors = {
