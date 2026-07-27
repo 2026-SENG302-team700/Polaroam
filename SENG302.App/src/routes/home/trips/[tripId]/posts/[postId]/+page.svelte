@@ -9,6 +9,7 @@
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -32,7 +33,7 @@
         creationTime: "9999-12-31",
     });
     
-    let photos: PostPhotoData[] = $state([]);
+    let photos: File[] = $state([]);
 
     onMount(() => {
         fetchPost();
@@ -108,25 +109,38 @@
      */
     async function fetchImages() {
         try {
-            loading = true
+            loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/images` as any),
-                {
+                resolve(`/api/post/${postId}/images` as any), {
                     method: "GET",
-                    credentials: "include",
+                    credentials: "include"
                 }
-            )
-            let responsePhotos = await response.json();
+            );
 
             if (!response.ok) {
-                error = await response.text() || "Failed to fetch images.";
+                error = (await response.text()) || "Failed to fetch images.";
+                return;
             }
 
-            responsePhotos.map(p => {
-                let blob = ConvertBase64ToBlob(p.base64String, p.contentType)
-                let url = URL.createObjectURL(blob);
-                photos.push({imageSource: url})
-            })
+            const metadata: {
+                photoId: number;
+                fileName: string;
+                mimeType: string;
+            }[] = await response.json();
+
+            photos = await Promise.all(
+                metadata.map(async (meta) => {
+                    const res = await fetchWithCsrf(
+                        resolve(`/api/post/${postId}/images/${meta.photoId}` as any),
+                        {
+                            method: "GET",
+                            credentials: "include"
+                        }
+                    );
+                    const blob = await res.blob();
+                    return new File([blob], meta.fileName, { type: meta.mimeType });
+                }),
+            );
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -230,15 +244,7 @@
     </div>
     <div class="container-fluid photo-grid mt-5" style="width: 100%;">
         {#if photos.length > 0}
-            {#each Array(Math.floor(photos.length/3)+1) as _, i}
-                {#each photos.slice(i*3, i*3+3) as photo}
-                    <img
-                            class="post-img"
-                            alt="profile"
-                            src={photo.imageSource}
-                    />
-                {/each}
-            {/each}
+            <ImageDisplay images={photos} />
         {/if}
     </div>
 </div>
