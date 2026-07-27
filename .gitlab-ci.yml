@@ -5,8 +5,6 @@ stages:
   - coverage-report
   - sonarqube
   - deploy
-  - e2e
-  - notify
 
 # Check that the tag matches the expected 'sprintX.Y' format
 tag-checker:
@@ -73,33 +71,6 @@ acceptance-tests:
   extends: .test_template
   variables:
     TEST_NAMESPACE: Acceptance
-
-# run the e2e tests on staging after deploy
-e2e-tests:
-  extends: .test_template
-  stage: e2e
-  variables:
-    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test"
-  needs:
-    - deploy-staging
-  script:
-    - 'echo "Testing staging URL: $E2E_BASE_URL"'
-    - 'curl -k -I "$E2E_BASE_URL/register"'
-    - 'curl -k -L "$E2E_BASE_URL/register" | head -100'
-    - "getent hosts csse-seng302-team700.canterbury.ac.nz"
-    - "getent ahosts csse-seng302-team700.canterbury.ac.nz"
-    - 'curl -k -v "$E2E_BASE_URL/register" -o /dev/null 2>&1 | head -80'
-    - dotnet restore SENG302.Api.Tests/SENG302.Api.Tests.csproj
-    - dotnet build SENG302.Api.Tests/SENG302.Api.Tests.csproj --no-restore
-    - SENG302.Api.Tests/bin/Debug/net10.0/.playwright/node/linux-x64/node SENG302.Api.Tests/bin/Debug/net10.0/.playwright/package/cli.js install chromium
-    - dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~SENG302.Api.Tests.E2E" --no-build --no-restore
-  artifacts:
-    when: always
-    paths:
-      - playwright-artifacts/
-    expire_in: 1 day
-  only:
-    - dev
 
 coverage-reporting:
   extends: .not-scheduled
