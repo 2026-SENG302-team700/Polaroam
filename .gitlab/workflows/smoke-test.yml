@@ -15,6 +15,11 @@ smoke-tests:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $SMOKE_TESTS == "true"'
     - when: never
+  artifacts:
+    when: always
+    paths:
+      - playwright-artifacts/
+    expire_in: 1 day
 
 notify-smoke-test-failure:
   stage: notify
