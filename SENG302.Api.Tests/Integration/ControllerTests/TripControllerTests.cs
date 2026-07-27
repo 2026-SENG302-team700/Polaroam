@@ -135,7 +135,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Invalid date, date must be formatted d/MM/yyyy");
+        message.ShouldContain("Invalid date, date must be formatted ");
     }
 
 

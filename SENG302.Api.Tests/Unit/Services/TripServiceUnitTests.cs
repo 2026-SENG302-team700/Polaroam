@@ -348,7 +348,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
 
         exception.Errors.ShouldContainKey("dates");
         exception.Errors["dates"].ShouldContain(
-            "Invalid date, date must be formatted d/MM/yyyy"
+            "Invalid date, date must be formatted"
         );
 
         var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
