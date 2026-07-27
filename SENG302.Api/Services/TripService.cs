@@ -188,8 +188,8 @@ public class TripService : ITripService
             throw new ArgumentException("trip with the provided ID does not exist.");
         }
 
-        var startDate = tripRequest.StartDate ?? trip.StartDate;
-        var endDate = tripRequest.EndDate ?? trip.EndDate;
+        var startDate = tripRequest.StartDateSupplied ? tripRequest.StartDate : trip.StartDate;
+        var endDate = tripRequest.EndDateSupplied ? tripRequest.EndDate : trip.EndDate;
         var title = tripRequest.Title?.Trim() ?? trip.Title.Trim();
         var description = tripRequest.Description?.Trim() ?? trip.Description.Trim();
 
@@ -231,10 +231,10 @@ public class TripService : ITripService
         if (!string.IsNullOrEmpty(tripRequest.Description?.Trim()))
             trip.Description = tripRequest.Description.Trim();
 
-        if (tripRequest.StartDate.HasValue)
+        if (tripRequest.StartDateSupplied)
             trip.StartDate = tripRequest.StartDate;
 
-        if (tripRequest.EndDate.HasValue)
+        if (tripRequest.EndDateSupplied)
             trip.EndDate = tripRequest.EndDate;
 
         await context.SaveChangesAsync();

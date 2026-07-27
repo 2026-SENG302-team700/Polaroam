@@ -2,7 +2,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
-using SENG302.Api.Resources.Helpers;
 
 
 namespace SENG302.Api.Services;
@@ -91,7 +90,7 @@ public class PostService : IPostService
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
-            creationTime = DateTime.UtcNow,
+            creationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = [],
             OsmId = postRequest.OsmId
@@ -157,8 +156,6 @@ public class PostService : IPostService
     public async Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-
 
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
         if (post == null)
