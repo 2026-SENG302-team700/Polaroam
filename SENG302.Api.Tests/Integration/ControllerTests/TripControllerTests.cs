@@ -65,7 +65,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Trip title must be between 3 and 128 characters long");
+        message.ShouldContain("Trip title is required and must be between 3 and 128 characters long");
     }
 
 
@@ -135,7 +135,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Invalid date, date must be formatted DD/MM/YYYY");
+        message.ShouldContain("Invalid date, date must be formatted d/MM/yyyy");
     }
 
 

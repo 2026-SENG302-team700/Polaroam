@@ -199,7 +199,8 @@ namespace SENG302.Api.Tests.Acceptance.Features
         await testRunner.WhenAsync("I click \'Create Trip\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
-        await testRunner.ThenAsync("I see the error message \'Trip title must be between 3 and 128 characters long\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("I see the error message \'Trip title is required and must be between 3 and 128 cha" +
+                        "racters long\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
