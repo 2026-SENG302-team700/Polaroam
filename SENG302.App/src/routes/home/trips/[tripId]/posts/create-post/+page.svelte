@@ -3,16 +3,14 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import {fetchWithCsrf} from "$lib/csrf"
-    
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import SearchForm from "$lib/components/forms/search-form.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import ImagePicker from "$lib/components/image-picker.svelte";
+    import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     
     let loading = $state(false);
@@ -29,7 +27,7 @@
         displayName : "",
     })
     let content = $state("")
-    let files: FileList | null = $state(null);
+    let files: File[] = $state([]);
     let noContentAllowed = $state(false);
     
     let showConfirmationModal = $state(false);
@@ -148,7 +146,7 @@
         <LocationForm bind:searchQuery bind:location/>
         <DescriptionForm placeholder="Content" bind:description={content}/>
         <ImageDisplay images={files}/>
-        <ImagePicker bind:files error={errors.photos}></ImagePicker>
+        <ImagePicker filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]}/>
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

@@ -13,7 +13,7 @@
             <div class="position-relative">
                 <img src={URL.createObjectURL(image)} alt="Image" class="img-thumbnail w-100" style="aspect-ratio: 1; object-fit: cover;" />
                 <div class="position-absolute top-0 end-0 m-1">
-                    <DeleteButton onclick={() => ondelete?.(index)} class="btn-sm" />
+                    <DeleteButton deleteAction={() => ondelete?.(index)} class="btn-sm" />
                 </div>
             </div>
         </div>
