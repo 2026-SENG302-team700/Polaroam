@@ -73,14 +73,17 @@ public class PostService : IPostService
         {
             throw new MultipleValidationListException(errors);
         }
-        
+
         // Add location
         var location = await _geoService.GetLocationAsync(postRequest.OsmId);
         if (location == null)
         {
-            throw new Exception("Location not found");
+            throw new MultipleValidationListException(new Dictionary<string, List<string>>
+            {
+                ["location"] = ["This isn't a valid location"]
+            });
         }
-        
+
 
         // Add post
         var newPost = new Post
@@ -105,9 +108,9 @@ public class PostService : IPostService
             Name = location.name,
             DisplayName = location.display_name,
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         return newPost;
     }
 

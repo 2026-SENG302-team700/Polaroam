@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7004CreatePost.feature.ndjson", 5);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7004CreatePost.feature.ndjson", 7);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -170,16 +170,16 @@ namespace SENG302.Api.Tests.Acceptance.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC4 - Create Post with invalid date")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC3 - Create post with invalid title length")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U7004_As Benji I want to be able to create posts So that I can log key moments fr" +
             "om specific trips.")]
-        [global::Xunit.TraitAttribute("Description", "AC4 - Create Post with invalid date")]
-        public async global::System.Threading.Tasks.Task AC4_CreatePostWithInvalidDate()
+        [global::Xunit.TraitAttribute("Description", "AC3 - Create post with invalid title length")]
+        public async global::System.Threading.Tasks.Task AC3_CreatePostWithInvalidTitleLength()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "1";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC4 - Create Post with invalid date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC3 - Create post with invalid title length", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 8
@@ -193,29 +193,30 @@ namespace SENG302.Api.Tests.Acceptance.Features
             {
                 await this.ScenarioStartAsync();
 #line 9
-        await testRunner.GivenAsync("I am on the create post form And I enter a miss-formed or null date", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("I am on the create post form And I enter a title that is not between 3 and 128 ch" +
+                        "aracters", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 10
         await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
-        await testRunner.ThenAsync("I see the error message \'Invalid date, date must be formatted [INSERT LOCALISED F" +
-                        "ORMAT]\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("I see an error message \'Title is required and must be between 3 and 128 character" +
+                        "s long\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC5 - Create Post with date in the future")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC4 - Create Post with invalid date")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U7004_As Benji I want to be able to create posts So that I can log key moments fr" +
             "om specific trips.")]
-        [global::Xunit.TraitAttribute("Description", "AC5 - Create Post with date in the future")]
-        public async global::System.Threading.Tasks.Task AC5_CreatePostWithDateInTheFuture()
+        [global::Xunit.TraitAttribute("Description", "AC4 - Create Post with invalid date")]
+        public async global::System.Threading.Tasks.Task AC4_CreatePostWithInvalidDate()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "2";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC5 - Create Post with date in the future", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC4 - Create Post with invalid date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 13
@@ -229,13 +230,84 @@ namespace SENG302.Api.Tests.Acceptance.Features
             {
                 await this.ScenarioStartAsync();
 #line 14
-        await testRunner.GivenAsync("I am on the create post form And I enter a date in the future", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("I am on the create post form And I enter a miss-formed or null date", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 15
         await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 16
+        await testRunner.ThenAsync("I see an error message \'Invalid date, date must be formatted [INSERT LOCALISED FO" +
+                        "RMAT]\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC5 - Create Post with date in the future")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7004_As Benji I want to be able to create posts So that I can log key moments fr" +
+            "om specific trips.")]
+        [global::Xunit.TraitAttribute("Description", "AC5 - Create Post with date in the future")]
+        public async global::System.Threading.Tasks.Task AC5_CreatePostWithDateInTheFuture()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "3";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC5 - Create Post with date in the future", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 18
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 19
+        await testRunner.GivenAsync("I am on the create post form And I enter a date in the future", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 20
+        await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 21
         await testRunner.ThenAsync("I see an error message \'Invalid date, date cannot be in the future\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC14 - Create post with an invalid location")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7004_As Benji I want to be able to create posts So that I can log key moments fr" +
+            "om specific trips.")]
+        [global::Xunit.TraitAttribute("Description", "AC14 - Create post with an invalid location")]
+        public async global::System.Threading.Tasks.Task AC14_CreatePostWithAnInvalidLocation()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "4";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC14 - Create post with an invalid location", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 23
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 24
+        await testRunner.GivenAsync("I enter location text without selecting a suggested location", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 25
+        await testRunner.WhenAsync("I click \'Create Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 26
+        await testRunner.ThenAsync("I see an error message \'This isn\'t a valid location\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

@@ -6,13 +6,14 @@ using NSubstitute;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using Shouldly;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class PostControllerTests : BaseIntegrationTestFixture
 {
     public PostControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
-    
+
     private void SetupGeoMock()
     {
         GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
@@ -42,7 +43,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
 
         await context.SaveChangesAsync();
-        
+
         SetupGeoMock();
 
         var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
@@ -246,16 +247,68 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
     
     [Fact]
+    public async Task CreatePost_InvalidTitleLength_ReturnsBadRequestAndDoesNotPersist()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "test@example.com",
+                DisplayName = "Test User",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                Title = "Test trip",
+                Description = "Test description",
+                UserId = 1,
+                StartDate = new DateTime(2026, 7, 1),
+                EndDate = new DateTime(2026, 7, 10)
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "ab",
+            Content = "Some content",
+            OsmId = 1,
+            Date = new DateTime(2026, 7, 5)
+        };
+
+        var response = await HttpClient.PostAsJsonAsync("/api/post", request);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        responseBody.ShouldContain("Title is required and must be between 3 and 128 characters long");
+
+        await using var context2 = DbContextFactory.CreateDbContext();
+
+        var postExists =
+            await context2.Posts.AnyAsync();
+
+        postExists.ShouldBeFalse();
+    }
+    
+    [Fact]
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
         await using var context = DbContextFactory.CreateDbContext();
         
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1});
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
         await context.SaveChangesAsync();
-        
-        
+
+
         var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
 
         using var content = new MultipartFormDataContent();
@@ -266,12 +319,12 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         content.Add(new StringContent("1"), "postId");
         content.Add(new StringContent("1"), "tripId");
-        
+
         var response = await HttpClient.PutAsync("/api/post/images", content);
         var photoIds = await response.Content.ReadAsStringAsync();
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         photoIds.ShouldBe("[1]");
-        
+
     }
 
     public async Task<MultipartContent> CreateImageContent()
@@ -294,11 +347,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task UploadPostPhotos_InvalidRequest_NotOwnerOfPost()
     {
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
         await context.SaveChangesAsync();
 
         var content = await CreateImageContent();

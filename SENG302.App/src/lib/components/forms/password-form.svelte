@@ -10,7 +10,7 @@
 </script>
 
 <div class="mb-3">
-    <div class="input-group">
+    <div class="input-group password-group">
         <input
                 type={showPassword ? "text" : "password"}
                 class="form-control"
@@ -36,3 +36,11 @@
     {/if}
     </div>
 </div>
+
+    <style>
+    .password-group {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+    }
+</style>
