@@ -8,7 +8,7 @@
     </script>
 
     <div class="mb-3">
-        <div class="input-group">
+        <div class="input-group search-group">
             <input
                     type="search"
                     class="form-control"
@@ -25,3 +25,12 @@
             </button>
         </div>
     </div>
+
+    <style>
+    .search-group {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin-bottom: 20px;
+    }
+</style>
