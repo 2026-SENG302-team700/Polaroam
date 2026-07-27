@@ -41,6 +41,8 @@ public class LoginE2ETest : E2ETestFixture
         // Click the regsiter button
         await Page.Locator("button[type='submit']").ClickAsync();
 
+        await Page.WaitForTimeoutAsync(1000);
+
         await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 10000 });
 
         // Assert: Verify we're on the verify code page
