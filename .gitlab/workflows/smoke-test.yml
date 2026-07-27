@@ -1,0 +1,43 @@
+smoke-tests:
+  stage: test
+  variables:
+    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test/"
+    PLAYWRIGHT_BROWSERS_PATH: "$CI_PROJECT_DIR/.cache/ms-playwright"
+  cache:
+    key: playwright-1.61.0-linux
+    paths:
+      - .cache/ms-playwright/
+  script:
+    - dotnet restore SENG302.Api.Tests/SENG302.Api.Tests.csproj
+    - dotnet build SENG302.Api.Tests/SENG302.Api.Tests.csproj --no-restore
+    - SENG302.Api.Tests/bin/Debug/net10.0/.playwright/node/linux-x64/node SENG302.Api.Tests/bin/Debug/net10.0/.playwright/package/cli.js install chromium
+    - dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~SENG302.Api.Tests.E2E" --no-build --no-restore
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SMOKE_TESTS == "true"'
+    - when: never
+  artifacts:
+    when: always
+    paths:
+      - playwright-artifacts/
+    expire_in: 1 day
+
+notify-smoke-test-failure:
+  stage: notify
+  needs:
+    - job: smoke-tests
+      artifacts: false
+  script:
+    - |
+      curl --fail-with-body \
+        --request POST \
+        --url "$MATTERMOST_URL/api/v4/posts" \
+        --header "Authorization: Bearer $MATTERMOST_BOT_TOKEN" \
+        --header "Content-Type: application/json" \
+        --data "{
+          \"channel_id\": \"$MATTERMOST_CHANNEL_ID\",
+          \"message\": \"Overnight smoke tests failed for **$CI_PROJECT_NAME** on branch **$CI_COMMIT_REF_NAME**. [View pipeline]($CI_PIPELINE_URL)\"
+        }"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SMOKE_TESTS == "true"'
+      when: on_failure
+    - when: never

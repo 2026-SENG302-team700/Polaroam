@@ -111,7 +111,7 @@
 </script>
 
 <div class="search-container mb-3">
-    <div class="input-group">
+    <div class="input-group" style="gap:2px;">
         <input
             type="text"
             class="form-control"

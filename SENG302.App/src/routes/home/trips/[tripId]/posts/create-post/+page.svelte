@@ -10,7 +10,8 @@
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import ImagePicker from "$lib/components/image-picker.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
+    import ImagePicker from "$lib/components/images/image-picker.svelte";
 
     type PostFormErrors = {
         title: string[];
@@ -43,7 +44,7 @@
     function clearErrors() {
         errors = emptyErrors();
     }
-
+    
     let loading = $state(false);
     const tripId = page.params.tripId!;
 
@@ -58,7 +59,7 @@
         displayName: "",
     });
     let content = $state("");
-    let files: FileList | null = $state(null);
+    let files: File[] = $state([]);
     let noContentAllowed = $state(false);
 
     let showConfirmationModal = $state(false);
@@ -72,7 +73,6 @@
             try {
                 const formData = new FormData();
                 for (let i = 0; i < files.length; i++) {
-                    console.log("File ", files[i]);
                     formData.append("files", files[i]);
                     formData.append("postId", postId.toString());
                     formData.append("tripId", tripId.toString());
@@ -95,8 +95,7 @@
                     }
                 } else {
                     customImageIds = await response.json();
-                    goto(resolve(`/home/trips/${tripId}`));
-                    console.log(customImageIds.toString());
+                    goto(resolve(`/home/trips/${tripId}`));;
                 }
             } catch (err) {
                 errors.photos = (err as Error).message;
@@ -188,7 +187,8 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImagePicker bind:files error={errors.photos}></ImagePicker>
+        <ImageDisplay images={files}/>
+        <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
