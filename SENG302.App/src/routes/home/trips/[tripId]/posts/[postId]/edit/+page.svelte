@@ -7,7 +7,7 @@
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import ImagePicker from "$lib/components/image-picker.svelte";
+    import ImagePicker from "$lib/components/images/image-picker.svelte";
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
@@ -18,7 +18,6 @@
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
-    let osmId = $state(0);
     let photoIds = $state([]);
     
     let confirmationModalShown = $state(false)
@@ -81,7 +80,7 @@
             title = data.title;
             content = data.content;
             date = parseLocalDate(data.date);
-            osmId = data.osmId;
+            location.osmId = data.osmId;
             photoIds = data.photoIds;
             searchQuery = data.locationName;
             
@@ -112,7 +111,7 @@
                         Title: title,
                         Content: content,
                         Date: date,
-                        OsmId: osmId,
+                        OsmId: location.osmId,
                         NoContentAllowed: noContentAllowed,
                     }),
                     credentials: "include",
