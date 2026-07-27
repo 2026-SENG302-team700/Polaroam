@@ -15,10 +15,10 @@ public class TripServiceTests : BaseIntegrationTestFixture
 
     [Theory]
     [InlineData("test", 1, "2026-07-04", "2026-07-12")] // Basic Test
-    [InlineData("abc", 2, "2026-07-19", "2026-07-29")] // Name with exactly 3 characters
-    [InlineData("  xyz  ", 3, "2027-07-19", "2027-07-29")] // Name with 3 characters but whitespace that will be trimmed
-    [InlineData("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh", 4, "2000-01-01", "2000-07-29")] // Name with 128 characters
-    [InlineData(" 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5, "1999-01-01", "1999-03-20")] // Name with 128 characters but whitespace that should be trimmed
+    [InlineData("abc", 2, "2026-07-19", "2026-07-29")] // Title with exactly 3 characters
+    [InlineData("  xyz  ", 3, "2027-07-19", "2027-07-29")] // Title with 3 characters but whitespace that will be trimmed
+    [InlineData("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh", 4, "2000-01-01", "2000-07-29")] // Title with 128 characters
+    [InlineData(" 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5, "1999-01-01", "1999-03-20")] // Title with 128 characters but whitespace that should be trimmed
     [InlineData("f                  f", 6, "1970-07-19", "1970-07-29")] // Lots of spaces but only a few characters at either side
     public async Task CreateNewTrip_Success_ReturnTrip(string title, int userId, string stringStartDate, string stringEndDate)
     {
@@ -60,7 +60,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
     [InlineData("Hi!", 2)] // Title with special character
     [InlineData("                    Hi  ", 3)] // long enough but whitespace should be trimmed, meaning not long enough
     [InlineData("          ", 4)] // long enough but only whitespace
-    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Name with 129 characters so invalid
+    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", 5)] // Title with 129 characters so invalid
     public async Task CreateNewTrip_InvalidTitle_ThrowValidationException(string title, int userId)
     {
         // Add a user to the database with the email that we are testing with
@@ -93,7 +93,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
     [InlineData("Hi!", false)] // Title with special character
     [InlineData("                    Hi  ", false)] // long enough but whitespace should be trimmed, meaning not long enough
     [InlineData("          ", false)] // long enough but only whitespace
-    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", false)] // Name with 129 characters so invalid
+    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", false)] // Title with 129 characters so invalid
     [InlineData("Hai", true)] // lower edge
     [InlineData("Hello there this is my trip", true)] // generic case
     [InlineData("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", true)] // 128 so valid
