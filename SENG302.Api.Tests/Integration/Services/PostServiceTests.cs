@@ -201,4 +201,67 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         (await context.Posts.AnyAsync()).ShouldBeFalse();
     }
+
+    [Fact]
+    public async Task DeletePost_ExistingPost_DeletesPostAndLocation()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        int postId;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            var post = new Post
+            {
+                TripId = 1,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 123,
+                Date = DateTimeOffset.Now.AddDays(-1),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
+            postId = post.PostId;
+
+            context.Locations.Add(new Location
+            {
+                PostId = postId,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        await ServiceUnderTest.DeletePostByIdAsync(postId);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var postExists = await assertContext.Posts
+            .AnyAsync(post => post.PostId == postId);
+
+        var locationExists = await assertContext.Locations
+            .AnyAsync(location => location.PostId == postId);
+
+        postExists.ShouldBeFalse();
+        locationExists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DeletePost_NonExistentPost_ThrowsArgumentException()
+    {
+        var exception = await Should.ThrowAsync<ArgumentException>(
+            () => ServiceUnderTest.DeletePostByIdAsync(999)
+        );
+
+        exception.Message.ShouldBe(
+            "Post with the provided ID does not exist.");
+    }
 }

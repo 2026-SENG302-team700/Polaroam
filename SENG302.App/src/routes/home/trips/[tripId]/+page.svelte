@@ -35,7 +35,7 @@
     });
 
     /**
-     * Fetches the trip from the backend corresponding 
+     * Fetches the trip from the backend corresponding
      * with the slug value being the trip's id
      */
     async function fetchTrip() {
@@ -77,17 +77,15 @@
                 },
             );
             posts = await response.json();
-        }
-        catch (err) {
+        } catch (err) {
             error = "Failed to fetch posts: " + (err as Error).message;
-        }
-        finally {
+        } finally {
             loading = false;
         }
     }
 
     /**
-     * Deletes the trip from the backend corresponding 
+     * Deletes the trip from the backend corresponding
      * with the slug value being the trip's id
      */
     async function deleteTrip() {
@@ -103,11 +101,12 @@
 
             const data = await response.text();
 
-            if (data === "") {
-                goto(resolve("/home/trips"));
-            } else {
-                error = data || "Failed to delete trip.";
+            if (!response.ok) {
+                error = data || "Failed to delete post.";
+                return;
             }
+
+            await goto(resolve(`/home/trips/${tripId}` as any));
         } catch (err) {
             error = "Failed to delete trip: " + (err as Error).message;
         } finally {
@@ -126,7 +125,7 @@
 
 <div class="container trip-page-content">
     <NavigationButton path="/home/trips" text="Back" />
-    <AddButton path="/home/trips/{tripObject.id}/posts/create-post"/>
+    <AddButton path="/home/trips/{tripObject.id}/posts/create-post" />
     <EditButton path={`/home/trips/${params.tripId}/edit`} />
     <DeleteButton deleteAction={showConfirmationModal} />
     <ErrorDisplay errors={[error]} />
@@ -134,7 +133,9 @@
         <div class="trip-head-grid">
             <h1>{tripObject.title}</h1>
             <p class="date-object">
-                {formatDate(tripObject.startDate)} - {formatDate(tripObject.endDate)}
+                {formatDate(tripObject.startDate)} - {formatDate(
+                    tripObject.endDate,
+                )}
             </p>
         </div>
         {#if tripObject.description.length > 0}
@@ -143,12 +144,12 @@
             <p>No description</p>
         {/if}
     </div>
-    <PostSection posts={posts}/>
+    <PostSection {posts} />
 </div>
 
 <ConfirmationModal
     bind:show={deletionModalShown}
-    message="Are you sure you want to delete this trip?"
+    message="Are you sure you want to delete this post? This action cannot be undone."
     option1Text="Delete"
     option2Text="Do not delete"
     onOption1={deleteTrip}
@@ -156,13 +157,12 @@
 />
 
 <style>
-    .trip-head-grid { 
-        align-items:end;
+    .trip-head-grid {
+        align-items: end;
         display: flex;
     }
     .date-object {
         margin-left: 10px;
         bottom: 0;
     }
-
 </style>
