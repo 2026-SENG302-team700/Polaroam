@@ -12,8 +12,6 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
-    import BackButton from "$lib/components/buttons/cancel-button.svelte";
-    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
     
     let deletionModalShown = $state(false);
 
