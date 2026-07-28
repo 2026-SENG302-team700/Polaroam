@@ -153,7 +153,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
-    
+
     [Fact]
     public async Task CreatePost_NullDate_ReturnBadRequest()
     {
@@ -171,7 +171,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
 
         await context.SaveChangesAsync();
-        
+
         SetupGeoMock();
         var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
         {
@@ -184,7 +184,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
-    
+
     [Fact]
     public async Task CreatePost_NoContentAndNotAllowed_Ok()
     {
@@ -202,7 +202,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
 
         await context.SaveChangesAsync();
-        
+
         SetupGeoMock();
         var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
         {
@@ -214,7 +214,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
-    
+
     [Fact]
     public async Task CreatePost_NoContentAndAllowed_Ok()
     {
@@ -232,7 +232,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
 
         await context.SaveChangesAsync();
-        
+
         SetupGeoMock();
         var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
         {
@@ -245,7 +245,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
-    
+
     [Fact]
     public async Task CreatePost_InvalidTitleLength_ReturnsBadRequestAndDoesNotPersist()
     {
@@ -302,7 +302,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
@@ -336,13 +336,13 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var fileContent = new ByteArrayContent(fileBytes);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/webp");
         content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
-        
+
         content.Add(new StringContent("1"), "postId");
         content.Add(new StringContent("1"), "tripId");
 
         return content;
     }
-    
+
     [Fact]
     public async Task UploadPostPhotos_InvalidRequest_NotOwnerOfPost()
     {
@@ -355,43 +355,43 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         var content = await CreateImageContent();
-        
+
         var response = await HttpClient.PutAsync("/api/post/images", content);
         var photoIds = await response.Content.ReadAsStringAsync();
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         photoIds.ShouldContain("You do not have authorisation to upload photos to this post!");
-        
+
     }
 
     [Fact]
     public async Task GetUserNameByPostId_ValidRequest_ReturnsDisplayName()
     {
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
         await context.SaveChangesAsync();
-        
+
         var response = await HttpClient.GetAsync("/api/post/1/user");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var message = await response.Content.ReadAsStringAsync();
         message.ShouldContain("Test user");
     }
-    
+
     [Fact]
     public async Task GetUserNameByPostId_InvalidPostId_ReturnsNotFoundError()
     {
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
         await context.SaveChangesAsync();
-        
+
         var response = await HttpClient.GetAsync("/api/post/2/user");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var message = await response.Content.ReadAsStringAsync();
         message.ShouldContain("Post not found");
@@ -401,46 +401,167 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPostPhotos_ValidPostId_ReturnsPhotoFile()
     {
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
         await context.SaveChangesAsync();
-        
+
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-        
+
         var response = await HttpClient.GetAsync("/api/post/1/images");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var photos = await response.Content.ReadFromJsonAsync<List<PhotoFile>>();
-        
+
         var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         var base64String = Convert.ToBase64String(fileBytes);
-        
-        
+
+
         photos.Count.ShouldBe(1);
         photos.First().FileName.ShouldBe("photo");
         photos.First().Base64String.ShouldBe(base64String);
     }
-    
+
     [Fact]
     public async Task GetPostPhotos_InvalidPostId_ReturnsNotFound()
     {
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1 });
         await context.SaveChangesAsync();
-        
+
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-        
+
         var response = await HttpClient.GetAsync("/api/post/3/images");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var photos = await response.Content.ReadAsStringAsync();
         photos.ShouldContain("Post not found");
+    }
+
+    [Fact]
+    public async Task DeletePost_IsOwner_ReturnsNoContentAndDeletesPost()
+    {
+        int postId;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "ex@example.com",
+                DisplayName = "Owner",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                UserId = 1,
+                Title = "Test trip",
+                Description = "",
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 10)
+            });
+
+            var post = new Post
+            {
+                TripId = 1,
+                Title = "Delete",
+                Content = "Content",
+                OsmId = 123,
+                PhotoIds = [],
+                Date = DateTimeOffset.Now.AddDays(-1)
+            };
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
+            postId = post.PostId;
+        }
+
+        var response =
+            await HttpClient.DeleteAsync($"/api/post/{postId}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var postExists = await assertContext.Posts
+            .AnyAsync(post => post.PostId == postId);
+
+        postExists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DeletePost_WrongUser_ReturnsUnauthorizedAndKeepsPost()
+    {
+        int postId;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 2,
+                Email = "other@example.com",
+                DisplayName = "Other user",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                UserId = 2,
+                Title = "Other user trip",
+                Description = "",
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 10)
+            });
+
+            var post = new Post
+            {
+                TripId = 1,
+                Title = "Dont delete",
+                Content = "Content",
+                OsmId = 123,
+                PhotoIds = [],
+                Date = DateTimeOffset.Now.AddDays(-1)
+            };
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
+            postId = post.PostId;
+        }
+
+        var response =
+            await HttpClient.DeleteAsync($"/api/post/{postId}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var postExists = await assertContext.Posts
+            .AnyAsync(post => post.PostId == postId);
+
+        postExists.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task DeletePost_PostDoesNotExist_ReturnsNotFound()
+    {
+        var response =
+            await HttpClient.DeleteAsync("/api/post/999");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

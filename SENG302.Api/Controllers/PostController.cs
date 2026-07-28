@@ -7,6 +7,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Resources.Helpers;
+using Org.BouncyCastle.Bcpg.Sig;
 using System.Dynamic;
 using Org.BouncyCastle.Bcpg;
 using SENG302.Api.Models.Responses;
@@ -148,7 +149,7 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-    
+
 
     /// <summary>
     /// Takes a post id and returns all the photos as form files
@@ -178,8 +179,8 @@ public class PostController : ControllerBase
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-            
-            var responseFile =  new PhotoFile
+
+            var responseFile = new PhotoFile
             {
                 FileName = "photo",
                 ContentType = file.MimeType,
@@ -223,6 +224,8 @@ public class PostController : ControllerBase
 
         var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
 
+
+
         if (ownsPost == false)
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
@@ -250,6 +253,7 @@ public class PostController : ControllerBase
         }
 
         await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
+
 
         return Ok(customFileIds);
     }
@@ -279,6 +283,47 @@ public class PostController : ControllerBase
             return NotFound("User not found");
         }
         return Ok(user.DisplayName);
+    }
+
+    /// <summary>
+    /// Endpoint for removing a specific post by its id.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeletePost(int id)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var post = await _postService.GetPostAsync(id);
+
+        if (post == null)
+        {
+            return NotFound("Post does not exist");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _postService.DeletePostByIdAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return NotFound(exception.Message);
+        }
     }
 
 }

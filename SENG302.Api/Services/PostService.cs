@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Resources.Helpers;
+using SENG302.Api.Models.Requests;
 
 
 namespace SENG302.Api.Services;
@@ -16,6 +17,7 @@ public interface IPostService
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
+    Task DeletePostByIdAsync(int postId);
 }
 
 
@@ -233,6 +235,37 @@ public class PostService : IPostService
             return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Delete a specific post by its id from the database and remove accociated images along with it.
+    /// </summary>
+    /// <param name="postId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task DeletePostByIdAsync(int postId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.PostId == postId);
+
+        if (post == null)
+        {
+            throw new ArgumentException(
+                "Post with the provided ID does not exist."
+            );
+        }
+
+        var locations = await context.Locations
+            .Where(location => location.PostId == postId)
+            .ToListAsync();
+
+        context.Locations.RemoveRange(locations);
+
+        //TODO: delete the custom file records and physical image files from server
+
+        context.Posts.Remove(post);
+        await context.SaveChangesAsync();
     }
 }
 
