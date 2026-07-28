@@ -16,7 +16,7 @@
 
     let { params } = $props();
     let postId = params.postId;
-
+    
     let displayName = $state("");
     let locationName = $state("");
 
@@ -31,7 +31,7 @@
         osmId: 0,
         creationTime: "9999-12-31",
     });
-
+    
     let photos: PostPhotoData[] = $state([]);
 
     onMount(() => {
@@ -39,7 +39,11 @@
         fetchDisplayName();
     });
 
+    /**
+     * Fetches the location name from the backend for an osmId
+     */
     async function fetchLocationName() {
+        
         try {
             loading = true;
             const response = await fetchWithCsrf(
@@ -81,7 +85,7 @@
 
     /**
      * Converts a Base64String representing an image from backend into a image blob which can then be transformed
-     * into a image url
+     * into an image url
      * @param base64
      * @param contentType
      * @constructor

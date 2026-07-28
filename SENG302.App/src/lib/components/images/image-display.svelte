@@ -4,7 +4,7 @@
     let {
         images = [],
         ondelete,
-    }: { images?: File[] | null; ondelete?: (index: number) => void } = $props();
+    }: { images?: File[] | null | undefined; ondelete?: (index: number) => void } = $props();
 </script>
 
 <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-2 container">
