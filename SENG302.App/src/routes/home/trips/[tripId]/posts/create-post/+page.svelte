@@ -80,7 +80,7 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(`/api/post`, {
+            const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
