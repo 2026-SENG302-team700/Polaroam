@@ -113,8 +113,6 @@
                     credentials: "include",
                 },
             );
-            let responsePhotos = await response.json();
-
             if (!response.ok) {
                 error = (await response.text()) || "Failed to fetch images.";
                 return;
