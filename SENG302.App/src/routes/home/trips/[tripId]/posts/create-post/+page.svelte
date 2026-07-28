@@ -12,6 +12,10 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
+    import BackButton from "$lib/components/buttons/cancel-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    
+    let deletionModalShown = $state(false);
 
     type PostFormErrors = {
         title: string[];
@@ -176,6 +180,13 @@
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
+        <div class="form-header">
+            <button type="button" class="btn btn-secondary" onclick={() => {deletionModalShown = true}}
+                >Cancel</button>
+
+            <h1 class="text-center mb-4">Create Post</h1>
+        </div>
+
         <TitleForm bind:name={title} errors={errors.title} {loading} />
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}
@@ -193,8 +204,18 @@
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
         </div>
+        
     </div>
 </div>
+
+<ConfirmationModal
+    bind:show={deletionModalShown}
+    message="If you leave this page all progress will be lost"
+    option1Text="Back to your Trip"
+    option2Text="Stay on This Page"
+    onOption1={() => goto(resolve(`/home/trips/${tripId}`))}
+    onOption2={() => {deletionModalShown = false;}}
+/>
 
 <ConfirmationModal
     bind:show={showConfirmationModal}
