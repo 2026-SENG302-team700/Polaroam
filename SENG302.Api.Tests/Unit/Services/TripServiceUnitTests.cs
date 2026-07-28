@@ -347,7 +347,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
             );
 
         exception.Errors.ShouldContainKey("dates");
-        exception.Errors["dates"].ShouldContain(
+        exception.Errors["dates"][0].ShouldContain(
             "Invalid date, date must be formatted"
         );
 
