@@ -1,13 +1,14 @@
 <script lang="ts">
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import SearchForm from "$lib/components/forms/search-form.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
+    
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
@@ -175,6 +176,9 @@
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />
+        </div>
+        <div class="d-grid mt-3">
+            <CancelButton path={`/home/trips/${page.params.tripId}`} />
         </div>
     </div>
 </div>
