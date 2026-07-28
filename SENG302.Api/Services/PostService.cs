@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Resources.Helpers;
+using SENG302.Api.Models.Requests;
 
 
 namespace SENG302.Api.Services;
@@ -16,6 +17,7 @@ public interface IPostService
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
+    Task DeletePostByIdAsync(int postId);
 }
 
 
@@ -91,10 +93,11 @@ public class PostService : IPostService
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
-            creationTime = DateTime.UtcNow,
+            creationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = [],
-            OsmId = postRequest.OsmId
+            OsmId = postRequest.OsmId,
+            LocationName = location.name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -135,14 +138,8 @@ public class PostService : IPostService
     public async Task<Post?> GetPostAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var PostItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
-        if (PostItem == null)
-        {
-            return null;
-        }
-
-        return PostItem;
+        var postItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
+        return postItem;
     }
 
     /// <summary>
@@ -158,8 +155,6 @@ public class PostService : IPostService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-
-
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
         if (post == null)
         {
@@ -171,7 +166,7 @@ public class PostService : IPostService
 
         var errors = PostValidator.ValidatePostFields(postUpdates, post);
 
-        if (errors.Count > 0)
+        if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
         }
@@ -179,6 +174,20 @@ public class PostService : IPostService
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
+
+        if (postUpdates.OsmId != post.OsmId)
+        {
+            var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            if (location == null)
+            {
+                throw new MultipleValidationListException(new Dictionary<string, List<string>>
+                {
+                    ["location"] = ["This isn't a valid location"]
+                });
+            }
+            post.OsmId = postUpdates.OsmId;
+            post.LocationName = location.name;
+        }
 
         context.Posts.Update(post);
         await context.SaveChangesAsync();
@@ -233,6 +242,37 @@ public class PostService : IPostService
             return false;
         }
         return true;
+    }
+
+    /// <summary>
+    /// Delete a specific post by its id from the database and remove accociated images along with it.
+    /// </summary>
+    /// <param name="postId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task DeletePostByIdAsync(int postId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.PostId == postId);
+
+        if (post == null)
+        {
+            throw new ArgumentException(
+                "Post with the provided ID does not exist."
+            );
+        }
+
+        var locations = await context.Locations
+            .Where(location => location.PostId == postId)
+            .ToListAsync();
+
+        context.Locations.RemoveRange(locations);
+
+        //TODO: delete the custom file records and physical image files from server
+
+        context.Posts.Remove(post);
+        await context.SaveChangesAsync();
     }
 }
 

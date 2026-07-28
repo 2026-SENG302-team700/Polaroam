@@ -72,6 +72,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "User 1 post",
             Content = "desc",
             OsmId = 292806332,
+            LocationName = "Christchurch",
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -81,6 +82,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "User 2 post",
             Content = "desc",
             OsmId = 292806332,
+            LocationName = "Christchurch",
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -126,6 +128,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Fetch me",
             Content = "desc",
             OsmId = 292806332,
+            LocationName = "Christchurch",
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         };
@@ -235,5 +238,120 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var postExists = await context.Posts.AnyAsync();
 
         postExists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DeletePost_ExistingPost_DeletesPostAndLocation()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        int postId;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            var post = new Post
+            {
+                TripId = 1,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateTimeOffset.Now.AddDays(-1),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
+            postId = post.PostId;
+
+            context.Locations.Add(new Location
+            {
+                PostId = postId,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        await ServiceUnderTest.DeletePostByIdAsync(postId);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var postExists = await assertContext.Posts
+            .AnyAsync(post => post.PostId == postId);
+
+        var locationExists = await assertContext.Locations
+            .AnyAsync(location => location.PostId == postId);
+
+        postExists.ShouldBeFalse();
+        locationExists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DeletePost_NonExistentPost_ThrowsArgumentException()
+    {
+        var exception = await Should.ThrowAsync<ArgumentException>(
+            () => ServiceUnderTest.DeletePostByIdAsync(999)
+        );
+
+        exception.Message.ShouldBe(
+            "Post with the provided ID does not exist.");
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_InvalidLocation_ThrowsAndDoesNotUpdatePost()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new UpdatePostRequest
+        {
+            Id = 1,
+            TripId = 1,
+            Title = "updated title",
+            Content = "updated content",
+            Date = DateTimeOffset.Now.AddDays(-1),
+            OsmId = 0
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.UpdatePostAsync(request)
+            );
+
+        exception.Errors["location"]
+            .ShouldContain("This isn't a valid location");
+
+        await using var assertContext = DbContextFactory.CreateDbContext();
+
+        var post = await assertContext.Posts.FindAsync(1);
+
+        post.ShouldNotBeNull();
+        post.Title.ShouldBe("og title");
+        post.Content.ShouldBe("og content");
+        post.OsmId.ShouldBe(123);
+        post.LocationName.ShouldBe("Christchurch");
     }
 }

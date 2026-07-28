@@ -9,7 +9,7 @@ public interface IFileService
     Task<CustomFile> SaveFileAsync(IFormFile file, int ownerId);
     Task<CustomFile> GetFileByIdAsync(int id);
     Task DeleteFileAsync(string fileKey);
-    Task<Byte[]> GetFileContentAsync(string fileKey);
+    Task<byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
 }
 
@@ -128,7 +128,7 @@ public class FileService : IFileService
     /// </summary>
     /// <param name="fileKey">FileKey used to lookup file in bucket</param>
     /// <returns>File content of matching file key</returns>
-    public async Task<Byte[]> GetFileContentAsync(string fileKey)
+    public async Task<byte[]> GetFileContentAsync(string fileKey)
     {
         try
         {

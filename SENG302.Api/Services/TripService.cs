@@ -188,13 +188,30 @@ public class TripService : ITripService
             throw new ArgumentException("trip with the provided ID does not exist.");
         }
 
-        var startDate = tripRequest.StartDate ?? trip.StartDate;
-        var endDate = tripRequest.EndDate ?? trip.EndDate;
+        var startDate = tripRequest.StartDateSupplied ? tripRequest.StartDate : trip.StartDate;
+        var endDate = tripRequest.EndDateSupplied ? tripRequest.EndDate : trip.EndDate;
+        var title = tripRequest.Title?.Trim() ?? trip.Title.Trim();
+        var description = tripRequest.Description?.Trim() ?? trip.Description.Trim();
 
         var errors = new Dictionary<string, List<string>>();
 
-        // TODO: add other validation
-        foreach (var (field, errorList) in TripValidator.ValidateDates(tripRequest.StartDate, tripRequest.EndDate))
+        foreach (var (field, errorList) in TripValidator.ValidateDates(startDate, endDate))
+        {
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
+        }
+
+        foreach (var (field, errorList) in TripValidator.ValidateTitle(title))
+        {
+            if (errorList.Count > 0)
+            {
+                errors[field] = errorList;
+            }
+        }
+
+        foreach (var (field, errorList) in TripValidator.ValidateDescription(description))
         {
             if (errorList.Count > 0)
             {
@@ -208,16 +225,16 @@ public class TripService : ITripService
         }
 
         // Update the trip
-        if (!string.IsNullOrEmpty(tripRequest.Title))
-            trip.Title = tripRequest.Title;
+        if (!string.IsNullOrEmpty(tripRequest.Title?.Trim()))
+            trip.Title = tripRequest.Title.Trim();
 
-        if (!string.IsNullOrEmpty(tripRequest.Description))
-            trip.Description = tripRequest.Description;
+        if (!string.IsNullOrEmpty(tripRequest.Description?.Trim()))
+            trip.Description = tripRequest.Description.Trim();
 
-        if (tripRequest.StartDate.HasValue)
+        if (tripRequest.StartDateSupplied)
             trip.StartDate = tripRequest.StartDate;
 
-        if (tripRequest.EndDate.HasValue)
+        if (tripRequest.EndDateSupplied)
             trip.EndDate = tripRequest.EndDate;
 
         await context.SaveChangesAsync();

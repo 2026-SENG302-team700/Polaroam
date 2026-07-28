@@ -54,10 +54,11 @@ public class PostValidator
 
         errors["location"] = ValidatePostLocation(postRequest.OsmId);
 
-        if (postRequest != post)
+        if (postRequest.DateSupplied)
         {
             errors["date"] = ValidatePostDate(postRequest.Date);
         }
+        
         errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 
         return errors;
