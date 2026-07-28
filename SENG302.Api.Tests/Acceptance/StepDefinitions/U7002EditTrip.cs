@@ -116,6 +116,57 @@ public class U7002EditTrip
         );
     }
 
+    [When("I update the trip with an invalid title length")]
+    public async Task WhenIUpdateTheTripWithAnInvalidTitleLength()
+    {
+        _originalTrip.ShouldNotBeNull();
+
+        var request = new UpdateTripRequest
+        {
+            Id = _originalTrip.Id,
+            Title = "th",
+        };
+
+        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
+            $"api/trip/{_originalTrip.Id}",
+            request
+        );
+    }
+
+    [When("I update the trip with invalid trip title characters")]
+    public async Task WhenIUpdateTheTripWithInvalidTripTitleCharacters()
+    {
+        _originalTrip.ShouldNotBeNull();
+
+        var request = new UpdateTripRequest
+        {
+            Id = _originalTrip.Id,
+            Title = "@@$%@$^",
+        };
+
+        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
+            $"api/trip/{_originalTrip.Id}",
+            request
+        );
+    }
+
+    [When("I update the trip with a too long description")]
+    public async Task WhenIUpdateTheTripWithATooLongDescription()
+    {
+        _originalTrip.ShouldNotBeNull();
+
+        var request = new UpdateTripRequest
+        {
+            Id = _originalTrip.Id,
+            Description = new string('a', 2049)
+        };
+
+        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
+            $"api/trip/{_originalTrip.Id}",
+            request
+        );
+    }
+
     [Then("the trip is not updated")]
     public async Task ThenTheTripIsNotUpdated()
     {
