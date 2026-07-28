@@ -64,6 +64,7 @@ public class PostController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpPost]
+    [RequestSizeLimit(200000000)]
     public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

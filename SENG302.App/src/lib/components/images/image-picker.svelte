@@ -5,8 +5,8 @@
     let files: FileList | undefined = $state();
     let {
         filesList = $bindable<File[]>([]),
-        error = ""
-    }: { filesList: File[] | null | undefined; error: string } = $props();
+        errors = []
+    }: { filesList: File[] | null | undefined; errors: string[] } = $props();
 
     /**
      * Added the selected files to the given file list
@@ -23,7 +23,7 @@
     <button
             type="button"
             class="btn btn-sm btn-primary"
-            class:is-invalid={error.length > 0}
+            class:is-invalid={errors.length > 0}
             onclick={() => {
           pfpInput.value = "";
           pfpInput.click();
@@ -41,5 +41,5 @@
             multiple
             onchange={appendImages}
     />
-    <ErrorDisplay errors={[error]}/>
+    <ErrorDisplay {errors}/>
 </div>

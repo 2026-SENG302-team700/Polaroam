@@ -14,7 +14,7 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-
+    
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -60,10 +60,9 @@
         name: "",
         displayName: "",
     });
-    let content = $state(" ");
+    let content = $state("");
     let files: File[] | null | undefined = $state([]);
     let noContentAllowed = $state(false);
-    
     let showConfirmationModal = $state(false);
 
     /**
@@ -71,7 +70,7 @@
      */
     async function createPost() {
         clearErrors();
-        
+
         try {
             loading = true;
 
@@ -95,7 +94,13 @@
             });
             const data = await response.json();
 
+            
+            
             if (!response.ok) {
+                if (response.status === 413) {
+                    errors.generic = "Upload too large, please upload less photos at a time";
+                    return;
+                }
                 errors.title = data.errors?.title ?? [];
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
@@ -105,6 +110,7 @@
                 if (
                     errors.content.length === 1 &&
                     errors.title.length === 0 &&
+                    errors.photos.length === 0 &&
                     !errors.date &&
                     !errors.generic &&
                     !errors.location
@@ -164,8 +170,8 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files} />
-        <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
+        <ImageDisplay images={files} errors="{errors.photos}"/>
+        <ImagePicker bind:filesList={files} errors={errors.photos} />
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

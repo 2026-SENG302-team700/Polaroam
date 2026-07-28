@@ -118,8 +118,7 @@ public class PostService : IPostService
                 ["location"] = ["This isn't a valid location"]
             });
         }
-
-
+        
         // Add post
         var newPost = new Post
         {
@@ -129,7 +128,8 @@ public class PostService : IPostService
             creationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = photoIds,
-            OsmId = postRequest.OsmId
+            OsmId = postRequest.OsmId,
+            LocationName = location.name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
