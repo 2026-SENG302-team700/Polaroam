@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using Shouldly;
 
