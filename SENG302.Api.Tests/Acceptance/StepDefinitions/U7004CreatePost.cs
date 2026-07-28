@@ -112,9 +112,9 @@ public class U7004CreatePost
         using var form = new MultipartFormDataContent();
         form.Add(new StringContent(_title), "Title");
         form.Add(new StringContent(_content), "Content");
-        form.Add(new StringContent(_osmId), "OsmId");
+        form.Add(new StringContent(_osmId.ToString()), "OsmId");
         form.Add(new StringContent("1"), "TripId");
-        form.Add(new StringContent(_date.ToString("o")), "Date");
+        form.Add(new StringContent(_date?.ToString("o") ?? string.Empty), "Date");
 
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
@@ -132,5 +132,46 @@ public class U7004CreatePost
 
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(post.PostId);
+    }
+
+    // AC 4
+    [Given(@"I am on the create post form And I enter a miss-formed or null date")]
+    public async Task SetInvalidDate()
+    {
+        await SetupUserAndTrip();
+
+        _title = "Valid post title";
+        _content = "Valid post content";
+        _osmId = 292806332;
+        _date = null;
+    }
+
+    // AC 5
+    [Given(@"I am on the create post form And I enter a date in the future")]
+    public async Task SetFutureDate()
+    {
+        await SetupUserAndTrip();
+
+        _title = "Valid post title";
+        _content = "Valid post content";
+        _date = DateTime.Now.AddDays(1);
+    }
+
+    [Then(@"I see an error message '(.*)'")]
+    public async Task CheckFutureDateErrorMessage(string expectedMessage)
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+
+        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
+        {
+            error.ShouldContain(
+                "Invalid date, date must be formatted ");
+        }
+        else
+        {
+            error.ShouldContain(expectedMessage);
+        }
     }
 }

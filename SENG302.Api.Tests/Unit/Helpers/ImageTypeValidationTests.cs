@@ -7,12 +7,13 @@ namespace SENG302.Api.Tests.Unit.Services;
 public class ImageTypeValidationTests
 {
 
-    private IFormFile GetMockFile(string filename, Byte[] content)
+    private IFormFile GetMockFile(string filename, Byte[] content, string? mimeType = null)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
         {
-            Headers = new HeaderDictionary()
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType!
         };
     }
 
@@ -55,5 +56,42 @@ public class ImageTypeValidationTests
     {
         var file = GetMockFile("test", bytes);
         ImageValidationTools.GetRealImageMime(file).ShouldBe(ImageValidationTools.InvalidMimeString);
+    }
+
+    [Theory] 
+        [InlineData(10000000)] // at 10MB
+        [InlineData(5000000)] // below 10MB
+    public async Task IsValidFilesize_AtOrUnderLimit_Success(long fileSize)
+    {
+        var file = GetMockFile("test", new byte[fileSize]);
+        ImageValidationTools.IsValidFilesize(file).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task IsValidFilesize_ExceedsLimit_Fail()
+    {
+        var file = GetMockFile("test", new byte[10000001]);
+        ImageValidationTools.IsValidFilesize(file).ShouldBeFalse();
+    }
+    
+        [Fact]
+        public async Task IsValidMimeType_ValidMimeNoSpoof_Success()
+        {
+            var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png");
+            ImageValidationTools.IsValidMimeType(file).ShouldBeTrue();
+        }
+
+    [Fact]
+    public async Task IsValidMimeType_ValidMimeInvalidSpoof_Fail()
+    {
+        var file = GetMockFile("test", new byte[] { 0x00, 0x00, 0x00, 0x00 }, "image/png");
+        ImageValidationTools.IsValidMimeType(file).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task IsValidMimeType_InvalidMimeValidSpoof_Fail()
+    {
+        var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "application/octet-stream");
+        ImageValidationTools.IsValidMimeType(file).ShouldBeFalse();
     }
 }

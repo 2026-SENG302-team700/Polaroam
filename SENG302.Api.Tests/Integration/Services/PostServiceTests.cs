@@ -193,7 +193,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request)
+                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
             );
 
         exception.Errors["location"]
@@ -222,7 +222,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request)
+                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
             );
 
         exception.Errors.ShouldContainKey("title");
