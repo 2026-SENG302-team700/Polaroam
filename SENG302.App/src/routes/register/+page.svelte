@@ -2,9 +2,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
-    import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import PasswordForm from "$lib/components/forms/password-form.svelte";
     import EmailForm from "$lib/components/forms/email-form.svelte";
     import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
@@ -97,7 +95,7 @@
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
-    <form on:submit|preventDefault={registerUser}>
+    <form onsubmit={registerUser}>
         <div class="mb-3">
             <EmailForm bind:email error={errors.email} {loading} />
         </div>
@@ -139,13 +137,3 @@
         </div>
     </form>
 </div>
-
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    .country-select {
-        color: #666666; /* Bootstrap's placeholder color */
-    }
-</style>

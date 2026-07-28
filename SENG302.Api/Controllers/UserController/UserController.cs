@@ -229,6 +229,10 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
         var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
 
         if (user.ProfilePicture == 0)
         {

@@ -207,13 +207,18 @@ public class PostService : IPostService
 
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
 
-        if (post == null || postId == null)
+        if (post == null)
+        {
+            return null;
+        }
+        if (post.PhotoIds == null)
         {
             return null;
         }
 
         for (int i = 0; i < photoFileIds.Count; i++)
         {
+            
             post.PhotoIds.Add(photoFileIds[i]);
         }
 

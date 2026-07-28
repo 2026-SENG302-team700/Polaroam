@@ -647,9 +647,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-</style>
