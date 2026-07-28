@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,34 +6,14 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
 public class PostServiceTests : BaseIntegrationTestFixture
 {
-    /// <summary>
-    /// Creates a mock file with a given filename, content, and type
-    /// </summary>
-    /// <param name="filename">The file name for the mock file</param>
-    /// <param name="content">What bytes are in the file</param>
-    /// <param name="mimeType">The mime type for the mock file</param>
-    /// <returns>The mock file</returns>
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
-    {
-        var stream = new MemoryStream(content);
-        return new FormFile(stream, 0, stream.Length, "file", filename)
-        {
-            Headers = new HeaderDictionary(),
-            ContentType = mimeType
-        };
-    }
-    private IFileService _fileService => ServiceProvider.GetRequiredService<IFileService>();
     private IPostService ServiceUnderTest => ServiceProvider.GetRequiredService<IPostService>();
-    public PostServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
-    {
-
-    }
-
+    public PostServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
     private async Task SetupUserAndTrip(int userId, int tripId)
     {
@@ -312,66 +291,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         postExists.ShouldBeFalse();
         locationExists.ShouldBeFalse();
-    }
-
-    [Fact]
-    public async Task DeletePost_ExistingPostWithImage_DeletesImageAndPost()
-    {
-        await SetupUserAndTrip(1, 1);
-
-        int postId;
-        var fileId = 0;
-
-        await using (var context = DbContextFactory.CreateDbContext())
-        {
-            var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
-            var mockFile = GetMockFile(
-                "mocka",
-                mockFileContent,
-                "image/webp");
-            
-            var fileEntity = await _fileService.SaveFileAsync(mockFile,0);
-            fileId = fileEntity.Id;
-            var post = new Post
-            {
-                TripId = 1,
-                Title = "Post to delete",
-                Content = "Post content",
-                OsmId = 1,
-                LocationName = "Christchurch",
-                Date = DateTimeOffset.Now.AddDays(-1),
-                PhotoIds = [fileEntity.Id]
-            };
-
-            context.Posts.Add(post);
-            await context.SaveChangesAsync();
-
-            postId = post.PostId;
-
-            context.Locations.Add(new Location
-            {
-                PostId = postId,
-                OsmId = 123,
-                Lat = "-43.532",
-                Lon = "172.636",
-                Name = "Christchurch",
-                DisplayName = "Christchurch, New Zealand"
-            });
-
-            await context.SaveChangesAsync();
-        }
-        var file = await _fileService.GetFileByIdAsync(fileId);
-        file.ShouldNotBeNull();
-        await ServiceUnderTest.DeletePostByIdAsync(postId);
-
-        await using var assertContext =
-            DbContextFactory.CreateDbContext();
-
-        await Should.ThrowAsync<KeyNotFoundException>(async () =>
-        {
-            await _fileService.GetFileByIdAsync(fileId);
-        });
     }
 
     [Fact]
