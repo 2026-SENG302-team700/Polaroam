@@ -11,12 +11,20 @@
     
     let confirmationModalShown = $state(false);
     let pendingDeleteIndex: number | null = $state(null);
-    
+
+    /**
+     * Stores the index of the image to be deleted so it is not out of scope
+     * Shows the confirmation modal
+     * @param index, the index of the image to be deleted
+     */
     function RequestDelete(index: number) {
         pendingDeleteIndex = index;
         confirmationModalShown = true;
     }
-    
+
+    /**
+     * Performs the deletion of the image and closes the modal
+     */
     function ConfirmDelete() {
         if (pendingDeleteIndex !== null) {
             images.splice(pendingDeleteIndex, 1);
