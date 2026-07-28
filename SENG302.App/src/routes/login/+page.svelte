@@ -174,7 +174,7 @@
                 return;
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
-            addToast(`Welcome to Outstanding ${data?.message}!`);
+            addToast(`Welcome to Polaroam ${data?.message}!`);
             goto(resolve(`/home`));
         } catch (err) {
             password = "";
