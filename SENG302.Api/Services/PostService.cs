@@ -72,9 +72,8 @@ public class PostService : IPostService
         photos ??= [];
         
         // Validation
-        var postErrors = PostValidator.ValidatePostFields(postRequest);
-        var errors = postErrors.ToDictionary(kv  => kv.Key, kv => new List<string> { kv.Value });
-        
+        var errors = PostValidator.ValidatePostFields(postRequest);
+
         // Image Validation
         var photoErrors = new List<string>();
         foreach (var photo in photos)
@@ -94,11 +93,11 @@ public class PostService : IPostService
             errors["photos"] = photoErrors;
         }
 
-        if (errors.Count > 0)
+        if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
         }
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         // Add Photos
@@ -206,7 +205,7 @@ public class PostService : IPostService
 
         var errors = PostValidator.ValidatePostFields(postUpdates, post);
 
-        if (errors.Count > 0)
+        if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
         }
@@ -233,7 +232,7 @@ public class PostService : IPostService
 
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
 
-        if (post == null || postId == null)
+        if (post == null)
         {
             return null;
         }

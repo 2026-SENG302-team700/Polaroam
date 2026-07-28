@@ -11,7 +11,7 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
-    import ImagePicker from "$lib/components/image-picker.svelte";
+    import ImagePicker from "$lib/components/images/image-picker.svelte";
     
     type PostFormErrors = {
         title: string[];
@@ -77,7 +77,7 @@
             form.append("Title", title);
             form.append("OsmId", location.osmId);
             form.append("Content", content);
-            form.append("Date", date);
+            form.append("Date", date ? date.toISOString() : "");
             form.append("NoContentAllowed", noContentAllowed);
             if (files != null) {
                 for (let i = 0; i < files.length; i++) {
@@ -94,7 +94,7 @@
 
             if (!response.ok) {
                 errors.title = data.errors?.title ?? [];
-                errors.date = data.errors?.date?.[0] ?? "";
+                errors.date = data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
                 errors.generic = data.message;
