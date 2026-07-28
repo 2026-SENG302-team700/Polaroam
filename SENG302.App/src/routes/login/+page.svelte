@@ -499,6 +499,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <form
+                novalidate    
                 onsubmit={() => {
                     if (loadingStatus == 0) {
                         if (currentModalStep === ModalStep.EMAIL_INPUT) {
