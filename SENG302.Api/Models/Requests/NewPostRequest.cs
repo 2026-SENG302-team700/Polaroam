@@ -19,7 +19,6 @@ public class NewPostRequest : IPostRequest
             DateSupplied = true;
         }
     }
-    [JsonIgnore]
     public bool DateSupplied { get; set; } = false;
     public bool NoContentAllowed { get; set; } = false;
 }

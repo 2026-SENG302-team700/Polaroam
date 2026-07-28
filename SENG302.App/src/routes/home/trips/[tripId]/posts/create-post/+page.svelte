@@ -36,9 +36,7 @@
             photos: [],
         };
     }
-
-    let errors = $state<PostFormErrors>(emptyErrors());
-
+    
     /**
      * refreshes the PostFormErrors object
      */
@@ -61,59 +59,18 @@
         name: "",
         displayName: "",
     });
-    let content = $state("");
+    let content = $state(" ");
     let files: File[] = $state([]);
     let noContentAllowed = $state(false);
     
     let showConfirmationModal = $state(false);
 
     /**
-     * Function for uploading photos to the backend for a particular post
-     * @param postId Id of the post
-     */
-    async function uploadPhotos(postId: number) {
-        if (files != null) {
-            try {
-                const formData = new FormData();
-                for (let i = 0; i < files.length; i++) {
-                    formData.append("files", files[i]);
-                    formData.append("postId", postId.toString());
-                    formData.append("tripId", tripId.toString());
-                }
-
-                const response = await fetchWithCsrf(
-                    resolve(`/api/post/images` as any),
-                    {
-                        method: "PUT",
-                        body: formData,
-                    },
-                );
-
-                let customImageIds: String[];
-                if (!response.ok) {
-                    if (response.status == 500) {
-                        errors.photos = "Failed to upload picture";
-                    } else {
-                        errors.photos = await response.text();
-                    }
-                } else {
-                    customImageIds = await response.json();
-                    goto(resolve(`/home/trips/${tripId}`));;
-                }
-            } catch (err) {
-                errors.photos = (err as Error).message;
-            }
-        }
-    }
-
-    /**
      * Function for creating a post
      */
     async function createPost() {
         clearErrors();
-
-        title = title.trim();
-        content = content.trim();
+        
         try {
             loading = true;
 
