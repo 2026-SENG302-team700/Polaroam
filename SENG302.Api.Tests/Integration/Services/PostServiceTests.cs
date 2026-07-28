@@ -12,6 +12,13 @@ namespace SENG302.Api.Tests.Integration.Services;
 
 public class PostServiceTests : BaseIntegrationTestFixture
 {
+    /// <summary>
+    /// Creates a mock file with a given filename, content, and type
+    /// </summary>
+    /// <param name="filename">The file name for the mock file</param>
+    /// <param name="content">What bytes are in the file</param>
+    /// <param name="mimeType">The mime type for the mock file</param>
+    /// <returns>The mock file</returns>
     private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
