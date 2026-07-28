@@ -297,7 +297,6 @@
       } else {
         const data = await response.json().catch(() => null);
         if (data?.errors) {
-          console.log(data.errors);
           errors.email = data.errors.email ?? "";
           errors.displayName = data.errors.displayName ?? "";
         } else {
@@ -462,7 +461,6 @@
   async function sendToEditor() {
     clearErrors();
     imageEditor.highlightError(false);
-    console.log("recieve file");
     if (!files || files.length === 0) {
       return;
     }

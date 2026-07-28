@@ -5,7 +5,6 @@
 
         function clickClose() {
             close =!close;
-            console.log(close);
         }
 </script>
 
