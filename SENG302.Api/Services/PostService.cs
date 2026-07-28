@@ -2,6 +2,8 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Resources.Helpers;
+using SENG302.Api.Models.Requests;
 
 
 namespace SENG302.Api.Services;
@@ -24,19 +26,13 @@ public class PostService : IPostService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
-    private readonly IFileService _fileService;
 
-    public PostService(
-        IDbContextFactory<DatabaseContext> dbContextFactory, 
-        TimeProvider timeProvider, 
-        IGeoService geoService,
-        IFileService fileService
-        )
+
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IGeoService geoService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _geoService = geoService;
-        _fileService = fileService;
     }
 
     /// <summary>
@@ -273,18 +269,8 @@ public class PostService : IPostService
 
         context.Locations.RemoveRange(locations);
 
-        if (post.PhotoIds != null)
-        {
-            
-            var images = await context.CustomFiles
-                .Where(file => post.PhotoIds.Contains(file.Id))
-                .ToListAsync();
+        //TODO: delete the custom file records and physical image files from server
 
-            foreach (var image in images)
-            {
-                await _fileService.DeleteFileAsync(image.FileKey);
-            }
-        }
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
