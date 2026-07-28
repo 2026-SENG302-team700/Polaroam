@@ -3,22 +3,21 @@
     let {class: className = "", 
         image = $bindable(),
         index = $bindable(),
-        images = $bindable()} : {class?:string, 
+        images = $bindable(),
+        moveToRightImage,
+    } : {class?:string, 
         image: File,
         index: number,
-        images: File[] | null} = $props();
-
-    function moveToRightImage()
-    {
-        index += 1
-        let newImage = images?.[index];
-        if (newImage !== undefined) {
-            image = newImage
-        }
-    }
+        images: File[] | null
+        moveToRightImage: () => void,
+    } = $props();
+    
 </script>
 
-<button class="btn btn-secondary bi-arrow-right {className}" title="right-arrow" onclick={moveToRightImage}></button>
+<button class="btn btn-secondary bi-arrow-right {className}" 
+        title="right-arrow" 
+        onclick={moveToRightImage}
+></button>
 
 
 <style>
