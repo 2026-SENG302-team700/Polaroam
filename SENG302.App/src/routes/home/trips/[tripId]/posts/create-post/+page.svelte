@@ -3,7 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    
+
     import { uploadPhotos } from "$lib/posts/images";
 
     import TitleForm from "$lib/components/forms/title-form.svelte";
@@ -47,7 +47,7 @@
     function clearErrors() {
         errors = emptyErrors();
     }
-    
+
     let loading = $state(false);
     const tripId = page.params.tripId;
 
@@ -66,7 +66,6 @@
     let noContentAllowed = $state(false);
 
     let showConfirmationModal = $state(false);
-    
 
     /**
      * Function for creating a post
@@ -90,7 +89,7 @@
                     Title: title,
                     OsmId: location.osmId,
                     Content: content,
-                    Date: date,
+                    Date: serialiseLocalDate(date),
                     NoContentAllowed: noContentAllowed,
                 }),
                 credentials: "include",
@@ -117,22 +116,41 @@
             }
 
             if (files !== null && files !== undefined && files.length !== 0) {
-                let message = await uploadPhotos(data.postId, data.tripId, files);
+                let message = await uploadPhotos(
+                    data.postId,
+                    data.tripId,
+                    files,
+                );
                 if (message !== undefined) {
                     errors.photos = message;
                 }
             }
-            
+
             if (errors.photos === "") {
                 goto(resolve(`/home/trips/${tripId}`));
             }
-            
         } catch (err) {
             errors.generic = "Failed to create trip";
         } finally {
             loading = false;
             noContentAllowed = false;
         }
+    }
+
+    /**
+     * Converts a local date to a date only string without UTC timezone shifting
+     * @param date
+     */
+    function serialiseLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}T00:00:00`;
     }
 </script>
 
@@ -149,7 +167,7 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files}/>
+        <ImageDisplay images={files} />
         <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">

@@ -8,21 +8,20 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
-    
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
-    import {resolve} from "$app/paths";
+    import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import {goto} from "$app/navigation";
-    import {uploadPhotos} from "$lib/posts/images";
+    import { goto } from "$app/navigation";
+    import { uploadPhotos } from "$lib/posts/images";
 
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
     let photoIds = $state([]);
-    
-    let confirmationModalShown = $state(false)
+
+    let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
     let files: File[] | null | undefined = $state([]);
@@ -33,7 +32,7 @@
         name: "",
         displayName: "",
     });
-    
+
     let loading = $state(false);
     let errors = $state({
         title: [],
@@ -45,7 +44,7 @@
     });
 
     onMount(async () => {
-        await fetchPost()
+        await fetchPost();
     });
 
     /**
@@ -57,6 +56,22 @@
         const [year, month, day] = datePart.split("-").map(Number);
 
         return new Date(year, month - 1, day);
+    }
+
+    /**
+     * Converts a local date to a date only string without UTC timezone shifting
+     * @param date
+     */
+    function serialiseLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}T00:00:00`;
     }
 
     /**
@@ -80,14 +95,13 @@
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
                 return;
             }
-            
+
             title = data.title;
             content = data.content;
             date = parseLocalDate(data.date);
             location.osmId = data.osmId;
             photoIds = data.photoIds;
             searchQuery = data.locationName;
-            
         } catch (err) {
             errors.generic =
                 `Failed to fetch post: ${err}` || "Failed to fetch post.";
@@ -114,7 +128,7 @@
                         TripId: Number(page.params.tripId),
                         Title: title,
                         Content: content,
-                        Date: date,
+                        Date: serialiseLocalDate(date),
                         OsmId: location.osmId,
                         NoContentAllowed: noContentAllowed,
                     }),
@@ -122,9 +136,9 @@
                 },
             );
             const data = await response.json();
-            
+
             console.log(`data: ${JSON.stringify(data)}`);
-            
+
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
@@ -141,27 +155,31 @@
                 ) {
                     confirmationModalShown = true;
                 } else if (
-                    errors.content.length === 1 &&
-                    errors.title.length === 0 &&
-                    !errors.date &&
-                    errors.generic.length === 0 &&
-                    errors.location.length === 0 &&
-                    photoIds.length !== 0 ||
-                    files?.length !== 0 
+                    (errors.content.length === 1 &&
+                        errors.title.length === 0 &&
+                        !errors.date &&
+                        errors.generic.length === 0 &&
+                        errors.location.length === 0 &&
+                        photoIds.length !== 0) ||
+                    files?.length !== 0
                 ) {
                     confirmationModalShown = false;
                     noContentAllowed = true;
-                    updatePost()
+                    updatePost();
                 }
                 return;
             }
             if (files != null && files !== undefined && files.length > 0) {
-                let message: string | undefined = await uploadPhotos(data.postId, data.tripId, files);
+                let message: string | undefined = await uploadPhotos(
+                    data.postId,
+                    data.tripId,
+                    files,
+                );
                 if (message !== undefined) {
                     errors.photos = message;
                 }
             }
-            
+
             if (errors.photos === "") {
                 goto(resolve(`/home/trips/${data.tripId}`));
             }
@@ -172,7 +190,6 @@
             loading = false;
         }
     }
-    
 </script>
 
 <div class="container d-flex justify-content-center align-items-center">
@@ -183,9 +200,9 @@
             <div class="invalid-feedback d-block">{errors.date}</div>
         {/if}
         <LocationForm
-                bind:searchQuery
-                bind:location
-                bind:error={errors.location}
+            bind:searchQuery
+            bind:location
+            bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
         <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
