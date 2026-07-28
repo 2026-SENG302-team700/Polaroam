@@ -105,7 +105,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7002EditTrip.feature.ndjson", 5);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7002EditTrip.feature.ndjson", 8);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -173,15 +173,15 @@ namespace SENG302.Api.Tests.Acceptance.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC5 - Edit trip with an empty date")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC3 - Edit trip with invalid trip title length")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U7002_As Benji I want to edit my trips So that I can correct their information")]
-        [global::Xunit.TraitAttribute("Description", "AC5 - Edit trip with an empty date")]
-        public async global::System.Threading.Tasks.Task AC5_EditTripWithAnEmptyDate()
+        [global::Xunit.TraitAttribute("Description", "AC3 - Edit trip with invalid trip title length")]
+        public async global::System.Threading.Tasks.Task AC3_EditTripWithInvalidTripTitleLength()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "1";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC5 - Edit trip with an empty date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC3 - Edit trip with invalid trip title length", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 10
@@ -201,28 +201,28 @@ namespace SENG302.Api.Tests.Acceptance.Features
         await testRunner.AndAsync("I am editing that trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 13
-        await testRunner.WhenAsync("I update the trip with an empty start date", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+        await testRunner.WhenAsync("I update the trip with an invalid title length", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 14
         await testRunner.ThenAsync("the trip is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 15
-        await testRunner.AndAsync("I see the edit trip error message \"Invalid date, date must be formatted DD/MM/YYY" +
-                        "Y\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+        await testRunner.AndAsync("I see the edit trip error message \"Trip title is required and must be between 3 a" +
+                        "nd 128 characters long\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC6 - Edit trip with end date before start date")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC4 - Edit trip with invalid trip title characters")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U7002_As Benji I want to edit my trips So that I can correct their information")]
-        [global::Xunit.TraitAttribute("Description", "AC6 - Edit trip with end date before start date")]
-        public async global::System.Threading.Tasks.Task AC6_EditTripWithEndDateBeforeStartDate()
+        [global::Xunit.TraitAttribute("Description", "AC4 - Edit trip with invalid trip title characters")]
+        public async global::System.Threading.Tasks.Task AC4_EditTripWithInvalidTripTitleCharacters()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "2";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC6 - Edit trip with end date before start date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC4 - Edit trip with invalid trip title characters", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 17
@@ -242,13 +242,134 @@ namespace SENG302.Api.Tests.Acceptance.Features
         await testRunner.AndAsync("I am editing that trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 20
-        await testRunner.WhenAsync("I update the trip with an end date before the start date", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+        await testRunner.WhenAsync("I update the trip with invalid trip title characters", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 21
         await testRunner.ThenAsync("the trip is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 22
+        await testRunner.AndAsync("I see the edit trip error message \"Trip title cannot contain characters other tha" +
+                        "n letters, spaces, hyphens, apostrophes, or numbers\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC5 - Edit trip with an empty date")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7002_As Benji I want to edit my trips So that I can correct their information")]
+        [global::Xunit.TraitAttribute("Description", "AC5 - Edit trip with an empty date")]
+        public async global::System.Threading.Tasks.Task AC5_EditTripWithAnEmptyDate()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "3";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC5 - Edit trip with an empty date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 24
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 25
+        await testRunner.GivenAsync("I have an existing trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 26
+        await testRunner.AndAsync("I am editing that trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 27
+        await testRunner.WhenAsync("I update the trip with an empty start date", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 28
+        await testRunner.ThenAsync("the trip is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 29
+        await testRunner.AndAsync("I see the edit trip error message \"Invalid date, date must be formatted \"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC6 - Edit trip with end date before start date")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7002_As Benji I want to edit my trips So that I can correct their information")]
+        [global::Xunit.TraitAttribute("Description", "AC6 - Edit trip with end date before start date")]
+        public async global::System.Threading.Tasks.Task AC6_EditTripWithEndDateBeforeStartDate()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "4";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC6 - Edit trip with end date before start date", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 31
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 32
+        await testRunner.GivenAsync("I have an existing trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 33
+        await testRunner.AndAsync("I am editing that trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 34
+        await testRunner.WhenAsync("I update the trip with an end date before the start date", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 35
+        await testRunner.ThenAsync("the trip is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 36
         await testRunner.AndAsync("I see the edit trip error message \"End date must not be before the start date\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC7 - Edit trip with too long description")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7002_As Benji I want to edit my trips So that I can correct their information")]
+        [global::Xunit.TraitAttribute("Description", "AC7 - Edit trip with too long description")]
+        public async global::System.Threading.Tasks.Task AC7_EditTripWithTooLongDescription()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "5";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC7 - Edit trip with too long description", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 38
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 39
+        await testRunner.GivenAsync("I have an existing trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 40
+        await testRunner.AndAsync("I am editing that trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 41
+        await testRunner.WhenAsync("I update the trip with a too long description", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 42
+        await testRunner.ThenAsync("the trip is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 43
+        await testRunner.AndAsync("I see the edit trip error message \"Description must be 2048 characters or less\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

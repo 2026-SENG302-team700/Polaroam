@@ -97,8 +97,9 @@ public class PostController : ControllerBase
     {
         try
         {
-            var response = await _postService.GetPostAsync(id);
-            return Ok(response);
+            var post = await _postService.GetPostAsync(id);
+            if (post == null) return NotFound();
+            return Ok(post);
         }
         catch (Exception e)
         {
@@ -119,32 +120,31 @@ public class PostController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
     {
-        var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
+        
         if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
         {
             return Unauthorized();
         }
+
         try
         {
-            if (errors.Count > 0)
-            {
-                return BadRequest(new BadRequestValidationResponse
-                {
-                    Errors = errors
-                });
-            }
-
             var post = await _postService.UpdatePostAsync(postUpdates);
             return Ok(post);
+        }
+        catch (MultipleValidationListException e)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = e.Errors
+            });
         }
         catch (Exception e)
         {
             return BadRequest(e.Message);
         }
     }
-    
+
 
     /// <summary>
     /// Takes a post id and returns all the metadata related to the photos
@@ -296,6 +296,47 @@ public class PostController : ControllerBase
             return NotFound("User not found");
         }
         return Ok(user.DisplayName);
+    }
+
+    /// <summary>
+    /// Endpoint for removing a specific post by its id.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeletePost(int id)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var post = await _postService.GetPostAsync(id);
+
+        if (post == null)
+        {
+            return NotFound("Post does not exist");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _postService.DeletePostByIdAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return NotFound(exception.Message);
+        }
     }
 
 }

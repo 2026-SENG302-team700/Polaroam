@@ -3,15 +3,19 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+
+    import { uploadPhotos } from "$lib/posts/images";
+
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
+    import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
 
     type PostFormErrors = {
         title: string[];
@@ -44,9 +48,9 @@
     function clearErrors() {
         errors = emptyErrors();
     }
-    
+
     let loading = $state(false);
-    const tripId = page.params.tripId!;
+    const tripId = page.params.tripId;
 
     let title = $state("");
     let date = $state(new Date());
@@ -59,49 +63,10 @@
         displayName: "",
     });
     let content = $state("");
-    let files: File[] = $state([]);
+    let files: File[] | null | undefined = $state([]);
     let noContentAllowed = $state(false);
 
     let showConfirmationModal = $state(false);
-
-    /**
-     * Function for uploading photos to the backend for a particular post
-     * @param postId Id of the post
-     */
-    async function uploadPhotos(postId: number) {
-        if (files != null) {
-            try {
-                const formData = new FormData();
-                for (let i = 0; i < files.length; i++) {
-                    formData.append("files", files[i]);
-                    formData.append("postId", postId.toString());
-                    formData.append("tripId", tripId.toString());
-                }
-
-                const response = await fetchWithCsrf(
-                    resolve(`/api/post/images` as any),
-                    {
-                        method: "PUT",
-                        body: formData,
-                    },
-                );
-
-                let customImageIds: String[];
-                if (!response.ok) {
-                    if (response.status == 500) {
-                        errors.photos = "Failed to upload picture";
-                    } else {
-                        errors.photos = await response.text();
-                    }
-                } else {
-                    customImageIds = await response.json();
-                    goto(resolve(`/home/trips/${tripId}`));;
-                }
-            } catch (err) {
-                errors.photos = (err as Error).message;
-            }
-        }
-    }
 
     /**
      * Function for creating a post
@@ -111,15 +76,6 @@
 
         title = title.trim();
         content = content.trim();
-
-        // validation the title
-        if (title.length < 3 || title.length > 128) {
-            errors.title = [
-                "Title is required and must be between 3 and 128 characters long",
-            ];
-
-            return;
-        }
 
         try {
             loading = true;
@@ -134,7 +90,7 @@
                     Title: title,
                     OsmId: location.osmId,
                     Content: content,
-                    Date: date,
+                    Date: serialiseLocalDate(date),
                     NoContentAllowed: noContentAllowed,
                 }),
                 credentials: "include",
@@ -160,9 +116,18 @@
                 return;
             }
 
-            if (files != null) {
-                await uploadPhotos(data.postId);
-            } else {
+            if (files !== null && files !== undefined && files.length !== 0) {
+                let message = await uploadPhotos(
+                    data.postId,
+                    data.tripId,
+                    files,
+                );
+                if (message !== undefined) {
+                    errors.photos = message;
+                }
+            }
+
+            if (errors.photos === "") {
                 goto(resolve(`/home/trips/${tripId}`));
             }
         } catch (err) {
@@ -172,10 +137,36 @@
             noContentAllowed = false;
         }
     }
+
+    /**
+     * Converts a local date to a date only string without UTC timezone shifting
+     * @param date
+     */
+    function serialiseLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}T00:00:00`;
+    }
 </script>
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
+        <div class="form-header">
+            <ConfirmCancelButton
+                path={`/home/trips/${tripId}`}
+                option1Text="Back to your Trip"
+                option2Text="Stay on This Page"
+            />
+
+            <h1 class="text-center mb-4">Create Post</h1>
+        </div>
+
         <TitleForm bind:name={title} errors={errors.title} {loading} />
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}
@@ -187,14 +178,17 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files}/>
+        <ImageDisplay images={files} />
         <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
         </div>
+        
     </div>
 </div>
+
+
 
 <ConfirmationModal
     bind:show={showConfirmationModal}

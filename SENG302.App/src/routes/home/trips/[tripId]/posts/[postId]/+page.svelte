@@ -19,7 +19,7 @@
     let postId = params.postId;
     
     let displayName = $state("");
-    let locationName = $state("")
+    let locationName = $state("");
 
     let postObject = $state({
         postId: 0,
@@ -40,55 +40,53 @@
         fetchDisplayName();
     });
 
-    
+    /**
+     * Fetches the location name from the backend for an osmId
+     */
     async function fetchLocationName() {
         
         try {
-            loading = true
+            loading = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
-                }
-            )
+                },
+            );
             let location = await response.json();
             locationName = location.name;
-
         } catch (err) {
             error = "Failed to fetch location name: " + (err as Error).message;
         } finally {
-            loading = false
+            loading = false;
         }
-        
     }
-    
+
     /**
      * Fetch the display name of the user based on the post
      */
     async function fetchDisplayName() {
         try {
-            loading = true
+            loading = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/post/${postId}/user` as any),
                 {
                     method: "GET",
                     credentials: "include",
-                }
-            )
+                },
+            );
             displayName = await response.text();
-            
-            
         } catch (err) {
             error = "Failed to fetch post creator: " + (err as Error).message;
         } finally {
-            loading = false
+            loading = false;
         }
     }
-    
+
     /**
      * Converts a Base64String representing an image from backend into a image blob which can then be transformed
-     * into a image url
+     * into an image url
      * @param base64
      * @param contentType
      * @constructor
@@ -100,8 +98,7 @@
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        return new Blob([byteArray], {type: contentType});
-        
+        return new Blob([byteArray], { type: contentType });
     }
 
     /**
@@ -113,9 +110,10 @@
             const response = await fetchWithCsrf(
                 resolve(`/api/post/${postId}/images` as any), {
                     method: "GET",
-                    credentials: "include"
-                }
+                    credentials: "include",
+                },
             );
+            let responsePhotos = await response.json();
 
             if (!response.ok) {
                 error = (await response.text()) || "Failed to fetch images.";
@@ -145,7 +143,7 @@
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
-            loading = false
+            loading = false;
         }
     }
 
@@ -254,7 +252,7 @@
 
 <ConfirmationModal
     bind:show={deletionModalShown}
-    message="Are you sure you want to delete this post?"
+    message="Are you sure you want to delete this post? This action cannot be undone."
     option1Text="Delete"
     option2Text="Do not delete"
     onOption1={deletePost}

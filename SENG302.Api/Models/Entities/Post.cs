@@ -20,6 +20,7 @@ public class Post
     public string Content { get; set; }
     public DateTimeOffset? Date { get; set; }
     public required long OsmId { get; set; }
+    public required string LocationName { get; set; }
     public List<int>? PhotoIds { get; set; } 
     public DateTimeOffset creationTime { get; set; }
 }

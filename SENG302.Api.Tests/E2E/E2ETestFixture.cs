@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Playwright;
 using SENG302.Api.Tests.Integration;
 using SENG302.Api.Models.Requests;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace SENG302.Api.Tests.E2E;
 
@@ -17,8 +16,8 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     protected IBrowserContext Context = null!;
     protected IPage Page = null!;
     protected string ApiBaseUrl = null!;
+    protected string AppBaseUrl { get; private set; } = null!;
     private string _svelteBuildPath = null!;
-    protected string AppBaseUrl = null!;
     private bool _usesRemoteEnvironment;
 
     // Frontend build lock and flag
@@ -300,24 +299,28 @@ public class E2ETestFixture : BaseIntegrationTestFixture
     /// <summary>
     /// Helper method to register and login a user via the UI
     /// </summary>
-    protected async Task<string> RegisterAndLoginViaUI(string email = "test@example.com", string password = "TestPassword123", string displayName = "Test User")
+    protected async Task<string> RegisterAndLoginViaUI(string email = "test@example.com", string password = "TestPassword123", string displayName = "Test User", string country = "NZ")
     {
-        // First register the user via API (easier and faster)
-        await using var dbContext = await DbContextFactory.CreateDbContextAsync();
-
         var registerRequest = new PostUserRequest
         {
             Email = email,
             PasswordString = password,
             PasswordConfirm = password,
             DisplayName = displayName,
+            Country = country
         };
 
         var registerResponse = await HttpClient.PostAsJsonAsync("/api/register", registerRequest);
         registerResponse.EnsureSuccessStatusCode();
 
         // Now login via the UI
-        await Page.GotoAsync($"{AppBaseUrl}/login", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 10000 });
+        await Page.GotoAsync(
+            $"{AppBaseUrl}/login",
+            new PageGotoOptions
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 10000
+            });
 
         await Page.Locator("#email").FillAsync(email);
         await Page.Locator("#password").FillAsync(password);
