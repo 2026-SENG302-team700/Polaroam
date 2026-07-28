@@ -16,8 +16,9 @@
     let clientErrors: string[] = $state([]);
     let {
         filesList = $bindable<File[]>([]),
-        errors = []
-    }: { filesList: File[] | null | undefined; errors: string[] } = $props();
+        errors = [],
+        newUploadsCount = $bindable(0),
+    }: { filesList: File[] | null | undefined; errors: string[]; newUploadsCount?: number } = $props();
 
     let displayedErrors = $derived([...errors, ...clientErrors]);
 
@@ -81,16 +82,19 @@
 
         clientErrors = [];
         for (const file of files) {
-            const fileErrors = await validateImage(file);
+            // const fileErrors = await validateImage(file);
+            const fileErrors: string[] = [];
             if (fileErrors.length > 0) {
                 clientErrors.push(...fileErrors);
             } else {
+                newUploadsCount += 1
                 filesList.push(file);
             }
         }
     }
+    
+    // accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
 </script>
-
 <div class="d-flex flex-column mb-2">
     <button
             type="button"
@@ -104,7 +108,6 @@
         <i class="bi-images"></i>
     </button>
     <input
-            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
             type="file"
             bind:files
             bind:this={pfpInput}
