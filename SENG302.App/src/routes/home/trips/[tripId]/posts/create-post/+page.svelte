@@ -8,12 +8,11 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
-
-    let cancelConfirmModalShown = $state(false);
+    import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
 
     type PostFormErrors = {
         title: string[];
@@ -179,8 +178,11 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <div class="form-header">
-            <button type="button" class="btn btn-secondary" onclick={() => {cancelConfirmModalShown = true}}
-                >Cancel</button>
+            <ConfirmCancelButton
+                path={`/home/trips/${tripId}`}
+                option1Text="Back to your Trip"
+                option2Text="Stay on This Page"
+            />
 
             <h1 class="text-center mb-4">Create Post</h1>
         </div>
@@ -206,14 +208,7 @@
     </div>
 </div>
 
-<ConfirmationModal
-    bind:show={cancelConfirmModalShown}
-    message="If you leave this page all progress will be lost"
-    option1Text="Back to your Trip"
-    option2Text="Stay on This Page"
-    onOption1={() => goto(resolve(`/home/trips/${tripId}`))}
-    onOption2={() => {cancelConfirmModalShown = false;}}
-/>
+
 
 <ConfirmationModal
     bind:show={showConfirmationModal}
