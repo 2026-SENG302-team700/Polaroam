@@ -1,23 +1,30 @@
 <script lang="ts">
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    
+
     let pfpInput: HTMLInputElement;
-    
+    let files: FileList | undefined = $state();
     let {
-        files = $bindable(),
-        errors = []
-    }: {
-        files: FileList | null,
-        errors: string[],
-    } = $props();
+        filesList = $bindable<File[]>([]),
+        error = ""
+    }: { filesList: File[]; error: string } = $props();
+
+    /**
+     * Added the selected files to the given file list
+     */
+    function appendImages() {
+        if (!files) return;
+        for (const file of files) {
+            filesList.push(file);
+        }
+    }
 </script>
 
 <div class="d-flex flex-column mb-2">
     <button
             type="button"
             class="btn btn-sm btn-primary"
-            class:is-invalid={errors.length > 0}
-            on:click={() => {
+            class:is-invalid={error.length > 0}
+            onclick={() => {
           pfpInput.value = "";
           pfpInput.click();
         }}
@@ -30,8 +37,9 @@
             bind:files
             bind:this={pfpInput}
             class="d-none"
+            id="image-picker"
             multiple
+            onchange={appendImages}
     />
-    <ErrorDisplay {errors}/>
+    <ErrorDisplay errors={[error]}/>
 </div>
-

@@ -1,6 +1,7 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Resources.Helpers;
 using SENG302.Api.Helpers;
 
@@ -24,14 +25,16 @@ public class PostService : IPostService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
 
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
+        _geoService = geoService;
     }
 
     /// <summary>
@@ -43,12 +46,11 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         // get all the posts
         var posts = await context.Set<Post>()
-                        .Where(t => context.Set<Trip>()
-                        .Any(l => l.Id == t.TripId && l.UserId == userId))
-                        .OrderBy(t => t.Date)
-                        .ToListAsync();
+            .Where(post => context.Set<Trip>()
+                .Any(trip => trip.Id == post.TripId && trip.UserId == userId))
+            .ToListAsync();
 
-        return posts;
+        return posts.OrderBy(post => post.Date);
     }
 
     /// <summary>
@@ -106,9 +108,20 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
         }
-        
+
+        // Add location
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        if (location == null)
+        {
+            throw new MultipleValidationListException(new Dictionary<string, List<string>>
+            {
+                ["location"] = ["This isn't a valid location"]
+            });
+        }
+
+
         // Add post
-        var newPost = new Post()
+        var newPost = new Post
         {
             TripId = postRequest.TripId,
             Title = postRequest.Title,
@@ -116,10 +129,23 @@ public class PostService : IPostService
             creationTime = DateTime.UtcNow,
             Date = postRequest.Date,
             PhotoIds = photoIds,
-            Location = postRequest.Location
+            OsmId = postRequest.OsmId
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
+
+        context.Set<Location>().Add(new Location
+        {
+            OsmId = postRequest.OsmId,
+            PostId = newPost.PostId,
+            Lat = location.lat,
+            Lon = location.lon,
+            Name = location.name,
+            DisplayName = location.display_name,
+        });
+
+        await context.SaveChangesAsync();
+
         return newPost;
     }
 
@@ -140,7 +166,6 @@ public class PostService : IPostService
     /// Given a postId, return the post from the database.
     /// </summary>
     /// <param name="id">the id of the post</param>
-    /// <param name="userId"> id of the user making request</param>
     /// <returns>a list of all Posts found. Empty if no Posts exist.</returns>
     public async Task<Post?> GetPostAsync(int id)
     {
@@ -168,14 +193,14 @@ public class PostService : IPostService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        
+
 
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
         if (post == null)
         {
             return null;
         }
-        
+
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
 
@@ -183,7 +208,7 @@ public class PostService : IPostService
 
         if (errors.Count > 0)
         {
-            throw new MultipleValidationException(errors);
+            throw new MultipleValidationListException(errors);
         }
 
         post.Title = postUpdates.Title;
@@ -194,7 +219,7 @@ public class PostService : IPostService
         await context.SaveChangesAsync();
         return post;
     }
-    
+
     /// <summary>
     /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
     /// later on
@@ -205,19 +230,19 @@ public class PostService : IPostService
     public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
-        
+
         if (post == null || postId == null)
         {
             return null;
         }
-        
+
         for (int i = 0; i < photoFileIds.Count; i++)
         {
             post.PhotoIds.Add(photoFileIds[i]);
         }
-        
+
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
@@ -281,7 +306,7 @@ public class PostService : IPostService
     public async Task<bool> UserOwnsPost(int userId, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var trip = await context.Trips.FirstOrDefaultAsync(u => u.Id == tripId);
         if (trip == null)
         {

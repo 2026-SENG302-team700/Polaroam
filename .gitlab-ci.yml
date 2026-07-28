@@ -5,6 +5,8 @@ stages:
   - coverage-report
   - sonarqube
   - deploy
+  - e2e
+  - notify
 
 # Check that the tag matches the expected 'sprintX.Y' format
 tag-checker:
@@ -14,9 +16,18 @@ tag-checker:
   only:
     - tags
 
+# reusable template for normal jobs (not scheduled)
+.not-scheduled:
+  except:
+    refs:
+      - schedules
+    variables:
+      - '$SMOKE_TESTS == "true"'
+
 # builds dotnet project for all branches, except dev and main
 # regular builds should not be saved (no artifacts)
 dotnet-build:
+  extends: .not-scheduled
   stage: build
   script:
     - cd SENG302.Api
@@ -25,6 +36,7 @@ dotnet-build:
 # builds svelte project for all branches, except dev and main
 # regular builds should not be saved (no artifacts)
 svelte-build:
+  extends: .not-scheduled
   stage: build
   script:
     - cd SENG302.App
@@ -34,6 +46,7 @@ svelte-build:
 # Runs the tests for the dotnet project
 # Later (sprint 2) you will add support for coverage collection and SonarQube
 .test_template:
+  extends: .not-scheduled
   stage: test
   script:
     # Use Coverlet to collect coverage in OpenCover format via "XPlat Code Coverage"
@@ -61,7 +74,23 @@ acceptance-tests:
   variables:
     TEST_NAMESPACE: Acceptance
 
+# run the e2e tests on staging after deploy
+e2e-tests:
+  extends: .test_template
+  stage: e2e
+  variables:
+    E2E_BASE_URL: "https://csse-seng302-team700.canterbury.ac.nz/test/"
+  needs:
+    - deploy-staging
+  script:
+    - dotnet restore SENG302.Api.Tests/SENG302.Api.Tests.csproj
+    - dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter
+      "FullyQualifiedName~SENG302.Api.Tests.E2E" --no-restore
+  only:
+    - dev
+
 coverage-reporting:
+  extends: .not-scheduled
   stage: coverage-report
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
@@ -91,6 +120,7 @@ coverage-reporting:
     - acceptance-tests
 
 sonarqube-report:
+  extends: .not-scheduled
   stage: sonarqube
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
@@ -109,7 +139,11 @@ sonarqube-report:
 
 # During the DevOps workshop in sprint 2 we will cover the deployment configuration below
 deploy-staging:
+  extends: .not-scheduled
   stage: deploy
+  environment:
+    name: staging
+    url: https://csse-seng302-team700.canterbury.ac.nz/test/
   script:
     # Build backend api and restart the underlying service
     - dotnet publish SENG302.Api/SENG302.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
@@ -150,6 +184,7 @@ deploy-staging:
     - dev
 
 deploy-production:
+  extends: .not-scheduled
   stage: deploy
   script:
     # Build backend api and restart the underlying service
@@ -190,3 +225,6 @@ deploy-production:
       - SENG302.App/build/
   only:
     - tags
+
+include:
+  - local: ".gitlab/workflows/smoke-test.yml"

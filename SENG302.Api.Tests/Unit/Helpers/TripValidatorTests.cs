@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using SENG302.Api.Models.Entities;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
@@ -66,7 +64,7 @@ public class TripValidatorTests
         var errors = TripValidator.ValidateDescription(new string('a', 2048));
         errors["description"].Count.ShouldBe(0);
     }
-    
+
     [Fact]
     public async Task ValidateDescription_LongDescription_ReturnsNoErrors()
     {

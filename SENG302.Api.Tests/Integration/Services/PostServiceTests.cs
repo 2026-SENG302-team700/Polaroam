@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -34,6 +38,18 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    private void SetupGeoMock()
+    {
+        GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        {
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
+        });
+    }
+
     [Fact]
     public async Task GetAllPostsAsync_NoPosts_ReturnsEmpty()
     {
@@ -55,7 +71,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "User 1 post",
             Content = "desc",
-            Location = "location",
+            OsmId = 292806332,
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -64,7 +80,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 2,
             Title = "User 2 post",
             Content = "desc",
-            Location = "location",
+            OsmId = 292806332,
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -80,14 +96,15 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task CreateNewPostAsync_ValidRequest_ReturnsCreatedPost()
     {
         await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
 
         var request = new NewPostRequest
         {
             TripId = 1,
             Title = "New post",
             Content = "Some description",
-            Location = "Some location",
-            Date = DateTime.UtcNow.AddDays(2),
+            OsmId = 292806332,
+            Date = DateTime.UtcNow.AddDays(-2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
@@ -108,7 +125,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "Fetch me",
             Content = "desc",
-            Location = "location",
+            OsmId = 292806332,
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         };
@@ -139,23 +156,84 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task AddPhotoToPost_ValidRequest_ReturnsPost()
     {
         await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
 
         var request = new NewPostRequest
         {
             TripId = 1,
             Title = "New post",
             Content = "Some description",
-            Location = "Some location",
-            Date = DateTime.UtcNow.AddDays(2),
+            OsmId = 1,
+            Date = DateTime.UtcNow.AddDays(-2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
 
         List<int> photoIds = [1, 2];
         var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
-        
+
         updatedPost.ShouldNotBeNull();
         updatedPost.PhotoIds.ShouldBe(photoIds);
         updatedPost.PostId.ShouldBe(post.PostId);
+    }
+
+    [Fact]
+    public async Task CreateNewPostAsync_InvalidLocation_ThrowsAndDoesNotPersist()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "Valid title",
+            Content = "Valid content",
+            Date = DateTimeOffset.Now.AddDays(-1),
+            OsmId = 0
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.CreateNewPostAsync(request)
+            );
+
+        exception.Errors["location"]
+            .ShouldContain("This isn't a valid location");
+
+        await using var context = DbContextFactory.CreateDbContext();
+        (await context.Posts.AnyAsync()).ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(129)]
+    public async Task CreateNewPostAsync_InvalidTitle_ThrowsValidationExceptionAndDoesNotPersist(int titleLength)
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = new string('a', titleLength),
+            Content = "SOme content",
+            OsmId = 1,
+            Date = DateTime.UtcNow.AddDays(-2),
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.CreateNewPostAsync(request)
+            );
+
+        exception.Errors.ShouldContainKey("title");
+        exception.Errors["title"].ShouldContain(
+            "Title is required and must be between 3 and 128 characters long"
+        );
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var postExists = await context.Posts.AnyAsync();
+
+        postExists.ShouldBeFalse();
     }
 }
