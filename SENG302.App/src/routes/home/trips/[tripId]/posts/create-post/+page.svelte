@@ -8,7 +8,6 @@
 
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import SearchForm from "$lib/components/forms/search-form.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
@@ -63,7 +62,7 @@
         displayName: "",
     });
     let content = $state("");
-    let files: FileList | null = $state(null);
+    let files: File[] | null | undefined = $state([]);
     let noContentAllowed = $state(false);
 
     let showConfirmationModal = $state(false);
@@ -117,11 +116,17 @@
                 return;
             }
 
-            if (files != null) {
-                await uploadPhotos(data.postId);
-            } else {
+            if (files !== null && files !== undefined && files.length !== 0) {
+                let message = await uploadPhotos(data.postId, data.tripId, files);
+                if (message !== undefined) {
+                    errors.photos = message;
+                }
+            }
+            
+            if (errors.photos === "") {
                 goto(resolve(`/home/trips/${tripId}`));
             }
+            
         } catch (err) {
             errors.generic = "Failed to create trip";
         } finally {

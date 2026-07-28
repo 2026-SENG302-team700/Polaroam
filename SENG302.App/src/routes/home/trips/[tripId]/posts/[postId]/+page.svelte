@@ -39,7 +39,9 @@
         fetchDisplayName();
     });
 
-    
+    /**
+     * Fetches the location name from the backend for an osmId
+     */
     async function fetchLocationName() {
         
         try {
@@ -87,7 +89,7 @@
     
     /**
      * Converts a Base64String representing an image from backend into a image blob which can then be transformed
-     * into a image url
+     * into an image url
      * @param base64
      * @param contentType
      * @constructor

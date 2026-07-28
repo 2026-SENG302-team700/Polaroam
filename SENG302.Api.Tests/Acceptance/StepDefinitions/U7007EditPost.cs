@@ -91,7 +91,7 @@ public class U7007EditPost
     }
     
     [When(@"I click 'Update Post'")]
-    public async Task CreatePost()
+    public async Task UpdatePost()
     {
         UpdatePostRequest postRequest = new UpdatePostRequest()
         {
@@ -102,7 +102,7 @@ public class U7007EditPost
             OsmId = _osmId,
             Date = _date
         };
-        _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("api/post", postRequest);
+        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync("api/post/1", postRequest);
     }
     
     [Then(@"the post is updated")]

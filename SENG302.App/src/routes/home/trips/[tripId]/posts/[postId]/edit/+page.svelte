@@ -14,6 +14,7 @@
     import {resolve} from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import {goto} from "$app/navigation";
+    import {uploadPhotos} from "$lib/posts/images";
 
     let title = $state("");
     let content = $state("");
@@ -23,7 +24,7 @@
     let confirmationModalShown = $state(false)
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
-    let files: FileList | null = $state(null);
+    let files: File[] | null | undefined = $state([]);
     let location = $state({
         osmId: 0,
         lat: 0,
@@ -42,7 +43,9 @@
         photos: "",
     });
 
-    onMount(fetchPost());
+    onMount(async () => {
+        await fetchPost()
+    });
 
     /**
      * Parse date stored within database to the local format
@@ -135,12 +138,16 @@
                 }
                 return;
             }
-
-            if (files != null) {
-                await uploadPhotos(data.postId);
+            if (files != null && files !== undefined && files.length > 0) {
+                let message: string | undefined = await uploadPhotos(data.postId, data.tripId, files);
+                if (message !== undefined) {
+                    errors.photos = message;
+                }
             }
-
-            goto(resolve(`/home/trips/${page.params.tripId}`));
+            
+            if (errors.photos === "") {
+                goto(resolve(`/home/trips/${data.tripId}`));
+            }
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -164,7 +171,7 @@
                 bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImagePicker bind:files error={errors.photos}></ImagePicker>
+        <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />
@@ -180,7 +187,7 @@
     onOption1={() => {
         noContentAllowed = true;
         confirmationModalShown = false;
-        createPost();
+        updatePost();
     }}
     onOption2={() => (confirmationModalShown = false)}
 />

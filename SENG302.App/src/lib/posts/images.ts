@@ -1,8 +1,15 @@
+import {fetchWithCsrf} from "$lib/csrf";
+import { goto } from "$app/navigation";
+import { page } from "$app/state";
+import { resolve } from "$app/paths";
+
 /**
  * Function for uploading photos to the backend for a particular post
  * @param postId Id of the post
+ * @param tripId Id of the trip
+ * @param files the files to upload
  */
- export async function uploadPhotos(postId: number) {
+ export async function uploadPhotos(postId: number, tripId: number, files: File[] | null | undefined): Promise<string | undefined> {
     if (files != null) {
         try {
             const formData = new FormData();
@@ -19,20 +26,17 @@
                     body: formData,
                 },
             );
-
-            let customImageIds: String[];
+            
             if (!response.ok) {
                 if (response.status == 500) {
-                    errors.photos = "Failed to upload picture";
+                    return "Failed to upload picture";
                 } else {
-                    errors.photos = await response.text();
+                    return await response.text();
                 }
-            } else {
-                customImageIds = await response.json();
-                goto(resolve(`/home/trips/${tripId}`));;
-            }
+            } 
         } catch (err) {
-            errors.photos = (err as Error).message;
+            return (err as Error).message;
         }
     }
+    goto(resolve(`/home/trips/${page.params.tripId}`));
 }
