@@ -147,13 +147,13 @@ public class PostController : ControllerBase
     
 
     /// <summary>
-    /// Takes a post id and returns all the photos as form files
+    /// Takes a post id and returns all the metadata related to the photos
     /// </summary>
     /// <param name="postId">The id of the post</param>
-    /// <returns>The photos as form files</returns>
+    /// <returns>a list of metadata objects</returns>
     [Authorize]
     [HttpGet("{postId:int}/images")]
-    public async Task<ActionResult<List<PhotoFile>>> GetPostPhotos(int postId)
+    public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
