@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260728213406_AddPolaroamTables")]
-    partial class AddPolaroamTables
+    [Migration("20260728224630_AddPolaroamTablesCorrected")]
+    partial class AddPolaroamTablesCorrected
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
