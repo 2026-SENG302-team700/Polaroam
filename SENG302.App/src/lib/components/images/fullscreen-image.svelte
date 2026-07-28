@@ -1,12 +1,25 @@
 <script lang="ts">
     import CloseButton from "../buttons/close-button.svelte";
+    import RightArrowButton from "../buttons/right-arrow-button.svelte"
+    import LeftArrowButton from "../buttons/left-arrow-button.svelte"
+    import {onMount} from "svelte"
 
     let {
         image,
         enlarged = $bindable(false),
+       index,
+       images  
     }: { image: File,
-         enlarged: boolean; } = $props();
+         enlarged: boolean, 
+       index: number, 
+       images: File[] | null; } = $props();
 
+    onMount(() => {
+       console.log(`images length: ${images?.length}`)
+       console.log(`Index: ${index}`)
+    })
+    
+    
 
 </script>
 
@@ -15,6 +28,12 @@
       <div class="close-button-wrapper">
          <img src={URL.createObjectURL(image)} alt="Image" class="image" />
          <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
+         {#if images !== null && images?.length > 1 && index !== images?.length-1}
+            <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images}/>
+         {/if}
+         {#if images !== null && images?.length > 1 && index !== 0}
+            <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images}/>
+         {/if}
       </div>    
    </div>  
 </div>
@@ -43,8 +62,7 @@
     max-width: 70vw;
  }
  .close-button-wrapper {
-   position:relative; 
-
+   position:relative;
  }
 
 </style>
