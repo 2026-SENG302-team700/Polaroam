@@ -122,7 +122,9 @@
                 },
             );
             const data = await response.json();
-
+            
+            console.log(`data: ${JSON.stringify(data)}`);
+            
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
@@ -133,9 +135,23 @@
                     errors.title.length === 0 &&
                     !errors.date &&
                     errors.generic.length === 0 &&
-                    errors.location.length === 0
+                    errors.location.length === 0 &&
+                    photoIds.length === 0 &&
+                    files?.length === 0
                 ) {
                     confirmationModalShown = true;
+                } else if (
+                    errors.content.length === 1 &&
+                    errors.title.length === 0 &&
+                    !errors.date &&
+                    errors.generic.length === 0 &&
+                    errors.location.length === 0 &&
+                    photoIds.length !== 0 ||
+                    files?.length !== 0 
+                ) {
+                    confirmationModalShown = false;
+                    noContentAllowed = true;
+                    updatePost()
                 }
                 return;
             }
@@ -185,7 +201,7 @@
 
 <ConfirmationModal
     bind:show={confirmationModalShown}
-    message="Post contains no content, are you sure you want to update post?"
+    message="Post would contain no content or images, are you sure you want to update this post?"
     option1Text="Update anyway"
     option2Text="Cancel"
     onOption1={() => {
