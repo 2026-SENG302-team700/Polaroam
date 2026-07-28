@@ -2,12 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
-using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using Org.BouncyCastle.Bcpg.Sig;
-using SENG302.Api.Models.Responses;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
