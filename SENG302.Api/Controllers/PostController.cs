@@ -6,12 +6,7 @@ using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using SENG302.Api.Resources.Helpers;
-using Org.BouncyCastle.Bcpg.Sig;
-using System.Dynamic;
-using Org.BouncyCastle.Bcpg;
 using SENG302.Api.Models.Responses;
-using SQLitePCL;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -152,13 +147,13 @@ public class PostController : ControllerBase
 
 
     /// <summary>
-    /// Takes a post id and returns all the photos as form files
+    /// Takes a post id and returns all the metadata related to the photos
     /// </summary>
     /// <param name="postId">The id of the post</param>
-    /// <returns>The photos as form files</returns>
+    /// <returns>a list of metadata objects</returns>
     [Authorize]
     [HttpGet("{postId:int}/images")]
-    public async Task<ActionResult<List<PhotoFile>>> GetPostPhotos(int postId)
+    public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
@@ -166,31 +161,52 @@ public class PostController : ControllerBase
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
 
-        List<PhotoFile> photos = [];
-
         var post = await _postService.GetPostAsync(postId);
-
         if (post == null)
         {
             return NotFound("Post not found");
         }
 
-        foreach (int photoId in post.PhotoIds ?? [])
+        List<PhotoMetadataResponse> photos = [];
+        foreach(int photoId in post.PhotoIds ?? [])
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-
-            var responseFile = new PhotoFile
+            photos.Add(new PhotoMetadataResponse
             {
-                FileName = "photo",
-                ContentType = file.MimeType,
-                Base64String = Convert.ToBase64String(bytes),
-            };
-            photos.Add(responseFile);
-
+                PhotoId = photoId,
+                FileName = file.OriginalFileName ?? $"photo-{photoId}",
+                MimeType = file.MimeType
+            });
         }
 
         return Ok(photos);
+    }
+
+    /// <summary>
+    /// Streams a single photo back with correct types
+    /// </summary>
+    /// <param name="postId">post Id</param>
+    /// <param name="photoId">id of photo</param>
+    /// <returns>an image file</returns>
+    [Authorize]
+    [HttpGet("{postId:int}/images/{photoId:int}")]
+    public async Task<IActionResult> GetPostPhoto(int postId, int photoId)
+    {
+        var post = await _postService.GetPostAsync(postId);
+        if (post == null)
+        {
+            return NotFound("Post not found");
+        }
+
+        if (post.PhotoIds is null || !post.PhotoIds.Contains(photoId))
+        {
+            return NotFound("Photo not found on this post.");
+        }
+
+        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+        byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+
+        return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
     }
 
     /// <summary>
@@ -224,8 +240,6 @@ public class PostController : ControllerBase
 
         var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
 
-
-
         if (ownsPost == false)
         {
             return Unauthorized("You do not have authorisation to upload photos to this post!");
@@ -253,7 +267,6 @@ public class PostController : ControllerBase
         }
 
         await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
-
 
         return Ok(customFileIds);
     }
