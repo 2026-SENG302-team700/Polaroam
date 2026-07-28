@@ -1,11 +1,10 @@
-using System.Text;
 using Microsoft.AspNetCore.Http;
-
-namespace SENG302.Api.Tests.Integration.Services;
 using SENG302.Api.Services;
 using Shouldly;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+
+namespace SENG302.Api.Tests.Integration.Services;
 
 public class FileServiceTests : BaseIntegrationTestFixture
 {
