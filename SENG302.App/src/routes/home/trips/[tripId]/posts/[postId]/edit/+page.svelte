@@ -136,8 +136,7 @@
                 },
             );
             const data = await response.json();
-
-            console.log(`data: ${JSON.stringify(data)}`);
+            
 
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";
