@@ -59,8 +59,8 @@ public class ImageTypeValidationTests
     }
 
     [Theory] 
-        [InlineData(10000000)] // at 10MB
-        [InlineData(5000000)] // below 10MB
+    [InlineData(10000000)] // at 10MB
+    [InlineData(5000000)] // below 10MB
     public async Task IsValidFilesize_AtOrUnderLimit_Success(long fileSize)
     {
         var file = GetMockFile("test", new byte[fileSize]);
@@ -74,12 +74,12 @@ public class ImageTypeValidationTests
         ImageValidationTools.IsValidFilesize(file).ShouldBeFalse();
     }
     
-        [Fact]
-        public async Task IsValidMimeType_ValidMimeNoSpoof_Success()
-        {
-            var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png");
-            ImageValidationTools.IsValidMimeType(file).ShouldBeTrue();
-        }
+    [Fact] 
+    public async Task IsValidMimeType_ValidMimeNoSpoof_Success()
+    {
+        var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png"); 
+        ImageValidationTools.IsValidMimeType(file).ShouldBeTrue();
+    }
 
     [Fact]
     public async Task IsValidMimeType_ValidMimeInvalidSpoof_Fail()

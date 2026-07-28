@@ -8,7 +8,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using Shouldly;
-using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
