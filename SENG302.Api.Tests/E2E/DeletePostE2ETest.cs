@@ -68,6 +68,7 @@ public class DeletePostE2ETest : E2ETestFixture
             Content = "Content that should be gone",
             Date = DateTimeOffset.Now.AddDays(-1),
             OsmId = OsmId,
+            LocationName = "Christchurch",
             PhotoIds = [],
             creationTime = DateTimeOffset.Now
         };

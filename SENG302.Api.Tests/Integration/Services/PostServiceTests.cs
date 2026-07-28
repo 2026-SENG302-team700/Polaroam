@@ -72,6 +72,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "User 1 post",
             Content = "desc",
             OsmId = 292806332,
+            LocationName = "Christchurch",
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -81,6 +82,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "User 2 post",
             Content = "desc",
             OsmId = 292806332,
+            LocationName = "Christchurch",
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         });
@@ -126,6 +128,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Fetch me",
             Content = "desc",
             OsmId = 292806332,
+            LocationName = "Christchurch",
             Date = DateTime.UtcNow,
             creationTime = DateTimeOffset.UtcNow
         };
@@ -251,7 +254,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
-                OsmId = 123,
+                OsmId = 1, 
+                LocationName = "Christchurch",
                 Date = DateTimeOffset.Now.AddDays(-1),
                 PhotoIds = []
             };

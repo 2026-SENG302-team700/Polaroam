@@ -9,6 +9,7 @@
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -16,7 +17,7 @@
 
     let { params } = $props();
     let postId = params.postId;
-
+    
     let displayName = $state("");
     let locationName = $state("");
 
@@ -31,15 +32,19 @@
         osmId: 0,
         creationTime: "9999-12-31",
     });
-
-    let photos: PostPhotoData[] = $state([]);
+    
+    let photos: File[] = $state([]);
 
     onMount(() => {
         fetchPost();
         fetchDisplayName();
     });
 
+    /**
+     * Fetches the location name from the backend for an osmId
+     */
     async function fetchLocationName() {
+        
         try {
             loading = true;
             const response = await fetchWithCsrf(
@@ -81,7 +86,7 @@
 
     /**
      * Converts a Base64String representing an image from backend into a image blob which can then be transformed
-     * into a image url
+     * into an image url
      * @param base64
      * @param contentType
      * @constructor
@@ -103,23 +108,36 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/images` as any),
-                {
+                resolve(`/api/post/${postId}/images` as any), {
                     method: "GET",
                     credentials: "include",
                 },
             );
-            let responsePhotos = await response.json();
-
             if (!response.ok) {
                 error = (await response.text()) || "Failed to fetch images.";
+                return;
             }
 
-            responsePhotos.map((p) => {
-                let blob = ConvertBase64ToBlob(p.base64String, p.contentType);
-                let url = URL.createObjectURL(blob);
-                photos.push({ imageSource: url });
-            });
+            const metadata: {
+                photoId: number;
+                fileName: string;
+                mimeType: string;
+            }[] = await response.json();
+
+            photos = await Promise.all(
+                metadata.map(async (meta) => {
+                    const res = await fetchWithCsrf(
+                        resolve(`/api/post/${postId}/images/${meta.photoId}` as any),
+                        {
+                            method: "GET",
+                            credentials: "include"
+                        }
+                    );
+                    const blob = await res.blob();
+                    return new File([blob], meta.fileName, { type: meta.mimeType });
+                }),
+            );
+
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -195,44 +213,38 @@
     }
 </script>
 
-<div class="container trip-page-content">
-    <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
-    <EditButton
-        path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
-    />
-    <DeleteButton deleteAction={showConfirmationModal} />
-    <ErrorDisplay errors={[error]} />
-    <div class="trip-page-header">
-        <div class="post-head-grid">
-            <h1>{postObject.title}</h1>
+<div class="container trip-page-content d-flex justify-content-center align-items-center">
+    <div class="w-100" style="max-width: 600px;">
+        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
+        <EditButton
+            path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
+        />
+        <DeleteButton deleteAction={showConfirmationModal} />
+        <ErrorDisplay errors={[error]} />
+        <div class="trip-page-header">
+            <div class="post-head-grid">
+                <h1>{postObject.title}</h1>
 
-            <p class="date-object">
-                <i>
-                    <strong>Location:</strong>{`  ${locationName}`}
-                </i>
-            </p>
+                <p class="date-object">
+                    <i>
+                        <strong>Location:</strong>{`  ${locationName}`}
+                    </i>
+                </p>
 
-            <p class="date-object">
-                <strong>Date:</strong>{`  ${formatDate(postObject.date)}`}
-            </p>
-            <p>Posted by <i>{displayName}</i></p>
-            {#if postObject.content.length > 0}
-                <span>{postObject.content}</span>
+                <p class="date-object">
+                    <strong>Date:</strong>{`  ${formatDate(postObject.date)}`}
+                </p>
+                <p>Posted by <i>{displayName}</i></p>
+                {#if postObject.content.length > 0}
+                    <span>{postObject.content}</span>
+                {/if}
+            </div>
+        </div>
+        <div class="container-fluid photo-grid mt-5" style="width: 100%;">
+            {#if photos.length > 0}
+                <ImageDisplay images={photos} />
             {/if}
         </div>
-    </div>
-    <div class="container-fluid photo-grid mt-5" style="width: 100%;">
-        {#if photos.length > 0}
-            {#each Array(Math.floor(photos.length / 3) + 1) as _, i}
-                {#each photos.slice(i * 3, i * 3 + 3) as photo}
-                    <img
-                        class="post-img"
-                        alt="profile"
-                        src={photo.imageSource}
-                    />
-                {/each}
-            {/each}
-        {/if}
     </div>
 </div>
 
@@ -257,15 +269,8 @@
 
     .photo-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 600px));
         gap: 0.75rem;
-        width: 60%;
     }
 
-    .post-img {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        border-radius: 8px;
-    }
 </style>

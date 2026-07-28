@@ -52,7 +52,8 @@ public class U7005DeletePost
             TripId = trip.Id,
             Title = "Post to delete",
             Content = "Post content",
-            OsmId = 123,
+            OsmId = 1, 
+            LocationName = "Christchurch",
             PhotoIds = [],
             Date = DateTimeOffset.Now.AddDays(-1),
             creationTime = DateTimeOffset.Now

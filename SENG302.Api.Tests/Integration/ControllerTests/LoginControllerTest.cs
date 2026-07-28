@@ -5,10 +5,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 using Microsoft.AspNetCore.Identity;
-using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
-using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 

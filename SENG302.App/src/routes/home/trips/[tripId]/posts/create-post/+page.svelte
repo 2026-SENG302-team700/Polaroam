@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { uploadPhotos } from "$lib/posts/images";
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
@@ -47,7 +48,7 @@
     let errors = $state<PostFormErrors>(emptyErrors());
     
     let loading = $state(false);
-    const tripId = page.params.tripId!;
+    const tripId = page.params.tripId;
 
     let title = $state("");
     let date = $state(new Date());
@@ -60,7 +61,7 @@
         displayName: "",
     });
     let content = $state(" ");
-    let files: File[] = $state([]);
+    let files: File[] | null | undefined = $state([]);
     let noContentAllowed = $state(false);
     
     let showConfirmationModal = $state(false);
@@ -122,6 +123,22 @@
             noContentAllowed = false;
         }
     }
+
+    /**
+     * Converts a local date to a date only string without UTC timezone shifting
+     * @param date
+     */
+    function serialiseLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}T00:00:00`;
+    }
 </script>
 
 <div class="container d-flex justify-content-center align-items-center">
@@ -147,7 +164,7 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files}/>
+        <ImageDisplay images={files} />
         <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">

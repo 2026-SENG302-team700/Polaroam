@@ -5,6 +5,7 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Requests;
 
+
 namespace SENG302.Api.Services;
 
 public interface IPostService
@@ -169,14 +170,8 @@ public class PostService : IPostService
     public async Task<Post?> GetPostAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var PostItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
-        if (PostItem == null)
-        {
-            return null;
-        }
-
-        return PostItem;
+        var postItem = await context.Posts.FirstOrDefaultAsync(t => t.PostId == id);
+        return postItem;
     }
 
     /// <summary>
@@ -211,6 +206,20 @@ public class PostService : IPostService
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
+
+        if (postUpdates.OsmId != post.OsmId)
+        {
+            var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            if (location == null)
+            {
+                throw new MultipleValidationListException(new Dictionary<string, List<string>>
+                {
+                    ["location"] = ["This isn't a valid location"]
+                });
+            }
+            post.OsmId = postUpdates.OsmId;
+            post.LocationName = location.name;
+        }
 
         context.Posts.Update(post);
         await context.SaveChangesAsync();

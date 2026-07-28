@@ -6,7 +6,7 @@
     let {
         filesList = $bindable<File[]>([]),
         error = ""
-    }: { filesList: File[]; error: string } = $props();
+    }: { filesList: File[] | null | undefined; error: string } = $props();
 
     /**
      * Added the selected files to the given file list
