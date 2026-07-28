@@ -8,11 +8,12 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
-    
+    import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -22,6 +23,9 @@
         photos: string[];
     }
 
+    /**
+     * returns an empty PostFormErrors object
+     */
     function emptyErrors(): PostFormErrors {
         return {
             title: [],
@@ -33,6 +37,8 @@
         };
     }
 
+    let errors = $state<PostFormErrors>(emptyErrors());
+
     /**
      * refreshes the PostFormErrors object
      */
@@ -43,8 +49,8 @@
     let errors = $state<PostFormErrors>(emptyErrors());
     
     let loading = $state(false);
-    const tripId = page.params.tripId;
-    
+    const tripId = page.params.tripId!;
+
     let title = $state("");
     let date = $state(new Date());
     let searchQuery = $state("");
@@ -60,6 +66,45 @@
     let noContentAllowed = $state(false);
     
     let showConfirmationModal = $state(false);
+
+    /**
+     * Function for uploading photos to the backend for a particular post
+     * @param postId Id of the post
+     */
+    async function uploadPhotos(postId: number) {
+        if (files != null) {
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < files.length; i++) {
+                    formData.append("files", files[i]);
+                    formData.append("postId", postId.toString());
+                    formData.append("tripId", tripId.toString());
+                }
+
+                const response = await fetchWithCsrf(
+                    resolve(`/api/post/images` as any),
+                    {
+                        method: "PUT",
+                        body: formData,
+                    },
+                );
+
+                let customImageIds: String[];
+                if (!response.ok) {
+                    if (response.status == 500) {
+                        errors.photos = "Failed to upload picture";
+                    } else {
+                        errors.photos = await response.text();
+                    }
+                } else {
+                    customImageIds = await response.json();
+                    goto(resolve(`/home/trips/${tripId}`));;
+                }
+            } catch (err) {
+                errors.photos = (err as Error).message;
+            }
+        }
+    }
 
     /**
      * Function for creating a post
@@ -94,10 +139,10 @@
 
             if (!response.ok) {
                 errors.title = data.errors?.title ?? [];
-                errors.date = data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
+                errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
-                errors.generic = data.message;
+                errors.generic = data.message ?? "";
                 errors.photos = data.errors?.photos ?? [];
                 if (
                     errors.content.length === 1 &&
@@ -119,12 +164,21 @@
             loading = false;
             noContentAllowed = false;
         }
-        
     }
 </script>
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
+        <div class="form-header">
+            <ConfirmCancelButton
+                path={`/home/trips/${tripId}`}
+                option1Text="Back to your Trip"
+                option2Text="Stay on This Page"
+            />
+
+            <h1 class="text-center mb-4">Create Post</h1>
+        </div>
+
         <TitleForm bind:name={title} errors={errors.title} {loading} />
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}

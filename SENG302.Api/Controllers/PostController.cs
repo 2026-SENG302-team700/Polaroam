@@ -2,14 +2,12 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
+using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using SENG302.Api.Resources.Helpers;
-using System.Dynamic;
-using Org.BouncyCastle.Bcpg;
+using Org.BouncyCastle.Bcpg.Sig;
 using SENG302.Api.Models.Responses;
-using SQLitePCL;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -178,8 +176,8 @@ public class PostController : ControllerBase
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-            
-            var responseFile =  new PhotoFile
+
+            var responseFile = new PhotoFile
             {
                 FileName = "photo",
                 ContentType = file.MimeType,
@@ -267,6 +265,47 @@ public class PostController : ControllerBase
             return NotFound("User not found");
         }
         return Ok(user.DisplayName);
+    }
+
+    /// <summary>
+    /// Endpoint for removing a specific post by its id.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeletePost(int id)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var post = await _postService.GetPostAsync(id);
+
+        if (post == null)
+        {
+            return NotFound("Post does not exist");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _postService.DeletePostByIdAsync(id);
+            return NoContent();
+        }
+        catch (ArgumentException exception)
+        {
+            return NotFound(exception.Message);
+        }
     }
 
 }
