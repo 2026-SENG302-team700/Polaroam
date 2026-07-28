@@ -254,7 +254,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
-                OsmId = 123,
+                OsmId = 1, 
+                LocationName = "Christchurch",
                 Date = DateTimeOffset.Now.AddDays(-1),
                 PhotoIds = []
             };

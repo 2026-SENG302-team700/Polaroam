@@ -62,7 +62,8 @@ public class PostControllerUnitTests
             TripId = 20,
             Title = "Post to delete",
             Content = "",
-            OsmId = 123,
+            OsmId = 1, 
+            LocationName = "Christchurch",
             PhotoIds = []
         };
 

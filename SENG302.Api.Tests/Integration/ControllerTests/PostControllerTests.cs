@@ -518,7 +518,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Delete",
                 Content = "Content",
-                OsmId = 123,
+                OsmId = 1, 
+                LocationName = "Christchurch",
                 PhotoIds = [],
                 Date = DateTimeOffset.Now.AddDays(-1)
             };
@@ -574,7 +575,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Dont delete",
                 Content = "Content",
-                OsmId = 123,
+                OsmId = 1, 
+                LocationName = "Christchurch",
                 PhotoIds = [],
                 Date = DateTimeOffset.Now.AddDays(-1)
             };
