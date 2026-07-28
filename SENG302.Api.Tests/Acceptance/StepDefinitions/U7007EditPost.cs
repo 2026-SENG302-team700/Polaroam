@@ -65,20 +65,20 @@ public class U7007EditPost
             EndDate = new DateTime(2026, 7, 10),
             UserId = 1
         });
-        
+
         context.Posts.Add(new Post
-            {
-                PostId = 1, 
-                TripId = 1, 
-                Title = "My post", 
-                Content = "", 
-                PhotoIds = [], 
-                OsmId = 1, 
-                LocationName = "Christchurch"
+        {
+            PostId = 1,
+            TripId = 1,
+            Title = "My post",
+            Content = "",
+            PhotoIds = [],
+            OsmId = 1,
+            LocationName = "Christchurch"
         });
         await context.SaveChangesAsync();
     }
-    
+
     [Given(
         @"I am on the edit post form page And I enter a valid title, location, date, images and content")]
     public async Task ValidTripAttributes()
@@ -89,7 +89,33 @@ public class U7007EditPost
         _content = "Updated content";
         _date = DateTime.Parse("2025-01-07");
     }
-    
+
+    [Given(
+      "I am editing an existing post and enter location text without selecting a suggested location"
+  )]
+    public async Task GivenIEnterInvalidLocationWhileEditingPost()
+    {
+        await SetupUserTripAndPost();
+
+        _title = "Valid updated title";
+        _content = "Valid updated content";
+        _date = DateTime.Today.AddDays(-1);
+
+        // Text was entered without selecting a suggested location.
+        _location = "Made up location";
+        _osmId = 0;
+    }
+
+    [Then("I see the edit post error message {string}")]
+    public async Task ThenISeeTheEditPostErrorMessage(string expectedMessage)
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var responseBody = await _lastResponse.Content.ReadAsStringAsync();
+        responseBody.ShouldContain(expectedMessage);
+    }
+
     [When(@"I click 'Update Post'")]
     public async Task UpdatePost()
     {
@@ -104,7 +130,7 @@ public class U7007EditPost
         };
         _lastResponse = await _fixture.HttpClient.PutAsJsonAsync("api/post/1", postRequest);
     }
-    
+
     [Then(@"the post is updated")]
     public async Task CheckPostIsPersisted()
     {
@@ -116,5 +142,20 @@ public class U7007EditPost
         post.Title.ShouldBe(_title);
         post.Content.ShouldBe(_content);
         post.Date.ShouldBe(_date);
+    }
+
+    [Then("the post is not updated")]
+    public async Task ThenThePostIsNotUpdated()
+    {
+        await using var context =
+            await _fixture.DbContextFactory.CreateDbContextAsync();
+
+        var post = await context.Posts.FindAsync(1);
+
+        post.ShouldNotBeNull();
+        post.Title.ShouldBe("My post");
+        post.Content.ShouldBe("");
+        post.OsmId.ShouldBe(1);
+        post.LocationName.ShouldBe("Christchurch");
     }
 }
