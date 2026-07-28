@@ -1,6 +1,7 @@
 <script>
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
+    import { formatDate } from "$lib/datepicker/formatDate";
 
     let { post } = $props();
 
@@ -22,7 +23,7 @@
 >
     <div class="card-body">
         <h5 class="card-title fw-bold">{post.title}</h5>
-        <h6 class="card-subtitle mb-2 text-muted">{post.date}</h6>
+        <h6 class="card-subtitle mb-2 text-muted">{formatDate(post.date)}</h6>
         <p class="card-text">{post.content}</p>
     </div>
 </div>
