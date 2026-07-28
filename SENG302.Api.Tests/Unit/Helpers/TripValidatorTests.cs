@@ -44,7 +44,7 @@ public class TripValidatorTests
     {
         var errors = TripValidator.ValidateTitle("a!");
         errors["title"].Count.ShouldBe(2);
-        errors["title"].ShouldContain("Trip title must be between 3 and 128 characters long");
+        errors["title"].ShouldContain("Trip title is required and must be between 3 and 128 characters long");
         errors["title"]
             .ShouldContain(
                 "Trip title cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
@@ -55,7 +55,7 @@ public class TripValidatorTests
     {
         var errors = TripValidator.ValidateTitle("");
         errors["title"].Count.ShouldBe(1);
-        errors["title"].ShouldContain("Trip title is required");
+        errors["title"].ShouldContain("Trip title is required and must be between 3 and 128 characters long");
     }
 
     [Fact]

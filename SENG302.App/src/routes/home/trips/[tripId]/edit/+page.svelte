@@ -55,7 +55,7 @@
             loading = true;
 
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.slug}` as any),
+                resolve(`/api/trip/${params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -109,8 +109,10 @@
             const data = await response.json();
             if (!response.ok) {
                 errors.date = data.errors?.dates?.join(" ") ?? "";
+                errors.title = data.errors?.title ?? "";
+                errors.description = data.errors?.description ?? "";
 
-                if (!errors.date) {
+                if (data.generic) {
                     errors.generic =
                         typeof data === "string"
                             ? data
