@@ -12,8 +12,8 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
-    
-    let deletionModalShown = $state(false);
+
+    let cancelConfirmModalShown = $state(false);
 
     type PostFormErrors = {
         title: string[];
@@ -179,7 +179,7 @@
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
         <div class="form-header">
-            <button type="button" class="btn btn-secondary" onclick={() => {deletionModalShown = true}}
+            <button type="button" class="btn btn-secondary" onclick={() => {cancelConfirmModalShown = true}}
                 >Cancel</button>
 
             <h1 class="text-center mb-4">Create Post</h1>
@@ -207,12 +207,12 @@
 </div>
 
 <ConfirmationModal
-    bind:show={deletionModalShown}
+    bind:show={cancelConfirmModalShown}
     message="If you leave this page all progress will be lost"
     option1Text="Back to your Trip"
     option2Text="Stay on This Page"
     onOption1={() => goto(resolve(`/home/trips/${tripId}`))}
-    onOption2={() => {deletionModalShown = false;}}
+    onOption2={() => {cancelConfirmModalShown = false;}}
 />
 
 <ConfirmationModal
