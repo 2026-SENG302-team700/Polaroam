@@ -135,7 +135,7 @@ deploy-staging:
     - rm -rf /home/gitlab-runner/staging/ || true
     - mkdir -p /home/gitlab-runner/staging/
     - mv /home/gitlab-runner/UserUploads /home/gitlab-runner/staging/UserUploads # copy them back in
-    - chown -R gitlab-runner:gitlab-runner home/gitlab-runner/staging/UserUploads
+    - chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/staging/UserUploads
     - ls /home/gitlab-runner/staging/UserUploads # check to ensure files are copied over correctly
     - cp -r ./SENG302.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/staging/
     - cp runner-scripts/staging.sh /home/gitlab-runner/staging.sh
