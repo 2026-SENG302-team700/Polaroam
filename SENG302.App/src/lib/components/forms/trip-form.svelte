@@ -56,7 +56,7 @@
 
         <div class="date-picker-wrapper">
             <div class="date-field">
-                <label for="trip-start-date">From</label>
+                <label for="trip-start-date">Start Date</label>
                 <Datepicker
                         bind:value={startDate}
                         disabled={loading}
@@ -64,7 +64,7 @@
                 />
             </div>
             <div class="date-field">
-                <label for="trip-end-date">To</label>
+                <label for="trip-end-date">End Date</label>
                 <Datepicker
                         bind:value={endDate}
                         disabled={loading}
