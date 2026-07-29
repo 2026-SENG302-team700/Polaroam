@@ -166,8 +166,9 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay bind:images={files} letDelete={true} errors="{errors.photos}"/>
-        <ImagePicker bind:filesList={files} errors={errors.photos} />
+        <ImageDisplay bind:images={files} letDelete={true} errors="{errors.photos}">
+            <ImagePicker bind:filesList={files} errors={errors.photos} />
+        </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

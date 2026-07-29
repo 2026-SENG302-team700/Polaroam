@@ -30,9 +30,6 @@
           image = newImage
        }
     }
-    
-    
-
 </script>
 
 <svelte:window onkeydown={(e) => {
@@ -40,7 +37,9 @@
             moveToLeftImage()
          } else if (e.key === "ArrowRight" && images !== null && index!==images.length-1) {
             moveToRightImage()
-            }
+         } else if (e.key === "Escape") {
+            enlarged = false
+         }
       }
    }
 />
