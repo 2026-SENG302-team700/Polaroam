@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import ClickableImage from "./clickable-image.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
@@ -8,11 +9,13 @@
         letDelete = false,
         ondelete,
         errors = [],
-    }: { 
+        children,
+    }: {
         images?: File[] | null;
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
+        children?: Snippet;
     } = $props();
 
     let confirmationModalShown = $state(false);
@@ -65,10 +68,20 @@
                 {/if}
             </div>
         </div>
-    {:else}
-        <p>No image selected</p>
     {/each}
+    {#if images && images.length > 0}
+        <div class="col">
+            <div class="picker-tile">
+                {@render children?.()}
+            </div>
+        </div>
+    {/if}
 </div>
+
+{#if !images || images.length === 0}
+    <p>No image selected</p>
+    {@render children?.()}
+{/if}
 
 <ConfirmationModal
         bind:show={confirmationModalShown}
@@ -83,5 +96,22 @@
     .has-error :global(.img-thumbnail) {
         border-color: var(--bs-danger, #dc3545);
         border-width: 2px;
+    }
+
+    .picker-tile {
+        width: 100%;
+        aspect-ratio: 1;
+        display: flex;
+    }
+
+    .picker-tile :global(> div) {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .picker-tile :global(button) {
+        flex: 1;
+        font-size: 1.5rem;
     }
 </style>
