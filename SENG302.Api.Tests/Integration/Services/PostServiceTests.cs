@@ -108,7 +108,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateTime.UtcNow.AddDays(-2),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
 
         post.Title.ShouldBe("New post");
         post.TripId.ShouldBe(1);
@@ -169,7 +169,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateTime.UtcNow.AddDays(-2),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
 
         List<int> photoIds = [1, 2];
         var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
@@ -195,7 +195,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request)
+                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
             );
 
         exception.Errors["location"]
@@ -224,7 +224,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request)
+                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
             );
 
         exception.Errors.ShouldContainKey("title");

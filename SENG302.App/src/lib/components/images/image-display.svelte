@@ -6,7 +6,14 @@
     let {
         images = $bindable([]),
         letDelete = false,
-    }: { images?: File[] | null; letDelete?: boolean } = $props();
+        ondelete,
+        errors = [],
+    }: { 
+        images?: File[] | null;
+        letDelete?: boolean
+        ondelete?: (index: number) => void
+        errors?: string[] 
+    } = $props();
 
     let confirmationModalShown = $state(false);
     let pendingDeleteIndex: number | null = $state(null);
@@ -31,6 +38,13 @@
         }
         confirmationModalShown = false;
     }
+    
+    /**
+     * Checks whether a given image has a validation error associated with it
+     */
+    function hasError(image: File): boolean {
+        return errors.some((error) => error.startsWith(`${image.name}:`));
+    }
 </script>
 
 <div
@@ -38,7 +52,7 @@
 >
     {#each images ?? [] as image, index}
         <div class="col">
-            <div class="position-relative">
+            <div class="position-relative" class:has-error={hasError(image)}>
                 <ClickableImage {image} {index} {images} />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">
@@ -54,6 +68,13 @@
         <p>No image selected</p>
     {/each}
 </div>
+
+<style>
+    .has-error :global(.img-thumbnail) {
+        border-color: var(--bs-danger, #dc3545);
+        border-width: 2px;
+    }
+</style>
 
 <ConfirmationModal
     bind:show={confirmationModalShown}

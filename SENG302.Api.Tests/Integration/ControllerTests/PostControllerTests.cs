@@ -3,10 +3,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
+using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using Shouldly;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.DataAccess;
 
@@ -27,7 +28,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             name = "Auckland, New Zealand"
         });
     }
-
+    
     /// <summary>
     /// Sets up a user, trip and post for testing.
     /// All Ids are set to 1.
@@ -61,17 +62,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         SetupGeoMock();
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("name"), "Title");
+        content.Add(new StringContent("test"), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
 
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
-        {
-            TripId = 1,
-            Title = "name",
-            Content = "test",
-            creationTime = DateTimeOffset.UtcNow,
-            OsmId = 1,
-            LocationName = "Christchurch",
-            Date = DateTime.Now
-        });
+        var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -223,14 +221,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         SetupGeoMock();
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
-        {
-            TripId = 1,
-            Title = "name",
-            Content = "test",
-            OsmId = 1,
-            Date = DateTime.Now,
-        });
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("name"), "Title");
+        content.Add(new StringContent("test"), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
+
+        var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -253,15 +251,15 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         SetupGeoMock();
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
-        {
-            TripId = 1,
-            Title = "name",
-            Content = "test",
-            OsmId = 1,
-            Date = DateTime.Now,
-            NoContentAllowed = true
-        });
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("name"), "Title");
+        content.Add(new StringContent("test"), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
+        content.Add(new StringContent("true"), "NoContentAllowed");
+
+        var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -292,16 +290,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
             await context.SaveChangesAsync();
         }
 
-        var request = new NewPostRequest
-        {
-            TripId = 1,
-            Title = "ab",
-            Content = "Some content",
-            OsmId = 1,
-            Date = new DateTime(2026, 7, 5)
-        };
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("ab"), "Title");
+        content.Add(new StringContent("Some content"), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(new DateTime(2026, 7, 5).ToString("o")), "Date");
 
-        var response = await HttpClient.PostAsJsonAsync("/api/post", request);
+        var response = await HttpClient.PostAsync("/api/post", content);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
@@ -316,7 +312,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         postExists.ShouldBeFalse();
     }
-
+    
     [Fact]
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
@@ -344,6 +340,163 @@ public class PostControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         photoIds.ShouldBe("[1]");
 
+    }
+
+    private MultipartFormDataContent BuildPostForm(
+        long osmId = 1,
+        IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("Valid title"), "Title");
+        content.Add(new StringContent("Valid content"), "Content");
+        content.Add(new StringContent(osmId.ToString()), "osmId");
+        content.Add(new StringContent(DateTimeOffset.Now.ToString("o")), "Date");
+
+        foreach (var (bytes, fileName, contentType) in photos ?? [])
+        {
+            var fileContent = new ByteArrayContent(bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "files", fileName);
+        }
+
+        return content;
+    }
+
+    [Fact]
+    public async Task CreatePost_ValidPhotos_Ok()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        using var content = BuildPostForm(photos: [(pandaBytes, "panda.webp", "image/webp")]);
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var post = await response.Content.ReadFromJsonAsync<Post>();
+        post!.PhotoIds!.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task CreatePost_MultipleValidPhotos_Ok()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
+
+        using var content = BuildPostForm(photos:
+        [
+            (pandaBytes, "panda.webp", "image/webp"),
+            (pngBytes, "square.png", "image/png")
+        ]);
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var post = await response.Content.ReadFromJsonAsync<Post>();
+        post!.PhotoIds!.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task CreatePost_NoPhotos_Ok()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+
+        using var content = BuildPostForm();
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var post = await response.Content.ReadFromJsonAsync<Post>();
+        post!.PhotoIds.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task CreatePost_OneInvalidPhotoOthersOk_BadRequestPostNotCreated()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+            await context.SaveChangesAsync();
+        }
+
+        SetupGeoMock();
+
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var invalidBytes = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+
+        using var content = BuildPostForm(photos:
+        [
+            (pandaBytes, "panda.webp", "image/webp"),
+            (invalidBytes, "notreal.png", "image/png")
+        ]);
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var errors = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
+        errors!.Errors["photos"].ShouldContain(e => e.Contains("notreal.png"));
+
+        await using var context2 = DbContextFactory.CreateDbContext();
+        (await context2.Posts.AnyAsync()).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task CreatePost_Over10MBPhoto_BadRequest()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+
+        var oversizedBytes = new byte[10000001];
+
+        using var content = BuildPostForm(photos: [(oversizedBytes, "huge.png", "image/png")]);
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreatePost_MultipleInvalidPhotos_BadRequestAllBadFilesListed()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+
+        var invalidBytesOne = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+        var invalidBytesTwo = new byte[] { 0xde, 0xad, 0xbe, 0xef };
+
+        using var content = BuildPostForm(photos:
+        [
+            (invalidBytesOne, "bad1.png", "image/png"),
+            (invalidBytesTwo, "bad2.jpeg", "image/jpeg")
+        ]);
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var errors = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
+        errors!.Errors["photos"].Count.ShouldBe(2);
+        errors.Errors["photos"].ShouldContain(e => e.Contains("bad1.png"));
+        errors.Errors["photos"].ShouldContain(e => e.Contains("bad2.jpeg"));
     }
 
     public async Task<MultipartContent> CreateImageContent()
@@ -386,27 +539,27 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetUserNameByPostId_ValidRequest_ReturnsDisplayName()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post/1/user");
-
+        
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var message = await response.Content.ReadAsStringAsync();
         message.ShouldContain("Test user");
     }
-
+    
     [Fact]
     public async Task GetUserNameByPostId_InvalidPostId_ReturnsNotFoundError()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post/2/user");
@@ -423,14 +576,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
-
+        
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-
+        
         var response = await HttpClient.GetAsync("/api/post/1/images");
-
+        
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var photos = await response.Content.ReadFromJsonAsync<List<PhotoMetadataResponse>>();
 
@@ -439,22 +592,22 @@ public class PostControllerTests : BaseIntegrationTestFixture
         photos.First().FileName.ShouldBe("panda.webp");
 
     }
-
+    
     [Fact]
     public async Task GetPostPhotoMetadata_InvalidPostId_ReturnsNotFound()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine" });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine"});
         await context.SaveChangesAsync();
-
+        
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-
+        
         var response = await HttpClient.GetAsync("/api/post/3/images");
-
+        
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var photos = await response.Content.ReadAsStringAsync();
         photos.ShouldContain("Post not found");
@@ -464,22 +617,22 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPostPhoto_ValidPostId_ReturnsPhoto()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my home" });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my home" });
         await context.SaveChangesAsync();
-
+        
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-
+        
         var response = await HttpClient.GetAsync("/api/post/1/images/1");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var responseBytes = await response.Content.ReadAsByteArrayAsync();
-
+    
         var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
-
+        
         responseBytes.SequenceEqual(fileBytes).ShouldBeTrue();
     }
 
@@ -487,17 +640,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPostPhoto_PhotoIdIsNull_ReturnsNotFound()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "my basement" });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "my basement"});
         await context.SaveChangesAsync();
-
+        
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-
+        
         var response = await HttpClient.GetAsync("/api/post/1/images/1");
-
+        
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var photos = await response.Content.ReadAsStringAsync();
         photos.ShouldContain("Photo not found on this post.");
@@ -507,17 +660,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPostPhoto_PhotoIdIsNotPresent_ReturnsNotFound()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "a mysterious place" });
+        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "a mysterious place" });
         await context.SaveChangesAsync();
-
+        
         var content = await CreateImageContent();
         await HttpClient.PutAsync("/api/post/images", content);
-
+        
         var response = await HttpClient.GetAsync("/api/post/1/images/5");
-
+        
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var photos = await response.Content.ReadAsStringAsync();
         photos.ShouldContain("Photo not found on this post.");
@@ -527,7 +680,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task UpdatePost_AllFields_UpdateSuccessful()
     {
         SetupUserTripAndPost();
-
+        
         var updateRequest = new UpdatePostRequest
         {
             Id = 1,
@@ -539,14 +692,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
         var response = await HttpClient.PutAsJsonAsync("/api/post/1", updateRequest);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-
+        
         await using var context = DbContextFactory.CreateDbContext();
         var updatedPost = await context.Posts.FirstOrDefaultAsync(p => p.PostId == 1);
         updatedPost.ShouldNotBeNull();
         updatedPost.Title.ShouldBe(updateRequest.Title);
         updatedPost.Content.ShouldBe(updateRequest.Content);
     }
-
+    
     [Fact]
     public async Task DeletePost_IsOwner_ReturnsNoContentAndDeletesPost()
     {
@@ -578,7 +731,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Delete",
                 Content = "Content",
-                OsmId = 1,
+                OsmId = 1, 
                 LocationName = "Christchurch",
                 PhotoIds = [],
                 Date = DateTimeOffset.Now.AddDays(-1)
@@ -741,4 +894,3 @@ public class PostControllerTests : BaseIntegrationTestFixture
         post.LocationName.ShouldBe("Christchurch");
     }
 }
-

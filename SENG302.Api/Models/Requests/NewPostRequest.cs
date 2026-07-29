@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using SENG302.Api.Models.Interfaces;
-
 namespace SENG302.Api.Models.Entities;
 
 /// <summary>
@@ -12,6 +11,9 @@ public class NewPostRequest : IPostRequest
     public required int TripId { get; set; }
     public required string Title { get; set; }
     public required long OsmId { get; set; }
+    
+    [Required(AllowEmptyStrings = true)]
+    [DisplayFormat(ConvertEmptyStringToNull = false)] 
     public required string Content { get; set; }
     public DateTimeOffset? Date { get;
         set {
@@ -23,3 +25,5 @@ public class NewPostRequest : IPostRequest
     public bool DateSupplied { get; set; } = false;
     public bool NoContentAllowed { get; set; } = false;
 }
+
+
