@@ -114,7 +114,7 @@ public class U7004CreatePost
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
         form.Add(new StringContent("1"), "TripId");
-        form.Add(new StringContent(_date?.ToString("o") ?? string.Empty), "Date");
+        form.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? string.Empty), "Date");
 
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);

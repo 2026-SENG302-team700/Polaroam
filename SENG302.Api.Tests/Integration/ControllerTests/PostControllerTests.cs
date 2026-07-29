@@ -68,7 +68,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
+        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -166,7 +166,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             creationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
             LocationName = "Christchurch",
-            Date = DateTime.Now.AddDays(1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(1))
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -227,7 +227,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
+        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -257,7 +257,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Now.ToString("o")), "Date");
+        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
         content.Add(new StringContent("true"), "NoContentAllowed");
 
         var message = await HttpClient.PostAsync("/api/post", content);
@@ -296,7 +296,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("ab"), "Title");
         content.Add(new StringContent("Some content"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(new DateTime(2026, 7, 5).ToString("o")), "Date");
+        content.Add(new StringContent(new DateOnly(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
 
         var response = await HttpClient.PostAsync("/api/post", content);
 
@@ -352,7 +352,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateTimeOffset.Now.ToString("o")), "Date");
+        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -687,7 +687,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateTimeOffset.Now.ToString("o")), "Date");
+        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -775,7 +775,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 OsmId = 1,
                 LocationName = "Christchurch",
                 PhotoIds = [],
-                Date = DateTimeOffset.Now.AddDays(-1)
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
             };
 
             context.Posts.Add(post);
@@ -832,7 +832,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 OsmId = 1,
                 LocationName = "Christchurch",
                 PhotoIds = [],
-                Date = DateTimeOffset.Now.AddDays(-1)
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
             };
 
             context.Posts.Add(post);
@@ -894,7 +894,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -966,7 +966,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -1024,7 +1024,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -1073,7 +1073,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -1102,4 +1102,3 @@ public class PostControllerTests : BaseIntegrationTestFixture
         errors.Errors["photos"].ShouldContain(e => e.Contains("bad2.jpeg"));
     }
 }
-

@@ -72,7 +72,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Content = "desc",
             OsmId = 292806332,
             LocationName = "Christchurch",
-            Date = DateTime.UtcNow,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow),
             creationTime = DateTimeOffset.UtcNow
         });
         context.Posts.Add(new Post
@@ -82,7 +82,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Content = "desc",
             OsmId = 292806332,
             LocationName = "Christchurch",
-            Date = DateTime.UtcNow,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow),
             creationTime = DateTimeOffset.UtcNow
         });
         await context.SaveChangesAsync();
@@ -105,7 +105,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New post",
             Content = "Some description",
             OsmId = 292806332,
-            Date = DateTime.UtcNow.AddDays(-2),
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
@@ -128,7 +128,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Content = "desc",
             OsmId = 292806332,
             LocationName = "Christchurch",
-            Date = DateTime.UtcNow,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow),
             creationTime = DateTimeOffset.UtcNow
         };
         context.Posts.Add(post);
@@ -166,7 +166,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New post",
             Content = "Some description",
             OsmId = 1,
-            Date = DateTime.UtcNow.AddDays(-2),
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
@@ -189,7 +189,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "Valid title",
             Content = "Valid content",
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
             OsmId = 0
         };
 
@@ -219,7 +219,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = new string('a', titleLength),
             Content = "SOme content",
             OsmId = 1,
-            Date = DateTime.UtcNow.AddDays(-2),
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
         };
 
         var exception =
@@ -255,7 +255,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateTimeOffset.Now.AddDays(-1),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
                 PhotoIds = []
             };
 
@@ -316,7 +316,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -331,7 +331,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "updated title",
             Content = "updated content",
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
             OsmId = 0
         };
 
@@ -370,7 +370,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -385,7 +385,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = new string('a', titleLength),
             Content = "updated content",
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
             OsmId = 0
         };
 
@@ -421,7 +421,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []

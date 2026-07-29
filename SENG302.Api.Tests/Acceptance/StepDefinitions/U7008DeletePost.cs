@@ -55,7 +55,7 @@ public class U7005DeletePost
             OsmId = 1, 
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
             creationTime = DateTimeOffset.Now
         };
 

@@ -70,7 +70,7 @@ public class PostControllerUnitTests
             Title = "Updated title",
             Content = "Updated content",
             OsmId = 123,
-            Date = DateTimeOffset.Now.AddDays(-1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
 
@@ -86,7 +86,7 @@ public class PostControllerUnitTests
             Title = "New post",
             Content = "Post content",
             OsmId = 123,
-            Date = DateTimeOffset.Now.AddDays(-1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
 
