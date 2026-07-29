@@ -34,7 +34,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     /// Sets up a user, trip and post for testing.
     /// All Ids are set to 1.
     /// </summary>
-    private async void SetupUserTripAndPost()
+    private async Task SetupUserTripAndPost()
     {
         await using var context = DbContextFactory.CreateDbContext();
         SetupGeoMock();
@@ -702,48 +702,43 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task UpdatePost_AllFields_UpdateSuccessful()
     {
-        SetupUserTripAndPost();
-
-        var updateRequest = new UpdatePostRequest
-        {
-            Id = 1,
-            UserId = 1,
-            Title = "Test trip",
-            Description = "",
-            StartDate = new DateTime(2026, 1, 1),
-            EndDate = new DateTime(2026, 1, 10)
-        });
-
-        var post = new Post
-        {
-            TripId = 1,
-            Title = "Title",
-            Content = "Content",
-            OsmId = 1,
-            LocationName = "Christchurch",
-            PhotoIds = [],
-            Date = DateTimeOffset.Now.AddDays(-1)
-        };
-        context.Posts.Add(post);
-        await context.SaveChangesAsync();
+        await SetupUserTripAndPost();
 
         SetupGeoMock();
 
-        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
-        var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
+        var pandaBytes =
+            await File.ReadAllBytesAsync("resources/panda.webp");
 
-        using var updateRequest = BuildUpdatePostForm(photos:
-        [
-            (pandaBytes, "panda.webp", "image/webp"),
-            (pngBytes, "square.png", "image/png")
-        ]);
-        var response = await HttpClient.PutAsync("/api/post/1", updateRequest);
+        var pngBytes = new byte[]
+        {
+          0x89, 0x50, 0x4e, 0x47,
+          0x0d, 0x0a, 0x1a, 0x0a
+        };
+
+        using var updateForm = BuildUpdatePostForm(
+            photos:
+            [
+                (pandaBytes, "panda.webp", "image/webp"),
+              (pngBytes, "square.png", "image/png")
+            ]);
+
+        var response = await HttpClient.PutAsync(
+            "/api/post/1",
+            updateForm);
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var updatedPost = await context.Posts.FirstOrDefaultAsync(p => p.PostId == 1);
+        await using var context =
+            DbContextFactory.CreateDbContext();
+
+        var updatedPost = await context.Posts
+            .FirstOrDefaultAsync(post => post.PostId == 1);
+
         updatedPost.ShouldNotBeNull();
-        updatedPost.Title.ShouldBe("Title");
-        updatedPost.Content.ShouldBe("Content");
+        updatedPost.Title.ShouldBe("Valid title");
+        updatedPost.Content.ShouldBe("Valid content");
+        updatedPost.PhotoIds.ShouldNotBeNull();
+        updatedPost.PhotoIds.Count.ShouldBe(2);
     }
 
     [Fact]
