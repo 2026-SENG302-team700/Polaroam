@@ -41,6 +41,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Acceptance\Features\" />
+      <Folder Include="Acceptance\StepDefinitions\" />
+      <Folder Include="E2E\" />
       <Folder Include="resources\" />
     </ItemGroup>
 
