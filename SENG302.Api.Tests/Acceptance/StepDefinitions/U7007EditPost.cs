@@ -5,6 +5,7 @@ using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net;
 using NSubstitute;
+using System.Net.Http.Headers;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
@@ -43,9 +44,12 @@ public class U7007EditPost
         });
     }
 
-    public async Task SetupUserTripAndPost()
+    public async Task SetupUserTripAndPost(bool setUpGeo)
     {
-        SetupGeoMock();
+        if (setUpGeo)
+        {
+            SetupGeoMock();
+        }
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
         {
@@ -78,12 +82,34 @@ public class U7007EditPost
         });
         await context.SaveChangesAsync();
     }
+    
+    private MultipartFormDataContent BuildUpdatePostForm(
+        long osmId = 1,
+        IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "Id");
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent(_title), "Title");
+        content.Add(new StringContent(_content), "Content");
+        content.Add(new StringContent(_osmId.ToString()), "OsmId");
+        content.Add(new StringContent(_date?.ToString("o") ?? ""), "Date");
+
+        foreach (var (bytes, fileName, contentType) in photos ?? [])
+        {
+            var fileContent = new ByteArrayContent(bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "files", fileName);
+        }
+
+        return content;
+    }
 
     [Given(
         @"I am on the edit post form page And I enter a valid title, location, date, images and content")]
     public async Task ValidTripAttributes()
     {
-        await SetupUserTripAndPost();
+        await SetupUserTripAndPost(true);
 
         _title = "Updated title";
         _content = "Updated content";
@@ -95,12 +121,12 @@ public class U7007EditPost
   )]
     public async Task GivenIEnterInvalidLocationWhileEditingPost()
     {
-        await SetupUserTripAndPost();
+        await SetupUserTripAndPost(false);
 
         _title = "Valid updated title";
         _content = "Valid updated content";
         _date = DateTime.Today.AddDays(-1);
-
+        
         // Text was entered without selecting a suggested location.
         _location = "Made up location";
         _osmId = 0;
@@ -113,22 +139,19 @@ public class U7007EditPost
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var responseBody = await _lastResponse.Content.ReadAsStringAsync();
+        Console.WriteLine(responseBody);
         responseBody.ShouldContain(expectedMessage);
     }
 
     [When(@"I click 'Update Post'")]
     public async Task UpdatePost()
     {
-        UpdatePostRequest postRequest = new UpdatePostRequest()
-        {
-            Id = 1,
-            TripId = 1,
-            Title = _title,
-            Content = _content,
-            OsmId = _osmId,
-            Date = _date
-        };
-        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync("api/post/1", postRequest);
+        
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
+
+        using var updateRequest = BuildUpdatePostForm();
+        _lastResponse = await _fixture.HttpClient.PutAsync("api/post/1", updateRequest);
     }
 
     [Then(@"the post is updated")]

@@ -126,15 +126,12 @@ public class PostController : ControllerBase
         {
             return Unauthorized();
         }
-        
-        List<int> photoIds = [];
 
         if (files != null)
         {
             try
             {
                 await _postService.UploadPhotosToPostAsync(files, postUpdates.Id, userId);
-            
             }
             catch (MultipleValidationListException e)
             {

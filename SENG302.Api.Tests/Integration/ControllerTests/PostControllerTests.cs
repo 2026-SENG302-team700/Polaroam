@@ -676,29 +676,75 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var photos = await response.Content.ReadAsStringAsync();
         photos.ShouldContain("Photo not found on this post.");
     }
+    
+    private MultipartFormDataContent BuildUpdatePostForm(
+        long osmId = 1,
+        IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "Id");
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("Valid title"), "Title");
+        content.Add(new StringContent("Valid content"), "Content");
+        content.Add(new StringContent(osmId.ToString()), "osmId");
+        content.Add(new StringContent(DateTimeOffset.Now.ToString("o")), "Date");
+
+        foreach (var (bytes, fileName, contentType) in photos ?? [])
+        {
+            var fileContent = new ByteArrayContent(bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "files", fileName);
+        }
+
+        return content;
+    }
 
     [Fact]
     public async Task UpdatePost_AllFields_UpdateSuccessful()
     {
-        SetupUserTripAndPost();
-
-        var updateRequest = new UpdatePostRequest
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        
+        context.Trips.Add(new Trip
         {
             Id = 1,
-            TripId = 1,
-            Title = "Updated title",
-            Content = "Updated content",
-            OsmId = 1,
-            Date = DateTime.Now.AddDays(-1),
-        };
-        var response = await HttpClient.PutAsJsonAsync("/api/post/1", updateRequest);
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            UserId = 1,
+            Title = "Test trip",
+            Description = "",
+            StartDate = new DateTime(2026, 1, 1),
+            EndDate = new DateTime(2026, 1, 10)
+        });
 
-        await using var context = DbContextFactory.CreateDbContext();
+        var post = new Post
+        {
+            TripId = 1,
+            Title = "Title",
+            Content = "Content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = [],
+            Date = DateTimeOffset.Now.AddDays(-1)
+        };
+        context.Posts.Add(post);
+        await context.SaveChangesAsync();
+
+        SetupGeoMock();
+
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
+
+        using var updateRequest = BuildUpdatePostForm(photos:
+        [
+            (pandaBytes, "panda.webp", "image/webp"),
+            (pngBytes, "square.png", "image/png")
+        ]);
+        var response = await HttpClient.PutAsync("/api/post/1", updateRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
         var updatedPost = await context.Posts.FirstOrDefaultAsync(p => p.PostId == 1);
         updatedPost.ShouldNotBeNull();
-        updatedPost.Title.ShouldBe(updateRequest.Title);
-        updatedPost.Content.ShouldBe(updateRequest.Content);
+        updatedPost.Title.ShouldBe("Title");
+        updatedPost.Content.ShouldBe("Content");
     }
 
     [Fact]
@@ -862,21 +908,20 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
             await context.SaveChangesAsync();
         }
+        
 
-        var request = new UpdatePostRequest
-        {
-            Id = 1,
-            TripId = 1,
-            Title = "new title",
-            Content = "new content",
-            Date = DateTimeOffset.Now.AddDays(-1),
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
 
-            OsmId = 0
-        };
+        using var updateRequest = BuildUpdatePostForm(photos:
+        [
+            (pandaBytes, "panda.webp", "image/webp"),
+            (pngBytes, "square.png", "image/png")
+        ]);
 
-        var response = await HttpClient.PutAsJsonAsync(
+        var response = await HttpClient.PutAsync(
             "/api/post/1",
-            request
+            updateRequest
         );
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
