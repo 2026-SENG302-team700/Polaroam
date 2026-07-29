@@ -124,7 +124,7 @@
 </script>
 
 <div class="container trip-page-content">
-    <NavigationButton path="/home/trips" text="Back" />
+    <NavigationButton path="/home" text="Back" />
     <AddButton path="/home/trips/{tripObject.id}/posts/create-post" />
     <EditButton path={`/home/trips/${params.tripId}/edit`} />
     <DeleteButton deleteAction={showConfirmationModal} />
