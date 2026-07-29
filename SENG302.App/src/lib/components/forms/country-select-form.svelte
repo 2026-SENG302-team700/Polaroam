@@ -15,7 +15,7 @@
     disabled={loading}
     id="country"
 >
-    <option value="">Select Country *</option>
+    <option hidden value="">Select Country *</option>
     {#each countries as country}
         <option id={country.code} value={country.code}>
             {country.name}

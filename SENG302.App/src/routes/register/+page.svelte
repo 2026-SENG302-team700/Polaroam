@@ -30,23 +30,25 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/register`), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetchWithCsrf(
+                resolve(`/api/register` as any),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        displayName: displayName,
+                        passwordString: password,
+                        passwordConfirm: passwordConfirm,
+                        country: selectedCountryCode,
+                    }),
                 },
-                body: JSON.stringify({
-                    email: email,
-                    displayName: displayName,
-                    passwordString: password,
-                    passwordConfirm: passwordConfirm,
-                    country: selectedCountryCode,
-                }),
-            });
+            );
 
             const data = await response.json().catch(() => null);
 
@@ -95,7 +97,7 @@
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
-    <form onsubmit={registerUser}>
+    <form onsubmit={registerUser} novalidate>
         <div class="mb-3">
             <EmailForm bind:email error={errors.email} {loading} />
         </div>
@@ -116,7 +118,7 @@
         </div>
         <div class="mb-3">
             <PasswordForm
-                id="initial-password-input"    
+                id="initial-password-input"
                 bind:password
                 error={errors.password}
                 {loading}
@@ -125,8 +127,8 @@
         </div>
         <div class="mb-3">
             <PasswordForm
-                    id="confirm-password"
-                    bind:password={passwordConfirm}
+                id="confirm-password"
+                bind:password={passwordConfirm}
                 error={errors.passwordConfirm}
                 {loading}
                 passConfirm={true}

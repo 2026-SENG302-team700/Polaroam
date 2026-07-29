@@ -131,7 +131,7 @@
                 goto(resolve(`/home/trips/${tripId}`));
             }
         } catch (err) {
-            errors.generic = "Failed to create trip";
+            errors.generic = "Failed to create post";
         } finally {
             loading = false;
             noContentAllowed = false;
@@ -178,17 +178,14 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files} />
+        <ImageDisplay bind:images={files} letDelete={true} />
         <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />
         </div>
-        
     </div>
 </div>
-
-
 
 <ConfirmationModal
     bind:show={showConfirmationModal}
