@@ -75,8 +75,7 @@
         <div style="flex: 0.01;"></div>
 
         <AppLogo />
-        <NavBarMenuButton path="/home" text="Home" />
-        <NavBarMenuButton path="/home/trips" text="View Trips" />
+        <NavBarMenuButton path="/home" text="My Trips" />
 
 
         <div
