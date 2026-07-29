@@ -41,8 +41,8 @@ public class U7005ImageValidation
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = new DateTime(2026, 7, 1),
-            EndDate = new DateTime(2026, 7, 10),
+            StartDate = new DateOnly(2026, 7, 1),
+            EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
 

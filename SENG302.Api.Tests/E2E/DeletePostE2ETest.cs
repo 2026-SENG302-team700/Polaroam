@@ -53,8 +53,8 @@ public class DeletePostE2ETest : E2ETestFixture
             UserId = user.Id,
             Title = "E2E delete trip",
             Description = "Trip used for deletion tests",
-            StartDate = new DateTime(2026, 1, 1),
-            EndDate = new DateTime(2026, 1, 10)
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 1, 10)
         };
 
         context.Users.Add(user);
