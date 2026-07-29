@@ -2,9 +2,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
-    import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import PasswordForm from "$lib/components/forms/password-form.svelte";
     import EmailForm from "$lib/components/forms/email-form.svelte";
     import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
@@ -35,19 +33,22 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/register`), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetchWithCsrf(
+                resolve(`/api/register` as any),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        displayName: displayName,
+                        passwordString: password,
+                        passwordConfirm: passwordConfirm,
+                        country: selectedCountryCode,
+                    }),
                 },
-                body: JSON.stringify({
-                    email: email,
-                    displayName: displayName,
-                    passwordString: password,
-                    passwordConfirm: passwordConfirm,
-                    country: selectedCountryCode,
-                }),
-            });
+            );
 
             const data = await response.json().catch(() => null);
 
@@ -96,7 +97,7 @@
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
-    <form on:submit|preventDefault={registerUser} novalidate>
+    <form onsubmit={registerUser} novalidate>
         <div class="mb-3">
             <EmailForm bind:email error={errors.email} {loading} />
         </div>
@@ -138,13 +139,3 @@
         </div>
     </form>
 </div>
-
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    .country-select {
-        color: #666666; /* Bootstrap's placeholder color */
-    }
-</style>

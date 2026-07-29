@@ -6,7 +6,6 @@ using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Responses;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]

@@ -2,8 +2,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
-using SENG302.Api.Resources.Helpers;
-using SENG302.Api.Models.Requests;
 
 
 namespace SENG302.Api.Services;
@@ -207,13 +205,18 @@ public class PostService : IPostService
 
         var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
 
-        if (post == null || postId == null)
+        if (post == null)
+        {
+            return null;
+        }
+        if (post.PhotoIds == null)
         {
             return null;
         }
 
         for (int i = 0; i < photoFileIds.Count; i++)
         {
+            
             post.PhotoIds.Add(photoFileIds[i]);
         }
 

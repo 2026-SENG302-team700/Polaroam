@@ -149,6 +149,7 @@
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
+                errors.title = data.errors?.title ?? [];
 
                 if (
                     errors.content.length === 1 &&
@@ -200,7 +201,7 @@
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
-        <TitleForm bind:name={title} />
+        <TitleForm bind:name={title} errors={errors.title}/>
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}
             <div class="invalid-feedback d-block">{errors.date}</div>
