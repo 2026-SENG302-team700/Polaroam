@@ -14,7 +14,7 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-
+    
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -22,7 +22,7 @@
         generic: string;
         location: string;
         photos: string[];
-    }
+    };
 
     /**
      * returns an empty PostFormErrors object
@@ -37,16 +37,16 @@
             photos: [],
         };
     }
-    
+
+    let errors = $state<PostFormErrors>(emptyErrors());
+
     /**
      * refreshes the PostFormErrors object
      */
     function clearErrors() {
         errors = emptyErrors();
     }
-    
-    let errors = $state<PostFormErrors>(emptyErrors());
-    
+
     let loading = $state(false);
     const tripId = page.params.tripId;
 
@@ -96,7 +96,8 @@
 
             if (!response.ok) {
                 if (response.status === 413) {
-                    errors.generic = "Upload too large, please upload less photos at a time";
+                    errors.generic =
+                        "Upload too large, please upload less photos at a time";
                     return;
                 }
                 errors.title = data.errors?.title ?? [];
@@ -117,7 +118,7 @@
                 }
                 return;
             }
-            
+
             goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
             console.error("Failed to create post:", err);

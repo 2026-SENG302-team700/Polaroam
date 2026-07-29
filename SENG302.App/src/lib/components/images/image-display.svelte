@@ -9,10 +9,10 @@
         ondelete,
         errors = [],
     }: { 
-        images?: File[] | null; 
+        images?: File[] | null;
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
-        errors?: string[]
+        errors?: string[];
     } = $props();
 
     let confirmationModalShown = $state(false);

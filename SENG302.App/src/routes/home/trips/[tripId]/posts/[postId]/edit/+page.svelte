@@ -15,7 +15,6 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
-    import { uploadPhotos } from "$lib/posts/images";
 
     let title = $state("");
     let content = $state("");
@@ -24,7 +23,7 @@
     let photoIdFileMap = new WeakMap();
 
     const tripId = page.params.tripId;
-    let newUploadsCount = $state(0)
+    let newUploadsCount = $state(0);
     let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
@@ -46,7 +45,7 @@
         generic: string;
         location: string;
         photos: string[];
-    }
+    };
 
     /**
      * returns an empty PostFormErrors object
@@ -76,7 +75,6 @@
         await fetchImages();
     });
 
-
     /**
      * Fetch Images
      */
@@ -84,14 +82,16 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${page.params.postId}/images` as any), {
+                resolve(`/api/post/${page.params.postId}/images` as any),
+                {
                     method: "GET",
                     credentials: "include",
                 },
             );
             if (!response.ok) {
-                let error = (await response.text()) || "Failed to fetch images.";
-                errors.photos.push(error)
+                let error =
+                    (await response.text()) || "Failed to fetch images.";
+                errors.photos.push(error);
                 return;
             }
 
@@ -104,11 +104,13 @@
             files = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/post/${page.params.postId}/images/${meta.photoId}` as any),
+                        resolve(
+                            `/api/post/${page.params.postId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
-                            credentials: "include"
-                        }
+                            credentials: "include",
+                        },
                     );
                     const blob = await res.blob();
                     const file = new File([blob], meta.fileName, { type: meta.mimeType });
@@ -117,7 +119,9 @@
                 }),
             );
         } catch (err) {
-            errors.photos.push("Failed to fetch images: " + (err as Error).message);
+            errors.photos.push(
+                "Failed to fetch images: " + (err as Error).message,
+            );
         } finally {
             loading = false;
         }
@@ -171,7 +175,7 @@
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
                 return;
             }
-            console.log(`PhotoIds: ${data.photoIds}`)
+            console.log(`PhotoIds: ${data.photoIds}`);
 
             title = data.title;
             content = data.content;
@@ -194,9 +198,12 @@
     async function updatePost() {
         try {
             loading = true;
-            
-            if (content.length > 0  || (files !== undefined && files !== null && files?.length > 0)) {
-                noContentAllowed = true
+
+            if (
+                content.length > 0 ||
+                (files !== undefined && files !== null && files?.length > 0)
+            ) {
+                noContentAllowed = true;
             }
 
             const form = new FormData();
@@ -221,7 +228,6 @@
                 credentials: "include",
             });
             const data = await response.json();
-            
 
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";
@@ -240,7 +246,7 @@
                     files?.length === 0
                 ) {
                     confirmationModalShown = true;
-                } 
+                }
                 return;
             }
             goto(resolve(`/home/trips/${data.tripId}`));
@@ -300,7 +306,7 @@
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
         <ImageDisplay bind:images={files} errors={errors.photos} letDelete={true} ondelete={removePhoto} />
-        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount={newUploadsCount} />
+        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount />
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />

@@ -103,6 +103,7 @@
           pfpInput.click();
         }}
     >
+        <i class="bi-plus"></i>
         <i class="bi-images"></i>
     </button>
     <input
