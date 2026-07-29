@@ -66,6 +66,12 @@
     >
 </div>
 
+{#if error}
+    <div class="invalid-feedback d-block date-error">
+        {error}
+    </div>
+{/if}
+
 <style>
     .date-form-wrapper {
         display: flex;

@@ -23,7 +23,8 @@
         errors = {
             title: [],
             description: [],
-            date: "",
+            dateOne: "",
+            dateTwo: "",
             generic: "",
         },
         loading = false,
@@ -40,30 +41,7 @@
         loading?: boolean;
         onSubmit: () => void | Promise<void>;
     } = $props();
-
-    const startDateInvalid = $derived(
-        !startDate || Number.isNaN(startDate.getTime()),
-    );
-
-    const endDateInvalid = $derived(
-        !endDate || Number.isNaN(endDate.getTime()),
-    );
-
-    const dateOrderInvalid = $derived(
-        startDate !== null &&
-            endDate !== null &&
-            !Number.isNaN(startDate.getTime()) &&
-            !Number.isNaN(endDate.getTime()) &&
-            endDate.getTime() < startDate.getTime(),
-    );
-
-    const startDateError = $derived(
-        errors.date && startDateInvalid ? errors.date : "",
-    );
-
-    const endDateError = $derived(
-        errors.date && (endDateInvalid || dateOrderInvalid) ? errors.date : "",
-    );
+    
 </script>
 
 <div class="container max-w-md">
@@ -82,7 +60,7 @@
                 <Datepicker
                         bind:value={startDate}
                         disabled={loading}
-                        error={startDateError}
+                        error={errors.dateOne}
                 />
             </div>
             <div class="date-field">
@@ -90,15 +68,11 @@
                 <Datepicker
                         bind:value={endDate}
                         disabled={loading}
-                        error={endDateError}
+                        error={errors.dateTwo}
                 />
             </div>
         </div>
-        {#if errors.date}
-            <div class="invalid-feedback d-block date-error">
-                {errors.date}
-            </div>
-        {/if}
+        
 
         {#if errors.generic}
             <div class="alert alert-danger" role="alert">

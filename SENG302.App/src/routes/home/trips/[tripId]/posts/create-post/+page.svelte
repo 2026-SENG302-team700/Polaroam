@@ -169,9 +169,6 @@
 
         <TitleForm bind:name={title} errors={errors.title} {loading} />
         <DatePicker bind:value={date} error={errors.date} />
-        {#if errors.date}
-            <div class="invalid-feedback d-block">{errors.date}</div>
-        {/if}
         <LocationForm
             bind:searchQuery
             bind:location
