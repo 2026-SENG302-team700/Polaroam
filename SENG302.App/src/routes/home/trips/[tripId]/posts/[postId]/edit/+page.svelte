@@ -252,6 +252,11 @@
         }
     }
 
+    /**
+     * Sends call to backend to delete image.
+     * @param image
+     * @param index NOT the photoId, index coming from image-display.
+     */
     async function removePhoto(image: File, index: number) {
         const photoId = photoIdFileMap.get(image);
         if (photoId === undefined) {
