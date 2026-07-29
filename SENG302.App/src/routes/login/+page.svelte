@@ -6,11 +6,11 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-    import PasswordForm from "$lib/components/password-form.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import CodeForm from "$lib/components/code-form.svelte";
+    import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import PasswordForm from "$lib/components/forms/password-form.svelte";
+    import EmailForm from "$lib/components/forms/email-form.svelte";
+    import CodeForm from "$lib/components/forms/code-form.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -174,7 +174,7 @@
                 return;
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
-            addToast(`Welcome to Outstanding ${data?.message}!`);
+            addToast(`Welcome to Polaroam ${data?.message}!`);
             goto(resolve(`/home`));
         } catch (err) {
             password = "";
@@ -451,12 +451,18 @@
             e.preventDefault();
             loginUser();
         }}
+        novalidate
     >
         <div class="mb-3">
             <EmailForm error={errors.email} {loading} bind:email />
         </div>
         <div class="mb-3">
-            <PasswordForm bind:password error={errors.password} {loading} />
+            <PasswordForm
+                bind:password
+                error={errors.password}
+                {loading}
+                id="password"
+            />
         </div>
         <div class="mb-3">
             <AuthenticatorButton buttonType={"login"} />
@@ -493,6 +499,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <form
+                novalidate    
                 onsubmit={() => {
                     if (loadingStatus == 0) {
                         if (currentModalStep === ModalStep.EMAIL_INPUT) {
@@ -647,9 +654,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-</style>

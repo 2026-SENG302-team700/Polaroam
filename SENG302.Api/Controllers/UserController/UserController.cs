@@ -175,23 +175,15 @@ public class UserController : ControllerBase
             return Unauthorized("You do not have authorisation to change this profile picture!");
         }
 
-        if (file.Length > 5000000)
+        if (!ImageValidationTools.IsValidFilesize(file))
         {
-            return BadRequest("Image too large, maximum file size is 5MB");
+            return BadRequest("Image too large, maximum file size is 10MB");
         }
 
-        var contentType = file.ContentType;
-        var validContentType = MimeTypeSets.Images.Contains(contentType);
-        var realContentType = ImageTypeValidation.GetRealImageMime(file);
-
-        if (!validContentType || realContentType == ImageTypeValidation.invalidMimeString)
+        // implement into one big callback function later.
+        if (!ImageValidationTools.IsValidMimeType(file))
         {
             return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
-        }
-
-        if (contentType != realContentType)
-        {
-            return BadRequest("Invalid image, file extension does not match file type");
         }
 
         var userId = int.Parse(userIdString);
@@ -220,6 +212,7 @@ public class UserController : ControllerBase
         await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);
         return Ok();
     }
+    
 
     /// <summary>
     /// Gets a user's profile picture and sends it as a form
@@ -236,6 +229,10 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
         var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
 
         if (user.ProfilePicture == 0)
         {

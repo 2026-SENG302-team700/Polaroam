@@ -47,6 +47,7 @@ public class UserCredentialsValidator
         // Gotten from C# docs
         try
         {
+            
             email = Regex.Replace(email, @"(@)(.+)$", DomainMapper,
                                       RegexOptions.None, TimeSpan.FromMilliseconds(200));
 
@@ -72,7 +73,6 @@ public class UserCredentialsValidator
         {
             return false;
         }
-
         try
         {
             return ValidationPatterns.UserEmail.IsMatch(email);
@@ -110,19 +110,6 @@ public class UserCredentialsValidator
         return passwordString == passwordConfirmation;
     }
     /// <summary>
-    /// Checks to see if the provided e-mail is already in the database
-    /// </summary>
-    /// <param name="context">The Database</param>
-    /// <param name="email">String representation of the e-mail</param>
-    /// <returns>
-    /// True: e-mail is already stored and associated with an account in the db
-    /// False: e-mail is not stored and associated with an account in the db
-    /// </returns>
-    public static bool EmailAlreadyExists(DatabaseContext context, string email)
-    {
-        return context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Count() > 0;
-    }
-    /// <summary>
     /// Runs all email validation checks and throws relavent exceptions
     /// </summary>
     /// <param name="context">The database - checks to see if email in db already.</param>
@@ -131,7 +118,7 @@ public class UserCredentialsValidator
     {
         var errors = new Dictionary<string, string>();
         
-        if (EmailAlreadyExists(context, email))
+        if (context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Any())
         {
             errors["email"] = "This email address is already in use by another account";
         }

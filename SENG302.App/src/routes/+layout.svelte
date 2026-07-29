@@ -5,11 +5,9 @@
 	import Toast from "$lib/toast/toast.svelte";
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
-	import { goto } from "$app/navigation";
-	import { resolve } from "$app/paths";
-	interface Props {
-		children?: import("svelte").Snippet;
-	}
+    import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
+
+	interface Props { children?: import("svelte").Snippet }
 
 	let { children }: Props = $props();
 
@@ -21,47 +19,39 @@
 </script>
 
 <Toast />
+
 {#key page.url.pathname}
-	<div class="container-fluid bg-light min-vh-footer py-4">
-		{@render children?.()}
-	</div>
-	<footer class="footerBar">
-		<div class="footerContent">
-			<button
-				class="btn btn-secondary"
-				onclick={() =>
-					goto(resolve(`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`))}
-			>
-				Content Policy
-			</button>
-			<button
-				class="btn btn-secondary"
-				onclick={() =>
-					goto(resolve(`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`))}
-			>
-				Privacy Policy
-			</button>
+	<div
+		class="container-fluid bg-light min-vh-footer py-2"
+	>{@render children?.()}</div>
+
+	<footer class="footerBar menu-bar ">
+		<div class="footerContent display: flex; flex-direction: row; align-items: center; padding-top: 5px; "
+    >
+			<NavBarMenuButton path={`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`} text= {"Content Policy"}/>
+			<NavBarMenuButton path={`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`} text= {"Privacy Policy"}/>
 		</div>
 	</footer>
 {/key}
-	
+
 <style>
 	.min-vh-footer {
 		min-height: 93vh;
 	}
-	
+
 	.footerBar {
+		margin-left: 12px;
+		margin-right: 12px;
 		margin-top: auto;
+		margin-bottom: 12px;
 		background-color: white;
 		height: 60px;
-		box-shadow: 0 -2px 6px rgba(214, 213, 210, 0.75);
 		border-radius: 10px;
 		display: flex;
 		align-items: center;
 	}
 
 	.footerContent {
-		width: 100%;
 		display: flex;
 		gap: 12px;
 		padding: 0 15px;

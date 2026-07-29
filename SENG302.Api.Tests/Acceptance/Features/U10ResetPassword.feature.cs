@@ -18,7 +18,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::Xunit.TraitAttribute("Category", "forgot-password")]
-    public partial class U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature : object, global::Xunit.IClassFixture<U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature.FixtureData>, global::Xunit.IAsyncLifetime
+    public partial class U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature : object, global::Xunit.IClassFixture<U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature.FixtureData>, global::Xunit.IAsyncLifetime
     {
         
         private global::Reqnroll.ITestRunner testRunner;
@@ -27,14 +27,14 @@ namespace SENG302.Api.Tests.Acceptance.Features
                 "forgot-password"};
         
         private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Acceptance/Features", "U10 - As Tipene I want to be able to reset my password via email so that I can ke" +
-                "ep access to Outstanding if I lose my password.", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+                "ep access to Polaroam if I lose my password.", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
         private global::Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
 #line 1 "U10ResetPassword.feature"
 #line hidden
         
-        public U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature(U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature.FixtureData fixtureData, global::Xunit.Abstractions.ITestOutputHelper testOutputHelper)
+        public U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature(U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature.FixtureData fixtureData, global::Xunit.Abstractions.ITestOutputHelper testOutputHelper)
         {
             this._testOutputHelper = testOutputHelper;
         }
@@ -138,7 +138,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         [global::Xunit.SkippableFactAttribute(DisplayName="AC.2 - Sending a code to be able to reset email")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U10 - As Tipene I want to be able to reset my password via email so that I can ke" +
-            "ep access to Outstanding if I lose my password.")]
+            "ep access to Polaroam if I lose my password.")]
         [global::Xunit.TraitAttribute("Description", "AC.2 - Sending a code to be able to reset email")]
         public async global::System.Threading.Tasks.Task AC_2_SendingACodeToBeAbleToResetEmail()
         {
@@ -173,7 +173,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         [global::Xunit.SkippableFactAttribute(DisplayName="AC8.1 - Login while a reset password has been requested cancels the reset")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U10 - As Tipene I want to be able to reset my password via email so that I can ke" +
-            "ep access to Outstanding if I lose my password.")]
+            "ep access to Polaroam if I lose my password.")]
         [global::Xunit.TraitAttribute("Description", "AC8.1 - Login while a reset password has been requested cancels the reset")]
         public async global::System.Threading.Tasks.Task AC8_1_LoginWhileAResetPasswordHasBeenRequestedCancelsTheReset()
         {
@@ -211,7 +211,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         [global::Xunit.SkippableFactAttribute(DisplayName="AC8.2 - Login without a pending reset does not send a warning email")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U10 - As Tipene I want to be able to reset my password via email so that I can ke" +
-            "ep access to Outstanding if I lose my password.")]
+            "ep access to Polaroam if I lose my password.")]
         [global::Xunit.TraitAttribute("Description", "AC8.2 - Login without a pending reset does not send a warning email")]
         public async global::System.Threading.Tasks.Task AC8_2_LoginWithoutAPendingResetDoesNotSendAWarningEmail()
         {
@@ -257,12 +257,12 @@ namespace SENG302.Api.Tests.Acceptance.Features
             
             async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
             {
-                await U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature.FeatureSetupAsync();
+                await U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature.FeatureSetupAsync();
             }
             
             async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.DisposeAsync()
             {
-                await U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature.FeatureTearDownAsync();
+                await U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature.FeatureTearDownAsync();
             }
         }
     }

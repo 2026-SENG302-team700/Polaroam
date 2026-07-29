@@ -9,11 +9,8 @@ public interface IFileService
     Task<CustomFile> SaveFileAsync(IFormFile file, int ownerId);
     Task<CustomFile> GetFileByIdAsync(int id);
     Task DeleteFileAsync(string fileKey);
-    Task<Byte[]> GetFileContentAsync(string fileKey);
+    Task<byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
-    Task WriteFile(IFormFile file, string fileKey);
-    Task<CustomFile> SaveFileEntity(IFormFile file, int ownerId, string fileKey);
-
 }
 
 public class FileService : IFileService
@@ -33,7 +30,6 @@ public class FileService : IFileService
             throw new InvalidOperationException("Base path not set");
         }
         Directory.CreateDirectory(_basePath);
-
     }
 
     /// <summary>
@@ -132,7 +128,7 @@ public class FileService : IFileService
     /// </summary>
     /// <param name="fileKey">FileKey used to lookup file in bucket</param>
     /// <returns>File content of matching file key</returns>
-    public async Task<Byte[]> GetFileContentAsync(string fileKey)
+    public async Task<byte[]> GetFileContentAsync(string fileKey)
     {
         try
         {

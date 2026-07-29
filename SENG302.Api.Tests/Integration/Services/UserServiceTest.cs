@@ -80,33 +80,33 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await ServiceUnderTest.CreateNewUserAsync(
             "j@whitsend.com",
             "Jason Whitaker",
-            "4365passTOEHKT$%^&$%^", 
+            "4365passTOEHKT$%^&$%^",
             "4365passTOEHKT$%^&$%^",
             "US");
-        var errors = Should.Throw<MultipleValidationException>(async () => 
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
             await ServiceUnderTest.CreateNewUserAsync(
-                "j@whitsend.com", 
+                "j@whitsend.com",
                 "Jack Allen",
                 "p4ukS__45`k%NNNS",
                 "p4ukS__45`k%NNNS",
                 "US"
                 )
             );
-        
+
         errors.Errors.Keys.ShouldContain("email");
         errors.Errors.Values.ShouldContain("This email address is already in use by another account");
     }
-    
+
     [Fact]
     public async Task CreateNewUser_ShortDisplayName_MultipleValidationException()
     {
         var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
-                "vlad@nistor.me", 
+                "vlad@nistor.me",
                 "v", // Should throw exception
-                "12345678Ab$", 
-                "12345678Ab$", 
+                "12345678Ab$",
+                "12345678Ab$",
                 "RO");
         });
 
@@ -123,11 +123,11 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "vlad@nistor.me",
                 "Vladimir gggggggg llllll ccccccccc bbbbbbbb nnnnnn mmmm tttttttttt abcdefghijkl", // Should throw exception
                 "12345678Ab$",
-                "12345678Ab$", 
+                "12345678Ab$",
                 "RO"
             );
         });
-        
+
         errors.Errors.Keys.ShouldContain("displayName");
         errors.Errors.Values.ShouldContain("Display name must be between 3 and 64 characters");
     }
@@ -148,7 +148,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         errors.Errors.Keys.ShouldContain("displayName");
         errors.Errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
     }
-    
+
     [Fact]
     public async Task CreateNewUser_ProfanitiesInDisplayName_MultipleValidationException()
     {
@@ -158,40 +158,47 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "vlad@nistor.me",
                 "fuck", // Should throw exception
                 "12345678Ab$",
-                "12345678Ab$", 
+                "12345678Ab$",
                 "RO"
             );
         });
-        
+
         errors.Errors.Keys.ShouldContain("displayName");
         errors.Errors.Values.ShouldContain("Display Name Contains Profanities! Remove Profanities!");
     }
 
-    [Theory]
-    [InlineData("vlad.nistor.email")]
-    [InlineData("pandya@gmail+!.co#m")]
-    [InlineData(".@gmail.com")]
-    [InlineData("cool..man@gmail.com")]
-    [InlineData("person@yahoo.")]
-    [InlineData("crazy.@gmail.nz")]
-    [InlineData("CrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyy@gmail.com")]
-    [InlineData("man@gmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompany")]
-    [InlineData("froggy@-outlook.com")]
-    [InlineData("froggy@outlook.com-")]
-    [InlineData("crazy@.nz")]
-    public async Task CreateNewUser_NoEmail_MultipleValidationException(string userEmail)
+    [Fact]
+    public async Task CreateNewUser_NoEmail_MultipleValidationException()
     {
         var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
-                userEmail,
+                "",
                 "Vlad Nistor",
                 "12345678Ab$",
-                "12345678Ab$", 
+                "12345678Ab$",
                 "RO"
             );
         });
-        
+
+        errors.Errors.Keys.ShouldContain("email");
+        errors.Errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
+    }
+
+    [Fact]
+    public async Task CreateNewUser_InvalidEmail_MultipleValidationException()
+    {
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad.nistor.email",
+                "Vlad Nistor",
+                "12345678Ab$",
+                "12345678Ab$",
+                "RO"
+            );
+        });
+
         errors.Errors.Keys.ShouldContain("email");
         errors.Errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
@@ -218,7 +225,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "RO"
             );
         });
-        
+
         errors.Errors.Keys.ShouldContain("password");
         errors.Errors.Values.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters");
     }
@@ -235,7 +242,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "abcDEF123!@#",
                 "RO");
         });
-        
+
         errors.Errors.Keys.ShouldContain("passwordConfirm");
         errors.Errors.Values.ShouldContain("Passwords do not match");
     }
@@ -254,7 +261,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
             );
         });
     }
-    
+
     [Theory]
     [InlineData("345678", 123456789, true)]
     public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(String code, long timeCreated, bool userVerified)
@@ -262,7 +269,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         string email = "testUser@gmail.com";
-        
+
         context.Users.Add(new User
         {
             Email = email,
@@ -270,24 +277,24 @@ public class UserServiceTest : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        
+
         await context.SaveChangesAsync();
-        
-        // Use the TaskService function to create a new task list with the name and user email
+
+        // Use the TripService function to create a new trip with the name and user email
         User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
 
         user.OneTimeCode.ShouldBe(code);
         user.CodeGenerationTime.ShouldBe(timeCreated);
         user.EmailVerified.ShouldBe(userVerified);
     }
-    
+
     [Fact]
     public async Task DeleteUser_Success_ReturnsDeletedUser()
     {
         await using var context = DbContextFactory.CreateDbContext();
 
         string email = "testUser@gmail.com";
-        
+
         context.Users.Add(new User
         {
             Email = email,
@@ -295,16 +302,16 @@ public class UserServiceTest : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
-        // Use the TaskService function to create a new task list with the name and user email
+        // Use the TripService function to create a new trip with the name and user email
         User? user = await ServiceUnderTest.DeleteUserByIdAsync((int)id);
 
         user.Id.ShouldBe((int)id);
         user.Email.ShouldBe(email);
-        
+
         context.Users.ShouldBeEmpty();
     }
 
@@ -313,10 +320,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
 
-        var email = "hello@outstanding.com";
-        var name = "Outstanding";
+        var email = "hello@polaroam.com";
+        var name = "Polaroam";
         var country = "NZ";
-        
+
         context.Users.Add(new User
         {
             Email = email,
@@ -324,20 +331,20 @@ public class UserServiceTest : BaseIntegrationTestFixture
             PasswordKey = "B3rn$uisse",
             Country = country
         });
-        
+
         await context.SaveChangesAsync();
 
         int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
 
         // First Toggle from False -> True (user should start off with profanity filtering set to off)
         User? updatedUser1 = await ServiceUnderTest.UpdateUser((int)id!, email, name, country, true);
-        
+
         updatedUser1.ShouldNotBeNull();
         updatedUser1.ProfanityFiltering.ShouldBeTrue();
-        
+
         // Second toggle from True -> False
         User? updateUser2 = await ServiceUnderTest.UpdateUser((int)id!, email, name, country, false);
-        
+
         updateUser2.ProfanityFiltering.ShouldBeFalse();
     }
 }

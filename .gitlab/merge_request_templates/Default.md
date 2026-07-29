@@ -1,30 +1,51 @@
-﻿# Dev Desciption
+﻿# Dev Description
+
+<!--
+  For every checked box below, add a short explanation (1-2 sentences) of
+  HOW it was satisfied — not just that it was. Unchecked boxes should say
+  why (e.g. "N/A — no UI changes in this MR").
+-->
 
 ## Dev Checklist
 
-- [ ] Unit tests are present and pass
-- [ ] Integration tests are present and pass
-- [ ] Acceptance tests are present and pass
-- [ ] Manual tests are created and tested
-- [ ] No code Smells
-  - Readable and understandable
-- [ ] Relevant Docstrings
-- [ ] Affected ACs are included in the MR description.
+- [ ] **Unit tests are present and pass**
+  - _Explanation:_
+- [ ] **Integration tests are present and pass**
+  - _Explanation:_
+- [ ] **Acceptance tests are present and pass**
+  - _Explanation:_
+- [ ] **Manual tests are created and tested**
+  - _Explanation:_ (what was tested, and how — steps or scenarios)
+- [ ] **No code smells** — checked for:
+  - Naming: clear, intention-revealing names (no `data2`, `temp`, `flag`, single-letter names outside tight loops)
+  - Function/method size & responsibility: each function does one thing (rough guide: >40-50 lines is a flag)
+  - Duplication (DRY): no copy-pasted logic; repeated code extracted into shared functions/utilities
+  - Magic numbers/strings: no unexplained literals; constants are named
+  - Nesting/complexity: no deeply nested conditionals/loops (rough guide: >3 levels is a flag); early returns/guard clauses used
+  - Dead code: no commented-out code, unused imports/variables, or unreachable branches
+  - Error handling: errors handled explicitly, not swallowed silently (no empty catch blocks)
+  - Consistent style: follows the project's existing formatting/linting conventions
+  - _Explanation:_ (note which of the above you actually reviewed/changed)
+- [ ] **Relevant docstrings**
+  - _Explanation:_ (which methods/classes were documented)
+- [ ] **Affected ACs are included in the MR description**
+  - _Explanation:_ (list the AC IDs)
+
+---
 
 ## Reviewer Checklist
 
-- [ ] No code Smells
-  - Readable and understandable
-- [ ] Unit Tests
-  - Is there enough Unit tests and do they all Pass?
-- [ ] Integration Tests
-  - Is there enough Integration tests and do they all Pass.
-- [ ] Relevant Docstrings
-  - Do all methods have Docstring
-- [ ] Passes Acceptance Criteria
-  - Do all of the AC touched in this branch pass the specification from the sprint backlog
-- [ ] Protected against sneaky inputs or malicious activity
-  - Is the app protected against SQL injections, HTML injections and edge case inputs (e.g. whitespaces are trimmed)
+- [ ] **No code smells** — check for: naming, function size/responsibility, duplication (DRY), magic numbers/strings, nesting/complexity, dead code, error handling, consistent style (see dev checklist above for details)
+- [ ] **Unit tests**
+  - Is there enough unit test coverage and do they all pass?
+- [ ] **Integration tests**
+  - Is there enough integration test coverage and do they all pass?
+- [ ] **Relevant docstrings**
+  - Do all new/changed methods have docstrings?
+- [ ] **Passes acceptance criteria**
+  - Do all ACs touched in this branch pass the specification from the sprint backlog?
+- [ ] **Protected against sneaky inputs or malicious activity**
+  - Is the app protected against SQL injection, HTML/script injection (XSS), and edge-case inputs (e.g. whitespace trimmed, empty strings, overly long inputs, null/undefined)?
 
 ### NFR Checklist (Reviewer)
 
@@ -47,4 +68,4 @@
   - Pressing **Tab** moves users sequentially through interactive elements to support keyboard navigation and screen readers.
 
 - [ ] **NFR 6: Locale-aware formatting**
-  - The system displays formatted data (e.g., dates and times) according to the user’s locale.
+  - The system displays formatted data (e.g., dates and times) according to the user's locale.

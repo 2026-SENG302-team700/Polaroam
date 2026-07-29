@@ -92,7 +92,7 @@ public class UserService : IUserService
         string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var errors = new Dictionary<string, string>();
 
         foreach (var (field, message) in UserCredentialsValidator.ValidateEmail(context, email))
@@ -108,11 +108,48 @@ public class UserService : IUserService
             errors[field] = message;
         }
         
-        UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
+        }
+        
+
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            errors["displayName"] = "Display name must be between 3 and 64 characters";
+        }
+        
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var swearList = profanityFilter.DetectAllProfanities(displayName);
+
+        if (swearList.Count > 0)
+        {
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
+        }
+        
+        if (string.IsNullOrWhiteSpace(country))
+        {
+            errors["country"] = "Country is required!";
+        }
+        else
+        {
+            UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
+        }
+        
+        if (string.IsNullOrWhiteSpace(passwordString))
+        {
+            errors["password"] =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+        }
+        
+        if (string.IsNullOrWhiteSpace(passwordConfirm))
+        {
+            errors["passwordConfirm"] = "Passwords do not match";
+        }
 
         if (errors.Count > 0)
             throw new MultipleValidationException(errors);
-        
+
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
@@ -167,8 +204,6 @@ public class UserService : IUserService
     {
         PasswordHasher<User> passwordHasher = new();
 
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         if (!UserCredentialsValidator.CheckEmailFormat(email))
         {
             return new UserVerificationResponse
@@ -178,7 +213,7 @@ public class UserService : IUserService
             };
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+        var user = await GetUserFromEmailAsync(email);
         if (user == null)
         {
             return new UserVerificationResponse
@@ -256,26 +291,29 @@ public class UserService : IUserService
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null) return null;
 
+        // trim display name and email to remove whitespace
+        newDisplayName = newDisplayName.Trim();
+
         // Validation
         var errors = new Dictionary<string, string>();
         if (newEmail != user.Email)
         {
             foreach (var (field, message) in UserCredentialsValidator.ValidateEmail(context, newEmail))
             {
-               
+
                 errors[field] = message;
             }
-        }        
+        }
         foreach (var (field, message) in UserCredentialsValidator.ValidateDisplayName(newDisplayName))
         {
             errors[field] = message;
         }
-        
+
         UserCredentialsValidator.ValidateCountry(newCountry);
 
         if (errors.Count > 0)
             throw new MultipleValidationException(errors);
-        
+
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
@@ -379,11 +417,11 @@ public class UserService : IUserService
     {
         // Get user from Id
         User? user = await GetUserByIdAsync(userId);
-        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
-        
+        if (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+
         // validate inputs
         if (!UserCredentialsValidator.ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
-        
+
         // Perform update
         PasswordHasher<User> passwordHasher = new();
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
@@ -407,7 +445,7 @@ public class UserService : IUserService
         {
             throw new MismatchedPasswordException("Passwords do not match");
         }
-        
+
         // validate password is of valid form
         if (!UserCredentialsValidator.CheckPassword(newPassword))
         {
@@ -416,7 +454,7 @@ public class UserService : IUserService
             );
         }
     }
-    
+
     /// <summary>
     /// Validates and performs the request to reset the users password
     /// </summary>
@@ -428,11 +466,11 @@ public class UserService : IUserService
     {
         // Get user from Id
         User? user = await GetUserFromEmailAsync(userEmail);
-        if  (user == null) throw new UnauthorizedAccessException("email didn't match any user");
-        
+        if (user == null) throw new UnauthorizedAccessException("email didn't match any user");
+
         // validate inputs
         ValidateResetPasswordRequest(newPassword, newPasswordConfirm);
-        
+
         // Perform update
         PasswordHasher<User> passwordHasher = new();
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
@@ -451,6 +489,7 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var user = await context.Users.FindAsync(userId);
+        if (user == null) throw new UnauthorizedAccessException("a user with that id does not exist");
         user.ProfanityFiltering = profanityFilter;
         await context.SaveChangesAsync();
     }
