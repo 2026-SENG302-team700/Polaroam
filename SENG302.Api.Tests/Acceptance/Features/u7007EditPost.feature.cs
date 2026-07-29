@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/u7007EditPost.feature.ndjson", 4);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/u7007EditPost.feature.ndjson", 7);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -170,16 +170,16 @@ namespace SENG302.Api.Tests.Acceptance.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC18 - Edit post with an invalid location")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC13 - Edit post with an image larger than 10MB")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U7007_As Benji I want to edit my trip posts So that I can correct or update infor" +
             "mation about key moments from my trips.")]
-        [global::Xunit.TraitAttribute("Description", "AC18 - Edit post with an invalid location")]
-        public async global::System.Threading.Tasks.Task AC18_EditPostWithAnInvalidLocation()
+        [global::Xunit.TraitAttribute("Description", "AC13 - Edit post with an image larger than 10MB")]
+        public async global::System.Threading.Tasks.Task AC13_EditPostWithAnImageLargerThan10MB()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "1";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC18 - Edit post with an invalid location", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC13 - Edit post with an image larger than 10MB", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 8
@@ -193,16 +193,132 @@ namespace SENG302.Api.Tests.Acceptance.Features
             {
                 await this.ScenarioStartAsync();
 #line 9
-        await testRunner.GivenAsync("I am editing an existing post and enter location text without selecting a suggest" +
-                        "ed location", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("I am editing an existing post with an image larger than 10MB", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 10
         await testRunner.WhenAsync("I click \'Update Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
-        await testRunner.ThenAsync("I see the edit post error message \"This isn\'t a valid location\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("I see the edit post photo error message \"Image too large, maximum file size is 10" +
+                        "MB\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 12
+        await testRunner.AndAsync("no new images are associated with the post", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC14 - Edit post with an unsupported image type")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7007_As Benji I want to edit my trip posts So that I can correct or update infor" +
+            "mation about key moments from my trips.")]
+        [global::Xunit.TraitAttribute("Description", "AC14 - Edit post with an unsupported image type")]
+        public async global::System.Threading.Tasks.Task AC14_EditPostWithAnUnsupportedImageType()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "2";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC14 - Edit post with an unsupported image type", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 14
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 15
+        await testRunner.GivenAsync("I am editing an existing post with an unsupported image type", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 16
+        await testRunner.WhenAsync("I click \'Update Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 17
+        await testRunner.ThenAsync("I see the edit post photo error message \"Invalid image, supported file types are " +
+                        ".jpeg, .png, .svg, .gif, .webp\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 18
+        await testRunner.AndAsync("no new images are associated with the post", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC16 - Edit post and add valid images")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7007_As Benji I want to edit my trip posts So that I can correct or update infor" +
+            "mation about key moments from my trips.")]
+        [global::Xunit.TraitAttribute("Description", "AC16 - Edit post and add valid images")]
+        public async global::System.Threading.Tasks.Task AC16_EditPostAndAddValidImages()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "3";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC16 - Edit post and add valid images", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 20
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 21
+        await testRunner.GivenAsync("I am editing an existing post with two valid images to add", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 22
+        await testRunner.WhenAsync("I click \'Update Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 23
+        await testRunner.ThenAsync("the post is updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 24
+        await testRunner.AndAsync("the two new images are associated with the post", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC18 - Edit post with an invalid location")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7007_As Benji I want to edit my trip posts So that I can correct or update infor" +
+            "mation about key moments from my trips.")]
+        [global::Xunit.TraitAttribute("Description", "AC18 - Edit post with an invalid location")]
+        public async global::System.Threading.Tasks.Task AC18_EditPostWithAnInvalidLocation()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "4";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC18 - Edit post with an invalid location", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 26
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 27
+        await testRunner.GivenAsync("I am editing an existing post and enter location text without selecting a suggest" +
+                        "ed location", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 28
+        await testRunner.WhenAsync("I click \'Update Post\'", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 29
+        await testRunner.ThenAsync("I see the edit post error message \"This isn\'t a valid location\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 30
         await testRunner.AndAsync("the post is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
