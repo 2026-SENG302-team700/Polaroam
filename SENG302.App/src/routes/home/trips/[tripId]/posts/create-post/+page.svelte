@@ -14,7 +14,7 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-    
+
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -37,16 +37,16 @@
             photos: [],
         };
     }
-    
+
+    let errors = $state<PostFormErrors>(emptyErrors());
+
     /**
      * refreshes the PostFormErrors object
      */
     function clearErrors() {
         errors = emptyErrors();
     }
-    
-    let errors = $state<PostFormErrors>(emptyErrors());
-    
+
     let loading = $state(false);
     const tripId = page.params.tripId;
 
@@ -87,15 +87,13 @@
                 }
             }
             
-            const response = await fetchWithCsrf(`/api/post`, {
+            const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
                 body: form,
                 credentials: "include",
             });
             const data = await response.json();
 
-            
-            
             if (!response.ok) {
                 if (response.status === 413) {
                     errors.generic = "Upload too large, please upload less photos at a time";
@@ -170,7 +168,7 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files} errors="{errors.photos}"/>
+        <ImageDisplay bind:images={files} errors="{errors.photos}" letDelete={true}/>
         <ImagePicker bind:filesList={files} errors={errors.photos} />
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">

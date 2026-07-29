@@ -571,7 +571,7 @@
 
   <div class="container d-flex flex-column flex-md-row">
     <div class="flex-grow-1 m-3">
-      <form onsubmit={updateUser}>
+      <form onsubmit={updateUser} novalidate>
         <div class="m-3" style="display: flex; ">
           <CancelButton path={"/home/profile"} />
           <div class="ms-auto">
@@ -813,7 +813,7 @@
         ></button>
       </div>
       <div class="modal-body">
-        <form onsubmit={() => updatePfp()}>
+        <form onsubmit={() => updatePfp()} novalidate>
           <input
             accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
             bind:files

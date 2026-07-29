@@ -46,7 +46,7 @@ public class EmailService : IEmailService
         var (subject, htmlBody) = await RenderAsync(template, model);
 
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Outstanding", _settings.FromEmail));
+        message.From.Add(new MailboxAddress("Polaroam", _settings.FromEmail));
         // check for display name
         if (model.ContainsKey("DISPLAY_NAME"))
         {
@@ -54,7 +54,7 @@ public class EmailService : IEmailService
         }
         else
         {
-            message.To.Add(new MailboxAddress("Outstanding User", toEmail));
+            message.To.Add(new MailboxAddress("Polaroam User", toEmail));
         }
 
         message.Subject = subject;

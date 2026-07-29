@@ -40,20 +40,24 @@ $font-weight-bold: 700;
         transform $transition-fast,
         box-shadow $transition-fast,
         background-color $transition-fast;
+
     &:hover {
         border-color: $ink;
         transform: translate(1px, 1px);
         box-shadow: 2px 2px 0 $ink;
     }
+
     &:active,
     &:focus:active {
         transform: translate(3px, 3px);
         box-shadow: none;
     }
+
     &:focus-visible {
         outline: 3px solid rgba($primary-colour, 0.45);
         outline-offset: 3px;
     }
+
     &:disabled {
         box-shadow: none;
         transform: none;
@@ -77,6 +81,7 @@ $font-weight-bold: 700;
         transform $transition-fast,
         box-shadow $transition-fast,
         background-color $transition-fast;
+
     &:hover {
         border-radius: 3px;
         background-color: $button-hover-colour;
@@ -95,6 +100,7 @@ $font-weight-bold: 700;
     --bs-btn-active-bg: #{darken($primary-colour, 9%)};
     --bs-btn-active-border-color: #{$ink};
 }
+
 // Cancel/secondary buttons.
 .btn-secondary,
 .btn-outline-secondary {
@@ -108,6 +114,7 @@ $font-weight-bold: 700;
     --bs-btn-active-bg: #ddd4c3;
     --bs-btn-active-border-color: #{$ink};
 }
+
 // Destructive buttons.
 .btn-danger {
     --bs-btn-color: #{$ink};
@@ -117,6 +124,7 @@ $font-weight-bold: 700;
     --bs-btn-hover-bg: #{darken($danger-colour, 5%)};
     --bs-btn-hover-border-color: #{$ink};
 }
+
 // Cards.
 .card {
     border: 2px solid $ink;
@@ -124,11 +132,13 @@ $font-weight-bold: 700;
     box-shadow: $shadow-medium;
     background-color: #fff;
 }
+
 .card-header {
     border-bottom: 2px solid $ink;
     background-color: $primary-colour;
     font-weight: 700;
 }
+
 // Inputs and selects.
 .form-control,
 .form-select {
@@ -137,11 +147,13 @@ $font-weight-bold: 700;
         transform $transition-fast,
         box-shadow $transition-fast,
         background-color $transition-fast;
+
     &:hover {
         border-color: $ink;
         transform: translate(1px, 1px);
         box-shadow: 2px 2px 0 $ink;
     }
+
     &:focus {
         transform: translate(2px, 2px);
         box-shadow: 1px 1px 0 $ink inset;
@@ -152,17 +164,24 @@ $font-weight-bold: 700;
         transform: none;
         opacity: 0.55;
     }
+
+    &:has(>option[value=""]:checked) {
+        color: rgba($ink, 0.75);
+    }
 }
+
 // Modal styling.
 .modal-content {
     border: 2px solid $ink;
     border-radius: 0.35rem;
     box-shadow: 7px 7px 0 $ink;
 }
+
 .modal-header,
 .modal-footer {
     border-color: $ink;
 }
+
 .menu-bar {
     border: 2px solid $ink;
     border-radius: 0.35rem;
@@ -171,9 +190,11 @@ $font-weight-bold: 700;
 
 .clickable-image {
     transition: transform $transition-fast;
+
     &:hover {
         transform: scale(0.95);
     }
+
     &:focus {
         transform: scale(0.6);
     }

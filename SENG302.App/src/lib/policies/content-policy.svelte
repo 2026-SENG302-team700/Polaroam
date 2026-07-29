@@ -5,7 +5,7 @@
     <h1 class="mb-3">Content Policy</h1>
 
     <p>
-        <strong>Outstanding</strong> is designed to support safe, organised, and
+        <strong>Polaroam</strong> is designed to support safe, organised, and
         productive task tracking. All content must comply with the rules below.
     </p>
 

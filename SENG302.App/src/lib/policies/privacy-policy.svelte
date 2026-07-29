@@ -5,7 +5,7 @@
     <h1 class="mb-3">Privacy Policy</h1>
 
     <p>
-        <strong>Outstanding</strong> is unilaterally designed to be comprehensive
+        <strong>Polaroam</strong> is unilaterally designed to be comprehensive
         in its containment and security of your personal information. We strive to
         uphold the highest standard of personal privacy for all our users.
     </p>
@@ -23,7 +23,7 @@
         <li>Country</li>
     </ul>
     <p>
-        This data is collected when you register for <strong>Outstanding</strong
+        This data is collected when you register for <strong>Polaroam</strong
         >.
     </p>
 
@@ -43,11 +43,11 @@
     <h2>Cookie Management</h2>
 
     <p>
-        <strong>Outstanding</strong> uses cookies. Cookies are little pieces of data
+        <strong>Polaroam</strong> uses cookies. Cookies are little pieces of data
         stored on your computer, placed there by a website.
     </p>
     <p>
-        <strong>Outstanding's</strong> cookies are used to verify who you are every
+        <strong>Polaroam's</strong> cookies are used to verify who you are every
         time you open the site. Without cookies, you would have to log into the site
         every single time you open it. Our cookies store your identifiers in a signed,
         encrypted format which communicates with our services to verify your identity,
@@ -60,9 +60,9 @@
     <p>
         7 days after logging in, your cookies will expire and you will need to
         login again to continue use of the service, regardless of if you used
-        <strong>Outstanding</strong> or not in this time period.
+        <strong>Polaroam</strong> or not in this time period.
     </p>
-    <p><strong>Outstanding</strong> does not use third party cookies.</p>
+    <p><strong>Polaroam</strong> does not use third party cookies.</p>
 </div>
 
 <style>

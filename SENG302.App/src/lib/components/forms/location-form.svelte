@@ -116,7 +116,7 @@
             type="text"
             class="form-control"
             class:is-invalid={Boolean(error)}
-            placeholder="Search location..."
+            placeholder="Search location... *"
             bind:value={searchQuery}
             oninput={handleInput}
             onkeydown={handleKeydown}
