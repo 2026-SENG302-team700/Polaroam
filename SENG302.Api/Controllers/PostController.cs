@@ -344,4 +344,38 @@ public class PostController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpDelete("{postId:int}/images/{photoId:int}")]
+    public async Task<IActionResult> DeletePhotoFromPost(int postId, int photoId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var post = await _postService.GetPostAsync(postId);
+
+        if (post == null)
+        {
+            return NotFound("Post does not exist");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            await _postService.DeletePhotoFromPostAsync(postId, photoId);
+            return NoContent();
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+    }
 }

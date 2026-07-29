@@ -11,7 +11,7 @@
     }: { 
         images?: File[] | null; 
         letDelete?: boolean;
-        ondelete?: (index: number) => void;
+        ondelete?: (image: File, index: number) => void;
         errors?: string[]
     } = $props();
 
@@ -32,8 +32,9 @@
      * Performs the deletion of the image and closes the modal
      */
     function ConfirmDelete() {
-        if (pendingDeleteIndex !== null) {
-            images.splice(pendingDeleteIndex, 1);
+        if (pendingDeleteIndex !== null && images) {
+            const [removed] = images.splice(pendingDeleteIndex, 1);
+            ondelete?.(removed, pendingDeleteIndex);
             pendingDeleteIndex = null;
         }
         confirmationModalShown = false;

@@ -8,18 +8,20 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
-    import ImageDisplay from "$lib/components/images/image-display.svelte";
+    import { uploadPhotos } from "$lib/posts/images";
 
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
     let photoIds = $state([]);
+    let photoIdFileMap = new WeakMap();
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0)
@@ -109,10 +111,11 @@
                         }
                     );
                     const blob = await res.blob();
-                    return new File([blob], meta.fileName, { type: meta.mimeType });
+                    const file = new File([blob], meta.fileName, { type: meta.mimeType });
+                    photoIdFileMap.set(file, meta.photoId);
+                    return file;
                 }),
             );
-
         } catch (err) {
             errors.photos.push("Failed to fetch images: " + (err as Error).message);
         } finally {
@@ -189,7 +192,6 @@
      * Sends a PUT request to the backend with the updated trip details.
      */
     async function updatePost() {
-
         try {
             loading = true;
             
@@ -206,7 +208,6 @@
             form.append("Date", date ? date.toISOString() : "");
             form.append("NoContentAllowed", noContentAllowed);
             
-            
             const newUploadedFiles = newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
             if (newUploadedFiles != null) {
                 for (let i = 0; i < newUploadedFiles.length; i++) {
@@ -214,7 +215,6 @@
                 }
             }
             
-
             const response = await fetchWithCsrf(`/api/post/${page.params.postId}` as any, {
                 method: "PUT",
                 body: form,
@@ -251,6 +251,34 @@
             loading = false;
         }
     }
+
+    async function removePhoto(image: File, index: number) {
+        const photoId = photoIdFileMap.get(image);
+        if (photoId === undefined) {
+            return;
+        }
+
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/post/${page.params.postId}/images/${photoId}` as any),
+                { 
+                    method: "DELETE", 
+                    credentials: "include" 
+                },
+            );
+
+            if (!response.ok) {
+                errors.photos.push((await response.text()) || "Failed to delete image.");
+                files?.splice(index, 0, image);
+                return;
+            }
+
+            photoIds = photoIds.filter((id) => id !== photoId);
+        } catch (err) {
+            errors.photos.push("Failed to delete image: " + (err as Error).message);
+            files?.splice(index, 0, image);
+        }
+    }
 </script>
 
 <div class="container d-flex justify-content-center align-items-center">
@@ -266,8 +294,8 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files} errors={errors.photos}/>
-        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount={newUploadsCount}></ImagePicker>
+        <ImageDisplay bind:images={files} errors={errors.photos} letDelete={true} ondelete={removePhoto} />
+        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount={newUploadsCount} />
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />
