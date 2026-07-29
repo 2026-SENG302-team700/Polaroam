@@ -8,11 +8,11 @@
         letDelete = false,
         ondelete,
         errors = [],
-    }: { 
+    }: {
         images?: File[] | null;
-        letDelete?: boolean
-        ondelete?: (index: number) => void
-        errors?: string[] 
+        letDelete?: boolean;
+        ondelete?: (index: number) => void;
+        errors?: string[];
     } = $props();
 
     let confirmationModalShown = $state(false);
@@ -38,7 +38,7 @@
         }
         confirmationModalShown = false;
     }
-    
+
     /**
      * Checks whether a given image has a validation error associated with it
      */
@@ -69,13 +69,6 @@
     {/each}
 </div>
 
-<style>
-    .has-error :global(.img-thumbnail) {
-        border-color: var(--bs-danger, #dc3545);
-        border-width: 2px;
-    }
-</style>
-
 <ConfirmationModal
     bind:show={confirmationModalShown}
     message="Are you sure you want to delete this image?"
@@ -84,3 +77,10 @@
     onOption1={() => ConfirmDelete()}
     onOption2={() => (confirmationModalShown = false)}
 />
+
+<style>
+    .has-error :global(.img-thumbnail) {
+        border-color: var(--bs-danger, #dc3545);
+        border-width: 2px;
+    }
+</style>

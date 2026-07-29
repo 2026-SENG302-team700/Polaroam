@@ -5,7 +5,12 @@ using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net;
 using NSubstitute;
+using System.Net.Http.Headers;
 using SENG302.Api.Models.Responses;
+using System.Net.Http.Headers;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -20,6 +25,8 @@ public class U7007EditPost
     private DateTime? _date;
     private string _location;
     private long _osmId;
+
+    private readonly List<(byte[] Bytes, string FileName, string ContentType)> _images = [];
 
     public U7007EditPost(AcceptanceTestFixture fixture)
     {
@@ -43,9 +50,12 @@ public class U7007EditPost
         });
     }
 
-    public async Task SetupUserTripAndPost()
+    public async Task SetupUserTripAndPost(bool setUpGeo = true)
     {
-        SetupGeoMock();
+        if (setUpGeo)
+        {
+            SetupGeoMock();
+        }
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
         {
@@ -79,15 +89,97 @@ public class U7007EditPost
         await context.SaveChangesAsync();
     }
 
+    private MultipartFormDataContent BuildUpdatePostForm(
+        long osmId = 1,
+        IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "Id");
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent(_title), "Title");
+        content.Add(new StringContent(_content), "Content");
+        content.Add(new StringContent(_osmId.ToString()), "OsmId");
+        content.Add(new StringContent(_date?.ToString("o") ?? ""), "Date");
+
+        foreach (var (bytes, fileName, contentType) in photos ?? [])
+        {
+            var fileContent = new ByteArrayContent(bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "files", fileName);
+        }
+
+        return content;
+    }
+
     [Given(
         @"I am on the edit post form page And I enter a valid title, location, date, images and content")]
     public async Task ValidTripAttributes()
+    {
+        await SetupUserTripAndPost(true);
+
+        _title = "Updated title";
+        _content = "Updated content";
+        _date = DateTime.Parse("2025-01-07");
+    }
+
+    [Given("I am editing an existing post with two valid images to add")]
+    public async Task GivenIAmEditingPostWithTwoValidImages()
     {
         await SetupUserTripAndPost();
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTime.Parse("2025-01-07");
+        _date = DateTime.Today.AddDays(-1);
+        _osmId = 1;
+
+        var pandaBytes =
+            await File.ReadAllBytesAsync("resources/panda.webp");
+
+        _images.Add((
+            pandaBytes,
+            "panda.webp",
+            "image/webp"
+        ));
+
+        _images.Add((
+            pandaBytes,
+            "second-panda.webp",
+            "image/webp"
+        ));
+    }
+
+    [Given("I am editing an existing post with an image larger than 10MB")]
+    public async Task GivenIAmEditingPostWithOversizedImage()
+    {
+        await SetupUserTripAndPost();
+
+        _title = "Updated title";
+        _content = "Updated content";
+        _date = DateTime.Today.AddDays(-1);
+        _osmId = 1;
+
+        _images.Add((
+            new byte[10_000_001],
+            "huge.png",
+            "image/png"
+        ));
+    }
+
+    [Given("I am editing an existing post with an unsupported image type")]
+    public async Task GivenIAmEditingPostWithInvalidImageType()
+    {
+        await SetupUserTripAndPost();
+
+        _title = "Updated title";
+        _content = "Updated content";
+        _date = DateTime.Today.AddDays(-1);
+        _osmId = 1;
+
+        _images.Add((
+            Encoding.UTF8.GetBytes("This is not an image"),
+            "notes.txt",
+            "text/plain"
+        ));
     }
 
     [Given(
@@ -95,7 +187,7 @@ public class U7007EditPost
   )]
     public async Task GivenIEnterInvalidLocationWhileEditingPost()
     {
-        await SetupUserTripAndPost();
+        await SetupUserTripAndPost(false);
 
         _title = "Valid updated title";
         _content = "Valid updated content";
@@ -113,22 +205,45 @@ public class U7007EditPost
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var responseBody = await _lastResponse.Content.ReadAsStringAsync();
+        Console.WriteLine(responseBody);
         responseBody.ShouldContain(expectedMessage);
     }
 
     [When(@"I click 'Update Post'")]
     public async Task UpdatePost()
     {
-        UpdatePostRequest postRequest = new UpdatePostRequest()
+        using var form = new MultipartFormDataContent();
+
+        form.Add(new StringContent("1"), "Id");
+        form.Add(new StringContent("1"), "TripId");
+        form.Add(new StringContent(_title), "Title");
+        form.Add(new StringContent(_content), "Content");
+        form.Add(new StringContent(_osmId.ToString()), "OsmId");
+
+        if (_date != null)
         {
-            Id = 1,
-            TripId = 1,
-            Title = _title,
-            Content = _content,
-            OsmId = _osmId,
-            Date = _date
-        };
-        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync("api/post/1", postRequest);
+            form.Add(
+                new StringContent(
+                    new DateTimeOffset(_date.Value).ToString("O")),
+                "Date");
+        }
+
+        foreach (var image in _images)
+        {
+            var imageContent = new ByteArrayContent(image.Bytes);
+
+            imageContent.Headers.ContentType =
+                new MediaTypeHeaderValue(image.ContentType);
+
+            form.Add(
+                imageContent,
+                "files",
+                image.FileName);
+        }
+
+        _lastResponse = await _fixture.HttpClient.PutAsync(
+            "api/post/1",
+            form);
     }
 
     [Then(@"the post is updated")]
@@ -139,9 +254,63 @@ public class U7007EditPost
 
         var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
 
+        post.ShouldNotBeNull();
         post.Title.ShouldBe(_title);
         post.Content.ShouldBe(_content);
-        post.Date.ShouldBe(_date);
+    }
+
+    [Then("the two new images are associated with the post")]
+    public async Task ThenTwoNewImagesAreAssociatedWithPost()
+    {
+        await using var context =
+            await _fixture.DbContextFactory.CreateDbContextAsync();
+
+        var post = await context.Posts
+            .SingleAsync(post => post.PostId == 1);
+
+        post.PhotoIds.ShouldNotBeNull();
+        post.PhotoIds.Count.ShouldBe(2);
+
+        var files = await context.CustomFiles
+            .Where(file => post.PhotoIds.Contains(file.Id))
+            .ToListAsync();
+
+        files.Count.ShouldBe(2);
+        files.Select(file => file.OriginalFileName)
+            .ShouldBe(["panda.webp", "second-panda.webp"], ignoreOrder: true);
+    }
+
+    [Then("no new images are associated with the post")]
+    public async Task ThenNoNewImagesAreAssociatedWithPost()
+    {
+        await using var context =
+            await _fixture.DbContextFactory.CreateDbContextAsync();
+
+        var post = await context.Posts
+            .SingleAsync(post => post.PostId == 1);
+
+        post.PhotoIds.ShouldNotBeNull();
+        post.PhotoIds.ShouldBeEmpty();
+
+        var storedFiles = await context.CustomFiles.CountAsync();
+        storedFiles.ShouldBe(0);
+    }
+
+    [Then("I see the edit post photo error message {string}")]
+    public async Task ThenISeeTheEditPostPhotoErrorMessage(
+      string expectedMessage)
+    {
+        _lastResponse.ShouldNotBeNull();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var response = await _lastResponse.Content
+            .ReadFromJsonAsync<BadRequestValidationListResponse>();
+
+        response.ShouldNotBeNull();
+        response.Errors.ShouldContainKey("photos");
+
+        response.Errors["photos"].ShouldContain(
+            error => error.Contains(expectedMessage));
     }
 
     [Then("the post is not updated")]

@@ -118,7 +118,7 @@ public class PostController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
+    public async Task<ActionResult<Post>> UpdatePost([FromForm] UpdatePostRequest postUpdates, [FromForm] List<IFormFile>? files)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
@@ -127,6 +127,21 @@ public class PostController : ControllerBase
             return Unauthorized();
         }
 
+        if (files != null)
+        {
+            try
+            {
+                await _postService.UploadPhotosToPostAsync(files, postUpdates.Id, userId);
+            }
+            catch (MultipleValidationListException e)
+            {
+                return BadRequest(new BadRequestValidationListResponse
+                {
+                    Errors = e.Errors
+                });
+            }
+        }
+        
         try
         {
             var post = await _postService.UpdatePostAsync(postUpdates);
@@ -145,7 +160,6 @@ public class PostController : ControllerBase
         }
     }
     
-
     /// <summary>
     /// Takes a post id and returns all the metadata related to the photos
     /// </summary>
