@@ -226,7 +226,7 @@
             }
 
             const response = await fetchWithCsrf(
-                `/api/post/${page.params.postId}` as any,
+                resolve(`/api/post/${page.params.postId}` as any),
                 {
                     method: "PUT",
                     body: form,
@@ -317,13 +317,17 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay 
-                bind:images={files} 
-                errors={errors.photos} 
-                letDelete={true} 
-                ondelete={removePhoto}
+        <ImageDisplay
+            bind:images={files}
+            errors={errors.photos}
+            letDelete={true}
+            ondelete={removePhoto}
         >
-            <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount />
+            <ImagePicker
+                bind:filesList={files}
+                errors={errors.photos}
+                bind:newUploadsCount
+            />
         </ImageDisplay>
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
