@@ -6,7 +6,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
-using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -343,6 +342,111 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         exception.Errors["location"]
             .ShouldContain("This isn't a valid location");
+
+        await using var assertContext = DbContextFactory.CreateDbContext();
+
+        var post = await assertContext.Posts.FindAsync(1);
+
+        post.ShouldNotBeNull();
+        post.Title.ShouldBe("og title");
+        post.Content.ShouldBe("og content");
+        post.OsmId.ShouldBe(123);
+        post.LocationName.ShouldBe("Christchurch");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(129)]
+    public async Task UpdatePostAsync_InvalidTitleLength_ThrowsAndDoesNotUpdatePost(int titleLength)
+    {
+        await SetupUserAndTrip(1, 1);
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new UpdatePostRequest
+        {
+            Id = 1,
+            TripId = 1,
+            Title = new string('a', titleLength),
+            Content = "updated content",
+            Date = DateTimeOffset.Now.AddDays(-1),
+            OsmId = 0
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.UpdatePostAsync(request)
+            );
+
+        exception.Errors["title"]
+            .ShouldContain("Title is required and must be between 3 and 128 characters long");
+
+        await using var assertContext = DbContextFactory.CreateDbContext();
+
+        var post = await assertContext.Posts.FindAsync(1);
+
+        post.ShouldNotBeNull();
+        post.Title.ShouldBe("og title");
+        post.Content.ShouldBe("og content");
+        post.OsmId.ShouldBe(123);
+        post.LocationName.ShouldBe("Christchurch");
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_InvalidDateFormat_ThrowsAndDoesNotUpdatePost()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new UpdatePostRequest
+        {
+            Id = 1,
+            TripId = 1,
+            Title = "updated title",
+            Content = "updated content",
+            Date = null,
+            OsmId = 123
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.UpdatePostAsync(request)
+            );
+
+        exception.Errors["date"][0]
+            .ShouldContain("Invalid date, date must be formatted");
 
         await using var assertContext = DbContextFactory.CreateDbContext();
 

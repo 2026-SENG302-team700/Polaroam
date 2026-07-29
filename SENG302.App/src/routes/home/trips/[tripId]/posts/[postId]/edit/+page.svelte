@@ -22,7 +22,7 @@
     let photoIds = $state([]);
 
     const tripId = page.params.tripId;
-    let newUploadsCount = $state(0)
+    let newUploadsCount = $state(0);
     let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
@@ -36,7 +36,7 @@
     });
 
     let loading = $state(false);
-    
+
     type UpdateFormErrors = {
         title: string[];
         content: string[];
@@ -44,7 +44,7 @@
         generic: string;
         location: string;
         photos: string[];
-    }
+    };
 
     /**
      * returns an empty PostFormErrors object
@@ -74,7 +74,6 @@
         await fetchImages();
     });
 
-
     /**
      * Fetch Images
      */
@@ -82,14 +81,16 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${page.params.postId}/images` as any), {
+                resolve(`/api/post/${page.params.postId}/images` as any),
+                {
                     method: "GET",
                     credentials: "include",
                 },
             );
             if (!response.ok) {
-                let error = (await response.text()) || "Failed to fetch images.";
-                errors.photos.push(error)
+                let error =
+                    (await response.text()) || "Failed to fetch images.";
+                errors.photos.push(error);
                 return;
             }
 
@@ -102,19 +103,24 @@
             files = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/post/${page.params.postId}/images/${meta.photoId}` as any),
+                        resolve(
+                            `/api/post/${page.params.postId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
-                            credentials: "include"
-                        }
+                            credentials: "include",
+                        },
                     );
                     const blob = await res.blob();
-                    return new File([blob], meta.fileName, { type: meta.mimeType });
+                    return new File([blob], meta.fileName, {
+                        type: meta.mimeType,
+                    });
                 }),
             );
-
         } catch (err) {
-            errors.photos.push("Failed to fetch images: " + (err as Error).message);
+            errors.photos.push(
+                "Failed to fetch images: " + (err as Error).message,
+            );
         } finally {
             loading = false;
         }
@@ -168,7 +174,7 @@
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
                 return;
             }
-            console.log(`PhotoIds: ${data.photoIds}`)
+            console.log(`PhotoIds: ${data.photoIds}`);
 
             title = data.title;
             content = data.content;
@@ -189,12 +195,14 @@
      * Sends a PUT request to the backend with the updated trip details.
      */
     async function updatePost() {
-
         try {
             loading = true;
-            
-            if (content.length > 0  || (files !== undefined && files !== null && files?.length > 0)) {
-                noContentAllowed = true
+
+            if (
+                content.length > 0 ||
+                (files !== undefined && files !== null && files?.length > 0)
+            ) {
+                noContentAllowed = true;
             }
 
             const form = new FormData();
@@ -205,28 +213,30 @@
             form.append("Content", content);
             form.append("Date", date ? date.toISOString() : "");
             form.append("NoContentAllowed", noContentAllowed);
-            
-            
-            const newUploadedFiles = newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
+
+            const newUploadedFiles =
+                newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
             if (newUploadedFiles != null) {
                 for (let i = 0; i < newUploadedFiles.length; i++) {
                     form.append("files", newUploadedFiles[i]);
                 }
             }
-            
 
-            const response = await fetchWithCsrf(`/api/post/${page.params.postId}` as any, {
-                method: "PUT",
-                body: form,
-                credentials: "include",
-            });
+            const response = await fetchWithCsrf(
+                `/api/post/${page.params.postId}` as any,
+                {
+                    method: "PUT",
+                    body: form,
+                    credentials: "include",
+                },
+            );
             const data = await response.json();
-            
 
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
+                errors.title = data.errors?.title ?? [];
                 errors.photos = data.errors?.photos ?? [];
 
                 if (
@@ -239,7 +249,7 @@
                     files?.length === 0
                 ) {
                     confirmationModalShown = true;
-                } 
+                }
                 return;
             }
             goto(resolve(`/home/trips/${data.tripId}`));
@@ -254,7 +264,7 @@
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
-        <TitleForm bind:name={title} />
+        <TitleForm bind:name={title} errors={errors.title} />
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}
             <div class="invalid-feedback d-block">{errors.date}</div>
@@ -265,8 +275,12 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files} errors={errors.photos}/>
-        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount={newUploadsCount}></ImagePicker>
+        <ImageDisplay images={files} errors={errors.photos} />
+        <ImagePicker
+            bind:filesList={files}
+            errors={errors.photos}
+            bind:newUploadsCount
+        ></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />

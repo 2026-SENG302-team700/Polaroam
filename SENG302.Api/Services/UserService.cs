@@ -489,6 +489,7 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var user = await context.Users.FindAsync(userId);
+        if (user == null) throw new UnauthorizedAccessException("a user with that id does not exist");
         user.ProfanityFiltering = profanityFilter;
         await context.SaveChangesAsync();
     }

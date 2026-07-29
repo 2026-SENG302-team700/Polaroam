@@ -108,7 +108,7 @@ public class Program
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
-                options.Cookie.Name = "OUTSTANDING-AUTH-COOKIE";
+                options.Cookie.Name = "POLAROAM-AUTH-COOKIE";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = cookiePolicy;
                 options.Cookie.SameSite = SameSiteMode.Lax;
@@ -119,7 +119,7 @@ public class Program
             })
             .AddCookie("PasswordResetScheme", options =>
             {
-                options.Cookie.Name = "OUTSTANDING-RESET-COOKIE";
+                options.Cookie.Name = "POLAROAM-RESET-COOKIE";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = cookiePolicy;
                 options.Cookie.SameSite = SameSiteMode.Lax;

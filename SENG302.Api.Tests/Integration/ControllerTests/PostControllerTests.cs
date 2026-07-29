@@ -29,7 +29,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             name = "Auckland, New Zealand"
         });
     }
-    
+
     /// <summary>
     /// Sets up a user, trip and post for testing.
     /// All Ids are set to 1.
@@ -313,7 +313,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         postExists.ShouldBeFalse();
     }
-    
+
     [Fact]
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
@@ -431,7 +431,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         await using (var context = DbContextFactory.CreateDbContext())
         {
-        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
+            context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
             await context.SaveChangesAsync();
         }
 
@@ -676,7 +676,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var photos = await response.Content.ReadAsStringAsync();
         photos.ShouldContain("Photo not found on this post.");
     }
-    
+
     private MultipartFormDataContent BuildUpdatePostForm(
         long osmId = 1,
         IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
@@ -702,10 +702,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task UpdatePost_AllFields_UpdateSuccessful()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        
-        context.Trips.Add(new Trip
+        SetupUserTripAndPost();
+
+        var updateRequest = new UpdatePostRequest
         {
             Id = 1,
             UserId = 1,
@@ -740,7 +739,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         ]);
         var response = await HttpClient.PutAsync("/api/post/1", updateRequest);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
+
         var updatedPost = await context.Posts.FirstOrDefaultAsync(p => p.PostId == 1);
         updatedPost.ShouldNotBeNull();
         updatedPost.Title.ShouldBe("Title");
@@ -908,7 +907,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
             await context.SaveChangesAsync();
         }
-        
+
 
         var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
@@ -939,9 +938,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
         post.OsmId.ShouldBe(123);
         post.LocationName.ShouldBe("Christchurch");
     }
-    
-    
-    
+
+
+
     [Fact]
     public async Task UpdatePost_OneInvalidPhotoOthersOk_BadRequestPostNotCreated()
     {
@@ -997,7 +996,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var errors = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
         errors!.Errors["photos"].ShouldContain(e => e.Contains("notreal.png"));
-        
+
     }
 
     [Fact]

@@ -243,6 +243,10 @@ public class PostService : IPostService
         {
             return null;
         }
+        if (post.PhotoIds == null)
+        {
+            return null;
+        }
 
         for (int i = 0; i < photoFileIds.Count; i++)
         {

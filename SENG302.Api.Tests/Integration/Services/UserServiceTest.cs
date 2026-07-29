@@ -320,8 +320,8 @@ public class UserServiceTest : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
 
-        var email = "hello@outstanding.com";
-        var name = "Outstanding";
+        var email = "hello@polaroam.com";
+        var name = "Polaroam";
         var country = "NZ";
 
         context.Users.Add(new User

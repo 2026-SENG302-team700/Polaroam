@@ -224,6 +224,14 @@ public class ResetPasswordController : ControllerBase
 
             // Create a dictionary of important values to send in the email, then call function to send email
             var user = await _userService.GetUserFromEmailAsync(userEmail);
+            if (user ==null)
+            {
+                return Unauthorized(new
+                {
+                    message = "A user with that email does not exist."
+                });
+            }
+            
             var emailDictionary = new Dictionary<string, string>
             {
                 {"DISPLAY_NAME", user.Email}
