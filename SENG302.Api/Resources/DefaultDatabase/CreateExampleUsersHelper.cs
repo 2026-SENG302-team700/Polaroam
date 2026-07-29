@@ -68,8 +68,8 @@ public static class CreateExampleUsersHelper
                 {
                     Title = "Name_" + i.ToString(),
                     UserId = user.Id,
-                    StartDate = DateOnly.FromDateTime(DateTime.Now),
-                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1))
+                    StartDate = DateTime.Now,
+                    EndDate = DateTime.Now.AddDays(1),
                 };
 
                 dbContext.Add(trip);
@@ -83,7 +83,7 @@ public static class CreateExampleUsersHelper
                         Title = "Post_" + j.ToString(),
                         TripId = trip.Id,
                         Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
-                        Date = DateOnly.MaxValue,
+                        Date = DateTime.MaxValue,
                         creationTime = DateTimeOffset.Now,
                         OsmId = 1,
                         LocationName = "Location_" + j

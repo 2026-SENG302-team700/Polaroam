@@ -10,7 +10,7 @@ public class UpdateTripRequest
     public string? Title { get; set; }
     public string? Description { get; set; }
 
-    public DateOnly? StartDate { get;
+    public DateTime? StartDate { get;
         set {
             field = value;
             StartDateSupplied = true;
@@ -20,7 +20,7 @@ public class UpdateTripRequest
     public bool StartDateSupplied { get; set; } = false;
 
 
-    public DateOnly? EndDate { get;
+    public DateTime? EndDate { get;
         set {
             field = value;
             EndDateSupplied = true;

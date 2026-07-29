@@ -8,7 +8,7 @@ public class NewTripRequest
     
     public required string Description { get; set; }
 
-    public required DateOnly? StartDate { get; set; }
-    public required DateOnly? EndDate { get; set; }
+    public required DateTime? StartDate { get; set; }
+    public required DateTime? EndDate { get; set; }
 
 }
