@@ -106,7 +106,7 @@
                 return;
             }
 
-            await goto(resolve(`/home/trips` as any));
+            await goto(resolve(`/home` as any));
         } catch (err) {
             error = "Failed to delete trip: " + (err as Error).message;
         } finally {
