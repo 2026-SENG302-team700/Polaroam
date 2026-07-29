@@ -18,7 +18,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::Xunit.TraitAttribute("Category", "forgot-password")]
-    public partial class U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature : object, global::Xunit.IClassFixture<U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature.FixtureData>, global::Xunit.IAsyncLifetime
+    public partial class U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToPolaroamIfILoseMyPassword_Feature : object, global::Xunit.IClassFixture<U10_AsTipeneIWantToBeAbleToResetMyPasswordViaEmailSoThatICanKeepAccessToOutstandingIfILoseMyPassword_Feature.FixtureData>, global::Xunit.IAsyncLifetime
     {
         
         private global::Reqnroll.ITestRunner testRunner;

@@ -174,7 +174,7 @@
                 return;
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
-            addToast(`Welcome to Outstanding ${data?.message}!`);
+            addToast(`Welcome to Polaroam ${data?.message}!`);
             goto(resolve(`/home`));
         } catch (err) {
             password = "";
@@ -451,12 +451,18 @@
             e.preventDefault();
             loginUser();
         }}
+        novalidate
     >
         <div class="mb-3">
             <EmailForm error={errors.email} {loading} bind:email />
         </div>
         <div class="mb-3">
-            <PasswordForm bind:password error={errors.password} {loading} id="password" />
+            <PasswordForm
+                bind:password
+                error={errors.password}
+                {loading}
+                id="password"
+            />
         </div>
         <div class="mb-3">
             <AuthenticatorButton buttonType={"login"} />
@@ -493,6 +499,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <form
+                novalidate    
                 onsubmit={() => {
                     if (loadingStatus == 0) {
                         if (currentModalStep === ModalStep.EMAIL_INPUT) {

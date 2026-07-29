@@ -84,7 +84,7 @@ public class EmailServiceUnitTests
 
         await _smtpMock.Received(1).SendAsync(Arg.Is<MimeMessage>(msg =>
                 msg.Subject != null &&
-                msg.Subject.Equals("Your Outstanding verification code") &&
+                msg.Subject.Equals("Your Polaroam verification code") &&
                 !msg.Subject.StartsWith("Subject:")
         ));
     }

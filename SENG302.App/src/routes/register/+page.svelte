@@ -32,7 +32,6 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-
         try {
             loading = true;
 
@@ -97,7 +96,7 @@
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
-    <form on:submit|preventDefault={registerUser}>
+    <form on:submit|preventDefault={registerUser} novalidate>
         <div class="mb-3">
             <EmailForm bind:email error={errors.email} {loading} />
         </div>
@@ -118,7 +117,7 @@
         </div>
         <div class="mb-3">
             <PasswordForm
-                id="initial-password-input"    
+                id="initial-password-input"
                 bind:password
                 error={errors.password}
                 {loading}
@@ -127,8 +126,8 @@
         </div>
         <div class="mb-3">
             <PasswordForm
-                    id="confirm-password"
-                    bind:password={passwordConfirm}
+                id="confirm-password"
+                bind:password={passwordConfirm}
                 error={errors.passwordConfirm}
                 {loading}
                 passConfirm={true}
