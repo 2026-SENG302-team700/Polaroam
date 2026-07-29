@@ -297,7 +297,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         trips.First().Title.ShouldBe("Test trip title");
         trips.First().Description.ShouldBe("Test Description");
         trips.First().StartDate.ShouldBe(new DateOnly(2022, 1, 1));
-        trips.First().EndDate.ShouldBe(new DateOnly(2020, 1, 7));
+        trips.First().EndDate.ShouldBe(new DateOnly(2022, 1, 7));
     }
 
     /// <summary>
