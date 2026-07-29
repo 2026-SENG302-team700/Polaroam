@@ -141,9 +141,9 @@ public class PostControllerUnitTests
 
         _mockUserService.GetUserByIdAsync(1).Returns(user);
 
-        _mockPostService.CreateNewPostAsync(request).Returns(Task.FromException<Post>(new MultipleValidationListException(errors)));
+        _mockPostService.CreateNewPostAsync(request, null, 1).Returns(Task.FromException<Post>(new MultipleValidationListException(errors)));
 
-        var result = await _controller.CreatePost(request);
+        var result = await _controller.CreatePost(request, null);
 
         var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
 
@@ -170,9 +170,9 @@ public class PostControllerUnitTests
 
         _mockUserService.GetUserByIdAsync(1).Returns(user);
 
-        _mockPostService.CreateNewPostAsync(request).Returns(Task.FromException<Post>(new Exception("Unable to create post")));
+        _mockPostService.CreateNewPostAsync(request, null, 1).Returns(Task.FromException<Post>(new Exception("Unable to create post")));
 
-        var result = await _controller.CreatePost(request);
+        var result = await _controller.CreatePost(request, null);
 
         var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
 
@@ -188,11 +188,11 @@ public class PostControllerUnitTests
 
         _mockUserService.GetUserByIdAsync(1).Returns((User?)null);
 
-        var result = await _controller.CreatePost(request);
+        var result = await _controller.CreatePost(request, null);
 
         result.Result.ShouldBeOfType<UnauthorizedResult>();
 
-        await _mockPostService.DidNotReceive().CreateNewPostAsync(Arg.Any<NewPostRequest>());
+        await _mockPostService.DidNotReceive().CreateNewPostAsync(Arg.Any<NewPostRequest>(), Arg.Any<List<IFormFile>?>(), Arg.Any<int>());
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class PostControllerUnitTests
 
         _mockPostService.UpdatePostAsync(request).Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
 
-        var result = await _controller.UpdatePost(request);
+        var result = await _controller.UpdatePost(request, null);
 
         var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
 
@@ -299,7 +299,7 @@ public class PostControllerUnitTests
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(false);
 
-        var result = await _controller.UpdatePost(request);
+        var result = await _controller.UpdatePost(request, null);
 
         result.Result.ShouldBeOfType<UnauthorizedResult>();
 
@@ -331,7 +331,7 @@ public class PostControllerUnitTests
 
         _mockPostService.UpdatePostAsync(request).Returns(updatedPost);
 
-        var result = await _controller.UpdatePost(request);
+        var result = await _controller.UpdatePost(request, null);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(updatedPost);
@@ -357,7 +357,7 @@ public class PostControllerUnitTests
 
         _mockPostService.UpdatePostAsync(request).Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
 
-        var result = await _controller.UpdatePost(request);
+        var result = await _controller.UpdatePost(request, null);
 
         var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
 
