@@ -8,10 +8,15 @@
         letDelete = false,
         ondelete,
         errors = [],
-    }: { images?: File[] | null;
-         letDelete?: boolean
-         ondelete?: (index: number) => void
-         errors?: string[] } = $props();
+    }: { 
+        images?: File[] | null;
+        letDelete?: boolean
+        ondelete?: (index: number) => void
+        errors?: string[] 
+    } = $props();
+
+    let confirmationModalShown = $state(false);
+    let pendingDeleteIndex: number | null = $state(null);
 
     /**
      * Stores the index of the image to be deleted so it is not out of scope
@@ -70,7 +75,6 @@
         border-width: 2px;
     }
 </style>
-</div>
 
 <ConfirmationModal
     bind:show={confirmationModalShown}
