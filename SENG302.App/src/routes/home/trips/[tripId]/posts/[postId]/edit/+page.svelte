@@ -36,14 +36,38 @@
     });
 
     let loading = $state(false);
-    let errors = $state({
-        title: [],
-        content: [],
-        date: "",
-        location: "",
-        generic: "",
-        photos: "",
-    });
+    
+    type UpdateFormErrors = {
+        title: string[];
+        content: string[];
+        date: string;
+        generic: string;
+        location: string;
+        photos: string[];
+    }
+
+    /**
+     * returns an empty PostFormErrors object
+     */
+    function emptyErrors(): UpdateFormErrors {
+        return {
+            title: [],
+            content: [],
+            date: "",
+            generic: "",
+            location: "",
+            photos: [],
+        };
+    }
+
+    /**
+     * refreshes the PostFormErrors object
+     */
+    function clearErrors() {
+        errors = emptyErrors();
+    }
+
+    let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
         await fetchPost();
@@ -54,7 +78,7 @@
     /**
      * Fetch Images
      */
-    async function fetchImages(photo) {
+    async function fetchImages() {
         try {
             loading = true;
             const response = await fetchWithCsrf(
@@ -64,7 +88,8 @@
                 },
             );
             if (!response.ok) {
-                errors.photos = (await response.text()) || "Failed to fetch images.";
+                let error = (await response.text()) || "Failed to fetch images.";
+                errors.photos.push(error)
                 return;
             }
 
@@ -89,7 +114,7 @@
             );
 
         } catch (err) {
-            errors.photos = "Failed to fetch images: " + (err as Error).message;
+            errors.photos.push("Failed to fetch images: " + (err as Error).message);
         } finally {
             loading = false;
         }
@@ -164,40 +189,12 @@
      * Sends a PUT request to the backend with the updated trip details.
      */
     async function updatePost() {
-        errors.title = [];
-        errors.content = [];
-        errors.date = "";
-        errors.location = "";
-        errors.generic = "";
-        errors.photos = "";
 
         try {
-            // const response = await fetchWithCsrf(
-            //     resolve(`/api/post/${page.params.postId}` as any),
-            //     {
-            //         method: "PUT",
-            //         headers: {
-            //             "Content-Type": "application/json",
-            //         },
-            //         body: JSON.stringify({
-            //             Id: Number(page.params.postId),
-            //             TripId: Number(page.params.tripId),
-            //             Title: title,
-            //             Content: content,
-            //             Date: serialiseLocalDate(date),
-            //             OsmId: location.osmId,
-            //             NoContentAllowed: noContentAllowed,
-            //         }),
-            //         credentials: "include",
-            //     },
-            // );
-            // const data = await response.json();
-
             loading = true;
             
             if (content.length > 0  || (files !== undefined && files !== null && files?.length > 0)) {
                 noContentAllowed = true
-                console.log("No content is allowed?")
             }
 
             const form = new FormData();
@@ -211,8 +208,6 @@
             
             
             const newUploadedFiles = newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
-            console.log(`New Upload counts: ${newUploadsCount}`)
-            console.log(`Length: ${newUploadedFiles?.length}`)
             if (newUploadedFiles != null) {
                 for (let i = 0; i < newUploadedFiles.length; i++) {
                     form.append("files", newUploadedFiles[i]);
@@ -232,6 +227,7 @@
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
+                errors.photos = data.errors?.photos ?? [];
 
                 if (
                     errors.content.length === 1 &&
@@ -269,8 +265,8 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay images={files} errors={[errors.photos]}/>
-        <ImagePicker bind:filesList={files} errors={[errors.photos]} bind:newUploadsCount={newUploadsCount}></ImagePicker>
+        <ImageDisplay images={files} errors={errors.photos}/>
+        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount={newUploadsCount}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />

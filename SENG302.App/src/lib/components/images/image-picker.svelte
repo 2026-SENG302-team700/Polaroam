@@ -82,8 +82,7 @@
 
         clientErrors = [];
         for (const file of files) {
-            // const fileErrors = await validateImage(file);
-            const fileErrors: string[] = [];
+            const fileErrors = await validateImage(file);
             if (fileErrors.length > 0) {
                 clientErrors.push(...fileErrors);
             } else {
@@ -93,7 +92,6 @@
         }
     }
     
-    // accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
 </script>
 <div class="d-flex flex-column mb-2">
     <button
@@ -108,6 +106,7 @@
         <i class="bi-images"></i>
     </button>
     <input
+            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
             type="file"
             bind:files
             bind:this={pfpInput}
