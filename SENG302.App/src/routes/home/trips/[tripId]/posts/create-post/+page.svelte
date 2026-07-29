@@ -14,7 +14,7 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-
+    
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -86,7 +86,7 @@
                     form.append("files", files[i]);
                 }
             }
-
+            
             const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
                 body: form,
@@ -166,11 +166,7 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay
-            bind:images={files}
-            errors={errors.photos}
-            letDelete={true}
-        />
+        <ImageDisplay bind:images={files} letDelete={true} errors="{errors.photos}"/>
         <ImagePicker bind:filesList={files} errors={errors.photos} />
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
