@@ -40,8 +40,8 @@ public class U7002EditTrip
         {
             Title = "Original trip",
             Description = "Original description",
-            StartDate = new DateTime(2026, 7, 1),
-            EndDate = new DateTime(2026, 7, 10),
+            StartDate = new DateOnly(2026, 7, 1),
+            EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
 
@@ -66,8 +66,8 @@ public class U7002EditTrip
             Id = _originalTrip.Id,
             Title = "Updated trip",
             Description = "Updated description",
-            StartDate = new DateTime(2026, 8, 1),
-            EndDate = new DateTime(2026, 8, 10)
+            StartDate = new DateOnly(2026, 8, 1),
+            EndDate = new DateOnly(2026, 8, 10)
         };
 
         _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
@@ -86,8 +86,8 @@ public class U7002EditTrip
             Id = _originalTrip.Id,
             Title = "Invalid updated trip",
             Description = "This should not be persisted",
-            StartDate = new DateTime(2026, 8, 10),
-            EndDate = new DateTime(2026, 8, 1)
+            StartDate = new DateOnly(2026, 8, 10),
+            EndDate = new DateOnly(2026, 8, 1)
         };
 
         _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
@@ -107,7 +107,7 @@ public class U7002EditTrip
             Title = "Invalid updated trip",
             Description = "This should not be persisted",
             StartDate = null,
-            EndDate = new DateTime(2026, 8, 10)
+            EndDate = new DateOnly(2026, 8, 10)
         };
 
         _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
@@ -211,8 +211,8 @@ public class U7002EditTrip
         savedTrip.ShouldNotBeNull();
         savedTrip.Title.ShouldBe("Updated trip");
         savedTrip.Description.ShouldBe("Updated description");
-        savedTrip.StartDate.ShouldBe(new DateTime(2026, 8, 1));
-        savedTrip.EndDate.ShouldBe(new DateTime(2026, 8, 10));
+        savedTrip.StartDate.ShouldBe(new DateOnly(2026, 8, 1));
+        savedTrip.EndDate.ShouldBe(new DateOnly(2026, 8, 10));
     }
 
     [Then("I am transported back to the trip page")]

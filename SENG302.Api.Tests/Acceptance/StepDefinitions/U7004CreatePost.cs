@@ -17,7 +17,7 @@ public class U7004CreatePost
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _content;
-    private DateTime? _date;
+    private DateOnly? _date;
     private string _location;
     private long _osmId;
 
@@ -26,7 +26,7 @@ public class U7004CreatePost
         _fixture = fixture;
         _title = "";
         _content = "";
-        _date = new DateTime();
+        _date = new DateOnly();
         _location = "";
         _osmId = 292806332;
     }
@@ -60,8 +60,8 @@ public class U7004CreatePost
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = new DateTime(2026, 7, 1),
-            EndDate = new DateTime(2026, 7, 10),
+            StartDate = new DateOnly(2026, 7, 1),
+            EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
         await context.SaveChangesAsync();
@@ -76,7 +76,7 @@ public class U7004CreatePost
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
-        _date = DateTime.Parse("2025-01-07");
+        _date = DateOnly.Parse("2025-01-07");
 
 
     }
@@ -89,7 +89,7 @@ public class U7004CreatePost
 
         _title = "ab";
         _content = "Test content";
-        _date = DateTime.Parse("2022-01-07");
+        _date = DateOnly.Parse("2022-01-07");
     }
 
     [Given(@"I enter location text without selecting a suggested location")]
@@ -99,7 +99,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = "Valid post content";
-        _date = DateTimeOffset.Now.AddDays(-1).DateTime;
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
 
         // Text was entered, but no search result was selected.
         _location = "Made up location";
@@ -154,7 +154,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = "Valid post content";
-        _date = DateTime.Now.AddDays(1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(1);
     }
 
     [Then(@"I see an error message '(.*)'")]
