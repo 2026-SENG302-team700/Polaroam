@@ -34,8 +34,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        DateTime startDate = DateTime.Parse(stringStartDate);
-        DateTime endDate = DateTime.Parse(stringEndDate);
+        DateOnly startDate = DateOnly.FromDateTime(DateTime.Parse(stringStartDate));
+        DateOnly endDate = DateOnly.FromDateTime(DateTime.Parse(stringEndDate));
 
         var tripRequest = new NewTripRequest
         {
@@ -79,8 +79,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = title,
             Description = "Test",
-            StartDate = DateTime.Parse("2022-01-01"),
-            EndDate = DateTime.Parse("2022-01-07"),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
@@ -115,8 +115,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "Trip Title",
             Description = "Test",
-            StartDate = DateTime.Parse("2022-01-01"),
-            EndDate = DateTime.Parse("2022-01-07"),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
@@ -156,8 +156,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "test",
             Description = new string('a', 2049),
-            StartDate = DateTime.Parse("2022-01-01"),
-            EndDate = DateTime.Parse("2022-01-07"),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
@@ -187,8 +187,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "test",
             Description = "Test",
-            StartDate = DateTime.Parse("2022-01-01"),
-            EndDate = DateTime.Parse("2022-01-07"),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         Trip trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
@@ -228,8 +228,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "title",
             Description = "Test",
-            StartDate = DateTime.Parse("2022-01-01"),
-            EndDate = DateTime.Parse("2021-12-29"),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2021, 1, 7)
         };
 
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
@@ -288,16 +288,16 @@ public class TripServiceTests : BaseIntegrationTestFixture
             Title = "Test trip title",
             UserId = 1,
             Description = "Test Description",
-            StartDate = new DateTime(2020, 1, 30),
-            EndDate = new DateTime(2020, 2, 5)
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         });
         await context.SaveChangesAsync();
         var trips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
         trips.Count().ShouldBe(1);
         trips.First().Title.ShouldBe("Test trip title");
         trips.First().Description.ShouldBe("Test Description");
-        trips.First().StartDate.ShouldBe(new DateTime(2020, 1, 30));
-        trips.First().EndDate.ShouldBe(new DateTime(2020, 2, 5));
+        trips.First().StartDate.ShouldBe(new DateOnly(2022, 1, 1));
+        trips.First().EndDate.ShouldBe(new DateOnly(2020, 1, 7));
     }
 
     /// <summary>
@@ -326,8 +326,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
             {
                 Title = "Original trip",
                 Description = "Original description",
-                StartDate = new DateTime(2026, 7, 1),
-                EndDate = new DateTime(2026, 7, 10)
+                StartDate =  new DateOnly(2022, 1, 1),
+                EndDate = new DateOnly(2022, 1, 7)
             },
             userId
         );
@@ -338,8 +338,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
     {
         var trip = await CreateTripForUpdateTests();
 
-        var newStartDate = new DateTime(2026, 8, 1);
-        var newEndDate = new DateTime(2026, 8, 10);
+        var newStartDate = new DateOnly(2026, 8, 1);
+        var newEndDate = new DateOnly(2026, 8, 10);
 
         var request = new UpdateTripRequest
         {
