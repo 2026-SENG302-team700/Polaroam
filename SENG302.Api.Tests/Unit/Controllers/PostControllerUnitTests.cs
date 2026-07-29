@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using SENG302.Api.Controllers;
@@ -447,5 +448,62 @@ public class PostControllerUnitTests
 
         var notFound = result.ShouldBeOfType<NotFoundObjectResult>();
         notFound.Value.ShouldBe("Post does not exist");
+    }
+
+    [Fact]
+    public async Task DeletePhotoFromPost_UserOwnsPost_DeletesPostAndReturnsNoContent()
+    {
+        SetupUserContext("1");
+
+        var post = new Post
+        {
+            PostId = 10,
+            TripId = 20,
+            Title = "Post to delete",
+            Content = "",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = [15]
+        };
+
+        _mockPostService.GetPostAsync(10).Returns(post);
+        _mockPostService.UserOwnsPost(1, 20).Returns(true);
+
+        var result = await _controller.DeletePhotoFromPost(10, 15);
+
+        result.ShouldBeOfType<NoContentResult>();
+        await _mockPostService.Received(1).DeletePhotoFromPostAsync(10, 15);
+    }
+
+    [Fact]
+    public async Task DeletePhotoFromPost_PostDoesntExist_NotFound()
+    {
+        SetupUserContext("1");
+        var result = await _controller.DeletePhotoFromPost(10, 15);
+
+        result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task DeletePhotoFromPost_UserNotOwner_Unauthorized()
+    {
+        SetupUserContext("1");
+
+        var post = new Post
+        {
+            PostId = 10,
+            TripId = 20,
+            Title = "Post to delete",
+            Content = "",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = [15]
+        };
+
+        _mockPostService.GetPostAsync(10).Returns(post);
+
+        var result = await _controller.DeletePhotoFromPost(10, 15);
+
+        result.ShouldBeOfType<UnauthorizedResult>();
     }
 }

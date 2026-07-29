@@ -3,7 +3,6 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
-using SENG302.Api.Models.Requests;
 
 
 namespace SENG302.Api.Services;
@@ -19,6 +18,7 @@ public interface IPostService
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
     Task DeletePostByIdAsync(int postId);
     Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId);
+    Task DeletePhotoFromPostAsync(int postId, int photoId);
 }
 
 
@@ -354,9 +354,45 @@ public class PostService : IPostService
 
         context.Locations.RemoveRange(locations);
 
-        //TODO: delete the custom file records and physical image files from server
+        if (post.PhotoIds != null)
+        {
+            var images = await context.CustomFiles
+                .Where(file => post.PhotoIds.Contains(file.Id))
+                .ToListAsync();
 
+            foreach (var image in images)
+            {
+                await _fileService.DeleteFileAsync(image.FileKey);
+            }
+        }
+        
         context.Posts.Remove(post);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Deletes post photo via file service then removes from photo id list.
+    /// </summary>
+    /// <param name="postId">The post id containing the image</param>
+    /// <param name="photoId">photo id of deleted photo</param>
+    /// <exception cref="KeyNotFoundException">photo not belonging in post</exception>
+    public async Task DeletePhotoFromPostAsync(int postId, int photoId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var post = await context.Posts.FirstOrDefaultAsync(t => t.PostId == postId);
+
+        if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
+        {
+            throw new KeyNotFoundException(
+                "This photo does not belong to this post."
+            );
+        }
+
+        var photo = await _fileService.GetFileByIdAsync(photoId);
+        await _fileService.DeleteFileAsync(photo.FileKey);
+        
+        post.PhotoIds.Remove(photoId);
         await context.SaveChangesAsync();
     }
 }
