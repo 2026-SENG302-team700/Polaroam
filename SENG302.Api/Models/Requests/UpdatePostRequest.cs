@@ -15,7 +15,7 @@ public class UpdatePostRequest : IPostRequest
     public long OsmId { get; set; }
     public string Content { get; set; } = string.Empty;
 
-    public required DateTimeOffset? Date { get;
+    public required DateOnly? Date { get;
         set {
             field = value;
             DateSupplied = true;

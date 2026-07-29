@@ -22,7 +22,7 @@ public class PostValidator
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="date"></param>
-    public static List<string> ValidatePostDate(DateTimeOffset? date)
+    public static List<string> ValidatePostDate(DateOnly? date)
     {
         var errors = new List<string>();
         if (date == null)
@@ -31,7 +31,7 @@ public class PostValidator
             return errors;
         }
 
-        if (date > DateTime.Now) errors.Add("Invalid date, date cannot be in the future");
+        if (date > DateOnly.FromDateTime(DateTime.Now)) errors.Add("Invalid date, date cannot be in the future");
         return errors;
     }
 
