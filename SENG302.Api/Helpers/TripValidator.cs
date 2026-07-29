@@ -97,16 +97,22 @@ public class TripValidator
     public static Dictionary<string, List<string>> ValidateDates(DateTime? startDate, DateTime? endDate)
     {
         var errors = new Dictionary<string, List<string>>();
-        errors["dates"] = new List<string>();
+        errors["dateOne"] = new List<string>();
+        errors["dateTwo"] = new List<string>();
 
         if (startDate > endDate)
         {
-            errors["dates"].Add("End date must not be before the start date");
+            errors["dateTwo"].Add("End date must not be before the start date");
         }
 
-        if (startDate == null || endDate == null)
+        if (startDate == null)
         {
-            errors["dates"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat()}");
+            errors["dateOne"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat()}");
+        }
+        
+        if (endDate == null)
+        {
+            errors["dateTwo"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat()}");
         }
 
         return errors;
