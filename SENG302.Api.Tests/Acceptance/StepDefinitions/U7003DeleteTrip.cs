@@ -25,11 +25,11 @@ public class U7003DeleteTrip
             Id = tripId,
             Title = "title ya'll",
             Description = "description",
-            StartDate = DateTime.Parse("2022-01-01"),
-            EndDate = DateTime.Parse("2022-01-07"),
+            StartDate = DateOnly.Parse("2022-01-01"),
+            EndDate = DateOnly.Parse("2022-01-07"),
             UserId = 1
         });
-        
+
         await context.SaveChangesAsync();
     }
 

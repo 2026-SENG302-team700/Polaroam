@@ -22,7 +22,7 @@ public class U7007EditPost
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _content;
-    private DateTime? _date;
+    private DateOnly? _date;
     private string _location;
     private long _osmId;
 
@@ -33,7 +33,7 @@ public class U7007EditPost
         _fixture = fixture;
         _title = "";
         _content = "";
-        _date = new DateTime();
+        _date = new DateOnly();
         _location = "";
         _osmId = 1;
     }
@@ -71,8 +71,8 @@ public class U7007EditPost
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = new DateTime(2026, 7, 1),
-            EndDate = new DateTime(2026, 7, 10),
+            StartDate = new DateOnly(2026, 7, 1),
+            EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
 
@@ -119,7 +119,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTime.Parse("2025-01-07");
+        _date = DateOnly.Parse("2025-01-07");
     }
 
     [Given("I am editing an existing post with two valid images to add")]
@@ -129,7 +129,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTime.Today.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
         _osmId = 1;
 
         var pandaBytes =
@@ -155,7 +155,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTime.Today.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
         _osmId = 1;
 
         _images.Add((
@@ -172,7 +172,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTime.Today.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
         _osmId = 1;
 
         _images.Add((
@@ -191,7 +191,7 @@ public class U7007EditPost
 
         _title = "Valid updated title";
         _content = "Valid updated content";
-        _date = DateTime.Today.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
 
         // Text was entered without selecting a suggested location.
         _location = "Made up location";

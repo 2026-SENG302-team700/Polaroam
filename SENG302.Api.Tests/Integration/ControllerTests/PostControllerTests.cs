@@ -39,7 +39,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         SetupGeoMock();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
     }
@@ -84,8 +84,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
 
         // Add a trip to each user
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
 
         // Add 1 post to each trip
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
@@ -105,7 +105,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My Trip", UserId = 1, Description = "", StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My Trip", UserId = 1, Description = "", StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
@@ -124,8 +124,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
 
         // Add a trip to each user
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
 
         // Add 1 post to each trip
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
@@ -284,8 +284,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 Title = "Test trip",
                 Description = "Test description",
                 UserId = 1,
-                StartDate = new DateTime(2026, 7, 1),
-                EndDate = new DateTime(2026, 7, 10)
+                StartDate = new DateOnly(2026, 7, 1),
+                EndDate = new DateOnly(2026, 7, 10)
             });
 
             await context.SaveChangesAsync();
@@ -320,7 +320,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -523,7 +523,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -542,7 +542,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -559,7 +559,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -576,7 +576,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -600,7 +600,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine" });
         await context.SaveChangesAsync();
 
@@ -620,7 +620,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my home" });
         await context.SaveChangesAsync();
 
@@ -643,7 +643,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "my basement" });
         await context.SaveChangesAsync();
 
@@ -663,7 +663,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "a mysterious place" });
         await context.SaveChangesAsync();
 
@@ -763,8 +763,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "Test trip",
                 Description = "",
-                StartDate = new DateTime(2026, 1, 1),
-                EndDate = new DateTime(2026, 1, 10)
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 10)
             });
 
             var post = new Post
@@ -820,8 +820,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 2,
                 Title = "Other user trip",
                 Description = "",
-                StartDate = new DateTime(2026, 1, 1),
-                EndDate = new DateTime(2026, 1, 10)
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 10)
             });
 
             var post = new Post
@@ -884,8 +884,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateTime(2026, 1, 1),
-                EndDate = new DateTime(2026, 1, 10)
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -956,8 +956,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateTime(2026, 1, 1),
-                EndDate = new DateTime(2026, 1, 10)
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -1014,8 +1014,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateTime(2026, 1, 1),
-                EndDate = new DateTime(2026, 1, 10)
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -1063,8 +1063,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateTime(2026, 1, 1),
-                EndDate = new DateTime(2026, 1, 10)
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 10)
             });
 
             context.Posts.Add(new Post

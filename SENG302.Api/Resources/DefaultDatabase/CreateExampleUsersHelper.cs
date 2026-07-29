@@ -68,8 +68,8 @@ public static class CreateExampleUsersHelper
                 {
                     Title = "Name_" + i.ToString(),
                     UserId = user.Id,
-                    StartDate = DateTime.Now,
-                    EndDate = DateTime.Now.AddDays(1),
+                    StartDate = DateOnly.FromDateTime(DateTime.Now),
+                    EndDate = DateOnly.FromDateTime(DateTime.Now).AddDays(1),
                 };
 
                 dbContext.Add(trip);

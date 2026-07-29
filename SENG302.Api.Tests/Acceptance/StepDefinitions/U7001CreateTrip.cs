@@ -17,16 +17,16 @@ public class U7001CreateTrip
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _description;
-    private DateTime _startDate;
-    private DateTime _endDate;
+    private DateOnly _startDate;
+    private DateOnly _endDate;
 
     public U7001CreateTrip(AcceptanceTestFixture fixture)
     {
         _fixture = fixture;
         _title = "";
         _description = "";
-        _startDate = new DateTime();
-        _endDate = new DateTime();
+        _startDate = new DateOnly();
+        _endDate = new DateOnly();
 
     }
 
@@ -46,8 +46,8 @@ public class U7001CreateTrip
 
         _title = "Test trip";
         _description = "Test description";
-        _startDate = DateTime.Parse("2022-01-01");
-        _endDate = DateTime.Parse("2022-01-07");
+        _startDate = new DateOnly(2022, 1, 1);
+        _endDate = new DateOnly(2022, 2, 1);
 
         await context.SaveChangesAsync();
     }
@@ -94,8 +94,8 @@ public class U7001CreateTrip
 
         _title = "Test trip";
         _description = "Test description";
-        _startDate = DateTime.Parse("2022-01-09");
-        _endDate = DateTime.Parse("2022-01-07");
+        _startDate = new DateOnly(2022, 1, 1);
+        _endDate = new DateOnly(2021, 2, 1);
 
         await context.SaveChangesAsync();
     }

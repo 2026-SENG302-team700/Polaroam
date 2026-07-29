@@ -51,8 +51,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Test List",
             UserId = userId,
             Description = "Test",
-            StartDate = new DateTime(2017, 10, 08),
-            EndDate = new DateTime(2017, 10, 21)
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
         });
         await context.SaveChangesAsync();
     }

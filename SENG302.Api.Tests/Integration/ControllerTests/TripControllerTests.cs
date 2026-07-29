@@ -36,8 +36,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         Title = "Test Trip",
         Description = "Test",
-        StartDate = new DateTime(2025, 11, 21),
-        EndDate = new DateTime(2025, 12, 21)
+        StartDate = new DateOnly(2025, 11, 21),
+        EndDate = new DateOnly(2025, 12, 21)
     };
 
     [Fact]
@@ -58,8 +58,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "T",
             Description = "Test",
-            StartDate = new DateTime(2025, 11, 21),
-            EndDate = new DateTime(2025, 12, 21)
+            StartDate = new DateOnly(2025, 11, 21),
+            EndDate = new DateOnly(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -90,8 +90,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateTime(2025, 11, 21),
-            EndDate = new DateTime(2025, 12, 21)
+            StartDate = new DateOnly(2025, 11, 21),
+            EndDate = new DateOnly(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -109,8 +109,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateTime(2025, 11, 21),
-            EndDate = new DateTime(2025, 10, 21)
+            StartDate = new DateOnly(2025, 11, 21),
+            EndDate = new DateOnly(2025, 10, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -213,8 +213,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         Assert.NotNull(createdTrip);
 
-        var newStartDate = new DateTime(2026, 8, 1);
-        var newEndDate = new DateTime(2026, 8, 10);
+        var newStartDate = new DateOnly(2026, 8, 1);
+        var newEndDate = new DateOnly(2026, 8, 10);
 
         var request = new UpdateTripRequest
         {

@@ -43,8 +43,8 @@ public class U7005DeletePost
             UserId = user.Id,
             Title = "Trip with post",
             Description = "Test trip",
-            StartDate = new DateTime(2026, 1, 1),
-            EndDate = new DateTime(2026, 1, 10)
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 1, 10)
         };
 
         var post = new Post
@@ -52,10 +52,10 @@ public class U7005DeletePost
             TripId = trip.Id,
             Title = "Post to delete",
             Content = "Post content",
-            OsmId = 1, 
+            OsmId = 1,
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+            Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
             creationTime = DateTimeOffset.Now
         };
 
