@@ -939,5 +939,173 @@ public class PostControllerTests : BaseIntegrationTestFixture
         post.OsmId.ShouldBe(123);
         post.LocationName.ShouldBe("Christchurch");
     }
+    
+    
+    
+    [Fact]
+    public async Task UpdatePost_OneInvalidPhotoOthersOk_BadRequestPostNotCreated()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "owner@ex.com",
+                DisplayName = "poster",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                UserId = 1,
+                Title = "test trip",
+                Description = "test description",
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 10)
+            });
+
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        SetupGeoMock();
+
+        var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var invalidBytes = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+
+        using var content = BuildUpdatePostForm(photos:
+        [
+            (pandaBytes, "panda.webp", "image/webp"),
+            (invalidBytes, "notreal.png", "image/png")
+        ]);
+
+        var response = await HttpClient.PutAsync("/api/post/1", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var errors = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
+        errors!.Errors["photos"].ShouldContain(e => e.Contains("notreal.png"));
+        
+    }
+
+    [Fact]
+    public async Task UpdatePost_Over10MBPhoto_BadRequest()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "owner@ex.com",
+                DisplayName = "poster",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                UserId = 1,
+                Title = "test trip",
+                Description = "test description",
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 10)
+            });
+
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        SetupGeoMock();
+
+        var oversizedBytes = new byte[10000001];
+
+        using var content = BuildUpdatePostForm(photos: [(oversizedBytes, "huge.png", "image/png")]);
+
+        var response = await HttpClient.PutAsync("/api/post/1", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdatePost_MultipleInvalidPhotos_BadRequestAllBadFilesListed()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "owner@ex.com",
+                DisplayName = "poster",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                UserId = 1,
+                Title = "test trip",
+                Description = "test description",
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 10)
+            });
+
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        SetupGeoMock();
+
+        var invalidBytesOne = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+        var invalidBytesTwo = new byte[] { 0xde, 0xad, 0xbe, 0xef };
+
+        using var content = BuildUpdatePostForm(photos:
+        [
+            (invalidBytesOne, "bad1.png", "image/png"),
+            (invalidBytesTwo, "bad2.jpeg", "image/jpeg")
+        ]);
+
+        var response = await HttpClient.PutAsync("/api/post/1", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var errors = await response.Content.ReadFromJsonAsync<BadRequestValidationListResponse>();
+        errors!.Errors["photos"].Count.ShouldBe(2);
+        errors.Errors["photos"].ShouldContain(e => e.Contains("bad1.png"));
+        errors.Errors["photos"].ShouldContain(e => e.Contains("bad2.jpeg"));
+    }
 }
 
