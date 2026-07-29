@@ -71,43 +71,46 @@
         <CancelButton path={cancelPath} />
         <h1 class="text-center mb-4">{heading}</h1>
     </div>
+    
+    <form>
+        <TitleForm bind:name={title} type="trip" errors={errors.title} {loading} />
+        <DescriptionForm bind:description errors={errors.description} {loading} />
 
-    <TitleForm bind:name={title} type="trip" errors={errors.title} {loading} />
-    <DescriptionForm bind:description errors={errors.description} {loading} />
+        <div class="date-picker-wrapper">
+            <div class="date-field">
+                <label for="trip-start-date">From</label>
+                <Datepicker
+                        bind:value={startDate}
+                        disabled={loading}
+                        error={startDateError}
+                />
+            </div>
+            <div class="date-field">
+                <label for="trip-end-date">To</label>
+                <Datepicker
+                        bind:value={endDate}
+                        disabled={loading}
+                        error={endDateError}
+                />
+            </div>
+        </div>
+        {#if errors.date}
+            <div class="invalid-feedback d-block date-error">
+                {errors.date}
+            </div>
+        {/if}
 
-    <div class="date-picker-wrapper">
-        <div class="date-field">
-            <label for="trip-start-date">From</label>
-            <Datepicker
-                bind:value={startDate}
-                disabled={loading}
-                error={startDateError}
-            />
-        </div>
-        <div class="date-field">
-            <label for="trip-end-date">To</label>
-            <Datepicker
-                bind:value={endDate}
-                disabled={loading}
-                error={endDateError}
-            />
-        </div>
-    </div>
-    {#if errors.date}
-        <div class="invalid-feedback d-block date-error">
-            {errors.date}
-        </div>
-    {/if}
+        {#if errors.generic}
+            <div class="alert alert-danger" role="alert">
+                {errors.generic}
+            </div>
+        {/if}
 
-    {#if errors.generic}
-        <div class="alert alert-danger" role="alert">
-            {errors.generic}
+        <div class="flex justify-end">
+            <CreationButton onClick={onSubmit} text={submitText} />
         </div>
-    {/if}
-
-    <div class="flex justify-end">
-        <CreationButton onClick={onSubmit} text={submitText} />
-    </div>
+    </form>
+    
 </div>
 
 <style>
