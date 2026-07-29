@@ -3,9 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-
     import { uploadPhotos } from "$lib/posts/images";
-
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
@@ -23,8 +21,8 @@
         date: string;
         generic: string;
         location: string;
-        photos: string;
-    };
+        photos: string[];
+    }
 
     /**
      * returns an empty PostFormErrors object
@@ -36,19 +34,19 @@
             date: "",
             generic: "",
             location: "",
-            photos: "",
+            photos: [],
         };
     }
-
-    let errors = $state<PostFormErrors>(emptyErrors());
-
+    
     /**
      * refreshes the PostFormErrors object
      */
     function clearErrors() {
         errors = emptyErrors();
     }
-
+    
+    let errors = $state<PostFormErrors>(emptyErrors());
+    
     let loading = $state(false);
     const tripId = page.params.tripId;
 
@@ -65,7 +63,6 @@
     let content = $state("");
     let files: File[] | null | undefined = $state([]);
     let noContentAllowed = $state(false);
-
     let showConfirmationModal = $state(false);
 
     /**
@@ -74,39 +71,44 @@
     async function createPost() {
         clearErrors();
 
-        title = title.trim();
-        content = content.trim();
-
         try {
             loading = true;
 
+            const form = new FormData();
+            form.append("TripId", tripId);
+            form.append("Title", title);
+            form.append("OsmId", location.osmId);
+            form.append("Content", content);
+            form.append("Date", date ? date.toISOString() : "");
+            form.append("NoContentAllowed", noContentAllowed);
+            if (files != null) {
+                for (let i = 0; i < files.length; i++) {
+                    form.append("files", files[i]);
+                }
+            }
+            
             const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    TripId: Number(tripId),
-                    Title: title,
-                    OsmId: location.osmId,
-                    Content: content,
-                    Date: serialiseLocalDate(date),
-                    NoContentAllowed: noContentAllowed,
-                }),
+                body: form,
                 credentials: "include",
             });
             const data = await response.json();
 
             if (!response.ok) {
+                if (response.status === 413) {
+                    errors.generic = "Upload too large, please upload less photos at a time";
+                    return;
+                }
                 errors.title = data.errors?.title ?? [];
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
                 errors.generic = data.message ?? "";
-
+                errors.photos = data.errors?.photos ?? [];
                 if (
                     errors.content.length === 1 &&
                     errors.title.length === 0 &&
+                    errors.photos.length === 0 &&
                     !errors.date &&
                     !errors.generic &&
                     !errors.location
@@ -115,23 +117,11 @@
                 }
                 return;
             }
-
-            if (files !== null && files !== undefined && files.length !== 0) {
-                let message = await uploadPhotos(
-                    data.postId,
-                    data.tripId,
-                    files,
-                );
-                if (message !== undefined) {
-                    errors.photos = message;
-                }
-            }
-
-            if (errors.photos === "") {
-                goto(resolve(`/home/trips/${tripId}`));
-            }
+            
+            goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
-            errors.generic = "Failed to create post";
+            console.error("Failed to create post:", err);
+            errors.generic = "Failed to create post: " + (err as Error).message;
         } finally {
             loading = false;
             noContentAllowed = false;
@@ -178,8 +168,8 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay bind:images={files} letDelete={true} />
-        <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
+        <ImageDisplay bind:images={files} letDelete={true} errors="{errors.photos}"/>
+        <ImagePicker bind:filesList={files} errors={errors.photos} />
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
             <CreationButton onClick={createPost} text="Create Post" />

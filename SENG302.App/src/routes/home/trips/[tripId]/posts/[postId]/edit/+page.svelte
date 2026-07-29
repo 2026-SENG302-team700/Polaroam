@@ -14,13 +14,15 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
-    import { uploadPhotos } from "$lib/posts/images";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
     let photoIds = $state([]);
 
+    const tripId = page.params.tripId;
+    let newUploadsCount = $state(0)
     let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
@@ -34,18 +36,89 @@
     });
 
     let loading = $state(false);
-    let errors = $state({
-        title: [],
-        content: [],
-        date: "",
-        location: "",
-        generic: "",
-        photos: "",
-    });
+    
+    type UpdateFormErrors = {
+        title: string[];
+        content: string[];
+        date: string;
+        generic: string;
+        location: string;
+        photos: string[];
+    }
+
+    /**
+     * returns an empty PostFormErrors object
+     */
+    function emptyErrors(): UpdateFormErrors {
+        return {
+            title: [],
+            content: [],
+            date: "",
+            generic: "",
+            location: "",
+            photos: [],
+        };
+    }
+
+    /**
+     * refreshes the PostFormErrors object
+     */
+    function clearErrors() {
+        errors = emptyErrors();
+    }
+
+    let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
         await fetchPost();
+        await fetchImages();
     });
+
+
+    /**
+     * Fetch Images
+     */
+    async function fetchImages() {
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/post/${page.params.postId}/images` as any), {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                let error = (await response.text()) || "Failed to fetch images.";
+                errors.photos.push(error)
+                return;
+            }
+
+            const metadata: {
+                photoId: number;
+                fileName: string;
+                mimeType: string;
+            }[] = await response.json();
+
+            files = await Promise.all(
+                metadata.map(async (meta) => {
+                    const res = await fetchWithCsrf(
+                        resolve(`/api/post/${page.params.postId}/images/${meta.photoId}` as any),
+                        {
+                            method: "GET",
+                            credentials: "include"
+                        }
+                    );
+                    const blob = await res.blob();
+                    return new File([blob], meta.fileName, { type: meta.mimeType });
+                }),
+            );
+
+        } catch (err) {
+            errors.photos.push("Failed to fetch images: " + (err as Error).message);
+        } finally {
+            loading = false;
+        }
+    }
 
     /**
      * Parse date stored within database to the local format
@@ -95,6 +168,7 @@
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
                 return;
             }
+            console.log(`PhotoIds: ${data.photoIds}`)
 
             title = data.title;
             content = data.content;
@@ -115,33 +189,37 @@
      * Sends a PUT request to the backend with the updated trip details.
      */
     async function updatePost() {
-        errors.title = [];
-        errors.content = [];
-        errors.date = "";
-        errors.location = "";
-        errors.generic = "";
-        errors.photos = "";
 
         try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/post/${page.params.postId}` as any),
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        Id: Number(page.params.postId),
-                        TripId: Number(page.params.tripId),
-                        Title: title,
-                        Content: content,
-                        Date: serialiseLocalDate(date),
-                        OsmId: location.osmId,
-                        NoContentAllowed: noContentAllowed,
-                    }),
-                    credentials: "include",
-                },
-            );
+            loading = true;
+            
+            if (content.length > 0  || (files !== undefined && files !== null && files?.length > 0)) {
+                noContentAllowed = true
+            }
+
+            const form = new FormData();
+            form.append("Id", parseInt(page.params.postId));
+            form.append("TripId", tripId);
+            form.append("Title", title);
+            form.append("OsmId", location.osmId);
+            form.append("Content", content);
+            form.append("Date", date ? date.toISOString() : "");
+            form.append("NoContentAllowed", noContentAllowed);
+            
+            
+            const newUploadedFiles = newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
+            if (newUploadedFiles != null) {
+                for (let i = 0; i < newUploadedFiles.length; i++) {
+                    form.append("files", newUploadedFiles[i]);
+                }
+            }
+            
+
+            const response = await fetchWithCsrf(`/api/post/${page.params.postId}` as any, {
+                method: "PUT",
+                body: form,
+                credentials: "include",
+            });
             const data = await response.json();
             
 
@@ -150,6 +228,7 @@
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
                 errors.title = data.errors?.title ?? [];
+                errors.photos = data.errors?.photos ?? [];
 
                 if (
                     errors.content.length === 1 &&
@@ -161,35 +240,10 @@
                     files?.length === 0
                 ) {
                     confirmationModalShown = true;
-                } else if (
-                    (errors.content.length === 1 &&
-                        errors.title.length === 0 &&
-                        !errors.date &&
-                        errors.generic.length === 0 &&
-                        errors.location.length === 0 &&
-                        photoIds.length !== 0) ||
-                    files?.length !== 0
-                ) {
-                    confirmationModalShown = false;
-                    noContentAllowed = true;
-                    updatePost();
-                }
+                } 
                 return;
             }
-            if (files != null && files !== undefined && files.length > 0) {
-                let message: string | undefined = await uploadPhotos(
-                    data.postId,
-                    data.tripId,
-                    files,
-                );
-                if (message !== undefined) {
-                    errors.photos = message;
-                }
-            }
-
-            if (errors.photos === "") {
-                goto(resolve(`/home/trips/${data.tripId}`));
-            }
+            goto(resolve(`/home/trips/${data.tripId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -212,7 +266,8 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImagePicker bind:filesList={files} error={errors.photos}></ImagePicker>
+        <ImageDisplay images={files} errors={errors.photos}/>
+        <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount={newUploadsCount}></ImagePicker>
         <MultipleErrorDisplay errors={[errors.generic]} />
         <div class="d-grid">
             <CreationButton onClick={updatePost} text="Update Post" />

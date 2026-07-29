@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
-using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
@@ -58,10 +57,12 @@ public class PostController : ControllerBase
     /// Given a post request object, create a new Post and add it to the db
     /// </summary>
     /// <param name="postRequest"></param>
+    /// <param name="files"></param>
     /// <returns></returns>
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<Post>> CreatePost([FromBody] NewPostRequest postRequest)
+    [RequestSizeLimit(200000000)]
+    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
@@ -69,7 +70,7 @@ public class PostController : ControllerBase
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest);
+            var response = await _postService.CreateNewPostAsync(postRequest, files, userId);
             return Ok(response);
         }
         catch (MultipleValidationListException e)
@@ -117,7 +118,7 @@ public class PostController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<Post>> UpdatePost([FromBody] UpdatePostRequest postUpdates)
+    public async Task<ActionResult<Post>> UpdatePost([FromForm] UpdatePostRequest postUpdates, [FromForm] List<IFormFile>? files)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         
@@ -125,7 +126,25 @@ public class PostController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        List<int> photoIds = [];
 
+        if (files != null)
+        {
+            try
+            {
+                await _postService.UploadPhotosToPostAsync(files, postUpdates.Id, userId);
+            
+            }
+            catch (MultipleValidationListException e)
+            {
+                return BadRequest(new BadRequestValidationListResponse
+                {
+                    Errors = e.Errors
+                });
+            }
+        }
+        
         try
         {
             var post = await _postService.UpdatePostAsync(postUpdates);
@@ -143,8 +162,7 @@ public class PostController : ControllerBase
             return BadRequest(e.Message);
         }
     }
-
-
+    
     /// <summary>
     /// Takes a post id and returns all the metadata related to the photos
     /// </summary>
@@ -244,30 +262,18 @@ public class PostController : ControllerBase
             return Unauthorized("You do not have authorisation to upload photos to this post!");
         }
 
-        List<int> customFileIds = [];
-
-        for (int i = 0; i < files.Count; i++)
+        try
         {
-            IFormFile file = files[i];
-
-            if (!ImageValidationTools.IsValidFilesize(file))
-            {
-                return BadRequest("Image too large, maximum file size is 10MB");
-            }
-
-            // implement into one big callback function later.
-            if (!ImageValidationTools.IsValidMimeType(file))
-            {
-                return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
-            }
-            var customFile = await _fileService.SaveFileAsync(file, userId);
-            var customFileId = customFile.Id;
-            customFileIds.Add(customFileId);
+            var customFileIds = await _postService.UploadPhotosToPostAsync(files, int.Parse(postId), userId);
+            return Ok(customFileIds);
         }
-
-        await _postService.AddPhotosToPost(customFileIds, int.Parse(postId));
-
-        return Ok(customFileIds);
+        catch (MultipleValidationListException e)
+        {
+            return BadRequest(new BadRequestValidationListResponse
+            {
+                Errors = e.Errors
+            });
+        }
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using SENG302.Api.Services;
 using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
@@ -28,7 +29,7 @@ public class Program
         {
             builder.Services.AddOpenApi();
         }
-
+        
         // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews(options =>
         {
@@ -83,7 +84,7 @@ public class Program
 
 
         builder.Services.AddHttpContextAccessor();
-
+        
         // Register custom services 
         RegisterServices(builder.Services);
 
@@ -206,12 +207,23 @@ public class Program
                 options.SwaggerEndpoint("/openapi/v1.json", "SENG302  API v1");
             });
         }
+        
+        // returns http code 413 payload to large if size exceeds kestrel size limit
+        // block below written by claude.
+        app.Use(async (ctx, next) =>
+        {
+            try { await next(); }
+            catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413PayloadTooLarge)
+            {
+                ctx.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Upload too large." });
+            }
+        });
+        // end of ai gen code.
 
         app.Run();
     }
     
-    
-
     protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();

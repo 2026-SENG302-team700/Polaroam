@@ -1,13 +1,15 @@
 <script>
     let { errors = [] } = $props();
+
+    let nonEmptyErrors = $derived(errors.filter((err) => err && err.trim().length > 0));
 </script>
 
 <div>
-    {#if errors.length > 0}
-        <div class="invalid-feedback d-block">
-            {#each errors as err}
-                <div>{err}</div>
+    {#if nonEmptyErrors.length > 0}
+        <ul class="invalid-feedback d-block mb-0 ps-3">
+            {#each nonEmptyErrors as err}
+                <li>{err}</li>
             {/each}
-        </div>
+        </ul>
     {/if}
 </div>
