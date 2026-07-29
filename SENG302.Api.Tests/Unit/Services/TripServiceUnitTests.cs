@@ -309,8 +309,8 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
                 () => _tripService.UpdateTripAsync(request, 1)
             );
 
-        exception.Errors.ShouldContainKey("dates");
-        exception.Errors["dates"].ShouldContain(
+        exception.Errors.ShouldContainKey("dateTwo");
+        exception.Errors["dateTwo"].ShouldContain(
             "End date must not be before the start date"
         );
 
@@ -346,8 +346,8 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
                 () => _tripService.UpdateTripAsync(request, 1)
             );
 
-        exception.Errors.ShouldContainKey("dates");
-        exception.Errors["dates"][0].ShouldContain(
+        exception.Errors.ShouldContainKey("dateOne");
+        exception.Errors["dateOne"][0].ShouldContain(
             "Invalid date, date must be formatted"
         );
 
