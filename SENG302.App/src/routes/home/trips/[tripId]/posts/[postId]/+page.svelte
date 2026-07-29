@@ -10,6 +10,7 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
+    import PostDisplayCard from "$lib/components/trip-components/post-display-card.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -214,37 +215,15 @@
 </script>
 
 <div class="container trip-page-content d-flex justify-content-center align-items-center">
-    <div class="w-100" style="max-width: 600px;">
+    <div class="w-100" style="max-width: 900px;">
         <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
         <EditButton
             path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
         />
         <DeleteButton deleteAction={showConfirmationModal} />
         <ErrorDisplay errors={[error]} />
-        <div class="trip-page-header">
-            <div class="post-head-grid">
-                <h1>{postObject.title}</h1>
-
-                <p class="date-object">
-                    <i>
-                        <strong>Location:</strong>{`  ${locationName}`}
-                    </i>
-                </p>
-
-                <p class="date-object">
-                    <strong>Date:</strong>{`  ${formatDate(postObject.date)}`}
-                </p>
-                <p>Posted by <i>{displayName}</i></p>
-                {#if postObject.content.length > 0}
-                    <span>{postObject.content}</span>
-                {/if}
-            </div>
-        </div>
-        <div class="container-fluid photo-grid mt-5" style="width: 100%;">
-            {#if photos.length > 0}
-                <ImageDisplay images={photos} />
-            {/if}
-        </div>
+        
+        <PostDisplayCard post={postObject} userName={displayName} {photos}/>
     </div>
 </div>
 
