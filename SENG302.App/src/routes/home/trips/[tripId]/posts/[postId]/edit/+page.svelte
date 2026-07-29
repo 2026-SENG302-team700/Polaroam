@@ -115,6 +115,13 @@
      * Sends a PUT request to the backend with the updated trip details.
      */
     async function updatePost() {
+        errors.title = [];
+        errors.content = [];
+        errors.date = "";
+        errors.location = "";
+        errors.generic = "";
+        errors.photos = "";
+
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/post/${page.params.postId}` as any),
@@ -136,8 +143,7 @@
                 },
             );
             const data = await response.json();
-
-            console.log(`data: ${JSON.stringify(data)}`);
+            
 
             if (!response.ok) {
                 errors.date = data.errors?.date?.[0] ?? "";

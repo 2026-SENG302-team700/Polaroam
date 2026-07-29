@@ -8,6 +8,8 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using Shouldly;
+using Microsoft.AspNetCore.Mvc;
+using SENG302.Api.DataAccess;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -37,7 +39,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         SetupGeoMock();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTime(2025, 11, 21), EndDate = new DateTime(2025, 12, 21) });
-        context.Posts.Add(new Post {TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
     }
 
@@ -786,7 +788,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Dont delete",
                 Content = "Content",
-                OsmId = 1, 
+                OsmId = 1,
                 LocationName = "Christchurch",
                 PhotoIds = [],
                 Date = DateTimeOffset.Now.AddDays(-1)
@@ -819,5 +821,76 @@ public class PostControllerTests : BaseIntegrationTestFixture
             await HttpClient.DeleteAsync("/api/post/999");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UpdatePost_InvalidLocation_ReturnsBadRequestAndDoesNotUpdatePost()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "owner@ex.com",
+                DisplayName = "poster",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                UserId = 1,
+                Title = "test trip",
+                Description = "test description",
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 10)
+            });
+
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new UpdatePostRequest
+        {
+            Id = 1,
+            TripId = 1,
+            Title = "new title",
+            Content = "new content",
+            Date = DateTimeOffset.Now.AddDays(-1),
+
+            OsmId = 0
+        };
+
+        var response = await HttpClient.PutAsJsonAsync(
+            "/api/post/1",
+            request
+        );
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        responseBody.ShouldContain("This isn't a valid location");
+
+        await using var assertContext = DbContextFactory.CreateDbContext();
+
+        var post = await assertContext.Posts.FindAsync(1);
+
+        post.ShouldNotBeNull();
+        post.Title.ShouldBe("og title");
+        post.Content.ShouldBe("og content");
+        post.OsmId.ShouldBe(123);
+        post.LocationName.ShouldBe("Christchurch");
     }
 }

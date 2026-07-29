@@ -24,13 +24,12 @@
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>
-                <ClickableImage {image} />
+                <ClickableImage {image} {index} {images} />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">
                         <DeleteButton deleteAction={() => ondelete?.(index)} class="btn-sm" />
                     </div>
                 {/if}
-
             </div>
         </div>
     {:else}

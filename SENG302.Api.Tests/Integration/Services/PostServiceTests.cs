@@ -254,7 +254,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
-                OsmId = 1, 
+                OsmId = 1,
                 LocationName = "Christchurch",
                 Date = DateTimeOffset.Now.AddDays(-1),
                 PhotoIds = []
@@ -302,5 +302,56 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         exception.Message.ShouldBe(
             "Post with the provided ID does not exist.");
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_InvalidLocation_ThrowsAndDoesNotUpdatePost()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "og title",
+                Content = "og content",
+                Date = DateTimeOffset.Now.AddDays(-2),
+                OsmId = 123,
+                LocationName = "Christchurch",
+                PhotoIds = []
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var request = new UpdatePostRequest
+        {
+            Id = 1,
+            TripId = 1,
+            Title = "updated title",
+            Content = "updated content",
+            Date = DateTimeOffset.Now.AddDays(-1),
+            OsmId = 0
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => ServiceUnderTest.UpdatePostAsync(request)
+            );
+
+        exception.Errors["location"]
+            .ShouldContain("This isn't a valid location");
+
+        await using var assertContext = DbContextFactory.CreateDbContext();
+
+        var post = await assertContext.Posts.FindAsync(1);
+
+        post.ShouldNotBeNull();
+        post.Title.ShouldBe("og title");
+        post.Content.ShouldBe("og content");
+        post.OsmId.ShouldBe(123);
+        post.LocationName.ShouldBe("Christchurch");
     }
 }

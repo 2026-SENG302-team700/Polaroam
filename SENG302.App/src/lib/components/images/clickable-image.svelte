@@ -3,7 +3,9 @@
 
     let {
         image,
-    }: { image: File; } = $props();
+        index,
+        images
+    }: { image: File, index: number, images: File[] | null; } = $props();
     let enlarged = $state(false);
 
     function clicked() {
@@ -17,7 +19,7 @@
     <img src={URL.createObjectURL(image)} onclick={clicked} alt="Image" class="img-thumbnail clickable-image" />
 </div>
 {#if enlarged} 
-<FullscreenImage {image} bind:enlarged />
+<FullscreenImage {image} {index} {images} bind:enlarged />
 {/if}
 
 <style>
