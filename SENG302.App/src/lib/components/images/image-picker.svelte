@@ -16,8 +16,9 @@
     let clientErrors: string[] = $state([]);
     let {
         filesList = $bindable<File[]>([]),
-        errors = []
-    }: { filesList: File[] | null | undefined; errors: string[] } = $props();
+        errors = [],
+        newUploadsCount = $bindable(0),
+    }: { filesList: File[] | null | undefined; errors: string[]; newUploadsCount?: number } = $props();
 
     let displayedErrors = $derived([...errors, ...clientErrors]);
 
@@ -85,12 +86,13 @@
             if (fileErrors.length > 0) {
                 clientErrors.push(...fileErrors);
             } else {
+                newUploadsCount += 1
                 filesList.push(file);
             }
         }
     }
+    
 </script>
-
 <div class="d-flex flex-column mb-2">
     <button
             type="button"
@@ -101,6 +103,7 @@
           pfpInput.click();
         }}
     >
+        <i class="bi-plus"></i>
         <i class="bi-images"></i>
     </button>
     <input
