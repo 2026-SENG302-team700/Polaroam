@@ -94,7 +94,7 @@ public class TripValidator
     /// <param name="startDate"></param>
     /// <param name="endDate"></param>
     /// <returns></returns>
-    public static Dictionary<string, List<string>> ValidateDates(DateTime? startDate, DateTime? endDate)
+    public static Dictionary<string, List<string>> ValidateDates(DateOnly? startDate, DateOnly? endDate)
     {
         var errors = new Dictionary<string, List<string>>();
         errors["dateOne"] = new List<string>();
@@ -109,7 +109,7 @@ public class TripValidator
         {
             errors["dateOne"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat()}");
         }
-        
+
         if (endDate == null)
         {
             errors["dateTwo"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat()}");
