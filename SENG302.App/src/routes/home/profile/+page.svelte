@@ -156,5 +156,6 @@
         font-weight: 400;
         font-size: 1rem;
         font-family: Arial;
+        word-break: break-all;
     }
 </style>
