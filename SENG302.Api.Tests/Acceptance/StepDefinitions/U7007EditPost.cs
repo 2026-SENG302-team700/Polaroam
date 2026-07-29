@@ -99,7 +99,7 @@ public class U7007EditPost
         content.Add(new StringContent(_title), "Title");
         content.Add(new StringContent(_content), "Content");
         content.Add(new StringContent(_osmId.ToString()), "OsmId");
-        content.Add(new StringContent(_date?.ToString("o") ?? ""), "Date");
+        content.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? ""), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -223,8 +223,7 @@ public class U7007EditPost
         if (_date != null)
         {
             form.Add(
-                new StringContent(
-                    new DateTimeOffset(_date.Value).ToString("O")),
+                new StringContent(_date.Value.ToString("yyyy-MM-dd")),
                 "Date");
         }
 

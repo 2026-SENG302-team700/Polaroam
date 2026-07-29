@@ -15,11 +15,14 @@ public class UpdatePostRequest : IPostRequest
     public required string Title { get; set; }
     public long OsmId { get; set; }
     [Required(AllowEmptyStrings = true)]
-    [DisplayFormat(ConvertEmptyStringToNull = false)] 
+    [DisplayFormat(ConvertEmptyStringToNull = false)]
     public string Content { get; set; } = string.Empty;
 
-    public required DateTimeOffset? Date { get;
-        set {
+    public required DateOnly? Date
+    {
+        get;
+        set
+        {
             field = value;
             DateSupplied = true;
         }

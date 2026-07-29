@@ -71,7 +71,7 @@ public class PostControllerUnitTests
             Title = "Updated title",
             Content = "Updated content",
             OsmId = 123,
-            Date = DateTimeOffset.Now.AddDays(-1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
 
@@ -87,7 +87,7 @@ public class PostControllerUnitTests
             Title = "New post",
             Content = "Post content",
             OsmId = 123,
-            Date = DateTimeOffset.Now.AddDays(-1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
 
@@ -465,12 +465,12 @@ public class PostControllerUnitTests
             LocationName = "Christchurch",
             PhotoIds = [15]
         };
-        
+
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockPostService.UserOwnsPost(1, 20).Returns(true);
 
         var result = await _controller.DeletePhotoFromPost(10, 15);
-        
+
         result.ShouldBeOfType<NoContentResult>();
         await _mockPostService.Received(1).DeletePhotoFromPostAsync(10, 15);
     }
@@ -480,7 +480,7 @@ public class PostControllerUnitTests
     {
         SetupUserContext("1");
         var result = await _controller.DeletePhotoFromPost(10, 15);
-        
+
         result.ShouldBeOfType<NotFoundObjectResult>();
     }
 
@@ -499,11 +499,11 @@ public class PostControllerUnitTests
             LocationName = "Christchurch",
             PhotoIds = [15]
         };
-        
+
         _mockPostService.GetPostAsync(10).Returns(post);
 
         var result = await _controller.DeletePhotoFromPost(10, 15);
-        
+
         result.ShouldBeOfType<UnauthorizedResult>();
     }
 }

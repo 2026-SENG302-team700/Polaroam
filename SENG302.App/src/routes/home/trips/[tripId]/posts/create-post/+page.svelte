@@ -14,7 +14,7 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-    
+
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -79,14 +79,14 @@
             form.append("Title", title);
             form.append("OsmId", location.osmId);
             form.append("Content", content);
-            form.append("Date", date ? date.toISOString() : "");
+            form.append("Date", serialiseLocalDate(date) ?? "");
             form.append("NoContentAllowed", noContentAllowed);
             if (files != null) {
                 for (let i = 0; i < files.length; i++) {
                     form.append("files", files[i]);
                 }
             }
-            
+
             const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
                 body: form,
@@ -142,7 +142,7 @@
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
         const day = date.getDate().toString().padStart(2, "0");
 
-        return `${year}-${month}-${day}T00:00:00`;
+        return `${year}-${month}-${day}`;
     }
 </script>
 
@@ -166,7 +166,11 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay bind:images={files} letDelete={true} errors="{errors.photos}">
+        <ImageDisplay 
+                bind:images={files} 
+                letDelete={true} 
+                errors="{errors.photos}"
+        >
             <ImagePicker bind:filesList={files} errors={errors.photos} />
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />

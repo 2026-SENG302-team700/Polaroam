@@ -37,7 +37,7 @@
     });
 
     let loading = $state(false);
-    
+
     type UpdateFormErrors = {
         title: string[];
         content: string[];
@@ -113,7 +113,9 @@
                         },
                     );
                     const blob = await res.blob();
-                    const file = new File([blob], meta.fileName, { type: meta.mimeType });
+                    const file = new File([blob], meta.fileName, {
+                        type: meta.mimeType,
+                    });
                     photoIdFileMap.set(file, meta.photoId);
                     return file;
                 }),
@@ -151,7 +153,7 @@
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
         const day = date.getDate().toString().padStart(2, "0");
 
-        return `${year}-${month}-${day}T00:00:00`;
+        return `${year}-${month}-${day}`;
     }
 
     /**
@@ -212,21 +214,25 @@
             form.append("Title", title);
             form.append("OsmId", location.osmId);
             form.append("Content", content);
-            form.append("Date", date ? date.toISOString() : "");
+            form.append("Date", serialiseLocalDate(date) ?? "");
             form.append("NoContentAllowed", noContentAllowed);
-            
-            const newUploadedFiles = newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
+
+            const newUploadedFiles =
+                newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
             if (newUploadedFiles != null) {
                 for (let i = 0; i < newUploadedFiles.length; i++) {
                     form.append("files", newUploadedFiles[i]);
                 }
             }
-            
-            const response = await fetchWithCsrf(`/api/post/${page.params.postId}` as any, {
-                method: "PUT",
-                body: form,
-                credentials: "include",
-            });
+
+            const response = await fetchWithCsrf(
+                `/api/post/${page.params.postId}` as any,
+                {
+                    method: "PUT",
+                    body: form,
+                    credentials: "include",
+                },
+            );
             const data = await response.json();
 
             if (!response.ok) {
@@ -271,22 +277,28 @@
 
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${page.params.postId}/images/${photoId}` as any),
-                { 
-                    method: "DELETE", 
-                    credentials: "include" 
+                resolve(
+                    `/api/post/${page.params.postId}/images/${photoId}` as any,
+                ),
+                {
+                    method: "DELETE",
+                    credentials: "include",
                 },
             );
 
             if (!response.ok) {
-                errors.photos.push((await response.text()) || "Failed to delete image.");
+                errors.photos.push(
+                    (await response.text()) || "Failed to delete image.",
+                );
                 files?.splice(index, 0, image);
                 return;
             }
 
             photoIds = photoIds.filter((id) => id !== photoId);
         } catch (err) {
-            errors.photos.push("Failed to delete image: " + (err as Error).message);
+            errors.photos.push(
+                "Failed to delete image: " + (err as Error).message,
+            );
             files?.splice(index, 0, image);
         }
     }
@@ -294,7 +306,7 @@
 
 <div class="container d-flex justify-content-center align-items-center">
     <div class="w-100" style="max-width: 600px;">
-        <TitleForm bind:name={title} errors={errors.title}/>
+        <TitleForm bind:name={title} errors={errors.title} />
         <DatePicker bind:value={date} error={errors.date} />
         {#if errors.date}
             <div class="invalid-feedback d-block">{errors.date}</div>
@@ -305,7 +317,12 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay bind:images={files} errors={errors.photos} letDelete={true} ondelete={removePhoto}>
+        <ImageDisplay 
+                bind:images={files} 
+                errors={errors.photos} 
+                letDelete={true} 
+                ondelete={removePhoto}
+        >
             <ImagePicker bind:filesList={files} errors={errors.photos} bind:newUploadsCount />
         </ImageDisplay>
         <MultipleErrorDisplay errors={[errors.generic]} />

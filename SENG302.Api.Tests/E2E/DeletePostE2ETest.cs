@@ -66,7 +66,7 @@ public class DeletePostE2ETest : E2ETestFixture
             TripId = trip.Id,
             Title = PostTitle,
             Content = "Content that should be gone",
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
             OsmId = OsmId,
             LocationName = "Christchurch",
             PhotoIds = [],
