@@ -17,6 +17,7 @@ public interface IPostService
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
     Task DeletePostByIdAsync(int postId);
+    Task DeleteAllPostOfTrip(int tripId);
     Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
 }
@@ -369,6 +370,25 @@ public class PostService : IPostService
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
+    
+    /// <summary>
+    /// Deletes all posts of a given trip. Used when a trip is deleted.
+    /// </summary>
+    /// <param name="tripId"></param>
+    public async Task DeleteAllPostOfTrip(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var posts = context.Set<Post>().Where(p => p.TripId == tripId).ToList();
+
+        for (int i = 0; i < posts.Count; i++)
+        {
+            context.Set<Post>().Remove(posts[i]);
+        }
+        
+        await context.SaveChangesAsync();
+    }
+
 
     /// <summary>
     /// Deletes post photo via file service then removes from photo id list.

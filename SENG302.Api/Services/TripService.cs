@@ -141,6 +141,7 @@ public class TripService : ITripService
         return trip;
     }
 
+    
     /// <summary>
     /// Delete the trip from the database
     /// </summary>
