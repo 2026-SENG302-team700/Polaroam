@@ -383,10 +383,9 @@ public class PostService : IPostService
 
         for (int i = 0; i < posts.Count; i++)
         {
-            context.Set<Post>().Remove(posts[i]);
+            await DeletePostByIdAsync(posts[i].PostId);
         }
         
-        await context.SaveChangesAsync();
     }
 
 

@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using Shouldly;
+using SENG302.Api.Models.Responses;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Net.Http.Headers;
+using NSubstitute;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -39,6 +42,19 @@ public class TripControllerTests : BaseIntegrationTestFixture
         StartDate = new DateOnly(2025, 11, 21),
         EndDate = new DateOnly(2025, 12, 21)
     };
+    
+    private void SetupGeoMock()
+    {
+        GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
+        {
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
+        });
+    }
+
 
     [Fact]
     public async Task CreateTrip_SuccessfulCreation_ReturnOk()
@@ -153,11 +169,61 @@ public class TripControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeleteTrip_TripExists_Success()
+    public async Task DeleteTrip_TripExistsNoPost_Success()
     {
         await AddTestUser();
         var postResponse = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
         var trip = await postResponse.Content.ReadFromJsonAsync<Trip>();
+
+        Assert.NotNull(trip);
+
+        var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{trip.Id}");
+        var responseMessage = await deleteResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+        responseMessage.ShouldBe("");
+    }
+    
+    private MultipartFormDataContent BuildPostForm(
+        long osmId = 1,
+        IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
+    {
+        var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("Valid title"), "Title");
+        content.Add(new StringContent("Valid content"), "Content");
+        content.Add(new StringContent(osmId.ToString()), "osmId");
+        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+
+        foreach (var (bytes, fileName, contentType) in photos ?? [])
+        {
+            var fileContent = new ByteArrayContent(bytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(fileContent, "files", fileName);
+        }
+
+        return content;
+    }
+    
+    [Fact]
+    public async Task DeleteTrip_TripExistsTripPostExists_Success()
+    {
+        await AddTestUser();
+        var postResponse = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
+        var trip = await postResponse.Content.ReadFromJsonAsync<Trip>();
+        
+        SetupGeoMock();
+
+        var invalidBytesOne = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+        var invalidBytesTwo = new byte[] { 0xde, 0xad, 0xbe, 0xef };
+
+        using var content = BuildPostForm(photos:
+        [
+            (invalidBytesOne, "bad1.png", "image/png"),
+            (invalidBytesTwo, "bad2.jpeg", "image/jpeg")
+        ]);
+
+        await HttpClient.PostAsync("/api/post", content);
 
         Assert.NotNull(trip);
 
