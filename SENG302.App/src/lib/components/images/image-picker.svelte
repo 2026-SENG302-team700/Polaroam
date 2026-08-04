@@ -91,7 +91,7 @@
                 fileErrors.push(...fileError);
             } else {
                 newUploadsCount += 1
-                filesList.push(file);
+                filesList?.push(file);
             }
         }
     }
