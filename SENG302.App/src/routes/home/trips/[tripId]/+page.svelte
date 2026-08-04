@@ -27,24 +27,53 @@
         endDate: "9999-12-31",
         userId: 0,
     });
-    
-    let postOsmIds = $state([]);
+
+    let map = $state();
     let postLocations = $state([]);
     //const mapStyle = 'https://demotiles.maplibre.org/style.json';
     const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
-    const defaultCenter: [number, number] = [172.6362, -43.5321]; // Christchurch, NZ
-    const defaultZoom = 5;
 
 
     let posts = $state([]);
 
     onMount(async () => {
         fetchTrip();
-        await fetchPosts();
-        for (const post of posts) {
-            postOsmIds.push(post.osmId)
+        fetchPosts();
+        await fetchLocations();
+    });
+
+    function recenterMap() {
+        if (!map || postLocations.length === 0) return;
+
+        const coords = postLocations
+            .map((loc) => [parseFloat(loc.lon), parseFloat(loc.lat)])
+            .filter(([lng, lat]) => !isNaN(lng) && !isNaN(lat));
+
+        if (coords.length === 0) return;
+
+        if (coords.length === 1) {
+            map.flyTo({ center: coords[0], zoom: 12 });
+            return;
         }
-        fetchLocations();
+
+        let minLng = coords[0][0], maxLng = coords[0][0];
+        let minLat = coords[0][1], maxLat = coords[0][1];
+        for (const [lng, lat] of coords) {
+            minLng = Math.min(minLng, lng);
+            maxLng = Math.max(maxLng, lng);
+            minLat = Math.min(minLat, lat);
+            maxLat = Math.max(maxLat, lat);
+        }
+
+        map.fitBounds(
+            [[minLng, minLat], [maxLng, maxLat]],
+            { padding: 50, maxZoom: 15, duration: 1000 }
+        );
+    }
+
+    // Auto-fit once map + locations are both ready
+    $effect(() => {
+        recenterMap();
     });
 
     /**
@@ -108,7 +137,6 @@
                 },
             );
             postLocations = await response.json();
-            console.log(postLocations);
         } finally {
             loading = false;
         }
@@ -177,12 +205,7 @@
 
     <div class="app">
         <div class="map-wrap">
-            <MapLibre
-                    style={mapStyle}
-                    center={defaultCenter}
-                    zoom={defaultZoom}
-                    class="map"
-            >
+            <MapLibre style={mapStyle} bind:map class="map">
                 {#each postLocations as location (location.osmId)}
                     <Marker lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}>
                         <div class="marker-pin"></div>
@@ -194,6 +217,10 @@
                     </Marker>
                 {/each}
             </MapLibre>
+
+            <button class="recenter-btn" onclick={recenterMap} type="button" aria-label="Recenter map">
+                ⤢
+            </button>
         </div>
 
         {#if postLocations.length > 0}
@@ -310,6 +337,33 @@
         border-radius: 50%;
         box-shadow: 0 1px 4px rgba(0,0,0,0.4);
         cursor: pointer;
+    }
+
+    .map-wrap {
+        position: relative; /* needed so the button can be absolutely positioned inside */
+        height: 480px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .recenter-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .recenter-btn:hover {
+        background: #f3f4f6;
     }
 
 </style>
