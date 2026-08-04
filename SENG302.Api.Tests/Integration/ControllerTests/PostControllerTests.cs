@@ -8,7 +8,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using Shouldly;
-using Microsoft.EntityFrameworkCore;
 using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
@@ -67,7 +66,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -165,7 +164,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             CreationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
             LocationName = "Christchurch",
-            Date = DateTime.Now.AddDays(1)
+            Date = DateTimeOffset.UtcNow.AddDays(1)
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -221,14 +220,15 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         SetupGeoMock();
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
-        {
-            TripId = 1,
-            Title = "name",
-            Content = "test",
-            OsmId = 1,
-            Date = DateTime.Now,
-        });
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("name"), "Title");
+        content.Add(new StringContent("test"), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+
+        var message = await HttpClient.PostAsync("/api/post", content);
+
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -251,15 +251,15 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         SetupGeoMock();
-        var message = await HttpClient.PostAsJsonAsync("/api/post", new NewPostRequest
-        {
-            TripId = 1,
-            Title = "name",
-            Content = "test",
-            OsmId = 1,
-            Date = DateTimeOffset.UtcNow,
-            NoContentAllowed = true
-        });
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("name"), "Title");
+        content.Add(new StringContent("test"), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent("true"), "NoContentAllowed");
+
+        var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -351,7 +351,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -686,7 +686,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -703,16 +703,28 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         await SetupUserTripAndPost();
 
-        var updateRequest = new UpdatePostRequest
+        SetupGeoMock();
+
+        var pandaBytes =
+            await File.ReadAllBytesAsync("resources/panda.webp");
+
+        var pngBytes = new byte[]
         {
-            Id = 1,
-            TripId = 1,
-            Title = "Updated title",
-            Content = "Updated content",
-            OsmId = 1,
-            Date = DateTimeOffset.UtcNow.AddDays(-1),
+          0x89, 0x50, 0x4e, 0x47,
+          0x0d, 0x0a, 0x1a, 0x0a
         };
-        var response = await HttpClient.PutAsJsonAsync("/api/post/1", updateRequest);
+
+        using var updateForm = BuildUpdatePostForm(
+            photos:
+            [
+                (pandaBytes, "panda.webp", "image/webp"),
+                (pngBytes, "square.png", "image/png")
+            ]);
+
+        var response = await HttpClient.PutAsync(
+            "/api/post/1",
+            updateForm);
+        
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         await using var context =

@@ -79,11 +79,11 @@ public class PostService : IPostService
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidationTools.IsValidFilesize(photo))
+            if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
             } 
-            else if (!ImageValidationTools.IsValidMimeType(photo))
+            else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -273,13 +273,13 @@ public class PostService : IPostService
 
         foreach (var file in files)
         {
-            if (!ImageValidationTools.IsValidFilesize(file))
+            if (!ImageValidator.IsValidFilesize(file))
             {
                 validationErrors.Add($"{file.FileName}: Image too large, maximum file size is 10MB");
                 continue;
             }
 
-            if (!ImageValidationTools.IsValidMimeType(file))
+            if (!ImageValidator.IsValidMimeType(file))
             {
                 validationErrors.Add($"{file.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
