@@ -71,7 +71,7 @@ public class PostService : IPostService
         postRequest.Title = postRequest.Title.Trim();
         postRequest.Content = postRequest.Content.Trim();
         photos ??= [];
-        
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
@@ -82,7 +82,7 @@ public class PostService : IPostService
             if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
-            } 
+            }
             else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
@@ -118,7 +118,7 @@ public class PostService : IPostService
                 ["location"] = ["This isn't a valid location"]
             });
         }
-        
+
         // Add post
         var newPost = new Post
         {
@@ -210,7 +210,7 @@ public class PostService : IPostService
         if (postUpdates.OsmId != post.OsmId)
         {
             var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
-            if (location == null)
+            if (location is null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
                 {
@@ -365,7 +365,7 @@ public class PostService : IPostService
                 await _fileService.DeleteFileAsync(image.FileKey);
             }
         }
-        
+
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
@@ -379,7 +379,7 @@ public class PostService : IPostService
     public async Task DeletePhotoFromPostAsync(int postId, int photoId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var post = await context.Posts.FirstOrDefaultAsync(t => t.PostId == postId);
 
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
@@ -391,7 +391,7 @@ public class PostService : IPostService
 
         var photo = await _fileService.GetFileByIdAsync(photoId);
         await _fileService.DeleteFileAsync(photo.FileKey);
-        
+
         post.PhotoIds.Remove(photoId);
         await context.SaveChangesAsync();
     }

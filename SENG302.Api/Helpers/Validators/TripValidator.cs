@@ -6,17 +6,6 @@ namespace SENG302.Api.Helpers.Validators;
 /// </summary>
 public static class TripValidator
 {
-    /// <summary>
-    /// Returns a string representing the date format of the users locale
-    /// </summary>
-    /// <param name="culture"></param>
-    /// <returns>dd/MM/yyyy or similar</returns>
-    public static string GetLocaleDateFormat(CultureInfo? culture = null)
-    {
-        culture ??= CultureInfo.CurrentCulture;
-        string pattern = culture.DateTimeFormat.ShortDatePattern;
-        return pattern;
-    }
 
     /// <summary>
     /// Checks to see if Title  Length is between 3-64 characters
@@ -106,12 +95,12 @@ public static class TripValidator
 
         if (startDate == null)
         {
-            errors["dateOne"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
+            errors["dateOne"].Add("Date is invalid");
         }
 
         if (endDate == null)
         {
-            errors["dateTwo"].Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
+            errors["dateTwo"].Add("Date is invalid");
         }
 
         return errors;

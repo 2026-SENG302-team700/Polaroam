@@ -8,18 +8,6 @@ public static class PostValidator
 {
 
     /// <summary>
-    /// Returns a string representing the date format of the users locale
-    /// </summary>
-    /// <param name="culture"></param>
-    /// <returns>dd/MM/yyyy or similar</returns>
-    public static string GetLocaleDateFormat(CultureInfo? culture = null)
-    {
-        culture ??= CultureInfo.CurrentCulture;
-        string pattern = culture.DateTimeFormat.ShortDatePattern;
-        return pattern;
-    }
-
-    /// <summary>
     /// Checks the due date is valid
     /// adds error to dictionary when error occurs.
     /// </summary>
@@ -29,7 +17,7 @@ public static class PostValidator
         var errors = new List<string>();
         if (date == null)
         {
-            errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
+            errors.Add($"Date is invalid");
             return errors;
         }
 
@@ -60,7 +48,7 @@ public static class PostValidator
         {
             errors["date"] = ValidatePostDate(postRequest.Date);
         }
-        
+
         errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 
         return errors;

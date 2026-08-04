@@ -25,9 +25,8 @@ public class RegistrationControllerUnitTests
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
         _mockEmailService = Substitute.For<IEmailService>();
         _controller = new RegistrationController(_mockUserService, _mockOneTimeCodeService, _mockEmailService);
-        
     }
-    
+
     [Fact]
     public async Task GenerateCode_ValidEmail_ReturnOk()
     {
@@ -43,20 +42,20 @@ public class RegistrationControllerUnitTests
             CodeGenerationTime = codeGenerationTime,
             EmailVerified = false,
         };
-    
+
         var emailDictionary = new Dictionary<string, string>
         {
             {"DISPLAY_NAME", user.DisplayName},
             {"CODE", user.OneTimeCode},
             {"MINUTES", "5"}
         };
-    
+
         _mockOneTimeCodeService.GenerateOneTimeCode().Returns(user.OneTimeCode);
         _mockOneTimeCodeService.GetEpochTime().Returns(codeGenerationTime);
         _mockUserService.UpdateUserOneTimeCode(user.Email, user.OneTimeCode, codeGenerationTime, false).Returns(user);
         _mockEmailService.SendEmailAsync(user.Email, EmailTemplate.VerifyEmailCode, emailDictionary)
             .Returns(Task.CompletedTask);
-        
+
         var data = new NewOneTimeCodeRequest
         {
             Email = user.Email,
