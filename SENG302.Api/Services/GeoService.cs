@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
+using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
@@ -12,15 +15,18 @@ public interface IGeoService
         CancellationToken cancellationToken
     );
     Task<GeoLocationSearchResult?> GetLocationAsync(long osmId);
+    Task<List<Location>> GetTripLocations(int tripId);
 }
 
 public class GeoService : IGeoService
 {
     private readonly HttpClient _httpClient;
+    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
-    public GeoService(HttpClient httpClient)
+    public GeoService(HttpClient httpClient, IDbContextFactory<DatabaseContext> dbContextFactory)
     {
         _httpClient = httpClient;
+        _dbContextFactory = dbContextFactory;
     }
     
     /// <summary>
@@ -88,5 +94,22 @@ public class GeoService : IGeoService
         var results = await response.Content.ReadFromJsonAsync<List<GeoLocationSearchResult>>();
 
         return results.FirstOrDefault();
+    }
+    
+    
+    public async Task<List<Location>> GetTripLocations(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var locations = await context.Set<Post>()
+            .Where(p => p.TripId == tripId)
+            .Join(context.Set<Location>(),
+                post => post.OsmId,
+                location => location.OsmId,
+                (post, location) => location)
+            .Distinct()
+            .ToListAsync();
+
+        return locations;
     }
 }
