@@ -15,7 +15,6 @@ public interface IGeoService
         CancellationToken cancellationToken
     );
     Task<GeoLocationSearchResult?> GetLocationAsync(long osmId);
-    Task<List<Location>> GetTripLocations(int tripId);
 }
 
 public class GeoService : IGeoService
@@ -96,20 +95,4 @@ public class GeoService : IGeoService
         return results.FirstOrDefault();
     }
     
-    
-    public async Task<List<Location>> GetTripLocations(int tripId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var locations = await context.Set<Post>()
-            .Where(p => p.TripId == tripId)
-            .Join(context.Set<Location>(),
-                post => post.OsmId,
-                location => location.OsmId,
-                (post, location) => location)
-            .Distinct()
-            .ToListAsync();
-
-        return locations;
-    }
 }

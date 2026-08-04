@@ -30,7 +30,8 @@
     
     let postOsmIds = $state([]);
     let postLocations = $state([]);
-    const mapStyle = 'https://demotiles.maplibre.org/style.json';
+    //const mapStyle = 'https://demotiles.maplibre.org/style.json';
+    const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
     const defaultCenter: [number, number] = [172.6362, -43.5321]; // Christchurch, NZ
     const defaultZoom = 5;
 

@@ -206,7 +206,7 @@ public class TripController : ControllerBase
     [HttpGet("locations/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Location>>> GetPostLocations(int tripId)
     {
-        var locations = await _geoService.GetTripLocations(tripId);
+        var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
     }
 
