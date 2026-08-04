@@ -86,9 +86,6 @@ namespace SENG302.Api.Migrations
                     b.Property<int>("TripId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTimeOffset>("creationTime")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("PostId");
 
                     b.ToTable("Posts");

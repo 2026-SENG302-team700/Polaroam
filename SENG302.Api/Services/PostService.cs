@@ -2,7 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
-using SENG302.Api.Helpers;
+using SENG302.Api.Helpers.Validators;
 
 
 namespace SENG302.Api.Services;
@@ -125,11 +125,11 @@ public class PostService : IPostService
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
-            creationTime = _timeProvider.GetUtcNow(),
+            CreationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
-            LocationName = location.name,
+            LocationName = location.Name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -138,10 +138,10 @@ public class PostService : IPostService
         {
             OsmId = postRequest.OsmId,
             PostId = newPost.PostId,
-            Lat = location.lat,
-            Lon = location.lon,
-            Name = location.name,
-            DisplayName = location.display_name,
+            Lat = location.Latitude,
+            Lon = location.Longitude,
+            Name = location.Name,
+            DisplayName = location.DisplayName,
         });
 
         await context.SaveChangesAsync();
@@ -218,7 +218,7 @@ public class PostService : IPostService
                 });
             }
             post.OsmId = postUpdates.OsmId;
-            post.LocationName = location.name;
+            post.LocationName = location.Name;
         }
 
         context.Posts.Update(post);

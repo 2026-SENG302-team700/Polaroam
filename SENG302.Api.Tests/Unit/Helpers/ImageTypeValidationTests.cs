@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using SENG302.Api.Helpers;
+using SENG302.Api.Helpers.Validators;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Services;
@@ -30,7 +31,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_ValidImageButJustMime_Success(byte[] bytes, string expectedMime)
     {
         var file = GetMockFile("test", bytes);
-        ImageValidationTools.GetRealImageMime(file).ShouldBe(expectedMime);
+        ImageValidator.GetRealImageMime(file).ShouldBe(expectedMime);
     }
 
     [Theory]
@@ -43,7 +44,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_ValidImage_Success(byte[] bytes, string expectedMime)
     {
         var file = GetMockFile("test", bytes);
-        ImageValidationTools.GetRealImageMime(file).ShouldBe(expectedMime);
+        ImageValidator.GetRealImageMime(file).ShouldBe(expectedMime);
     }
     
     [Theory]
@@ -55,7 +56,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_InvalidImage_Fail(byte[] bytes)
     {
         var file = GetMockFile("test", bytes);
-        ImageValidationTools.GetRealImageMime(file).ShouldBe(ImageValidationTools.InvalidMimeString);
+        ImageValidator.GetRealImageMime(file).ShouldBe(ImageValidator.InvalidMimeString);
     }
 
     [Theory] 

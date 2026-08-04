@@ -18,6 +18,8 @@ public class ResetPasswordController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly IOneTimeCodeService _codeService;
 
+    private readonly string ResetSchemeName = "PasswordResetScheme";
+
     public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailService emailService)
     {
         _userService = userService;
@@ -49,10 +51,10 @@ public class ResetPasswordController : ControllerBase
         };
 
         var principle = new ClaimsPrincipal(
-            new ClaimsIdentity(claims, "PasswordResetScheme")
+            new ClaimsIdentity(claims, ResetSchemeName)
         );
 
-        await HttpContext.SignInAsync("PasswordResetScheme", principle, new AuthenticationProperties
+        await HttpContext.SignInAsync(ResetSchemeName, principle, new AuthenticationProperties
         {
             IsPersistent = false,
             ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
@@ -101,11 +103,11 @@ public class ResetPasswordController : ControllerBase
         {
             return BadRequest(new { message = "An email is required" });
         }
-        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        var result = await HttpContext.AuthenticateAsync(ResetSchemeName);
 
         if (result.Principal == null)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
+            await HttpContext.SignOutAsync(ResetSchemeName);
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
         // check email and code in body
@@ -152,12 +154,12 @@ public class ResetPasswordController : ControllerBase
         }
 
         // Authenticate this context based on the password reset scheme
-        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        var result = await HttpContext.AuthenticateAsync(ResetSchemeName);
 
         // Using the results from the authentication, if it is null therefore the password reset has expired
         if (result.Principal == null)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
+            await HttpContext.SignOutAsync(ResetSchemeName);
             return Ok("Code has already expired");
         }
 
@@ -170,7 +172,7 @@ public class ResetPasswordController : ControllerBase
         }
 
         // Sign the user out from the password reset scheme, cancelling the code
-        await HttpContext.SignOutAsync("PasswordResetScheme");
+        await HttpContext.SignOutAsync(ResetSchemeName);
 
         // Retrieve the user from the user service - this is to get the name of the user
         var user = await _userService.GetUserFromEmailAsync(email);
