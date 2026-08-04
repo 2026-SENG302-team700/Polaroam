@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import mimeMagicNumbers from "../../../../../SENG302.Shared/mimeTypes.json";
 
     const MAX_IMAGE_SIZE = 10000000;
@@ -13,14 +12,19 @@
 
     let pfpInput: HTMLInputElement;
     let files: FileList | undefined = $state();
-    let clientErrors: string[] = $state([]);
     let {
         filesList = $bindable<File[]>([]),
         errors = [],
         newUploadsCount = $bindable(0),
-    }: { filesList: File[] | null | undefined; errors: string[]; newUploadsCount?: number } = $props();
+        fileErrors = $bindable<string[]>([]),
+    }: {
+        filesList: File[] | null | undefined;
+        errors: string[];
+        newUploadsCount?: number;
+        fileErrors?: string[];
+    } = $props();
 
-    let displayedErrors = $derived([...errors, ...clientErrors]);
+    let displayedErrors = $derived([...errors, ...fileErrors]);
 
     /**
      * Check the start of the file to get the mime type
@@ -80,11 +84,11 @@
     async function appendImages() {
         if (!files) return;
 
-        clientErrors = [];
+        fileErrors = [];
         for (const file of files) {
-            const fileErrors = await validateImage(file);
-            if (fileErrors.length > 0) {
-                clientErrors.push(...fileErrors);
+            const fileError = await validateImage(file);
+            if (fileError.length > 0) {
+                fileErrors.push(...fileError);
             } else {
                 newUploadsCount += 1
                 filesList.push(file);
@@ -116,5 +120,4 @@
             multiple
             onchange={appendImages}
     />
-    <ErrorDisplay errors={displayedErrors}/>
 </div>

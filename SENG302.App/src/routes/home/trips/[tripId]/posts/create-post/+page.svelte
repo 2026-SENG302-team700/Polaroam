@@ -62,6 +62,7 @@
     });
     let content = $state("");
     let files: File[] | null | undefined = $state([]);
+    let fileErrors: string[] = $state([]);
     let noContentAllowed = $state(false);
     let showConfirmationModal = $state(false);
 
@@ -166,12 +167,16 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay 
-                bind:images={files} 
-                letDelete={true} 
-                errors="{errors.photos}"
+        <ImageDisplay
+                bind:images={files}
+                letDelete={true}
+                errors={[...errors.photos, ...fileErrors]}
         >
-            <ImagePicker bind:filesList={files} errors={errors.photos} />
+            <ImagePicker
+                bind:filesList={files}
+                errors={errors.photos}
+                bind:fileErrors
+            />
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
