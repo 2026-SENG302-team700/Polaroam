@@ -61,7 +61,7 @@ public class ImageTaggingService : IImageTaggingService
         var requestBody = new
         {
             model = "qwen-3.6-27b",
-            message = new[]
+            messages = new[]
             {
                 new
                 {
@@ -94,8 +94,7 @@ public class ImageTaggingService : IImageTaggingService
             },
             stream = false,
             inject_tools = false,
-            temperature = 0.2,
-            max_tokens = 100
+            temperature = 0.2
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
@@ -134,7 +133,7 @@ public class ImageTaggingService : IImageTaggingService
     /// <param name="content"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    private static IReadOnlyList<string> ParseAndValidateTag(string? content)
+    private static IReadOnlyList<string> ParseAndValidateTags(string? content)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -147,8 +146,24 @@ public class ImageTaggingService : IImageTaggingService
 
         try
         {
+            // clean the response content
+            var cleanedContent = content.Trim();
+            if (cleanedContent.StartsWith("```"))
+            {
+                var firstLineEnd = cleanedContent.IndexOf('\n');
+                if (firstLineEnd >= 0)
+                {
+                    cleanedContent = cleanedContent[(firstLineEnd + 1)..];
+                }
+                if (cleanedContent.EndsWith("```"))
+                {
+                    cleanedContent = cleanedContent[..^3];
+                }
+                cleanedContent = cleanedContent.Trim();
+            }
+
             tagResponse = JsonSerializer.Deserialize<TagResponse>(
-                content, new JsonSerializerOptions
+                cleanedContent, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 }
