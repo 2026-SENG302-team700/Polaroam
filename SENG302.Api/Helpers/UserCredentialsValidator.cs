@@ -9,7 +9,7 @@ using SENG302.Api.Services;
 
 public class UserCredentialsValidator
 {
-     /// <summary>
+    /// <summary>
     /// Checks to see if display name length is between 3-64 characters
     /// </summary>
     /// <param name="displayName">String representing display name of the user</param>
@@ -109,7 +109,7 @@ public class UserCredentialsValidator
     public static Dictionary<string, string> ValidateEmail(DatabaseContext context, string email)
     {
         var errors = new Dictionary<string, string>();
-        
+
         if (context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Any())
         {
             errors["email"] = "This email address is already in use by another account";
@@ -138,17 +138,10 @@ public class UserCredentialsValidator
         {
             errors["displayName"] = "Display name must only include letters, spaces, hyphens or apostrophes";
         }
-        
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        var swearList = profanityFilter.DetectAllProfanities(displayName);
-        if (swearList.Count > 0)
-        {
-            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
-        }
 
         return errors;
     }
-    
+
     /// <summary>
     /// Runs all password validations and throws relavent excpetions
     /// </summary>
@@ -210,7 +203,7 @@ public class UserCredentialsValidator
         PasswordHasher<User> passwordHasher = new();
         return passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
     }
-    
+
     /// <summary>
     /// Performs all validation for the update password request
     /// </summary>
@@ -231,13 +224,13 @@ public class UserCredentialsValidator
         {
             throw new MismatchedPasswordException("Old password does not match password on file");
         }
-        
+
         // Validate new passwords match
         if (!PasswordMatching(newPassword, newPasswordConfirm))
         {
             throw new MismatchedPasswordException("Passwords do not match");
         }
-        
+
         // validate password is of valid form
         if (!CheckPassword(newPassword))
         {
@@ -245,7 +238,7 @@ public class UserCredentialsValidator
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
             );
         }
-        
+
         // Validate new password not the same as old password
         if (PasswordMatching(newPassword, oldPassword))
         {
