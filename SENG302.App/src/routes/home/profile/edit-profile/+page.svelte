@@ -191,60 +191,7 @@
       goto(resolve("/"));
     }
   }
-
-  /**
-   * Handles front end validation
-   * Updates error messages for invalid fields
-   *
-   * returns true if all fields are valid, false otherwise
-   */
-  function isValid() {
-    clearErrors();
-
-    // Front end Validation
-    let valid = true;
-
-    // Check email format
-    const emailRegex = new RegExp(regexPatterns.user.email);
-    if (!emailRegex.test(email) && email) {
-      errors.email =
-        "Invalid email address. Email must be in the format ‘jane@doe.nz’";
-      valid = false;
-    }
-
-    // trim display name to remove whitespace at the start and end
-    displayName = displayName.trim();
-
-    // Check Display name length
-    if (displayName.length < 3 || displayName.length > 64) {
-      errors.displayName = "Display name must be between 3 and 64 characters";
-      valid = false;
-    }
-
-    // Display Name format
-    const displayNameRegex = new RegExp(
-      regexPatterns.user.displayName.pattern,
-      regexPatterns.user.displayName.flags,
-    );
-    if (!displayNameRegex.test(displayName)) {
-      errors.displayName =
-        "Display name must only include letters, spaces, hyphens or apostrophes.";
-      valid = false;
-    }
-
-    // Fields not empty
-    if (!email) {
-      errors.email = "Email is required.";
-      valid = false;
-    }
-
-    if (!displayName) {
-      errors.displayName = "Display name is required.";
-      valid = false;
-    }
-
-    return valid;
-  }
+  
   /// <summary>
   /// Automatically refocus on the next input box
   /// </summary>
@@ -268,9 +215,6 @@
   /// Updates the users information with the provided information
   /// </summary>
   async function updateUser() {
-    // Return if error
-    if (!isValid()) return;
-
     try {
       const response = await fetchWithCsrf(resolve(`/api/user`), {
         method: "PUT",
