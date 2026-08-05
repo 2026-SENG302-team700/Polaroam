@@ -373,6 +373,249 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.OsmId.ShouldBe(123);
         post.LocationName.ShouldBe("Christchurch");
     }
+    
+    [Fact]
+    public async Task DeleteTrip_ExistingPost_DeletesSinglePosts()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        int postId;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            var post = new Post
+            {
+                TripId = 1,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
+            postId = post.PostId;
+
+            context.Locations.Add(new Location
+            {
+                PostId = postId,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        await ServiceUnderTest.DeleteAllPostOfTrip(1);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var postExists = await assertContext.Posts
+            .AnyAsync(post => post.TripId == 1);
+
+        var locationExists = await assertContext.Locations
+            .AnyAsync(location => location.PostId == postId);
+
+        postExists.ShouldBeFalse();
+        locationExists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DeleteTrip_ExistingPosts_DeletesMultiplePosts()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        int postId1;
+        int postId2;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            var post1 = new Post
+            {
+                TripId = 1,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post1);
+            await context.SaveChangesAsync();
+
+            postId1 = post1.PostId;
+            
+            var post2 = new Post
+            {
+                TripId = 1,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post2);
+            
+            await context.SaveChangesAsync();
+            
+            postId2 = post2.PostId;
+
+            context.Locations.Add(new Location
+            {
+                PostId = postId2,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+            
+            context.Locations.Add(new Location
+            {
+                PostId = postId1,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        await ServiceUnderTest.DeleteAllPostOfTrip(1);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var postExists = await assertContext.Posts
+            .AnyAsync(post => post.TripId == 1);
+
+        var locationExists = await assertContext.Locations
+            .AnyAsync(location => location.PostId == postId1 || location.PostId == postId2);
+
+        postExists.ShouldBeFalse();
+        locationExists.ShouldBeFalse();
+    }
+    
+    [Fact]
+    public async Task DeleteTrip_ExistingPosts_DeletesOnlyTripPosts()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        int postId1;
+        int postId2;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Trips.Add(new Trip
+            {
+                Id = 2,
+                Title = "Test List",
+                UserId = 1,
+                Description = "Test",
+                StartDate = new DateOnly(2017, 10, 08),
+                EndDate = new DateOnly(2017, 10, 21)
+            });
+            
+            var post1 = new Post
+            {
+                TripId = 1,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post1);
+            await context.SaveChangesAsync();
+
+            postId1 = post1.PostId;
+            
+            var post2 = new Post
+            {
+                TripId = 2,
+                Title = "Post to delete",
+                Content = "Post content",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                PhotoIds = []
+            };
+
+            context.Posts.Add(post2);
+            
+            await context.SaveChangesAsync();
+            
+            postId2 = post2.PostId;
+            
+            context.Locations.Add(new Location
+            {
+                PostId = postId1,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            context.Locations.Add(new Location
+            {
+                PostId = postId2,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        await ServiceUnderTest.DeleteAllPostOfTrip(1);
+
+        await using var assertContext =
+            DbContextFactory.CreateDbContext();
+
+        var post1Exists = await assertContext.Posts
+            .AnyAsync(post => post.TripId == 1);
+
+        var location1Exists = await assertContext.Locations
+            .AnyAsync(location => location.PostId == postId1);
+
+        post1Exists.ShouldBeFalse();
+        location1Exists.ShouldBeFalse();
+        
+        var post2Exists = await assertContext.Posts
+            .AnyAsync(post => post.TripId == 2);
+
+        var location2Exists = await assertContext.Locations
+            .AnyAsync(location => location.PostId == postId1 || location.PostId == postId2);
+
+        post2Exists.ShouldBeTrue();
+        location2Exists.ShouldBeTrue();
+    }
+    
+    [Fact]
+    public async Task DeleteTrip_NoPosts_RunsSuccessfully()
+    {
+        await SetupUserAndTrip(1, 1);
+        
+
+        await Should.NotThrowAsync(ServiceUnderTest.DeleteAllPostOfTrip(1));
+    }
 
     [Theory]
     [InlineData(0)]
