@@ -17,7 +17,7 @@ public class UserServiceUnitTest : DatabaseUnitTestFixture
     private readonly IUserService _userService;
 
     private readonly FakeTimeProvider _fakeTimeProvider;
-    
+
     public UserServiceUnitTest()
     {
         _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
@@ -29,11 +29,11 @@ public class UserServiceUnitTest : DatabaseUnitTestFixture
     public async Task CheckUserCredentials_UserDoesNotExist_ExpectDoesNotExistResult()
     {
         var result = await _userService.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
-        
+
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.Null(result.user);
     }
-    
+
     [Fact]
     public async Task CheckUserCredentials_UnverifiedEmail_ExpectAccountUnverifiedResult()
     {
@@ -42,7 +42,8 @@ public class UserServiceUnitTest : DatabaseUnitTestFixture
         user.EmailVerified = false;
         user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
 
-        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync()) {
+        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync())
+        {
             mockDatabaseContext.Users.Add(user);
             await mockDatabaseContext.SaveChangesAsync();
         }
@@ -52,7 +53,7 @@ public class UserServiceUnitTest : DatabaseUnitTestFixture
         Assert.NotNull(result.user);
 
     }
-    
+
     [Fact]
     public async Task CheckUserCredentials_UnverifiedEmailTimeExpired_ExpectAccountUnverifiedResult()
     {
@@ -61,50 +62,38 @@ public class UserServiceUnitTest : DatabaseUnitTestFixture
         user.EmailVerified = false;
         user.CodeGenerationTime = _fakeTimeProvider.GetUtcNow().ToUnixTimeSeconds() - 400;
 
-        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync()) {
+        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync())
+        {
             mockDatabaseContext.Users.Add(user);
             await mockDatabaseContext.SaveChangesAsync();
         }
-        
+
         var result = await _userService.CheckUserCredentialsAsync(email, "Password123!");
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.NotNull(result.user);
     }
-    
+
     [Fact]
     public async Task UpdateUser_ValidRequest_ExpectUpdatedUser()
     {
         int userId;
-        
-        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync()) {
+
+        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync())
+        {
             var user = new User { Email = "old@test.com", DisplayName = "Old Name", Country = "NZ", PasswordKey = "hash" };
             mockDatabaseContext.Users.Add(user);
             await mockDatabaseContext.SaveChangesAsync();
             userId = user.Id;
         }
 
-        var updatedUser = await _userService.UpdateUser(userId, "new@test.com", "New Name", "AU", true);
+        var updatedUser = await _userService.UpdateUser(userId, "new@test.com", "New Name", "AU");
 
         Assert.NotNull(updatedUser);
         Assert.Equal("new@test.com", updatedUser.Email);
         Assert.Equal("New Name", updatedUser.DisplayName);
         Assert.Equal("AU", updatedUser.Country);
-        Assert.True(updatedUser.ProfanityFiltering);
     }
 
-    [Fact]
-    public void ValidateProfanityFilterDisabled_NewAccount_ExpectProfanityFilterFalse()
-    {
-        var user = new User
-        {
-            Email = "hello@example.com",
-            DisplayName = "Hello",
-            Country = "NZ",
-        };
-        
-        Assert.False(user.ProfanityFiltering);
-    }
-    
     [Theory]
     [InlineData("vlad.nistor.email")]
     [InlineData("pandya@gmail+!.co#m")]
