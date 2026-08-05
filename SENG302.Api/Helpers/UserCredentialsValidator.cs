@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using SENG302.Api.Constants;
@@ -44,43 +45,34 @@ public class UserCredentialsValidator
     /// </returns>
     public static bool CheckEmailFormat(string email)
     {
-        // Gotten from C# docs
-        try
-        {
-            
-            email = Regex.Replace(email, @"(@)(.+)$", DomainMapper,
-                                      RegexOptions.None, TimeSpan.FromMilliseconds(200));
+        if (string.IsNullOrEmpty(email)) return false;
 
-            // Examines the domain part of the email and normalizes it.
+        int atIndex = email.IndexOf('@'); // returns -1 if not found
+        if (atIndex <= 0 || atIndex != email.LastIndexOf('@')) return false;
 
-            string DomainMapper(Match match)
-            {
-                // Use IdnMapping class to convert Unicode domain names.
-                var idn = new IdnMapping();
+        string local = email.Substring(0, atIndex);
+        string domain = email.Substring(atIndex + 1);
 
-                // Pull out and process domain name (throws ArgumentException on invalid)
-                string domainName = idn.GetAscii(match.Groups[2].Value);
+        if (local.Length == 0 || local.Length > 64) return false;
+        if (domain.Length == 0 || domain.Length > 255) return false;
 
-                return match.Groups[1].Value + domainName;
-            }
+        if (!email.All(c => c < 128)) return false; // ASCII only
 
-        }
-        catch (RegexMatchTimeoutException)
+        const string localAtom = @"[A-Za-z0-9!#$%&*+\-/=?^_`'{|}]+";
+        if (!Regex.IsMatch(local, $@"\A{localAtom}(\.{localAtom})*\z")) return false;
+
+        string[] labels = domain.Split('.');
+        if (labels.Length < 2) return false; // require domain + top level domain
+
+        foreach (var label in labels)
         {
-            return false;
+            if (label.Length == 0 || label.Length > 63) return false;
+            if (!Regex.IsMatch(label, @"\A[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\z")) return false;
         }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        try
-        {
-            return ValidationPatterns.UserEmail.IsMatch(email);
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return false;
-        }
+
+        if (Regex.IsMatch(labels[^1], @"\A\d+\z")) return false; // TLD can't be all-numeric
+
+        return true;
     }
 
     /// <summary>
