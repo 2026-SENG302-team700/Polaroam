@@ -349,7 +349,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
 
         exception.Errors.ShouldContainKey("dateOne");
         exception.Errors["dateOne"][0].ShouldContain(
-            "Invalid date, date must be formatted"
+            "Date is invalid"
         );
 
         var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);

@@ -25,7 +25,7 @@ public class PostValidatorTests
     {
         var errors = PostValidator.ValidatePostDate(null);
         errors.Count.ShouldBe(1);
-        errors[0].ShouldContain("Invalid date, date must be formatted ");
+        errors[0].ShouldContain("Date is invalid");
     }
 
     [Fact]

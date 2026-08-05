@@ -467,7 +467,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             );
 
         exception.Errors["date"][0]
-            .ShouldContain("Invalid date, date must be formatted");
+            .ShouldContain("Date is invalid");
 
         await using var assertContext = DbContextFactory.CreateDbContext();
 
