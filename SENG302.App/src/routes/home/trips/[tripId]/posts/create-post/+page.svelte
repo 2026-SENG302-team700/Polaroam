@@ -175,7 +175,7 @@
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
-            <CreationButton onClick={createPost} text="Create Post" />
+            <CreationButton onClick={createPost} text="Create Post" loading={loading} />
         </div>
     </div>
 </div>

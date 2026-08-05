@@ -81,7 +81,7 @@
         {/if}
 
         <div class="flex justify-end">
-            <CreationButton onClick={onSubmit} text={submitText} />
+            <CreationButton onClick={onSubmit} text={submitText} loading={loading}/>
         </div>
     </form>
     
