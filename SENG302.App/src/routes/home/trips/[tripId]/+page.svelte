@@ -12,6 +12,7 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
+    import Map from "$lib/components/trip-components/map.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -27,54 +28,17 @@
         endDate: "9999-12-31",
         userId: 0,
     });
-
-    let map = $state();
+    
     let postLocations = $state([]);
-    //const mapStyle = 'https://demotiles.maplibre.org/style.json';
-    const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
-
-
     let posts = $state([]);
 
-    onMount(async () => {
+    onMount(() => {
         fetchTrip();
         fetchPosts();
-        await fetchLocations();
+        fetchLocations();
     });
 
-    function recenterMap() {
-        if (!map || postLocations.length === 0) return;
-
-        const coords = postLocations
-            .map((loc) => [parseFloat(loc.lon), parseFloat(loc.lat)])
-            .filter(([lng, lat]) => !isNaN(lng) && !isNaN(lat));
-
-        if (coords.length === 0) return;
-
-        if (coords.length === 1) {
-            map.flyTo({ center: coords[0], zoom: 12 });
-            return;
-        }
-
-        let minLng = coords[0][0], maxLng = coords[0][0];
-        let minLat = coords[0][1], maxLat = coords[0][1];
-        for (const [lng, lat] of coords) {
-            minLng = Math.min(minLng, lng);
-            maxLng = Math.max(maxLng, lng);
-            minLat = Math.min(minLat, lat);
-            maxLat = Math.max(maxLat, lat);
-        }
-
-        map.fitBounds(
-            [[minLng, minLat], [maxLng, maxLat]],
-            { padding: 50, maxZoom: 15, duration: 1000 }
-        );
-    }
-
-    // Auto-fit once map + locations are both ready
-    $effect(() => {
-        recenterMap();
-    });
+    
 
     /**
      * Fetches the trip from the backend corresponding
@@ -125,7 +89,10 @@
             loading = false;
         }
     }
-    
+
+    /**
+     * Fetches all locations from the posts of the given trip
+     */
     async function fetchLocations() {
         try {
             loading = true;
@@ -202,37 +169,7 @@
             <p>No description</p>
         {/if}
     </div>
-
-    <div class="app">
-        <div class="map-wrap">
-            <MapLibre style={mapStyle} bind:map class="map">
-                {#each postLocations as location (location.osmId)}
-                    <Marker lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}>
-                        <div class="marker-pin"></div>
-                        <Popup offset={[0, -10]}>
-                            <div class="popup">
-                                <strong>{location.displayName}</strong>
-                            </div>
-                        </Popup>
-                    </Marker>
-                {/each}
-            </MapLibre>
-
-            <button class="recenter-btn" onclick={recenterMap} type="button" aria-label="Recenter map">
-                ⤢
-            </button>
-        </div>
-
-        {#if postLocations.length > 0}
-            <ul class="results-list">
-                {#each postLocations as location (location.osmId)}
-                    <li>{location.displayName}</li>
-                {/each}
-            </ul>
-        {/if}
-    </div>
-
-
+    <Map locations={postLocations} />
     <PostSection {posts} />
 </div>
 
@@ -291,79 +228,6 @@
     .error {
         color: #dc2626;
         font-size: 0.9rem;
-    }
-
-    .map-wrap {
-        height: 480px;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    :global(.map) {
-        width: 100%;
-        height: 100%;
-    }
-
-    .popup {
-        font-size: 0.85rem;
-        max-width: 220px;
-    }
-
-    .popup .type {
-        color: #666;
-        font-size: 0.75rem;
-        text-transform: capitalize;
-    }
-
-    .results-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        max-height: 150px;
-        overflow-y: auto;
-        font-size: 0.85rem;
-    }
-
-    .results-list li {
-        padding: 0.35rem 0;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .marker-pin {
-        width: 24px;
-        height: 24px;
-        background: #dc2626;
-        border: 2px solid white;
-        border-radius: 50%;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.4);
-        cursor: pointer;
-    }
-
-    .map-wrap {
-        position: relative; /* needed so the button can be absolutely positioned inside */
-        height: 480px;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .recenter-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 10;
-        width: 34px;
-        height: 34px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        background: white;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-        cursor: pointer;
-        font-size: 1rem;
-        line-height: 1;
-    }
-
-    .recenter-btn:hover {
-        background: #f3f4f6;
     }
 
 </style>

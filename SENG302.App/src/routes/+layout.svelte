@@ -1,7 +1,6 @@
 <script lang="ts">
 	import "bootstrap/dist/css/bootstrap.min.css";
 	import "bootstrap-icons/font/bootstrap-icons.css";
-    import 'maplibre-gl/dist/maplibre-gl.css';
 	import "../app.css";
 	import Toast from "$lib/toast/toast.svelte";
 	import { onMount } from "svelte";
