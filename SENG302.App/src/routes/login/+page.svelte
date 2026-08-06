@@ -45,7 +45,7 @@
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
-    let interval;
+    let interval: ReturnType<typeof setInterval> | undefined;
 
     let newPassword = $state("");
     let confirmPassword = $state("");
@@ -84,7 +84,10 @@
      */
     function startTimerCountdown() {
         timeRemaining = 300;
-        clearInterval(interval);
+        if (interval != undefined) {
+            clearInterval(interval);
+            interval = undefined;
+        }
 
         interval = setInterval(() => {
             timeRemaining--;
@@ -140,7 +143,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(resolve(`/api/login`), {
+            const response = await fetchWithCsrf(resolve(`/api/login` as any), {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -219,7 +222,7 @@
 
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/reset/code/generation`),
+                resolve(`/api/user/password/reset/code/generation` as any),
                 {
                     method: "POST",
                     headers: {
@@ -256,31 +259,45 @@
         errors.codeError = "";
         loadingStatus = 2;
 
-        const response = await fetchWithCsrf(
-            `/api/user/password/reset/code/cancel`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/reset/code/cancel`),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        Email: resetEmail,
+                    }),
                 },
-                body: JSON.stringify({
-                    Email: resetEmail,
-                }),
-            },
-        );
+            );
 
-        const data = await response.json().catch(() => null);
+            const data = await response.json().catch(() => null);
 
-        if (!response.ok) {
-            errors.codeError = data?.message;
-        } else {
+            if (!response.ok) {
+                errors.codeError =
+                    data?.message ?? "Failed to cancel password reset.";
+                return;
+            }
+
+            if (interval != undefined) {
+                clearInterval(interval);
+                interval = undefined;
+            }
+            clearResetCodeModalFields();
+
+            timeRemaining = 300;
+            timeRemainingText = "05:00";
             currentModalStep = ModalStep.EMAIL_INPUT;
-            authModal.hide();
+
+            authModal?.hide();
+        } catch {
+            errors.codeError = "Connection error. Please try again later.";
+        } finally {
+            loadingStatus = 0;
         }
-
-        loadingStatus = 0;
     }
-
     /**
      * Function that is called when all digits are entered.
      * Checks that the code is valid
@@ -499,7 +516,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <form
-                novalidate    
+                novalidate
                 onsubmit={() => {
                     if (loadingStatus == 0) {
                         if (currentModalStep === ModalStep.EMAIL_INPUT) {
