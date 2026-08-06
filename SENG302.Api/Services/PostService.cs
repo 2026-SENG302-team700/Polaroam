@@ -15,10 +15,8 @@ public interface IPostService
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos);
     Task<bool> UserOwnsPost(int userId, int tripId);
-    Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
-    Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
 }
 
@@ -86,8 +84,8 @@ public class PostService : IPostService
         {
             if (!ImageValidationTools.IsValidFilesize(photo))
             {
-                photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
-            } 
+                photoErrors.Add($"{photo.FileName}: Image too large, maximum file size is 10MB");
+            }
             else if (!ImageValidationTools.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
@@ -210,8 +208,8 @@ public class PostService : IPostService
         {
             if (!ImageValidationTools.IsValidFilesize(photo))
             {
-                photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
-            } 
+                photoErrors.Add($"{photo.FileName}: Image too large, maximum file size is 10MB");
+            }
             else if (!ImageValidationTools.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
@@ -227,7 +225,7 @@ public class PostService : IPostService
         {
             throw new MultipleValidationListException(errors);
         }
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         // Select post
@@ -266,97 +264,13 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList();
-        if (location != null)
-        {
-            post.LocationName = location.name;
-        }
+        post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.LocationName = location != null ? location.name : post.LocationName;
         
         // Save Changes
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
-    }
-
-    /// <summary>
-    /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
-    /// later on
-    /// </summary>
-    /// <param name="photoFileIds">List of the custom file Ids corresponding to the photos</param>
-    /// <param name="postId">The Ids of the post</param>
-    /// <returns></returns>
-    public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
-
-        if (post == null)
-        {
-            return null;
-        }
-        if (post.PhotoIds == null)
-        {
-            return null;
-        }
-
-        for (int i = 0; i < photoFileIds.Count; i++)
-        {
-            post.PhotoIds.Add(photoFileIds[i]);
-        }
-
-        context.Posts.Update(post);
-        await context.SaveChangesAsync();
-        return post;
-    }
-
-    /// <summary>
-    /// Validates and saves photos uploaded for a post, then attaches them to the post.
-    /// Deletes the post if any photo fails validation.
-    /// currently useless but will be implemented with edit post.
-    /// </summary>
-    /// <param name="files">The photo files being uploaded</param>
-    /// <param name="postId">The id of the post the photos belong to</param>
-    /// <param name="userId">The id of the user uploading the photos</param>
-    /// <returns>The ids of the newly created custom files for the photos</returns>
-    public async Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId)
-    {
-        var validationErrors = new List<string>();
-
-        foreach (var file in files)
-        {
-            if (!ImageValidationTools.IsValidFilesize(file))
-            {
-                validationErrors.Add($"{file.FileName}: Image too large, maximum file size is 10MB");
-                continue;
-            }
-
-            if (!ImageValidationTools.IsValidMimeType(file))
-            {
-                validationErrors.Add($"{file.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
-            }
-        }
-
-        if (validationErrors.Count > 0)
-        {
-            throw new MultipleValidationListException(
-                new Dictionary<string, List<string>> {
-                    { "photos", validationErrors }
-                }
-                );
-        }
-
-        List<int> customFileIds = [];
-
-        foreach (var file in files)
-        {
-            var customFile = await _fileService.SaveFileAsync(file, userId);
-            customFileIds.Add(customFile.Id);
-        }
-
-        await AddPhotosToPost(customFileIds, postId);
-
-        return customFileIds;
     }
 
     /// <summary>

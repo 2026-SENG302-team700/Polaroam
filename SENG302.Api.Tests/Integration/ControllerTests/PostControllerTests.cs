@@ -362,32 +362,19 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
+    public async Task UpdatePost_ValidPhotoUpload_PostContainsPhotos()
     {
-        await using var context = DbContextFactory.CreateDbContext();
+        await SetupUserTripAndPost();
 
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
-        await context.SaveChangesAsync();
+        var file = await File.ReadAllBytesAsync("resources/panda.webp");
 
+        using var content = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
 
-        var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
-
-        using var content = new MultipartFormDataContent();
-
-        var fileContent = new ByteArrayContent(fileBytes);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/webp");
-        content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
-
-        content.Add(new StringContent("1"), "postId");
-        content.Add(new StringContent("1"), "tripId");
-
-        var response = await HttpClient.PutAsync("/api/post/images", content);
-        var photoIds = await response.Content.ReadAsStringAsync();
+        var response = await HttpClient.PutAsync("/api/post/1", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        photoIds.ShouldBe("[1]");
 
+        var post = await response.Content.ReadFromJsonAsync<Post>();
+        post!.PhotoIds.ShouldBe([1]);
     }
 
     private MultipartFormDataContent BuildPostForm(
@@ -547,24 +534,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         errors.Errors["photos"].ShouldContain(e => e.Contains("bad2.jpeg"));
     }
 
-    public async Task<MultipartContent> CreateImageContent()
-    {
-        var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
-
-        var content = new MultipartFormDataContent();
-
-        var fileContent = new ByteArrayContent(fileBytes);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/webp");
-        content.Add(fileContent, "files", "panda.webp"); // field name "files" matches formData.append("files", ...)
-
-        content.Add(new StringContent("1"), "postId");
-        content.Add(new StringContent("1"), "tripId");
-
-        return content;
-    }
-
     [Fact]
-    public async Task UploadPostPhotos_InvalidRequest_NotOwnerOfPost()
+    public async Task UpdatePost_NotOwnerOfPost_ReturnsUnauthorized()
     {
         await using var context = DbContextFactory.CreateDbContext();
 
@@ -574,13 +545,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
-        var content = await CreateImageContent();
+        var file = await File.ReadAllBytesAsync("resources/panda.webp");
+        using var content = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
 
-        var response = await HttpClient.PutAsync("/api/post/images", content);
-        var photoIds = await response.Content.ReadAsStringAsync();
+        var response = await HttpClient.PutAsync("/api/post/1", content);
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        photoIds.ShouldContain("You do not have authorisation to upload photos to this post!");
-
     }
 
     [Fact]
@@ -627,8 +596,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
-        var content = await CreateImageContent();
-        await HttpClient.PutAsync("/api/post/images", content);
+        var file = await File.ReadAllBytesAsync("resources/panda.webp");
+        using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
+        await HttpClient.PutAsync("/api/post/1", uploadForm);
 
         var response = await HttpClient.GetAsync("/api/post/1/images");
 
@@ -651,8 +621,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine" });
         await context.SaveChangesAsync();
 
-        var content = await CreateImageContent();
-        await HttpClient.PutAsync("/api/post/images", content);
+        var file = await File.ReadAllBytesAsync("resources/panda.webp");
+        using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
+        await HttpClient.PutAsync("/api/post/1", uploadForm);
 
         var response = await HttpClient.GetAsync("/api/post/3/images");
 
@@ -671,8 +642,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my home" });
         await context.SaveChangesAsync();
 
-        var content = await CreateImageContent();
-        await HttpClient.PutAsync("/api/post/images", content);
+        var file = await File.ReadAllBytesAsync("resources/panda.webp");
+        using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
+        await HttpClient.PutAsync("/api/post/1", uploadForm);
 
         var response = await HttpClient.GetAsync("/api/post/1/images/1");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -694,9 +666,6 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "my basement" });
         await context.SaveChangesAsync();
 
-        var content = await CreateImageContent();
-        await HttpClient.PutAsync("/api/post/images", content);
-
         var response = await HttpClient.GetAsync("/api/post/1/images/1");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -713,9 +682,6 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "a mysterious place" });
         await context.SaveChangesAsync();
-
-        var content = await CreateImageContent();
-        await HttpClient.PutAsync("/api/post/images", content);
 
         var response = await HttpClient.GetAsync("/api/post/1/images/5");
 

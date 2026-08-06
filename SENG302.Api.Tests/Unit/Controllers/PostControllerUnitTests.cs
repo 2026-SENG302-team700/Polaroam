@@ -240,7 +240,7 @@ public class PostControllerUnitTests
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
         
-        _mockPostService.UpdatePostAsync(request, 1, new List<IFormFile>())
+        _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
 
         var result = await _controller.UpdatePost(request, null);
@@ -308,6 +308,17 @@ public class PostControllerUnitTests
     {
         SetupUserContext("1");
         
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test user",
+            PasswordKey = "password",
+            Country = "NZ"
+        };
+        
+        _mockUserService.GetUserByIdAsync(1).Returns(user);
+        
         var request = CreateUpdateRequest();
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(false);
@@ -326,6 +337,17 @@ public class PostControllerUnitTests
     {
         SetupUserContext("1");
 
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test user",
+            PasswordKey = "password",
+            Country = "NZ"
+        };
+        
+        _mockUserService.GetUserByIdAsync(1).Returns(user);
+        
         var request = CreateUpdateRequest();
 
         var updatedPost = new Post
@@ -342,14 +364,14 @@ public class PostControllerUnitTests
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
 
-        _mockPostService.UpdatePostAsync(request, 1, new List<IFormFile>()).Returns(updatedPost);
+        _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>()).Returns(updatedPost);
 
         var result = await _controller.UpdatePost(request, null);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(updatedPost);
 
-        await _mockPostService.Received(1).UpdatePostAsync(request, 1, new List<IFormFile>());
+        await _mockPostService.Received(1).UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>());
     }
 
     [Fact]
@@ -357,6 +379,17 @@ public class PostControllerUnitTests
     {
         SetupUserContext("1");
 
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test user",
+            PasswordKey = "password",
+            Country = "NZ"
+        };
+        
+        _mockUserService.GetUserByIdAsync(1).Returns(user);
+        
         var request = CreateUpdateRequest();
 
         var errors = new Dictionary<string, List<string>>{
@@ -368,7 +401,8 @@ public class PostControllerUnitTests
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
 
-        _mockPostService.UpdatePostAsync(request, 1, new List<IFormFile>()).Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
+        _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>())
+            .Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
 
         var result = await _controller.UpdatePost(request, null);
 

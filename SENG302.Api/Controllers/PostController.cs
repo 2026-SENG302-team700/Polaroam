@@ -148,9 +148,13 @@ public class PostController : ControllerBase
                 "Post does not exist"
             );
         }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
 
     }
-    
+
     /// <summary>
     /// Takes a post id and returns all the metadata related to the photos
     /// </summary>
@@ -212,56 +216,6 @@ public class PostController : ControllerBase
         byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
 
         return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
-    }
-
-    /// <summary>
-    /// Controller method for uploading photos to a post
-    /// </summary>
-    /// <param name="files">The photo files being uploaded</param>
-    /// <param name="postId">The id of the post corresponding to the photos being uploaded</param>
-    /// <returns>The ids of the newly create custom files for the photos</returns>
-    [Authorize]
-    [HttpPut("images")]
-    public async Task<ActionResult<List<int>>> UploadPostPhotos(
-        [FromForm] List<IFormFile> files,
-        [FromForm] string postId,
-        [FromForm] string tripId
-        )
-    {
-
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized("You do not have authorisation to upload photos to this post!");
-        }
-
-        var userId = int.Parse(userIdString);
-        var user = await _userService.GetUserByIdAsync(userId);
-
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
-
-        var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
-
-        if (ownsPost == false)
-        {
-            return Unauthorized("You do not have authorisation to upload photos to this post!");
-        }
-
-        try
-        {
-            var customFileIds = await _postService.UploadPhotosToPostAsync(files, int.Parse(postId), userId);
-            return Ok(customFileIds);
-        }
-        catch (MultipleValidationListException e)
-        {
-            return BadRequest(new BadRequestValidationListResponse
-            {
-                Errors = e.Errors
-            });
-        }
     }
 
     /// <summary>

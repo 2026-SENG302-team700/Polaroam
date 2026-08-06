@@ -3,7 +3,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { uploadPhotos } from "$lib/posts/images";
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
