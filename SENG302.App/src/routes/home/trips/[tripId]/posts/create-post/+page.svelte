@@ -79,7 +79,7 @@
             form.append("Title", title);
             form.append("OsmId", location.osmId);
             form.append("Content", content);
-            form.append("Date", date.toISOString() ?? "");
+            form.append("Date", date?.toISOString() ?? "");
             form.append("NoContentAllowed", noContentAllowed);
             if (files != null) {
                 for (let i = 0; i < files.length; i++) {

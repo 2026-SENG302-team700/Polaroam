@@ -59,8 +59,8 @@
                 body: JSON.stringify({
                     Title: tripTitle,
                     Description: tripDescription,
-                    StartDate: startDate.toISOString(),
-                    EndDate: endDate.toISOString(),
+                    StartDate: startDate?.toISOString(),
+                    EndDate: endDate?.toISOString(),
                 }),
                 credentials: "include",
             });

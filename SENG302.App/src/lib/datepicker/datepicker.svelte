@@ -17,7 +17,7 @@
         if (datePicker)
             datePicker.addEventListener("invalid", function (event) {
                 event.preventDefault();
-                error = "Please input a valid date";
+                error = "Date is invalid";
             });
     });
 
@@ -29,6 +29,20 @@
         const input = event.currentTarget as HTMLInputElement;
         value = input.value ? new Date(`${input.value}T00:00:00`) : null;
     }
+
+    /**
+     * Converts a utc date to a string formatted YYYY-MM-DD in the user's local time
+     * @param date a date formatted YYYY-MM-DD in the user's local time
+     */
+    function utcDateToLocalISO(date: Date) {
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        const localDate = `${year}-${month}-${day}`;
+        console.log(localDate);
+        return localDate;
+    }
 </script>
 
 <div class="date-form-wrapper input-group w-auto">
@@ -36,7 +50,7 @@
         type="date"
         class="form-control"
         class:is-invalid={error}
-        value={value?.toISOString()}
+        value={value != null ? utcDateToLocalISO(value) : ""}
         oninput={handleInput}
         bind:this={datePicker}
         {disabled}

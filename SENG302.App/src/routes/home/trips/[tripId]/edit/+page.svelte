@@ -11,7 +11,8 @@
     let errors = $state({
         title: [],
         description: [],
-        date: "",
+        dateOne: "",
+        dateTwo: "",
         generic: "",
     });
 
@@ -29,7 +30,8 @@
         errors = {
             title: [],
             description: [],
-            date: "",
+            dateOne: "",
+            dateTwo: "",
             generic: "",
         };
     }
@@ -60,6 +62,7 @@
 
             tripTitle = data.title;
             tripDescription = data.description;
+
             startDate = new Date(data.startDate);
             endDate = new Date(data.endDate);
         } catch (err) {
@@ -88,8 +91,8 @@
                         Id: Number(params.tripId),
                         Title: tripTitle,
                         Description: tripDescription,
-                        StartDate: startDate.toISOString(),
-                        EndDate: endDate.toISOString(),
+                        StartDate: startDate?.toISOString(),
+                        EndDate: endDate?.toISOString(),
                     }),
                     credentials: "include",
                 },
@@ -97,7 +100,8 @@
 
             const data = await response.json();
             if (!response.ok) {
-                errors.date = data.errors?.dates?.join(" ") ?? "";
+                errors.dateOne = data.errors?.dateOne?.join(" ") ?? "";
+                errors.dateTwo = data.errors?.dateTwo?.join(" ") ?? "";
                 errors.title = data.errors?.title ?? "";
                 errors.description = data.errors?.description ?? "";
 
