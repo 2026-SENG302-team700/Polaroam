@@ -1,6 +1,5 @@
 <script>
     let { errors = [] } = $props();
-
     let nonEmptyErrors = $derived(errors.filter((err) => err && err.trim().length > 0));
 </script>
 

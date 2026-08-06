@@ -11,7 +11,8 @@
     let errors = $state({
         title: [],
         description: [],
-        date: "",
+        dateOne: "",
+        dateTwo: "",
         generic: "",
     });
 
@@ -29,7 +30,8 @@
         errors = {
             title: [],
             description: [],
-            date: "",
+            dateOne: "",
+            dateTwo: "",
             generic: "",
         };
     }
@@ -108,9 +110,10 @@
 
             const data = await response.json();
             if (!response.ok) {
-                errors.date = data.errors?.dates?.join(" ") ?? "";
-                errors.title = data.errors?.title ?? "";
-                errors.description = data.errors?.description ?? "";
+                errors.dateOne = data.errors?.dateOne ?? "";
+                errors.dateTwo = data.errors?.dateTwo ?? "";
+                errors.title = data.errors?.title ?? [];
+                errors.description = data.errors?.description ?? [];
 
                 if (data.generic) {
                     errors.generic =
