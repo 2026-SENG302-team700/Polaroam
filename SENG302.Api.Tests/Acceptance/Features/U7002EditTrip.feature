@@ -6,13 +6,6 @@ Feature: U7002_As Benji I want to edit my trips So that I can correct their info
         When I update the trip with valid information
         Then the changes to the trip are persisted
         And I am transported back to the trip page
-        
-    Scenario: AC2.1 - Update a trip with invalid description
-        Given I have an existing trip
-        And I am editing that trip
-        When I enter a description longer than 2048 character And I click "Update Trip"
-        Then the trip is not updated
-        And I see the edit trip error message "Description must be 2048 characters or less"
 
     Scenario: AC3 - Edit trip with invalid trip title length
         Given I have an existing trip

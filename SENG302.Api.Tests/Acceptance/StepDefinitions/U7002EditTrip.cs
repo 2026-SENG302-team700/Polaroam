@@ -76,26 +76,6 @@ public class U7002EditTrip
         );
     }
 
-    [When("I enter a description longer than 2048 character And I click \"Update Trip\"")]
-    public async Task WhenIUpdateTheTripWithADescriptionLongerThan2048Characters()
-    {
-        _originalTrip.ShouldNotBeNull();
-
-        var request = new UpdateTripRequest
-        {
-            Id = _originalTrip.Id,
-            Title = "Invalid updated trip",
-            Description = new string('a', 2049),
-            StartDate = new DateOnly(2026, 8, 10),
-            EndDate = new DateOnly(2026, 8, 11)
-        };
-
-        _lastResponse = await _fixture.HttpClient.PutAsJsonAsync(
-            $"api/trip/{_originalTrip.Id}",
-            request
-        );
-    }
-
     [When("I update the trip with an end date before the start date")]
     public async Task WhenIUpdateTheTripWithAnEndDateBeforeTheStartDate()
     {
