@@ -1,25 +1,26 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
+    import AddButton from "$lib/components/buttons/add-button.svelte";
+    import SearchForm from "$lib/components/forms/search-form.svelte";
+    import TripCard from "$lib/components/trip-components/trip-card.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
-    import TasklistItem from "$lib/components/tasklist-item.svelte";
+    import { onMount } from "svelte";
 
     let loading = $state(false);
     let error = $state("");
-    let taskLists = $state([]);
+    let trips = $state([]);
 
     onMount(() => {
-        fetchLists();
+        fetchTrips();
     });
 
-    /// <summary>
-    /// Fetches the logged-in user's task lists from the server
-    // using there authorization token and updates the component state.
-    async function fetchLists() {
+    /**
+     * Fetches all trips corresponding to the user's credentials stored in the browser
+     */
+    async function fetchTrips() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+            const response = await fetchWithCsrf(resolve(`/api/trip` as any), {
                 method: "GET",
                 credentials: "include",
             });
@@ -28,7 +29,7 @@
                 error = "Failed to fetch task lists.";
                 return;
             }
-            taskLists = data;
+            trips = data;
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -40,49 +41,43 @@
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
         <h1 class="text-center mb-4" style="flex: 1; justify-content: center">
-            Home
+            My Trips
         </h1>
     </div>
 
     <div class="card-body d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Your Task Lists</h5>
-        <button
-            class="btn btn-primary"
-            onclick={() => goto(resolve("/home/new-list"))}
-        >
-            Add Task List
-        </button>
+        <AddButton path="/home/trips/create-trip" />
+        <div>
+            <SearchForm />
+        </div>
     </div>
-    {#if loading && taskLists.length === 0}
-        <div class="text-center text-muted py-4">Loading task lists...</div>
-    {:else if taskLists.length === 0}
-        <div class="text-center text-muted py-4">
-            No task lists yet. Create your first task list above!
+
+    {#if trips.length > 0}
+        <div class="trip-object-wrapper">
+            {#each trips as trip}
+                <TripCard tripObject={trip} />
+            {/each}
         </div>
     {:else}
-        <div
-            class="overflow-y-auto bg-white text-dark mt-2"
-            style="max-height: 400px;"
-        >
-            <span class="fs-5 p-2 mb-2"><b>Name</b></span>
-            {#each taskLists as taskList}
-                <TasklistItem {taskList} />
-            {/each}
+        <div class="no-trips-message">
+            <p>You have no trips yet! Create one with the "+" button</p>
         </div>
     {/if}
 </div>
 
 <style>
-    .cursor-pointer {
-        cursor: pointer;
+    .trip-object-wrapper {
+        padding-top: 3px;
+        display: grid;
+        grid-template-columns: 33% 33% 33%;
+        align-items: center;
     }
-
-    .task-item-box {
-        background-color: transparent;
-        transition: background-color 0.2s ease;
-    }
-
-    .task-item-box:hover {
-        background-color: #f8f8f8;
+    .no-trips-message {
+        width: 50vw;
+        display: flex;
+        flex-direction: row;
+        position: absolute;
+        align-items: center;
+        text-align: center;
     }
 </style>

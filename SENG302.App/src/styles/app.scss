@@ -1,0 +1,201 @@
+// Theme variables
+$ink: #686868;
+$paper: #fff8e8;
+$button-hover-colour: #cccccc;
+$primary-colour: #83beda;
+$danger-colour: #ef6a67;
+$success-colour: #88d498;
+$shadow-small: 3px 3px 0 $ink;
+$shadow-medium: 5px 5px 0 $ink;
+$transition-fast: 120ms ease;
+
+// Bootstrap variables overruide
+$primary: $primary-colour;
+$danger: $danger-colour;
+$success: $success-colour;
+$body-bg: $paper;
+$body-color: $ink;
+$border-color: $ink;
+$border-width: 2px;
+$border-radius: 0.25rem;
+$border-radius-sm: 0.2rem;
+$border-radius-lg: 0.35rem;
+$btn-border-width: 2px;
+$input-border-width: 2px;
+$card-border-width: 2px;
+$font-weight-bold: 700;
+
+// Import Bootstrap
+@import "../../node_modules/bootstrap/scss/bootstrap";
+
+// Global components
+.btn,
+.trip-container {
+    z-index: 3;
+    border-color: $ink;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: $shadow-small;
+    transition:
+        transform $transition-fast,
+        box-shadow $transition-fast,
+        background-color $transition-fast;
+
+    &:hover {
+        border-color: $ink;
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0 $ink;
+    }
+
+    &:active,
+    &:focus:active {
+        transform: translate(3px, 3px);
+        box-shadow: none;
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba($primary-colour, 0.45);
+        outline-offset: 3px;
+    }
+
+    &:disabled {
+        box-shadow: none;
+        transform: none;
+        opacity: 0.55;
+    }
+}
+
+.text {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.nav-link {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    transition:
+        transform $transition-fast,
+        box-shadow $transition-fast,
+        background-color $transition-fast;
+
+    &:hover {
+        border-radius: 3px;
+        background-color: $button-hover-colour;
+        border-color: $ink;
+    }
+}
+
+.btn-primary {
+    --bs-btn-color: #{$ink};
+    --bs-btn-bg: #{$primary-colour};
+    --bs-btn-border-color: #{$ink};
+    --bs-btn-hover-color: #{$ink};
+    --bs-btn-hover-bg: #{darken($primary-colour, 5%)};
+    --bs-btn-hover-border-color: #{$ink};
+    --bs-btn-active-color: #{$ink};
+    --bs-btn-active-bg: #{darken($primary-colour, 9%)};
+    --bs-btn-active-border-color: #{$ink};
+}
+
+// Cancel/secondary buttons.
+.btn-secondary,
+.btn-outline-secondary {
+    --bs-btn-color: #{$ink};
+    --bs-btn-bg: #fff;
+    --bs-btn-border-color: #{$ink};
+    --bs-btn-hover-color: #{$ink};
+    --bs-btn-hover-bg: #e9e2d3;
+    --bs-btn-hover-border-color: #{$ink};
+    --bs-btn-active-color: #{$ink};
+    --bs-btn-active-bg: #ddd4c3;
+    --bs-btn-active-border-color: #{$ink};
+}
+
+// Destructive buttons.
+.btn-danger {
+    --bs-btn-color: #{$ink};
+    --bs-btn-bg: #{$danger-colour};
+    --bs-btn-border-color: #{$ink};
+    --bs-btn-hover-color: #{$ink};
+    --bs-btn-hover-bg: #{darken($danger-colour, 5%)};
+    --bs-btn-hover-border-color: #{$ink};
+}
+
+// Cards.
+.card {
+    border: 2px solid $ink;
+    border-radius: 0.35rem;
+    box-shadow: $shadow-medium;
+    background-color: #fff;
+}
+
+.card-header {
+    border-bottom: 2px solid $ink;
+    background-color: $primary-colour;
+    font-weight: 700;
+}
+
+// Inputs and selects.
+.form-control,
+.form-select {
+    box-shadow: $shadow-small;
+    transition:
+        transform $transition-fast,
+        box-shadow $transition-fast,
+        background-color $transition-fast;
+
+    &:hover {
+        border-color: $ink;
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0 $ink;
+    }
+
+    &:focus {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 $ink inset;
+    }
+
+    &:disabled {
+        box-shadow: none;
+        transform: none;
+        opacity: 0.55;
+    }
+
+    &:has(>option[value=""]:checked) {
+        color: rgba($ink, 0.75);
+    }
+}
+
+// Modal styling.
+.modal-content {
+    border: 2px solid $ink;
+    border-radius: 0.35rem;
+    box-shadow: 7px 7px 0 $ink;
+}
+
+.modal-header,
+.modal-footer {
+    border-color: $ink;
+}
+
+.menu-bar {
+    border: 2px solid $ink;
+    border-radius: 0.35rem;
+    box-shadow: $shadow-small;
+}
+
+.clickable-image {
+    transition: transform $transition-fast;
+
+    &:hover {
+        transform: scale(0.95);
+    }
+
+    &:focus {
+        transform: scale(0.6);
+    }
+}

@@ -9,13 +9,13 @@
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import ImageEditor from "$lib/image-editor/image-editor.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-    import DisplayNameForm from "$lib/components/display-name-form.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import CountrySelectForm from "$lib/components/country-select-form.svelte";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-    import PasswordForm from "$lib/components/password-form.svelte";
-    import ToggleForm from "$lib/components/toggle-form.svelte"
+    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import DisplayNameForm from "$lib/components/forms/display-name-form.svelte";
+    import EmailForm from "$lib/components/forms/email-form.svelte";
+    import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
+    import PasswordForm from "$lib/components/forms/password-form.svelte";
+    import ToggleForm from "$lib/components/forms/toggle-form.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -42,8 +42,6 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false);
-    
-    let profanityFiltering = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -186,7 +184,6 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
-            profanityFiltering = data.profanityFiltering;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -194,57 +191,6 @@
         }
     }
 
-    /**
-     * Handles front end validation
-     * Updates error messages for invalid fields
-     *
-     * returns true if all fields are valid, false otherwise
-     */
-    function isValid() {
-        clearErrors();
-
-        // Front end Validation
-        let valid = true;
-
-        // Check email format
-        const emailRegex = new RegExp(regexPatterns.user.email);
-        if (!emailRegex.test(email) && email) {
-            errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
-            valid = false;
-        }
-
-        // Check Display name length
-        if (displayName.length < 3 || displayName.length > 64) {
-            errors.displayName =
-                "Display name must be between 3 and 64 characters";
-            valid = false;
-        }
-
-        // Display Name format
-        const displayNameRegex = new RegExp(
-            regexPatterns.user.displayName.pattern,
-            regexPatterns.user.displayName.flags,
-        );
-        if (!displayNameRegex.test(displayName)) {
-            errors.displayName =
-                "Display name must only include letters, spaces, hyphens or apostrophes.";
-            valid = false;
-        }
-
-        // Fields not empty
-        if (!email) {
-            errors.email = "Email is required.";
-            valid = false;
-        }
-
-        if (!displayName) {
-            errors.displayName = "Display name is required.";
-            valid = false;
-        }
-
-        return valid;
-    }
     /// <summary>
     /// Automatically refocus on the next input box
     /// </summary>
@@ -272,9 +218,6 @@
     /// Updates the users information with the provided information
     /// </summary>
     async function updateUser() {
-        // Return if error
-        if (!isValid()) return;
-
         try {
             const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
@@ -286,7 +229,6 @@
                     email,
                     displayName,
                     country,
-                    profanityFiltering
                 }),
             });
 
@@ -301,7 +243,6 @@
             } else {
                 const data = await response.json().catch(() => null);
                 if (data?.errors) {
-                    console.log(data.errors)
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
                 } else {
@@ -468,9 +409,8 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
-        clearErrors()
+        clearErrors();
         imageEditor.highlightError(false);
-        console.log("recieve file");
         if (!files || files.length === 0) {
             return;
         }
@@ -479,7 +419,7 @@
             pfpModal.show();
         }
     }
-    
+
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
@@ -487,14 +427,14 @@
      */
     async function updatePfp() {
         const data = imageEditor.exportData();
-        
+
         if (!data) {
             if (!imageError) {
                 imageError = "No file Selected";
             }
         }
         errors.image = imageError;
-        
+
         if (imageError) {
             imageEditor.highlightError(true);
             return;
@@ -536,33 +476,6 @@
             imageEditor.highlightError(true);
         }
     }
-
-    /**
-     * Requests backend to change profanity filter on toggle
-     * @param profFilterState Requested state of profanity filter
-     */
-    async function updateProfanityFilter(profFilterState: boolean) {
-        try {
-            const response = await fetchWithCsrf(resolve(`/api/user/profanity-filter`),
-                {
-                    method: "PATCH",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(
-                        profFilterState
-                    )
-                }
-            )
-            
-            if (!response.ok) {
-                addToast("Failed to update profanity filter");
-                profanityFiltering = !profFilterState;
-            }
-        } catch (error) {
-            addToast("Failed to update profanity filter", "error");
-            profanityFiltering = !profFilterState;
-        }
-    }
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
@@ -575,8 +488,8 @@
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                on:click={() => {
-                    pfpInput.value = ""
+                onclick={() => {
+                    pfpInput.value = "";
                     pfpInput.click();
                 }}
             >
@@ -584,13 +497,15 @@
             </button>
         </div>
     </div>
-    
+
     <div class="container d-flex flex-column flex-md-row">
         <div class="flex-grow-1 m-3">
-            <form on:submit|preventDefault={updateUser}>
+            <form onsubmit={updateUser} novalidate>
                 <div class="m-3" style="display: flex; ">
                     <CancelButton path={"/home/profile"} />
-                    <div class="ms-auto"><AuthenticatorButton buttonType={"update"} /></div>
+                    <div class="ms-auto">
+                        <AuthenticatorButton buttonType={"update"} />
+                    </div>
                 </div>
                 <div class="mb-4">
                     <h5 class="text-muted mb-2">Personal Information</h5>
@@ -614,22 +529,13 @@
                         <CountrySelectForm bind:selectedCountryCode={country} />
                     </div>
                 </div>
-                <div class="mb-3">
-
-                </div>
+                <div class="mb-3"></div>
                 <div class="mt-5 mb-4">
                     <h5 class="text-muted mb-2">Preferences</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
-                            class="d-flex align-items-center justify-content-between"
-                    >
-                        <label for="profanityFiltering" class="form-label">Profanity Censor</label>
-                        <ToggleForm id="profanityFiltering" bind:checked={profanityFiltering} onchange="{
-                        () => updateProfanityFilter(profanityFiltering)
-                        }"/>
-                    </div>
+                    <p>****add ai tagging toggling here****</p>
                 </div>
-            
+
                 <div class="mt-5 mb-4">
                     <h5 class="text-muted mb-2">Account Security</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
@@ -642,7 +548,7 @@
                         <button
                             type="button"
                             class="btn btn-outline-primary btn-sm"
-                            on:click={requestPasswordChange}
+                            onclick={requestPasswordChange}
                         >
                             Update Password
                         </button>
@@ -682,48 +588,48 @@
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit1}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit2}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit3}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit4}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit5}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit6}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                         </div>
 
@@ -736,7 +642,7 @@
 
                         <button
                             class="btn btn-link btn-sm text-decoration-none"
-                            on:click={requestPasswordChange}
+                            onclick={requestPasswordChange}
                             disabled={resendTimer > 0 || isSending}
                         >
                             {#if resendTimer > 0}
@@ -749,7 +655,7 @@
                         </button>
                     </div>
                 {:else}
-                    <form on:submit|preventDefault={() => updatePassword()}>
+                    <form onsubmit={() => updatePassword()}>
                         <div class="mb-3">
                             <label
                                 for="oldPassword"
@@ -793,16 +699,16 @@
                         </button>
                     </form>
                 {/if}
-                    <button
-                        type="button"
-                        class="btn btn-secondary w-100 py-2 mt-3"
-                        aria-label="Close"
-                        on:click={() => {
-                            authModal.hide();
-                            clearErrors();
-                            clearPasswordFields();
-                        }}>Cancel</button
-                    >
+                <button
+                    type="button"
+                    class="btn btn-secondary w-100 py-2 mt-3"
+                    aria-label="Close"
+                    onclick={() => {
+                        authModal.hide();
+                        clearErrors();
+                        clearPasswordFields();
+                    }}>Cancel</button
+                >
             </div>
         </div>
     </div>
@@ -828,49 +734,44 @@
                 <button
                     type="button"
                     class="btn-close"
-                    on:click={() => pfpModal.hide()}
+                    onclick={() => pfpModal.hide()}
                     aria-label="Close"
                 ></button>
             </div>
             <div class="modal-body">
-                <form on:submit|preventDefault={() => updatePfp()}>
+                <form onsubmit={() => updatePfp()} novalidate>
                     <input
-                            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                            bind:files
-                            bind:this={pfpInput}
-                            id="pfp"
-                            name="pfp"
-                            type="file"
-                            class="d-none"
-                            on:change={async () => {
-                                    imageEditor.reset();
-                                    clearErrors();
-                                    await sendToEditor();
-                                    // Reset the value so that if we select the same image a second time the on:change event is triggered
-                                    pfpInput.value = '';
-                                }
-                            }
+                        accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                        bind:files
+                        bind:this={pfpInput}
+                        id="pfp"
+                        name="pfp"
+                        type="file"
+                        class="d-none"
+                        onchange={async () => {
+                            imageEditor.reset();
+                            clearErrors();
+                            await sendToEditor();
+                            // Reset the value so that if we select the same image a second time the on:change event is triggered
+                            pfpInput.value = "";
+                        }}
                     />
-                    <ImageEditor
-                        bind:this={imageEditor}
-                    >
-                    </ImageEditor>
+                    <ImageEditor bind:this={imageEditor}></ImageEditor>
                     {#if errors.image}
                         <div class="text-danger small mt-1">
                             {errors.image}
                         </div>
                     {/if}
                     <div class="modal-footer">
-                        <button
-                            type="submit"
-                            class="btn btn-primary"
-                        >Submit</button>
+                        <button type="submit" class="btn btn-primary"
+                            >Submit</button
+                        >
                         <button
                             type="button"
                             class="btn btn-secondary"
-                            on:click={() => pfpModal.hide()}
-                            bind:this={pfpCancelButton}
-                        >Cancel</button>
+                            onclick={() => pfpModal.hide()}
+                            bind:this={pfpCancelButton}>Cancel</button
+                        >
                     </div>
                 </form>
             </div>

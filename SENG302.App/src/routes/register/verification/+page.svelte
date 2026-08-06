@@ -340,6 +340,7 @@
                 <p class="text-danger">{errorMessage}</p>
                 <div id="code-input" class="input-group d-flex gap-2 mt-4 mb-4">
                     <input
+                            id="code-input-1"
                         type="text"
                         class="form-control form-control-lg text-center"
                         maxlength="1"
@@ -348,6 +349,7 @@
                         on:keydown={handleKeyDown}
                     />
                     <input
+                            id="code-input-2"
                         type="text"
                         class="form-control form-control-lg text-center"
                         maxlength="1"
@@ -356,6 +358,7 @@
                         on:keydown={handleKeyDown}
                     />
                     <input
+                            id="code-input-3"
                         type="text"
                         class="form-control form-control-lg text-center"
                         maxlength="1"
@@ -364,6 +367,7 @@
                         on:keydown={handleKeyDown}
                     />
                     <input
+                            id="code-input-4"
                         type="text"
                         class="form-control form-control-lg text-center"
                         maxlength="1"
@@ -372,6 +376,7 @@
                         on:keydown={handleKeyDown}
                     />
                     <input
+                            id="code-input-5"
                         type="text"
                         class="form-control form-control-lg text-center"
                         maxlength="1"
@@ -380,6 +385,7 @@
                         on:keydown={handleKeyDown}
                     />
                     <input
+                            id="code-input-6"
                         type="text"
                         class="form-control form-control-lg text-center"
                         maxlength="1"
@@ -390,6 +396,7 @@
                 </div>
                 {#key buttonDisabled}
                     <button
+                            id="confirm-verification-button"
                         style="margin-top: 10px"
                         class="btn btn-primary w-100"
                         on:click={checkCode}

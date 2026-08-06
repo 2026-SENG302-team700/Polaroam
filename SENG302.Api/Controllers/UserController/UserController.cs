@@ -105,8 +105,7 @@ public class UserController : ControllerBase
                 userId,
                 updateUserRequest.Email,
                 updateUserRequest.DisplayName,
-                updateUserRequest.Country,
-                updateUserRequest.ProfanityFiltering);
+                updateUserRequest.Country);
 
             if (user == null)
             {
@@ -175,23 +174,15 @@ public class UserController : ControllerBase
             return Unauthorized("You do not have authorisation to change this profile picture!");
         }
 
-        if (file.Length > 5000000)
+        if (!ImageValidationTools.IsValidFilesize(file))
         {
-            return BadRequest("Image too large, maximum file size is 5MB");
+            return BadRequest("Image too large, maximum file size is 10MB");
         }
 
-        var contentType = file.ContentType;
-        var validContentType = MimeTypeSets.Images.Contains(contentType);
-        var realContentType = ImageTypeValidation.GetRealImageMime(file);
-
-        if (!validContentType || realContentType == ImageTypeValidation.invalidMimeString)
+        // implement into one big callback function later.
+        if (!ImageValidationTools.IsValidMimeType(file))
         {
             return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
-        }
-
-        if (contentType != realContentType)
-        {
-            return BadRequest("Invalid image, file extension does not match file type");
         }
 
         var userId = int.Parse(userIdString);
@@ -221,6 +212,7 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+
     /// <summary>
     /// Gets a user's profile picture and sends it as a form
     /// </summary>
@@ -236,6 +228,10 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
         var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
 
         if (user.ProfilePicture == 0)
         {
@@ -250,30 +246,5 @@ public class UserController : ControllerBase
         Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
 
         return File(fileBytes, customFile.MimeType);
-    }
-    
-    /// <summary>
-    /// API Endpoint for toggling the profanity filter on and off.
-    /// </summary>
-    /// <param name="profanityFilter">A boolean with true representing profanity filtering on and false representing off</param>
-    /// <returns>
-    /// Unauthorized - If user is unauthorized to change the profanity filter of the requested user
-    /// Ok - If profanity filter has been set.
-    /// </returns>
-    [Authorize]
-    [HttpPatch("profanity-filter")]
-    public async Task<ActionResult> ToggleProfanityFilter([FromBody] bool profanityFilter)
-    {
-        // get the logged in user id
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized();
-        }
-        
-        var userId = int.Parse(userIdString);
-
-        await _userService.ToggleProfanityFilterAsync(userId, profanityFilter);
-        return Ok();
     }
 }

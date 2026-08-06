@@ -28,7 +28,7 @@
     {:else}
         <i class="bi bi-person-circle icon {size}" />
     {/if}
-
+    
     <style>
 
         .profile-image-parent {

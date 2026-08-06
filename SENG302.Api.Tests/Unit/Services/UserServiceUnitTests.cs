@@ -6,89 +6,112 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
+using NSubstitute;
+using Microsoft.Extensions.Time.Testing;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace SENG302.Api.Tests.Unit.Services;
 
-public class UserServiceUnitTest : BaseUnitTestFixture
+public class UserServiceUnitTest : DatabaseUnitTestFixture
 {
-    private IUserService UserServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
-    private IDbContextFactory<DatabaseContext> DbFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
-    public UserServiceUnitTest(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
-    
+    private readonly IUserService _userService;
+
+    private readonly FakeTimeProvider _fakeTimeProvider;
+
+    public UserServiceUnitTest()
+    {
+        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
+
+        _userService = new UserService(_mockDbContextFactory, _fakeTimeProvider);
+    }
+
     [Fact]
     public async Task CheckUserCredentials_UserDoesNotExist_ExpectDoesNotExistResult()
     {
-        var result = await UserServiceUnderTest.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
-        
+        var result = await _userService.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
+
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.Null(result.user);
     }
-    
+
     [Fact]
     public async Task CheckUserCredentials_UnverifiedEmail_ExpectAccountUnverifiedResult()
     {
         var email = "unverified@test.com";
-        using (var context = await DbFactory.CreateDbContextAsync())
+        var user = await _userService.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
+        user.EmailVerified = false;
+        user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
+
+        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync())
         {
-            var user = await UserServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
-            user.EmailVerified = false;
-            user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
+            mockDatabaseContext.Users.Add(user);
+            await mockDatabaseContext.SaveChangesAsync();
         }
-        var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
+
+        var result = await _userService.CheckUserCredentialsAsync(email, "Password123!");
         Assert.Equal(UserVerificationResult.AccountUnverified, result.userVerificationResult);
         Assert.NotNull(result.user);
+
     }
-    
+
     [Fact]
     public async Task CheckUserCredentials_UnverifiedEmailTimeExpired_ExpectAccountUnverifiedResult()
     {
         var email = "unverified@test.com";
-        using (var context = await DbFactory.CreateDbContextAsync())
+        var user = await _userService.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
+        user.EmailVerified = false;
+        user.CodeGenerationTime = _fakeTimeProvider.GetUtcNow().ToUnixTimeSeconds() - 400;
+
+        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync())
         {
-            var user = await UserServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
-            user.EmailVerified = false;
-            user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400;
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
+            mockDatabaseContext.Users.Add(user);
+            await mockDatabaseContext.SaveChangesAsync();
         }
-        var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
+
+        var result = await _userService.CheckUserCredentialsAsync(email, "Password123!");
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.NotNull(result.user);
     }
-    
+
     [Fact]
     public async Task UpdateUser_ValidRequest_ExpectUpdatedUser()
     {
         int userId;
-        using (var context = await DbFactory.CreateDbContextAsync())
+
+        using (var mockDatabaseContext = await _mockDbContextFactory.CreateDbContextAsync())
         {
             var user = new User { Email = "old@test.com", DisplayName = "Old Name", Country = "NZ", PasswordKey = "hash" };
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
+            mockDatabaseContext.Users.Add(user);
+            await mockDatabaseContext.SaveChangesAsync();
             userId = user.Id;
         }
 
-        var updatedUser = await UserServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU", true);
+        var updatedUser = await _userService.UpdateUser(userId, "new@test.com", "New Name", "AU");
 
         Assert.NotNull(updatedUser);
         Assert.Equal("new@test.com", updatedUser.Email);
         Assert.Equal("New Name", updatedUser.DisplayName);
         Assert.Equal("AU", updatedUser.Country);
-        Assert.True(updatedUser.ProfanityFiltering);
     }
 
-    [Fact]
-    public void ValidateProfanityFilterDisabled_NewAccount_ExpectProfanityFilterFalse()
+    [Theory]
+    [InlineData("vlad.nistor.email")]
+    [InlineData("pandya@gmail+!.co#m")]
+    [InlineData(".@gmail.com")]
+    [InlineData("cool..man@gmail.com")]
+    [InlineData("person@yahoo.")]
+    [InlineData("crazy.@gmail.nz")]
+    [InlineData("CrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyy@gmail.com")]
+    [InlineData("man@gmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompany")]
+    [InlineData("froggy@-outlook.com")]
+    [InlineData("froggy@outlook.com-")]
+    [InlineData("crazy@.nz")]
+    [InlineData("abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij@abcdefghijabcdefghijabcdefgh")]
+    [InlineData("shidrl@panfgh")]
+    public async Task CreateUser_InvalidEmail_ExpectValidationException(string userEmail)
     {
-        var user = new User
-        {
-            Email = "hello@example.com",
-            DisplayName = "Hello",
-            Country = "NZ",
-        };
-        
-        Assert.False(user.ProfanityFiltering);
+        await Should.ThrowAsync<MultipleValidationException>(async () =>
+            await _userService.CreateNewUserAsync(userEmail, "Test User", "Password123!", "Password123!", "NZ")
+        );
     }
 }

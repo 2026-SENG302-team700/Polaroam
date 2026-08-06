@@ -36,5 +36,4 @@ public class User
 
     public bool EmailVerified { get; set; } = false;
 
-    public bool ProfanityFiltering { get; set; } = false;
 }

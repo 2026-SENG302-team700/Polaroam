@@ -1,31 +1,51 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "$lib/csrf";
-
-    let loading = $state(false);
-    let error = $state("");
+    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 </script>
 
-<div class="container">
-    <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
-    <button
-        class="btn btn-primary w-100 mb-3"
-        on:click={() => goto(resolve("/register"))}
-    >
-        Register
-    </button>
-    <button
-        class="btn btn-primary w-100"
-        on:click={() => goto(resolve("/login"))}
-    >
-        Login
-    </button>
-</div>
+<svelte:head>
+    <title>Welcome | Polaroam</title>
+</svelte:head>
+
+<main class="landing-page-wrapper">
+    <div class="card text-center landing-card" style="font-size:x-large;">
+        <div class="card-header">Welcome to Polaroam</div>
+        <div
+                class="card-body"
+                style="display: grid; grid-template-columns: auto; row-gap: 10px;"
+        >
+            <NavigationButton path="/register" text="Register" />
+            <NavigationButton path="/login" text="Log In" />
+        </div>
+    </div>
+</main>
 
 <style>
-    .cursor-pointer {
-        cursor: pointer;
+    .landing-page-wrapper {
+        height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .landing-card {
+        width: 90vw;
+    }
+
+    @media (min-width: 576px) {
+        .landing-card {
+            width: 70vw;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .landing-card {
+            width: 50vw;
+        }
+    }
+
+    @media (min-width: 992px) {
+        .landing-card {
+            width: 30vw;
+        }
     }
 </style>

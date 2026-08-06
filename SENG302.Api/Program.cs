@@ -1,9 +1,11 @@
+using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
@@ -27,7 +29,7 @@ public class Program
         {
             builder.Services.AddOpenApi();
         }
-
+        
         // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews(options =>
         {
@@ -37,6 +39,19 @@ public class Program
 
         // Add authorization service
         builder.Services.AddAuthorization();
+        
+        // Add rate limit handler
+        builder.Services.AddSingleton(new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+        {
+            TokenLimit = 1,
+            TokensPerPeriod = 1,
+            ReplenishmentPeriod = TimeSpan.FromMilliseconds(1500),
+            AutoReplenishment = true,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 15
+        }));
+        
+        builder.Services.AddTransient<NominatimRateLimitingHandler>();
 
 
         if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
@@ -69,7 +84,7 @@ public class Program
 
 
         builder.Services.AddHttpContextAccessor();
-
+        
         // Register custom services 
         RegisterServices(builder.Services);
 
@@ -93,7 +108,7 @@ public class Program
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
-                options.Cookie.Name = "OUTSTANDING-AUTH-COOKIE";
+                options.Cookie.Name = "POLAROAM-AUTH-COOKIE";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = cookiePolicy;
                 options.Cookie.SameSite = SameSiteMode.Lax;
@@ -104,7 +119,7 @@ public class Program
             })
             .AddCookie("PasswordResetScheme", options =>
             {
-                options.Cookie.Name = "OUTSTANDING-RESET-COOKIE";
+                options.Cookie.Name = "POLAROAM-RESET-COOKIE";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = cookiePolicy;
                 options.Cookie.SameSite = SameSiteMode.Lax;
@@ -136,7 +151,7 @@ public class Program
         builder.Services.AddSingleton(new EmailSettings());
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
-
+        
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -181,7 +196,7 @@ public class Program
             var tokens = antiforgery.GetAndStoreTokens(context);
             return Results.Ok(new { token = tokens.RequestToken });
         });
-
+        
         app.MapControllers();
 
         if (app.Environment.IsDevelopment())
@@ -192,10 +207,23 @@ public class Program
                 options.SwaggerEndpoint("/openapi/v1.json", "SENG302  API v1");
             });
         }
+        
+        // returns http code 413 payload to large if size exceeds kestrel size limit
+        // block below written by claude.
+        app.Use(async (ctx, next) =>
+        {
+            try { await next(); }
+            catch (BadHttpRequestException ex) when (ex.StatusCode == StatusCodes.Status413PayloadTooLarge)
+            {
+                ctx.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Upload too large." });
+            }
+        });
+        // end of ai gen code.
 
         app.Run();
     }
-
+    
     protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
@@ -228,11 +256,17 @@ public class Program
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
-        services.AddScoped<ITaskListService, TaskListService>();
-        services.AddScoped<ITaskItemService, TaskItemService>();
+        services.AddScoped<ITripService, TripService>();
+        services.AddScoped<IPostService, PostService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
+        services.AddHttpClient<IGeoService, GeoService>(client =>
+        {
+            client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
+        })
+        .AddHttpMessageHandler<NominatimRateLimitingHandler>();
 
-        // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
+    // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
     }
 
