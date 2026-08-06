@@ -59,17 +59,18 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
         var userId = user.Id;
         SetupTempSessionContext("test@example.com");
-
-        var request = new ResetPasswordRequest { NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
-        var response = await _controller.resetPassword(request);
+        
+        
+        var request = new ResetPasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
+        var response = await _controller.ResetPassword(request);
         response.ShouldBeOfType<OkResult>();
-
-        var verifyContext = await DbContextFactory.CreateDbContextAsync();
-        PasswordHasher<User> passwordHasher = new();
-        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
-
-        Assert.NotNull(updatedUser);
-        Assert.Equal("test@example.com", updatedUser.Email);
+        
+        var verifyContext = await  DbContextFactory.CreateDbContextAsync();
+        PasswordHasher<User> passwordHasher = new(); 
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(x => x.Id == userId); 
+        
+        Assert.NotNull(updatedUser); 
+        Assert.Equal("test@example.com", updatedUser.Email); 
         Assert.Equal(PasswordVerificationResult.Success, passwordHasher.VerifyHashedPassword(updatedUser, updatedUser.PasswordKey, "Test700!"));
     }
 
@@ -77,13 +78,13 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
     public async Task ResetPassword_MissmatchedPasswords_BadRequest()
     {
         var context = await DbContextFactory.CreateDbContextAsync();
-        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" };
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" }; 
+        context.Users.Add(user); 
+        await context.SaveChangesAsync(); 
         SetupTempSessionContext("test@example.com");
-
-        var request = new ResetPasswordRequest { NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
-        var response = await _controller.resetPassword(request);
+        
+        var request = new ResetPasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
+        var response = await _controller.ResetPassword(request);
         response.ShouldBeOfType<BadRequestObjectResult>();
     }
 }
