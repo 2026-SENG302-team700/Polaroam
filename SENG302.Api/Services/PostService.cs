@@ -29,14 +29,15 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
+    private readonly IImageTaggingService _imageTaggingService;
 
-
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService, IImageTaggingService imageTaggingService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -72,7 +73,7 @@ public class PostService : IPostService
         postRequest.Title = postRequest.Title.Trim();
         postRequest.Content = postRequest.Content.Trim();
         photos ??= [];
-        
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
@@ -83,7 +84,7 @@ public class PostService : IPostService
             if (!ImageValidationTools.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
-            } 
+            }
             else if (!ImageValidationTools.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
@@ -108,6 +109,8 @@ public class PostService : IPostService
         {
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
+
+            await GenerateImageTags(photo, file.Id);
         }
 
         // Add location
@@ -119,7 +122,7 @@ public class PostService : IPostService
                 ["location"] = ["This isn't a valid location"]
             });
         }
-        
+
         // Add post
         var newPost = new Post
         {
@@ -301,6 +304,8 @@ public class PostService : IPostService
         {
             var customFile = await _fileService.SaveFileAsync(file, userId);
             customFileIds.Add(customFile.Id);
+
+            await GenerateImageTags(file, customFile.Id);
         }
 
         await AddPhotosToPost(customFileIds, postId);
@@ -366,7 +371,7 @@ public class PostService : IPostService
                 await _fileService.DeleteFileAsync(image.FileKey);
             }
         }
-        
+
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
@@ -398,7 +403,7 @@ public class PostService : IPostService
     public async Task DeletePhotoFromPostAsync(int postId, int photoId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var post = await context.Posts.FirstOrDefaultAsync(t => t.PostId == postId);
 
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
@@ -410,9 +415,34 @@ public class PostService : IPostService
 
         var photo = await _fileService.GetFileByIdAsync(photoId);
         await _fileService.DeleteFileAsync(photo.FileKey);
-        
+
         post.PhotoIds.Remove(photoId);
         await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
+    /// while still allowing the image upload to continue
+    /// </summary>
+    /// <param name="image"></param>
+    /// <param name="imageId"></param>
+    /// <returns></returns>
+    private async Task GenerateImageTags(IFormFile image, int imageId)
+    {
+        try
+        {
+            var tags = await _imageTaggingService.GenerateTagsAsync(image);
+
+            //Save to db in the future
+            Console.WriteLine($"\n\n\n\nGenerated tags for image {imageId}: " + string.Join(", ", tags) + "\n\n\n\n");
+        }
+        catch (Exception ex)
+        {
+            // Tagging cant cause the image uplaod to fail
+            Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
+        }
+
+        // Add queuing later to make sure the tag generation is awaited.
     }
 }
 
