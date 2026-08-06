@@ -17,12 +17,12 @@
         if (datePicker)
             datePicker.addEventListener("invalid", function (event) {
                 event.preventDefault();
-                error = "Date is invalid";
             });
     });
 
     /**
      * Handles the input event for the date picker updating the value with a new Date object based on the input value.
+     * The time of the new date object is set to 0:00
      * @param event
      */
     function handleInput(event: Event) {
@@ -40,7 +40,6 @@
         const day = date.getDate().toString().padStart(2, "0");
 
         const localDate = `${year}-${month}-${day}`;
-        console.log(localDate);
         return localDate;
     }
 </script>
@@ -61,15 +60,17 @@
         {disabled}
         onclick={() => {
             value = null;
+            if (datePicker) {
+                datePicker.value = "";
+            }
         }}>Clear</button
     >
+    {#if error}
+        <div class="invalid-feedback d-block date-error">
+            {error}
+        </div>
+    {/if}
 </div>
-
-{#if error}
-    <div class="invalid-feedback d-block date-error">
-        {error}
-    </div>
-{/if}
 
 <style>
     .date-form-wrapper {

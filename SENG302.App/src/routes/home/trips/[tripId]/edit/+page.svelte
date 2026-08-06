@@ -91,8 +91,9 @@
                         Id: Number(params.tripId),
                         Title: tripTitle,
                         Description: tripDescription,
-                        StartDate: startDate?.toISOString(),
-                        EndDate: endDate?.toISOString(),
+                        StartDate:
+                            startDate == null ? null : startDate.toISOString(),
+                        EndDate: endDate == null ? null : endDate.toISOString(),
                     }),
                     credentials: "include",
                 },
