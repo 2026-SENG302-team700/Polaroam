@@ -315,6 +315,53 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreatePost_ContentTooLong_ReturnsBadRequestAndDoesNotPersist()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "test@example.com",
+                DisplayName = "Test User",
+                PasswordKey = "password",
+                Country = "NZ"
+            });
+            context.Trips.Add(new Trip
+            {
+                Id = 1,
+                Title = "Test trip",
+                Description = "Test description",
+                UserId = 1,
+                StartDate = new DateOnly(2026, 7, 1),
+                EndDate = new DateOnly(2026, 7, 10)
+            });
+            
+            await context.SaveChangesAsync();
+        }
+
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("title"), "Title");
+        content.Add(new StringContent(new string('a', 8197)), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(new DateOnly(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
+
+        var response = await HttpClient.PostAsync("/api/post", content);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        responseBody.ShouldContain("Content needs to be less than 8196 characters long");
+
+        await using var context2 = DbContextFactory.CreateDbContext();
+
+        var postExists =
+            await context2.Posts.AnyAsync();
+
+        postExists.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task UploadPostPhotos_ValidRequest_PostContainsPhotos()
     {
         await using var context = DbContextFactory.CreateDbContext();

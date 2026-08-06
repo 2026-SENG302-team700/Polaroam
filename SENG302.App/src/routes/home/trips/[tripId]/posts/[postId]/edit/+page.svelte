@@ -316,7 +316,7 @@
             bind:location
             bind:error={errors.location}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} />
+        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
         <ImageDisplay
             bind:images={files}
             errors={errors.photos}

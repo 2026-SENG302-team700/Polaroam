@@ -5,11 +5,15 @@
 
     import ImageCarousel from "../images/image-carousel.svelte";
 
-    let { post } = $props();
+    let { 
+        post
+    } = $props();
 
     function goToPost() {
         goto(resolve(`/home/trips/${post.tripId}/posts/${post.postId}`));
     }
+    
+    console.log(post);
 </script>
 
 <div class="card mb-3">
@@ -26,7 +30,9 @@
         <p class="card-text">{post.content}</p>
         
     </div>
-    <div class="card-footer">
-        <ImageCarousel {post} />
-    </div>
+    {#if post.photoIds.length > 0}
+        <div class="card-footer">
+            <ImageCarousel {post} />
+        </div>
+    {/if}
 </div>
