@@ -269,6 +269,13 @@ public class Program
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
         })
         .AddHttpMessageHandler<NominatimRateLimitingHandler>();
+        services.AddHttpClient<IImageTaggingService, ImageTaggingService>(
+            client =>
+            {
+                client.BaseAddress = new Uri("https://apps.csse.canterbury.ac.nz/llm/v1/");
+                client.Timeout = TimeSpan.FromSeconds(60);
+            }
+        );
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
