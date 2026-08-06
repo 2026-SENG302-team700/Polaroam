@@ -142,7 +142,7 @@ public class PostControllerUnitTests
 
         _mockUserService.GetUserByIdAsync(1).Returns(user);
 
-        _mockPostService.CreateNewPostAsync(request, null, 1).Returns(Task.FromException<Post>(new MultipleValidationListException(errors)));
+        _mockPostService.CreateNewPostAsync(request, 1, null).Returns(Task.FromException<Post>(new MultipleValidationListException(errors)));
 
         var result = await _controller.CreatePost(request, null);
 
@@ -171,7 +171,7 @@ public class PostControllerUnitTests
 
         _mockUserService.GetUserByIdAsync(1).Returns(user);
 
-        _mockPostService.CreateNewPostAsync(request, null, 1).Returns(Task.FromException<Post>(new Exception("Unable to create post")));
+        _mockPostService.CreateNewPostAsync(request, 1, null).Returns(Task.FromException<Post>(new Exception("Unable to create post")));
 
         var result = await _controller.CreatePost(request, null);
 
@@ -193,7 +193,7 @@ public class PostControllerUnitTests
 
         result.Result.ShouldBeOfType<UnauthorizedResult>();
 
-        await _mockPostService.DidNotReceive().CreateNewPostAsync(Arg.Any<NewPostRequest>(), Arg.Any<List<IFormFile>?>(), Arg.Any<int>());
+        await _mockPostService.DidNotReceive().CreateNewPostAsync(Arg.Any<NewPostRequest>(), Arg.Any<int>(), Arg.Any<List<IFormFile>?>());
     }
 
     [Fact]
@@ -225,11 +225,23 @@ public class PostControllerUnitTests
     {
         SetupUserContext("1");
 
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test user",
+            PasswordKey = "password",
+            Country = "NZ"
+        };
+        
+        _mockUserService.GetUserByIdAsync(1).Returns(user);
+        
         var request = CreateUpdateRequest();
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
-
-        _mockPostService.UpdatePostAsync(request).Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
+        
+        _mockPostService.UpdatePostAsync(request, 1, new List<IFormFile>())
+            .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
 
         var result = await _controller.UpdatePost(request, null);
 
@@ -295,7 +307,7 @@ public class PostControllerUnitTests
     public async Task UpdatePost_UserDoesNotOwnPost_ReturnsUnauthorized()
     {
         SetupUserContext("1");
-
+        
         var request = CreateUpdateRequest();
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(false);
@@ -306,7 +318,7 @@ public class PostControllerUnitTests
 
         await _mockPostService.Received(1).UserOwnsPost(1, request.TripId);
 
-        await _mockPostService.DidNotReceive().UpdatePostAsync(Arg.Any<UpdatePostRequest>());
+        await _mockPostService.DidNotReceive().UpdatePostAsync(Arg.Any<UpdatePostRequest>(), 1, Arg.Any<List<IFormFile>>());
     }
 
     [Fact]
@@ -330,14 +342,14 @@ public class PostControllerUnitTests
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
 
-        _mockPostService.UpdatePostAsync(request).Returns(updatedPost);
+        _mockPostService.UpdatePostAsync(request, 1, new List<IFormFile>()).Returns(updatedPost);
 
         var result = await _controller.UpdatePost(request, null);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(updatedPost);
 
-        await _mockPostService.Received(1).UpdatePostAsync(request);
+        await _mockPostService.Received(1).UpdatePostAsync(request, 1, new List<IFormFile>());
     }
 
     [Fact]
@@ -356,7 +368,7 @@ public class PostControllerUnitTests
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
 
-        _mockPostService.UpdatePostAsync(request).Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
+        _mockPostService.UpdatePostAsync(request, 1, new List<IFormFile>()).Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
 
         var result = await _controller.UpdatePost(request, null);
 

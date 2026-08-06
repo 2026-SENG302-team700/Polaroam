@@ -11,9 +11,9 @@ public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId);
-    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, List<IFormFile>? photos, int userId);
+    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos);
     Task<Post?> GetPostAsync(int id);
-    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
+    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos);
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
     Task DeletePostByIdAsync(int postId);
@@ -63,10 +63,14 @@ public class PostService : IPostService
     /// dueDate must be in the future, and currentStatus will be automatically set to
     /// </summary>
     /// <param name="postRequest"></param>
-    /// <param name="photos"></param>
     /// <param name="userId"></param>
+    /// <param name="photos"></param>
     /// <returns>the newly created postItem</returns>
-    public async Task<Post> CreateNewPostAsync(NewPostRequest postRequest, List<IFormFile>? photos, int userId)
+    public async Task<Post> CreateNewPostAsync(
+        NewPostRequest postRequest, 
+        int userId, 
+        List<IFormFile>? photos = null
+        )
     {
         // Clean Request
         postRequest.Title = postRequest.Title.Trim();
@@ -183,34 +187,62 @@ public class PostService : IPostService
     /// Updates the content then pushes to DB.
     /// </summary>
     /// <param name="postUpdates">Incoming Post Item Request</param>
+    /// <param name="userId"></param>
+    /// <param name="photos"></param>
     /// <returns>The updated Post item</returns>
-    public async Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates)
+    public async Task<Post?> UpdatePostAsync(
+        UpdatePostRequest postUpdates, 
+        int userId, 
+        List<IFormFile>? photos = null
+        )
     {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
-        if (post == null)
-        {
-            return null;
-        }
-
+        // Clean Request
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
+        photos ??= [];
+        
+        // Validation
+        var errors = PostValidator.ValidatePostFields(postUpdates);
+        
+        // Image Validation
+        var photoErrors = new List<string>();
+        foreach (var photo in photos)
+        {
+            if (!ImageValidationTools.IsValidFilesize(photo))
+            {
+                photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
+            } 
+            else if (!ImageValidationTools.IsValidMimeType(photo))
+            {
+                photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+            }
+        }
 
-        var errors = PostValidator.ValidatePostFields(postUpdates, post);
+        if (photoErrors.Count > 0)
+        {
+            errors["photos"] = photoErrors;
+        }
 
         if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
         }
+        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        post.Title = postUpdates.Title;
-        post.Content = postUpdates.Content;
-        post.Date = postUpdates.Date;
-
+        // Select post
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
+        if (post == null)
+        {
+            throw new KeyNotFoundException();
+        }
+        
+        // Location Validation
+        GeoLocationSearchResult? location = null;
+        
         if (postUpdates.OsmId != post.OsmId)
         {
-            var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -218,10 +250,29 @@ public class PostService : IPostService
                     ["location"] = ["This isn't a valid location"]
                 });
             }
-            post.OsmId = postUpdates.OsmId;
+        }
+        
+        // Add / Remove Photos 
+        List<int> customFileIds = [];
+
+        foreach (var photo in photos)
+        {
+            var customFile = await _fileService.SaveFileAsync(photo, userId);
+            customFileIds.Add(customFile.Id);
+        }
+        
+        // Update post content
+        post.Title = postUpdates.Title;
+        post.Content = postUpdates.Content;
+        post.Date = postUpdates.Date;
+        post.OsmId = postUpdates.OsmId;
+        post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList();
+        if (location != null)
+        {
             post.LocationName = location.name;
         }
-
+        
+        // Save Changes
         context.Posts.Update(post);
         await context.SaveChangesAsync();
         return post;
@@ -323,11 +374,7 @@ public class PostService : IPostService
         {
             return false;
         }
-        if (trip.UserId != userId)
-        {
-            return false;
-        }
-        return true;
+        return trip.UserId == userId;
     }
 
     /// <summary>

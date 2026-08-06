@@ -70,7 +70,7 @@ public class PostController : ControllerBase
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, files, userId);
+            var response = await _postService.CreateNewPostAsync(postRequest, userId, files);
             return Ok(response);
         }
         catch (MultipleValidationListException e)
@@ -118,33 +118,21 @@ public class PostController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<Post>> UpdatePost([FromForm] UpdatePostRequest postUpdates, [FromForm] List<IFormFile>? files)
+    public async Task<ActionResult<Post>> UpdatePost(
+        [FromForm] UpdatePostRequest postUpdates,
+        [FromForm] List<IFormFile>? files)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        
-        if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
+        User? user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null || !await _postService.UserOwnsPost(userId, postUpdates.TripId))
         {
             return Unauthorized();
         }
 
-        if (files != null)
-        {
-            try
-            {
-                await _postService.UploadPhotosToPostAsync(files, postUpdates.Id, userId);
-            }
-            catch (MultipleValidationListException e)
-            {
-                return BadRequest(new BadRequestValidationListResponse
-                {
-                    Errors = e.Errors
-                });
-            }
-        }
-        
         try
         {
-            var post = await _postService.UpdatePostAsync(postUpdates);
+            var post = await _postService.UpdatePostAsync(postUpdates, userId, files);
             return Ok(post);
         }
         catch (MultipleValidationListException e)
@@ -154,10 +142,13 @@ public class PostController : ControllerBase
                 Errors = e.Errors
             });
         }
-        catch (Exception e)
+        catch (KeyNotFoundException e)
         {
-            return BadRequest(e.Message);
+            return NotFound(
+                "Post does not exist"
+            );
         }
+
     }
     
     /// <summary>
