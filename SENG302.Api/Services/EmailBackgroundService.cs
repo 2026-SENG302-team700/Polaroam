@@ -1,6 +1,3 @@
-using System.Runtime.CompilerServices;
-using SENG302.Api.Models.Jobs;
-
 namespace SENG302.Api.Services;
 
 public class EmailBackgroundService : BackgroundService
@@ -14,6 +11,12 @@ public class EmailBackgroundService : BackgroundService
         _scopeFactory = scopeFactory;
     }
 
+    /// <summary>
+    /// Executes the background service that reads email jobs from the queue and then sends them using the email service.
+    /// This method runs continuously until the service is stopped or cancelled.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token used to cancel the operation.</param>
+    /// <returns></returns>
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         await foreach (var job in _queue.ReadAllAsync(cancellationToken))
