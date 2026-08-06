@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Tls;
 using SENG302.Api.Resources.DefaultDatabase;
 
 namespace SENG302.Api;
@@ -155,6 +156,8 @@ public class Program
         builder.Services.AddSingleton(emailSettings);
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
+        builder.Services.AddSingleton<IImageTaggingQueue, ImageTaggingQueue>();
+        builder.Services.AddHostedService<ImageTaggingBackgroundService>();
 
         var app = builder.Build();
 

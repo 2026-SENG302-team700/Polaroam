@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
+using SENG302.Api.Models.Jobs;
 
 
 namespace SENG302.Api.Services;
@@ -29,15 +30,15 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingService _imageTaggingService;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService, IImageTaggingService imageTaggingService)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService, IImageTaggingQueue imageTaggingQueue)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
-        _imageTaggingService = imageTaggingService;
+        _imageTaggingQueue = imageTaggingQueue;
     }
 
     /// <summary>
@@ -431,10 +432,7 @@ public class PostService : IPostService
     {
         try
         {
-            var tags = await _imageTaggingService.GenerateTagsAsync(image);
-
-            //Save to db in the future
-            Console.WriteLine($"\n\n\n\nGenerated tags for image {imageId}: " + string.Join(", ", tags) + "\n\n\n\n");
+            await _imageTaggingQueue.QueueImageTaggingAsync(new ImageTaggingJob(image, imageId));
         }
         catch (Exception ex)
         {

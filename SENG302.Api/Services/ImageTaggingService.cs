@@ -2,13 +2,18 @@ using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
 
 namespace SENG302.Api.Services;
 
 public interface IImageTaggingService
 {
-    Task<IReadOnlyList<string>> GenerateTagsAsync(
-        IFormFile image, CancellationToken cancellationToken = default
+    Task GenerateTagsAsync(
+        IFormFile image, 
+        int imageId, 
+        CancellationToken cancellationToken = default
     );
 }
 
@@ -16,14 +21,17 @@ public class ImageTaggingService : IImageTaggingService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
     public ImageTaggingService(
         HttpClient httpClient,
-        IConfiguration configuration
+        IConfiguration configuration,
+        IDbContextFactory<DatabaseContext> dbContextFactory
     )
     {
         _httpClient = httpClient;
         _configuration = configuration;
+        _dbContextFactory = dbContextFactory;
     }
 
     /// <summary>
@@ -37,8 +45,8 @@ public class ImageTaggingService : IImageTaggingService
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task<IReadOnlyList<string>> GenerateTagsAsync(
-        IFormFile image, CancellationToken cancellationToken = default)
+    public async Task GenerateTagsAsync(
+        IFormFile image, int imageId, CancellationToken cancellationToken = default)
     {
         // checkl the image is valid
         ValidateImage(image);
@@ -124,7 +132,7 @@ public class ImageTaggingService : IImageTaggingService
 
         var content = responseContentElement.GetString();
 
-        return ParseAndValidateTags(content);
+        ParseValidateAndSetTags(content, imageId);
     }
 
     /// <summary>
@@ -133,7 +141,7 @@ public class ImageTaggingService : IImageTaggingService
     /// <param name="content"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    private static IReadOnlyList<string> ParseAndValidateTags(string? content)
+    private async Task ParseValidateAndSetTags(string? content, int imageId)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -168,6 +176,17 @@ public class ImageTaggingService : IImageTaggingService
                     PropertyNameCaseInsensitive = true
                 }
             );
+            if (tagResponse == null) return;
+            
+            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            var image = context.CustomFiles.FirstOrDefault(f => f.Id == imageId);
+            if (image == null) return;
+            image.Tags = tagResponse?.Tags;
+            context.CustomFiles.Update(image);
+            context.SaveChanges();
+            
+            Console.WriteLine("Tags set for image: " + imageId);
+            
         }
         catch (JsonException exception)
         {
@@ -183,8 +202,6 @@ public class ImageTaggingService : IImageTaggingService
         {
             throw new InvalidOperationException("The LLM did not return any tags");
         }
-
-        return tags;
     }
 
     /// <summary>
