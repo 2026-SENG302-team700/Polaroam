@@ -154,6 +154,8 @@ public class Program
         }
         builder.Services.AddSingleton(emailSettings);
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
+        builder.Services.AddHostedService<EmailBackgroundService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 
         var app = builder.Build();

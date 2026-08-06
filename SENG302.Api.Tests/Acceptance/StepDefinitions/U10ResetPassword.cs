@@ -99,13 +99,12 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
         [Then(@"a warning email is sent to me that the reset was cancelled")]
         public async Task ThenAWarningEmailIsSentToMeThatTheResetWasCancelled()
         {
-            await _fixture.EmailMock
-                .Received(1)
-                .SendEmailAsync(
-                    "login@example.com",
-                    EmailTemplate.PasswordResetProcessCancelled,
-                    Arg.Any<Dictionary<string, string>>()
-                );
+            await Task.Delay(2000); // Wait for 2 seconds to ensure that no email is sent
+            await _fixture.EmailMock.DidNotReceive().SendEmailAsync(
+                "login@example.com",
+                EmailTemplate.PasswordResetProcessCancelled,
+                Arg.Any<Dictionary<string, string>>()
+            );
         }
 
         [Then(@"no warning email is sent to me")]

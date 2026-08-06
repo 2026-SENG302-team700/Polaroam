@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Requests.Password;
+using SENG302.Api.Models.Jobs;
 
 namespace SENG302.Api.Controllers.UserController.PasswordController;
 
@@ -16,17 +17,17 @@ namespace SENG302.Api.Controllers.UserController.PasswordController;
 public class UpdatePasswordController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IEmailService _emailService;
+    private readonly IEmailQueue _emailQueue;
     private readonly IOneTimeCodeService _codeService;
 
     public UpdatePasswordController(IUserService userService, IOneTimeCodeService codeService,
-        IEmailService emailService)
+        IEmailQueue emailQueue)
     {
         _userService = userService;
         _codeService = codeService;
-        _emailService = emailService;
+        _emailQueue = emailQueue;
     }
-    
+
     /// <summary>
     /// API Controller method that handles a put request where a one time code is requested for a specific user email.
     /// The method calls the one time code service to generate, store and then email the code to the user.
@@ -57,11 +58,11 @@ public class UpdatePasswordController : ControllerBase
             {"DISPLAY_NAME", userUpdated.DisplayName},
             {"CODE", oneTimeCode}
         };
-        await _emailService.SendEmailAsync(codeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
+        await _emailQueue.QueueEmailAsync(new EmailJob(codeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary));
 
         return Ok();
     }
-    
+
     /// <summary>
     /// Gets the user object from the database and compares the code the user has entered compared to the one generated
     /// to verify them. Doesnt worry about the time as this was not included in the AC.
@@ -89,7 +90,7 @@ public class UpdatePasswordController : ControllerBase
 
         return Ok();
     }
-    
+
     /// <summary>
     /// Sends a request to update the users email 
     /// </summary>
@@ -124,7 +125,7 @@ public class UpdatePasswordController : ControllerBase
             {
                 {"DISPLAY_NAME", userDisplayName}
             };
-            await _emailService.SendEmailAsync(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary);
+            await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary));
             return Ok();
         }
         catch (UnauthorizedAccessException e)

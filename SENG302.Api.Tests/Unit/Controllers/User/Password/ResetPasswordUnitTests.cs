@@ -11,6 +11,7 @@ using NSubstitute;
 using Shouldly;
 using SENG302.Api.Controllers.UserController.PasswordController;
 using Microsoft.AspNetCore.Http.HttpResults;
+using SENG302.Api.Models.Jobs;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
@@ -18,7 +19,7 @@ public class ResetPasswordUnitTests
 {
     private readonly IUserService _mockUserService;
     private readonly IOneTimeCodeService _mockCodeService;
-    private readonly IEmailService _mockEmailService;
+    private readonly IEmailQueue _mockEmailQueue;
     private readonly ResetPasswordController _controller;
     private readonly IAuthenticationService _mockAuthService;
 
@@ -26,13 +27,13 @@ public class ResetPasswordUnitTests
     {
         _mockUserService = Substitute.For<IUserService>();
         _mockCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
+        _mockEmailQueue = Substitute.For<IEmailQueue>();
         _mockAuthService = Substitute.For<IAuthenticationService>();
 
         _controller = new ResetPasswordController(
             _mockUserService,
             _mockCodeService,
-            _mockEmailService);
+            _mockEmailQueue);
     }
 
     /// <summary>
@@ -111,12 +112,19 @@ public class ResetPasswordUnitTests
             {"MINUTES", "5"},
             {"CODE", code}
         };
-        _mockEmailService.SendEmailAsync("test@test.com", EmailTemplate.ChangePasswordCode, emailDictionary).Returns(Task.CompletedTask);
-
         SetupForgotPasswordContext(request.Email, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), code, false);
 
         var result = await _controller.GenerateResetPasswordCode(request);
         result.Result.ShouldBeOfType<OkResult>();
+
+        await _mockEmailQueue.Received(1).QueueEmailAsync(
+            Arg.Is<EmailJob>(job =>
+                job.toEmail == "test@test.com" &&
+                job.Template == EmailTemplate.ChangePasswordCode &&
+                job.Model["MINUTES"] == "5" &&
+                job.Model["CODE"] == code),
+            Arg.Any<CancellationToken>()
+        );
     }
 
 

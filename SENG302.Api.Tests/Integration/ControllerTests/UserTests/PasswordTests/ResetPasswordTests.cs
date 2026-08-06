@@ -19,7 +19,7 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class ResetPasswordTests : BaseIntegrationTestFixture
 {
-    private readonly IEmailService _mockEmailService;
+    private readonly IEmailQueue _mockEmailQueue;
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
     private readonly ResetPasswordController _controller;
 
@@ -28,9 +28,9 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
     public ResetPasswordTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
+        _mockEmailQueue = Substitute.For<IEmailQueue>();
         _controller =
-            new ResetPasswordController(ServiceUnderTest, _mockOneTimeCodeService, _mockEmailService);
+            new ResetPasswordController(ServiceUnderTest, _mockOneTimeCodeService, _mockEmailQueue);
     }
 
     private void SetupTempSessionContext(string email)

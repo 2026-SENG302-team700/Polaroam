@@ -6,6 +6,7 @@ using SENG302.Api.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using SENG302.Api.Models.Jobs;
 
 
 namespace SENG302.Api.Controllers;
@@ -16,14 +17,14 @@ namespace SENG302.Api.Controllers;
 public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IEmailService _emailService;
+    private readonly IEmailQueue _emailQueue;
 
-    public LoginController(IUserService userService, IEmailService emailService)
+    public LoginController(IUserService userService, IEmailQueue emailQueue)
     {
         _userService = userService;
-        _emailService = emailService;
+        _emailQueue = emailQueue;
     }
-    
+
     /// <summary>
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
@@ -166,7 +167,7 @@ public class LoginController : ControllerBase
             {
                 { "DISPLAY_NAME", user.DisplayName }
             };
-            await _emailService.SendEmailAsync(user.Email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
+            await _emailQueue.QueueEmailAsync(new EmailJob(user.Email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary));
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using SENG302.Api.Filters;
+using SENG302.Api.Models.Jobs;
 namespace SENG302.Api.Controllers.UserController.PasswordController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -15,14 +16,14 @@ namespace SENG302.Api.Controllers.UserController.PasswordController;
 public class ResetPasswordController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IEmailService _emailService;
+    private readonly IEmailQueue _emailQueue;
     private readonly IOneTimeCodeService _codeService;
 
-    public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailService emailService)
+    public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailQueue emailQueue)
     {
         _userService = userService;
         _codeService = codeService;
-        _emailService = emailService;
+        _emailQueue = emailQueue;
     }
 
     /// <summary>
@@ -69,12 +70,7 @@ public class ResetPasswordController : ControllerBase
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user != null)
         {
-            await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
-        }
-        else
-        {
-            // Hacky, but to disguise that this email does not exist
-            Thread.Sleep(4000);
+            await _emailQueue.QueueEmailAsync(new EmailJob(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary));
         }
 
         // return ok no matter if there is a user or not
@@ -182,13 +178,7 @@ public class ResetPasswordController : ControllerBase
             {
                 {"DISPLAY_NAME", user.DisplayName}
             };
-
-            await _emailService.SendEmailAsync(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
-        }
-        else
-        {
-            // Hacky, but to disguise that this email does not exist
-            Thread.Sleep(4000);
+            await _emailQueue.QueueEmailAsync(new EmailJob(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary));
         }
 
         return Ok("Code cancelled");
@@ -224,19 +214,19 @@ public class ResetPasswordController : ControllerBase
 
             // Create a dictionary of important values to send in the email, then call function to send email
             var user = await _userService.GetUserFromEmailAsync(userEmail);
-            if (user ==null)
+            if (user == null)
             {
                 return Unauthorized(new
                 {
                     message = "A user with that email does not exist."
                 });
             }
-            
+
             var emailDictionary = new Dictionary<string, string>
             {
                 {"DISPLAY_NAME", user.Email}
             };
-            await _emailService.SendEmailAsync(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary);
+            await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary));
             return Ok();
         }
         catch (UnauthorizedAccessException e)

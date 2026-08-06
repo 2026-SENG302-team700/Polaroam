@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Jobs;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 
@@ -14,13 +15,13 @@ public class RegistrationController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IOneTimeCodeService _oneTimeCodeService;
-    private readonly IEmailService _emailService;
+    private readonly IEmailQueue _emailQueue;
 
-    public RegistrationController(IUserService userService, IOneTimeCodeService oneTimeCodeService, IEmailService emailService)
+    public RegistrationController(IUserService userService, IOneTimeCodeService oneTimeCodeService, IEmailQueue emailQueue)
     {
         _userService = userService;
         _oneTimeCodeService = oneTimeCodeService;
-        _emailService = emailService;
+        _emailQueue = emailQueue;
     }
 
     [HttpGet("{id:int}")]
@@ -115,7 +116,7 @@ public class RegistrationController : ControllerBase
             {"CODE", oneTimeCode},
             {"MINUTES", "5"}
         };
-        await _emailService.SendEmailAsync(userUpdated.Email, EmailTemplate.VerifyEmailCode, emailDictionary);
+        await _emailQueue.QueueEmailAsync(new EmailJob(userUpdated.Email, EmailTemplate.VerifyEmailCode, emailDictionary));
 
         return Ok();
     }
