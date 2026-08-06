@@ -132,6 +132,7 @@ public class UserCredentialsValidator
         if (DisplayNameLength(displayName))
         {
             errors["displayName"] = "Display name must be between 3 and 64 characters";
+            return errors;
         }
 
         if (!DisplayNameChars(displayName))
