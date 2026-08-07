@@ -16,6 +16,7 @@
     import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
     import PasswordForm from "$lib/components/forms/password-form.svelte";
     import ToggleForm from "$lib/components/forms/toggle-form.svelte";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -42,12 +43,13 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false);
-    let aiToggle = $state();
+    let aiToggle = $state(false);
+    let privacyPolicyModalShown = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
     let pfpCancelButton: HTMLButtonElement;
-    
+
     let errors = $state({
         email: "",
         displayName: "",
@@ -63,8 +65,8 @@
             checkCode();
         }
     });
-    
-    let userAcceptedPrivacyPolicy;
+
+    let userAcceptedPrivacyPolicy = $state(false);
 
     onMount(async () => {
         retrieveUserData();
@@ -187,6 +189,7 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
+            userAcceptedPrivacyPolicy = data.acceptedAiPrivacyPolicy;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -218,11 +221,33 @@
     }
 
     /// <summary>
+    /// Accepts the ai privacy policy
+    /// </summary>
+    async function acceptPrivacyPolicy() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/accept-policy` as any),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                },
+            );
+
+            if (response.ok) {
+                aiToggle = true;
+                userAcceptedPrivacyPolicy = true;
+            }
+        } catch (err) {
+            addToast((err as Error).message);
+        }
+    }
+
+    /// <summary>
     /// Updates the users information with the provided information
     /// </summary>
     async function updateUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(resolve(`/api/user` as any), {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -479,16 +504,19 @@
             imageEditor.highlightError(true);
         }
     }
-    
+
     async function updateAiToggle(aiToggleState: boolean) {
         try {
             // implement api call to backend.
+            if (!userAcceptedPrivacyPolicy) {
+                aiToggle = false;
+                privacyPolicyModalShown = true;
+            }
         } catch (error) {
             addToast("Failed to update AI tagging preference.", "error");
             aiToggle = !aiToggleState;
         }
     }
-    
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
@@ -547,12 +575,16 @@
                     <h5 class="text-muted mb-2">Preferences</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
                     <div
-                            class="d-flex align-items-center justify-content-between"
+                        class="d-flex align-items-center justify-content-between"
                     >
-                        <label for="aiToggle" class="form-label">Photo Tagging w/ Artifical Intelligence</label>
-                        <ToggleForm id="aiToggle" bind:checked={aiToggle} onchange="{
-                        () => updateAiToggle(aiToggle)
-                        }"/>
+                        <label for="aiToggle" class="form-label"
+                            >Photo Tagging w/ Artifical Intelligence</label
+                        >
+                        <ToggleForm
+                            id="aiToggle"
+                            bind:checked={aiToggle}
+                            onchange={() => updateAiToggle(aiToggle)}
+                        />
                     </div>
                 </div>
 
@@ -798,3 +830,15 @@
         </div>
     </div>
 </div>
+
+<!-- ai privacy policy confirmation modal -->
+<ConfirmationModal
+    bind:show={privacyPolicyModalShown}
+    message="If you leave this page all progress will be lost"
+    option1Text={"Accept"}
+    option2Text={"Reject"}
+    onOption1={() => acceptPrivacyPolicy()}
+    onOption2={() => {
+        privacyPolicyModalShown = false;
+    }}
+/>
