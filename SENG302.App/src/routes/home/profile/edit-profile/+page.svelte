@@ -42,11 +42,12 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false);
+    let aiToggle = $state();
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
     let pfpCancelButton: HTMLButtonElement;
-
+    
     let errors = $state({
         email: "",
         displayName: "",
@@ -62,6 +63,8 @@
             checkCode();
         }
     });
+    
+    let userAcceptedPrivacyPolicy;
 
     onMount(async () => {
         retrieveUserData();
@@ -476,6 +479,16 @@
             imageEditor.highlightError(true);
         }
     }
+    
+    async function updateAiToggle(aiToggleState: boolean) {
+        try {
+            // implement api call to backend.
+        } catch (error) {
+            addToast("Failed to update AI tagging preference.", "error");
+            aiToggle = !aiToggleState;
+        }
+    }
+    
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
@@ -533,7 +546,14 @@
                 <div class="mt-5 mb-4">
                     <h5 class="text-muted mb-2">Preferences</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
-                    <p>****add ai tagging toggling here****</p>
+                    <div
+                            class="d-flex align-items-center justify-content-between"
+                    >
+                        <label for="aiToggle" class="form-label">Photo Tagging w/ Artifical Intelligence</label>
+                        <ToggleForm id="aiToggle" bind:checked={aiToggle} onchange="{
+                        () => updateAiToggle(aiToggle)
+                        }"/>
+                    </div>
                 </div>
 
                 <div class="mt-5 mb-4">

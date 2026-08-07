@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 using SENG302.Api.Helpers;
+using SENG302.Api.Models.Responses;
+
 namespace SENG302.Api.Controllers.UserController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -19,15 +21,13 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IEmailService _emailService;
     private readonly IOneTimeCodeService _codeService;
 
-    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService, IEmailService emailService)
+    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService)
     {
         _userService = userService;
         _fileService = fileService;
         _codeService = codeService;
-        _emailService = emailService;
     }
 
     /// <summary>
@@ -51,10 +51,19 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
-
-        // Remove hashed password from user
-        user.PasswordKey = "---";
-        return Ok(user);
+        
+        return Ok(new GetUserResponse
+        {
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            Country = user.Country,
+            ProfilePicture = user.ProfilePicture,
+            ProfilePictureZoom = user.ProfilePictureZoom,
+            ProfilePictureOffsetX = user.ProfilePictureOffsetX,
+            ProfilePictureOffsetY = user.ProfilePictureOffsetY,
+            AcceptedAiPrivacyPolicy = user.AcceptedAiPrivacyPolicy,
+        });
     }
 
     [AllowAnonymous]
@@ -246,5 +255,20 @@ public class UserController : ControllerBase
         Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
 
         return File(fileBytes, customFile.MimeType);
+    }
+
+    [HttpPut("accept-policy")]
+    public async Task<IActionResult> AcceptPrivacyPolicy()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+        
+        var userId = int.Parse(userIdString);
+
+        await _userService.AcceptPrivacyPolicy(userId);
+        return Ok();
     }
 }

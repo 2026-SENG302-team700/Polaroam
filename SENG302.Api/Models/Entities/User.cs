@@ -21,9 +21,9 @@ public class User
 
     public int ProfilePicture { get; set; }
 
-    public float ProfilePictureOffsetX { get; set; } = 0;
+    public float ProfilePictureOffsetX { get; set; }
 
-    public float ProfilePictureOffsetY { get; set; } = 0;
+    public float ProfilePictureOffsetY { get; set; }
 
     public float ProfilePictureZoom { get; set; } = 1;
 
@@ -34,6 +34,8 @@ public class User
 
     public DateTimeOffset TimeCreated { get; set; }
 
-    public bool EmailVerified { get; set; } = false;
+    public bool EmailVerified { get; set; }
+    
+    public bool AcceptedAiPrivacyPolicy { get; set; } = false;
 
 }

@@ -20,6 +20,7 @@ public interface IUserService
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
     Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
+    Task AcceptPrivacyPolicy(int userId);
 }
 
 public enum UserVerificationResult
@@ -464,6 +465,22 @@ public class UserService : IUserService
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
         user.PasswordKey = passwordKey;
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Sets a flag to show that the user has accepted the AI privacy policy.
+    /// </summary>
+    /// <param name="userId">User that has accepted the AI privacy policy</param>
+    public async Task AcceptPrivacyPolicy(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        
+        user!.AcceptedAiPrivacyPolicy = true;
+        
         context.Users.Update(user);
         await context.SaveChangesAsync();
     }

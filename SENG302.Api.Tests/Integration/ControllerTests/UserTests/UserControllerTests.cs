@@ -28,7 +28,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         _mockEmailService = Substitute.For<IEmailService>();
         _mockFileService = Substitute.For<IFileService>();
         _controller =
-            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService, _mockEmailService);
+            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService);
     }
     
 

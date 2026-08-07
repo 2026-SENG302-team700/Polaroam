@@ -32,8 +32,7 @@ public class UserControllerUnitTests
         _controller = new UserController(
             _mockUserService, 
             _mockFileService, 
-            _mockCodeService, 
-            _mockEmailService);
+            _mockCodeService);
     }
     
     /// <summary>
