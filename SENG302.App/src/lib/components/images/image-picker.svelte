@@ -2,6 +2,8 @@
     import mimeMagicNumbers from "../../../../../SENG302.Shared/mimeTypes.json";
 
     const MAX_IMAGE_SIZE = 10000000;
+    const MAX_FILENAME_LENGTH = 32;
+
     const mimeTypes = [
         "image/webp",
         "image/jpeg",
@@ -58,20 +60,30 @@
     }
 
     /**
+     * Shortens a filename to 32 characters when exceeding 32 chars.
+     * @param name the file name
+     */
+    function truncateFilename(name: string): string {
+        if (name.length <= MAX_FILENAME_LENGTH) return name;
+        return `${name.slice(0, MAX_FILENAME_LENGTH - 3)}...`;
+    }
+
+    /**
      * Validates a file's size and mime type against the same rules the backend enforces
      * @param file the image file
      * @returns every error message the file fails, prefixed with the file name (empty if valid)
      */
     async function validateImage(file: File): Promise<string[]> {
         const fileErrors: string[] = [];
+        const shortName = truncateFilename(file.name);
 
         if (file.size > MAX_IMAGE_SIZE) {
-            fileErrors.push(`${file.name}: Image too large, maximum file size is 10MB`);
+            fileErrors.push(`${shortName}: Image too large, maximum file size is 10MB`);
         }
 
         const realMimeType = await getRealValidMime(file);
         if (!mimeTypes.includes(file.type) || realMimeType === undefined || file.type !== realMimeType) {
-            fileErrors.push(`${file.name}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp`);
+            fileErrors.push(`${shortName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp`);
         }
 
         return fileErrors;
@@ -84,16 +96,18 @@
     async function appendImages() {
         if (!files) return;
 
-        fileErrors = [];
+        const newFileErrors: string[] = [];
         for (const file of files) {
             const fileError = await validateImage(file);
             if (fileError.length > 0) {
-                fileErrors.push(...fileError);
+                newFileErrors.push(...fileError);
             } else {
                 newUploadsCount += 1
                 filesList?.push(file);
             }
         }
+
+        fileErrors = newFileErrors;
     }
     
 </script>
