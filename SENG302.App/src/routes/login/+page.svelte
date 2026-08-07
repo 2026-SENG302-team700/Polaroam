@@ -566,7 +566,7 @@
                                 />
                             </div>
                             <div>
-                                <p class="small"><i>Password reset email sent</i></p>
+                                <p class="small"><strong>Password reset email sent</strong></p>
                                 <p class="m-0 small">
                                     Please enter the verification code here:
                                 </p>
