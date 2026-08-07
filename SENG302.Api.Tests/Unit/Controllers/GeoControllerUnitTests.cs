@@ -26,11 +26,11 @@ public class GeoControllerUnitTests
         List<GeoLocationSearchResult>
           {
               new() {
-                  OsmId = 123,
-                  Latitude = "-43.5321",
-                  Longitude = "172.6362",
-                  Name = "Christchurch",
-                  DisplayName = "Christchurch, New Zealand"
+                  osm_id = 123,
+                  lat = "-43.5321",
+                  lon = "172.6362",
+                  name = "Christchurch",
+                  display_name = "Christchurch, New Zealand"
               }
           };
 
@@ -73,11 +73,11 @@ public class GeoControllerUnitTests
         var expectedLocation = new
         GeoLocationSearchResult
         {
-            OsmId = 123,
-            Latitude = "-43.5321",
-            Longitude = "172.6362",
-            Name = "Christchurch",
-            DisplayName = "Christchurch, New Zealand"
+            osm_id = 123,
+            lat = "-43.5321",
+            lon = "172.6362",
+            name = "Christchurch",
+            display_name = "Christchurch, New Zealand"
         };
 
         _mockGeoService

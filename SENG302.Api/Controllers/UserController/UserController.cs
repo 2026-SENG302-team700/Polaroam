@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 using SENG302.Api.Helpers;
-using SENG302.Api.Helpers.Validators;
 namespace SENG302.Api.Controllers.UserController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -175,13 +174,13 @@ public class UserController : ControllerBase
             return Unauthorized("You do not have authorisation to change this profile picture!");
         }
 
-        if (!ImageValidator.IsValidFilesize(file))
+        if (!ImageValidationTools.IsValidFilesize(file))
         {
             return BadRequest("Image too large, maximum file size is 10MB");
         }
 
         // implement into one big callback function later.
-        if (!ImageValidator.IsValidMimeType(file))
+        if (!ImageValidationTools.IsValidMimeType(file))
         {
             return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
         }

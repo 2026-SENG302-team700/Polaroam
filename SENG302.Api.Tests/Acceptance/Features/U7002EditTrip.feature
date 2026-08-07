@@ -26,7 +26,7 @@ Feature: U7002_As Benji I want to edit my trips So that I can correct their info
         And I am editing that trip
         When I update the trip with an empty start date
         Then the trip is not updated
-        And I see the edit trip error message "Date is invalid"
+        And I see the edit trip error message "Invalid date, date must be formatted "
 
     Scenario: AC6 - Edit trip with end date before start date
         Given I have an existing trip

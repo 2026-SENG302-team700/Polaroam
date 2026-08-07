@@ -1,11 +1,9 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using Shouldly;
-using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -36,8 +34,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        DateTimeOffset startDate = DateTimeOffset.Parse(stringStartDate, CultureInfo.CurrentCulture.DateTimeFormat);
-        DateTimeOffset endDate = DateTimeOffset.Parse(stringEndDate, CultureInfo.CurrentCulture.DateTimeFormat);
+        DateOnly startDate = DateOnly.FromDateTime(DateTime.Parse(stringStartDate));
+        DateOnly endDate = DateOnly.FromDateTime(DateTime.Parse(stringEndDate));
 
         var tripRequest = new NewTripRequest
         {
@@ -81,8 +79,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = title,
             Description = "Test",
-            StartDate = DateToDateTimeOffset(2022, 1, 1),
-            EndDate = DateToDateTimeOffset(2022, 1, 7),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
@@ -117,8 +115,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "Trip Title",
             Description = "Test",
-            StartDate = DateToDateTimeOffset(2022, 1, 1),
-            EndDate = DateToDateTimeOffset(2022, 1, 7),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
@@ -129,7 +127,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             Title = title
         };
 
-        if (expectedResult)
+        if (expectedResult == true)
         {
             await Should.NotThrowAsync(async () => await ServiceUnderTest.UpdateTripAsync(updateTripRequest, 1));
         }
@@ -160,8 +158,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "test",
             Description = new string('a', 2049),
-            StartDate = DateToDateTimeOffset(2022, 1, 1),
-            EndDate = DateToDateTimeOffset(2022, 1, 7),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
@@ -190,9 +188,9 @@ public class TripServiceTests : BaseIntegrationTestFixture
         NewTripRequest tripRequest = new NewTripRequest
         {
             Title = "test",
-            Description = "Test",
-            StartDate = DateToDateTimeOffset(2022, 1, 1),
-            EndDate = DateToDateTimeOffset(2022, 1, 7),
+            Description = "test",
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         };
 
         Trip trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, 1);
@@ -232,8 +230,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
         {
             Title = "title",
             Description = "Test",
-            StartDate = DateToDateTimeOffset(2022, 1, 1),
-            EndDate = DateToDateTimeOffset(2021, 12, 29),
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2021, 1, 7)
         };
 
         // Use the TripService function to create a new trip with the name and user email and check that it throws an ArgumentException
@@ -292,16 +290,16 @@ public class TripServiceTests : BaseIntegrationTestFixture
             Title = "Test trip title",
             UserId = 1,
             Description = "Test Description",
-            StartDate = DateToDateTimeOffset(2020, 1, 30),
-            EndDate = DateToDateTimeOffset(2020, 2, 5)
+            StartDate =  new DateOnly(2022, 1, 1),
+            EndDate = new DateOnly(2022, 1, 7)
         });
         await context.SaveChangesAsync();
         var trips = await ServiceUnderTest.GetTripsByUserIdAsync(1);
         trips.Count().ShouldBe(1);
         trips.First().Title.ShouldBe("Test trip title");
         trips.First().Description.ShouldBe("Test Description");
-        trips.First().StartDate.ShouldBe(DateToDateTimeOffset(2020, 1, 30));
-        trips.First().EndDate.ShouldBe(DateToDateTimeOffset(2020, 2, 5));
+        trips.First().StartDate.ShouldBe(new DateOnly(2022, 1, 1));
+        trips.First().EndDate.ShouldBe(new DateOnly(2022, 1, 7));
     }
 
     /// <summary>
@@ -330,8 +328,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
             {
                 Title = "Original trip",
                 Description = "Original description",
-                StartDate = DateToDateTimeOffset(2026, 7, 1),
-                EndDate = DateToDateTimeOffset(2026, 7, 10)
+                StartDate =  new DateOnly(2022, 1, 1),
+                EndDate = new DateOnly(2022, 1, 7)
             },
             userId
         );
@@ -342,8 +340,8 @@ public class TripServiceTests : BaseIntegrationTestFixture
     {
         var trip = await CreateTripForUpdateTests();
 
-        var newStartDate = DateToDateTimeOffset(2026, 8, 1);
-        var newEndDate = DateToDateTimeOffset(2026, 8, 10);
+        var newStartDate = new DateOnly(2026, 8, 1);
+        var newEndDate = new DateOnly(2026, 8, 10);
 
         var request = new UpdateTripRequest
         {
