@@ -12,7 +12,7 @@
             <div class="header-content-item">
                 <div class="bi-calendar-event"></div>
                 <h6 class="card-subtitle mb-2 text-muted">
-                    {formatDate(post.date, true)}
+                    {formatDate(post.date)}
                 </h6>
             </div>
             <div class="header-content-item">
