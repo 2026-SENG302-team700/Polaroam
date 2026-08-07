@@ -24,6 +24,7 @@
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0);
+    let fileErrors: string[] = $state([]);
     let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
@@ -321,7 +322,7 @@
         <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
         <ImageDisplay
             bind:images={files}
-            errors={errors.photos}
+            errors={[...errors.photos, ...fileErrors]}
             letDelete={true}
             ondelete={removePhoto}
         >
@@ -329,6 +330,7 @@
                 bind:filesList={files}
                 errors={errors.photos}
                 bind:newUploadsCount
+                bind:fileErrors
             />
         </ImageDisplay>
         <MultipleErrorDisplay errors={[errors.generic]} />
