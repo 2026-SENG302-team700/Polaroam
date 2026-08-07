@@ -232,7 +232,6 @@
             );
 
             if (response.ok) {
-                addToast("Password reset email sent", "success");
 
                 currentModalStep = ModalStep.VERIFY;
 
@@ -567,6 +566,7 @@
                                 />
                             </div>
                             <div>
+                                <p class="small"><i>Password reset email sent</i></p>
                                 <p class="m-0 small">
                                     Please enter the verification code here:
                                 </p>
