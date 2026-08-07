@@ -79,7 +79,7 @@
             form.append("Title", title);
             form.append("OsmId", location.osmId);
             form.append("Content", content);
-            form.append("Date", date?.toISOString() ?? "");
+            form.append("Date", serialiseLocalDate(date) ?? "");
             form.append("NoContentAllowed", noContentAllowed);
             if (files != null) {
                 for (let i = 0; i < files.length; i++) {
@@ -128,6 +128,22 @@
             noContentAllowed = false;
         }
     }
+
+    /**
+     * Converts a local date to a date only string without UTC timezone shifting
+     * @param date
+     */
+    function serialiseLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
 </script>
 
 <div class="container d-flex justify-content-center align-items-center">
@@ -150,10 +166,10 @@
             bind:error={errors.location}
         />
         <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay
-            bind:images={files}
-            letDelete={true}
-            errors={errors.photos}
+        <ImageDisplay 
+                bind:images={files} 
+                letDelete={true} 
+                errors="{errors.photos}"
         >
             <ImagePicker bind:filesList={files} errors={errors.photos} />
         </ImageDisplay>

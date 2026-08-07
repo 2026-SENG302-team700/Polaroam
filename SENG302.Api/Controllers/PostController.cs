@@ -5,8 +5,6 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Responses;
-using SENG302.Api.Helpers.Validators;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -66,7 +64,6 @@ public class PostController : ControllerBase
     [RequestSizeLimit(200000000)]
     public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files)
     {
-        
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
         if (user == null) return Unauthorized();

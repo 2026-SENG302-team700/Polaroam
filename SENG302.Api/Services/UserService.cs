@@ -2,7 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using SENG302.Api.Helpers.Validators;
+using SENG302.Api.Helpers;
 
 namespace SENG302.Api.Services;
 

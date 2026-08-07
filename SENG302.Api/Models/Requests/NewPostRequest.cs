@@ -15,7 +15,7 @@ public class NewPostRequest : IPostRequest
     [Required(AllowEmptyStrings = true)]
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Content { get; set; }
-    public DateTimeOffset? Date
+    public DateOnly? Date
     {
         get;
         set

@@ -6,7 +6,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
-using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -24,8 +23,8 @@ public class U7005DeletePost
     {
         _fixture = fixture;
     }
-
-
+    
+    
 
     [Given("I have an existing post to delete")]
     public async Task GivenIHaveAnExistingPostToDelete()
@@ -48,8 +47,8 @@ public class U7005DeletePost
             UserId = user.Id,
             Title = "Trip with post",
             Description = "Test trip",
-            StartDate = DateToDateTimeOffset(2026, 1, 1),
-            EndDate = DateToDateTimeOffset(2026, 1, 10),
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 1, 10)
         };
 
         var post = new Post
@@ -60,8 +59,8 @@ public class U7005DeletePost
             OsmId = 1,
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateTimeOffset.Now.AddDays(-1),
-            CreationTime = DateTimeOffset.Now
+            Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
+            creationTime = DateTimeOffset.Now
         };
 
         context.Users.Add(user);
@@ -92,7 +91,7 @@ public class U7005DeletePost
     {
         await using var context =
             await _fixture.DbContextFactory.CreateDbContextAsync();
-
+        
         var user = new User
         {
             Id = 1,
@@ -108,8 +107,8 @@ public class U7005DeletePost
             UserId = user.Id,
             Title = "Trip with post",
             Description = "Test trip",
-            StartDate = DateToDateTimeOffset(2026, 1, 1),
-            EndDate = DateToDateTimeOffset(2026, 1, 10)
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 1, 10)
         };
 
         var post = new Post
@@ -120,8 +119,8 @@ public class U7005DeletePost
             OsmId = 1,
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateTimeOffset.UtcNow.AddDays(-1),
-            CreationTime = DateTimeOffset.UtcNow
+            Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
+            creationTime = DateTimeOffset.Now
         };
 
         context.Users.Add(user);
@@ -142,8 +141,8 @@ public class U7005DeletePost
 
         context.Locations.Add(location);
         await context.SaveChangesAsync();
-
-
+        
+        
         var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         using var content = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(fileBytes);
@@ -160,7 +159,7 @@ public class U7005DeletePost
         _postId = post.PostId;
         _tripId = trip.Id;
     }
-
+    
     [When("I delete the tripp")]
     public async Task WhenIDeleteTheTrip()
     {
@@ -195,7 +194,7 @@ public class U7005DeletePost
         int.TryParse(_photoId, out numericPhotoId);
         var locationExists = await context.Set<Location>().AnyAsync(p => p.PostId == _postId);
         var imageExists = await context.Set<CustomFile>().AnyAsync(p => p.Id == numericPhotoId);
-
+        
         locationExists.ShouldBe(false);
         imageExists.ShouldBe(false);
     }
