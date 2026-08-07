@@ -374,7 +374,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.OsmId.ShouldBe(123);
         post.LocationName.ShouldBe("Christchurch");
     }
-    
+
     [Fact]
     public async Task DeleteTrip_ExistingPost_DeletesSinglePosts()
     {
@@ -391,7 +391,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -445,7 +445,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -453,7 +453,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             await context.SaveChangesAsync();
 
             postId1 = post1.PostId;
-            
+
             var post2 = new Post
             {
                 TripId = 1,
@@ -461,14 +461,14 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
             context.Posts.Add(post2);
-            
+
             await context.SaveChangesAsync();
-            
+
             postId2 = post2.PostId;
 
             context.Locations.Add(new Location
@@ -480,7 +480,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Name = "Christchurch",
                 DisplayName = "Christchurch, New Zealand"
             });
-            
+
             context.Locations.Add(new Location
             {
                 PostId = postId1,
@@ -508,7 +508,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         postExists.ShouldBeFalse();
         locationExists.ShouldBeFalse();
     }
-    
+
     [Fact]
     public async Task DeleteTrip_ExistingPosts_DeletesOnlyTripPosts()
     {
@@ -525,10 +525,10 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Test List",
                 UserId = 1,
                 Description = "Test",
-                StartDate = new DateOnly(2017, 10, 08),
-                EndDate = new DateOnly(2017, 10, 21)
+                StartDate = DateToDateTimeOffset(2017, 10, 08),
+                EndDate = DateToDateTimeOffset(2017, 10, 21)
             });
-            
+
             var post1 = new Post
             {
                 TripId = 1,
@@ -536,7 +536,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -544,7 +544,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             await context.SaveChangesAsync();
 
             postId1 = post1.PostId;
-            
+
             var post2 = new Post
             {
                 TripId = 2,
@@ -552,16 +552,16 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
             context.Posts.Add(post2);
-            
+
             await context.SaveChangesAsync();
-            
+
             postId2 = post2.PostId;
-            
+
             context.Locations.Add(new Location
             {
                 PostId = postId1,
@@ -598,7 +598,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         post1Exists.ShouldBeFalse();
         location1Exists.ShouldBeFalse();
-        
+
         var post2Exists = await assertContext.Posts
             .AnyAsync(post => post.TripId == 2);
 
@@ -608,12 +608,12 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post2Exists.ShouldBeTrue();
         location2Exists.ShouldBeTrue();
     }
-    
+
     [Fact]
     public async Task DeleteTrip_NoPosts_RunsSuccessfully()
     {
         await SetupUserAndTrip(1, 1);
-        
+
 
         await Should.NotThrowAsync(ServiceUnderTest.DeleteAllPostOfTrip(1));
     }

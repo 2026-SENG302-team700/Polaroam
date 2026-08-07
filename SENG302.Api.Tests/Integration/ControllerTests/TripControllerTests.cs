@@ -48,11 +48,11 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
