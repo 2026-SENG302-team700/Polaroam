@@ -67,7 +67,7 @@ public class TripValidatorTests
     }
 
     [Fact]
-    public async Task ValidateDescription_LongDescription_ReturnsNoErrors()
+    public async Task ValidateDescription_LongDescription_ReturnsErrors()
     {
         var errors = TripValidator.ValidateDescription(new string('a', 2049));
         errors["description"].Count.ShouldBe(1);

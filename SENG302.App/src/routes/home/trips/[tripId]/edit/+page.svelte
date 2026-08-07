@@ -101,10 +101,10 @@
 
             const data = await response.json();
             if (!response.ok) {
-                errors.dateOne = data.errors?.dateOne?.join(" ") ?? "";
-                errors.dateTwo = data.errors?.dateTwo?.join(" ") ?? "";
-                errors.title = data.errors?.title ?? "";
-                errors.description = data.errors?.description ?? "";
+                errors.dateOne = data.errors?.dateOne ?? "";
+                errors.dateTwo = data.errors?.dateTwo ?? "";
+                errors.title = data.errors?.title ?? [];
+                errors.description = data.errors?.description ?? [];
 
                 if (data.generic) {
                     errors.generic =
