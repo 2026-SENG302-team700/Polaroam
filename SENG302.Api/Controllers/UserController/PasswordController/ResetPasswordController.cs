@@ -18,6 +18,8 @@ public class ResetPasswordController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly IOneTimeCodeService _codeService;
 
+    private readonly string ResetSchemeName = "PasswordResetScheme";
+
     public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailService emailService)
     {
         _userService = userService;
@@ -42,7 +44,7 @@ public class ResetPasswordController : ControllerBase
         long timerStartTime = _codeService.GetEpochTime();
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user == null) return Ok();
-        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code,  timerStartTime, user.EmailVerified);
+        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified);
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -55,7 +57,7 @@ public class ResetPasswordController : ControllerBase
         // return ok no matter if there is a user or not
         return Ok();
     }
-    
+
     /// <summary>
     /// Validates the code entered by the user on the reset password forms. Compares the provided code and email with
     /// the database and if valid creates a temporary session cookie that can be used to reset the users password
@@ -73,29 +75,29 @@ public class ResetPasswordController : ControllerBase
         {
             return BadRequest(new { message = "An email is required" });
         }
-        
+
         var user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return BadRequest(new { message = "Invalid Code" });
-        
+
         long codeEnteredTime = _codeService.GetEpochTime();
         CodeVerificationResult codeVerificationResult =
             _codeService.VerfiyCode(user, codeEnteredTime, validationRequest.Code);
-        
+
         if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
-        
+
         if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
         {
             return BadRequest(new { message = "Invalid Code" });
         }
-        
+
         if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
         {
             var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
             if (userUpdated == null) return Problem();
-            
+
             long codeExpirationTime = _codeService.GetEpochTime() + 300;
             var claims = new List<Claim>
             {
@@ -114,7 +116,7 @@ public class ResetPasswordController : ControllerBase
                 ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
             });
         }
-        
+
         return Ok();
     }
 
@@ -138,12 +140,12 @@ public class ResetPasswordController : ControllerBase
         }
 
         // Authenticate this context based on the password reset scheme
-        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        var result = await HttpContext.AuthenticateAsync(ResetSchemeName);
 
         // Using the results from the authentication, if it is null therefore the password reset has expired
         if (result.Principal == null)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
+            await HttpContext.SignOutAsync(ResetSchemeName);
             return Ok("Code has already expired");
         }
 
@@ -156,7 +158,7 @@ public class ResetPasswordController : ControllerBase
         }
 
         // Sign the user out from the password reset scheme, cancelling the code
-        await HttpContext.SignOutAsync("PasswordResetScheme");
+        await HttpContext.SignOutAsync(ResetSchemeName);
 
         // Retrieve the user from the user service - this is to get the name of the user
         var user = await _userService.GetUserFromEmailAsync(email);
@@ -210,14 +212,14 @@ public class ResetPasswordController : ControllerBase
 
             // Create a dictionary of important values to send in the email, then call function to send email
             var user = await _userService.GetUserFromEmailAsync(userEmail);
-            if (user ==null)
+            if (user == null)
             {
                 return Unauthorized(new
                 {
                     message = "A user with that email does not exist."
                 });
             }
-            
+
             var emailDictionary = new Dictionary<string, string>
             {
                 {"DISPLAY_NAME", user.Email}

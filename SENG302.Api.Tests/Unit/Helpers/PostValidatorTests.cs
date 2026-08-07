@@ -1,3 +1,4 @@
+using SENG302.Api.Helpers.Validators;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
@@ -7,16 +8,14 @@ public class PostValidatorTests
     [Fact]
     public async Task ValidatePostDate_PastDate_ReturnNoErrors()
     {
-        var errors = PostValidator.ValidatePostDate(
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)));
+        var errors = PostValidator.ValidatePostDate(DateTimeOffset.UtcNow.AddDays(-1));
         errors.Count.ShouldBe(0);
     }
 
     [Fact]
     public async Task ValidatePostDate_FutureDate_ReturnCorrectError()
     {
-        var errors = PostValidator.ValidatePostDate(
-            DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var errors = PostValidator.ValidatePostDate(DateTimeOffset.UtcNow.AddDays(1));
         errors.Count.ShouldBe(1);
         errors.ShouldContain("Invalid date, date cannot be in the future");
     }
@@ -26,7 +25,7 @@ public class PostValidatorTests
     {
         var errors = PostValidator.ValidatePostDate(null);
         errors.Count.ShouldBe(1);
-        errors[0].ShouldContain("Invalid date, date must be formatted ");
+        errors[0].ShouldContain("Date is invalid");
     }
 
     [Fact]

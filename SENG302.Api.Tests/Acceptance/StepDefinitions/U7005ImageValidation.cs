@@ -7,6 +7,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -41,8 +42,8 @@ public class U7005ImageValidation
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = new DateOnly(2026, 7, 1),
-            EndDate = new DateOnly(2026, 7, 10),
+            StartDate = DateToDateTimeOffset(2026, 7, 1),
+            EndDate = DateToDateTimeOffset(2026, 7, 10),
             UserId = 1
         });
 
