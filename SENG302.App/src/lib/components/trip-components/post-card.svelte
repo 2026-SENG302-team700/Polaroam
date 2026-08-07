@@ -12,8 +12,6 @@
     function goToPost() {
         goto(resolve(`/home/trips/${post.tripId}/posts/${post.postId}`));
     }
-    
-    console.log(post);
 </script>
 
 <div class="card mb-3">

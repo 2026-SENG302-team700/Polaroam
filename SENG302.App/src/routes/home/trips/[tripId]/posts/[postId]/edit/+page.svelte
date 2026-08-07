@@ -243,7 +243,9 @@
                 errors.photos = data.errors?.photos ?? [];
 
                 if (
-                    errors.content.length === 1 &&
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
                     !errors.date &&
                     errors.generic.length === 0 &&
