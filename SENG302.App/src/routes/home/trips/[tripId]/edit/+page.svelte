@@ -11,7 +11,8 @@
     let errors = $state({
         title: [],
         description: [],
-        date: "",
+        dateOne: "",
+        dateTwo: "",
         generic: "",
     });
 
@@ -29,20 +30,10 @@
         errors = {
             title: [],
             description: [],
-            date: "",
+            dateOne: "",
+            dateTwo: "",
             generic: "",
         };
-    }
-
-    /**
-     * Parse date stored within database to the local format
-     * @param dateString the strin value of the date
-     */
-    function parseLocalDate(dateString: string): Date {
-        const datePart = dateString.split("T")[0];
-        const [year, month, day] = datePart.split("-").map(Number);
-
-        return new Date(year, month - 1, day);
     }
 
     /**
@@ -71,8 +62,9 @@
 
             tripTitle = data.title;
             tripDescription = data.description;
-            startDate = parseLocalDate(data.startDate);
-            endDate = parseLocalDate(data.endDate);
+
+            startDate = new Date(data.startDate);
+            endDate = new Date(data.endDate);
         } catch (err) {
             errors.generic =
                 `Failed to fetch trip: ${err}` || "Failed to fetch trip.";
@@ -99,8 +91,9 @@
                         Id: Number(params.tripId),
                         Title: tripTitle,
                         Description: tripDescription,
-                        StartDate: serializeLocalDate(startDate),
-                        EndDate: serializeLocalDate(endDate),
+                        StartDate:
+                            startDate == null ? null : startDate.toISOString(),
+                        EndDate: endDate == null ? null : endDate.toISOString(),
                     }),
                     credentials: "include",
                 },
@@ -108,9 +101,10 @@
 
             const data = await response.json();
             if (!response.ok) {
-                errors.date = data.errors?.dates?.join(" ") ?? "";
-                errors.title = data.errors?.title ?? "";
-                errors.description = data.errors?.description ?? "";
+                errors.dateOne = data.errors?.dateOne ?? "";
+                errors.dateTwo = data.errors?.dateTwo ?? "";
+                errors.title = data.errors?.title ?? [];
+                errors.description = data.errors?.description ?? [];
 
                 if (data.generic) {
                     errors.generic =
@@ -129,25 +123,6 @@
         } finally {
             loading = false;
         }
-    }
-
-    /**
-     * Serializes a Date object to a string in the format "YYYY-MM-DDT00:00:00".
-     * If the date is null or invalid, returns null.
-     *
-     * @param {Date | null} date - The date to serialize.
-     * @returns {string | null} The serialized date string or null.
-     */
-    function serializeLocalDate(date: Date | null): string | null {
-        if (!date || Number.isNaN(date.getTime())) {
-            return null;
-        }
-
-        const year = date.getFullYear().toString().padStart(4, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const day = date.getDate().toString().padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
     }
 </script>
 
