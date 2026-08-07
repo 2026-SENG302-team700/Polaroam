@@ -17,6 +17,7 @@ public interface IPostService
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
     Task DeletePostByIdAsync(int postId);
+    Task DeleteAllPostOfTrip(int tripId);
     Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
 }
@@ -28,14 +29,15 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
+    private readonly IImageTaggingService _imageTaggingService;
 
-
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService)
+    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService, IImageTaggingService imageTaggingService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -72,6 +74,7 @@ public class PostService : IPostService
         postRequest.Content = postRequest.Content.Trim();
         photos ??= [];
 
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
@@ -107,6 +110,8 @@ public class PostService : IPostService
         {
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
+
+            await GenerateImageTags(photo, file.Id);
         }
 
         // Add location
@@ -300,6 +305,8 @@ public class PostService : IPostService
         {
             var customFile = await _fileService.SaveFileAsync(file, userId);
             customFileIds.Add(customFile.Id);
+
+            await GenerateImageTags(file, customFile.Id);
         }
 
         await AddPhotosToPost(customFileIds, postId);
@@ -371,6 +378,24 @@ public class PostService : IPostService
     }
 
     /// <summary>
+    /// Deletes all posts of a given trip. Used when a trip is deleted.
+    /// </summary>
+    /// <param name="tripId"></param>
+    public async Task DeleteAllPostOfTrip(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var posts = context.Set<Post>().Where(p => p.TripId == tripId).ToList();
+
+        for (int i = 0; i < posts.Count; i++)
+        {
+            await DeletePostByIdAsync(posts[i].PostId);
+        }
+
+    }
+
+
+    /// <summary>
     /// Deletes post photo via file service then removes from photo id list.
     /// </summary>
     /// <param name="postId">The post id containing the image</param>
@@ -394,6 +419,31 @@ public class PostService : IPostService
 
         post.PhotoIds.Remove(photoId);
         await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
+    /// while still allowing the image upload to continue
+    /// </summary>
+    /// <param name="image"></param>
+    /// <param name="imageId"></param>
+    /// <returns></returns>
+    private async Task GenerateImageTags(IFormFile image, int imageId)
+    {
+        try
+        {
+            var tags = await _imageTaggingService.GenerateTagsAsync(image);
+
+            //Save to db in the future
+            Console.WriteLine($"\n\n\n\nGenerated tags for image {imageId}: " + string.Join(", ", tags) + "\n\n\n\n");
+        }
+        catch (Exception ex)
+        {
+            // Tagging cant cause the image uplaod to fail
+            Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
+        }
+
+        // Add queuing later to make sure the tag generation is awaited.
     }
 }
 

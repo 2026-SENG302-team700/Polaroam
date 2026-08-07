@@ -14,13 +14,12 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
-    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry, bool profanityFiltering);
+    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
     Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
-    Task ToggleProfanityFilterAsync(int userId, bool profanityFilter);
 }
 
 public enum UserVerificationResult
@@ -107,26 +106,18 @@ public class UserService : IUserService
         {
             errors[field] = message;
         }
-        
+
         if (string.IsNullOrWhiteSpace(email))
         {
             errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
         }
-        
+
 
         if (string.IsNullOrWhiteSpace(displayName))
         {
             errors["displayName"] = "Display name must be between 3 and 64 characters";
         }
-        
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        var swearList = profanityFilter.DetectAllProfanities(displayName);
 
-        if (swearList.Count > 0)
-        {
-            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
-        }
-        
         if (string.IsNullOrWhiteSpace(country))
         {
             errors["country"] = "Country is required!";
@@ -135,13 +126,13 @@ public class UserService : IUserService
         {
             UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
         }
-        
+
         if (string.IsNullOrWhiteSpace(passwordString))
         {
             errors["password"] =
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
         }
-        
+
         if (string.IsNullOrWhiteSpace(passwordConfirm))
         {
             errors["passwordConfirm"] = "Passwords do not match";
@@ -278,13 +269,11 @@ public class UserService : IUserService
     /// <param name="newEmail">a string of the provided email</param>
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
-    /// <param name="profanityFiltering">a boolean that represents whether profanity filtering is enabled or disabled</param>
     /// <returns>The new user that has been saved in the database</returns>
     public async Task<User?> UpdateUser(int userId,
         string newEmail,
         string newDisplayName,
-        string newCountry,
-        bool profanityFiltering
+        string newCountry
         )
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -317,7 +306,6 @@ public class UserService : IUserService
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
-        user.ProfanityFiltering = profanityFiltering;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
@@ -477,20 +465,6 @@ public class UserService : IUserService
         user.PasswordKey = passwordKey;
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         context.Users.Update(user);
-        await context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Toggles the profanity filter
-    /// </summary>
-    /// <param name="userId">The ID of the user</param>
-    /// <param name="profanityFilter">The requested state of the profanity filter</param>
-    public async Task ToggleProfanityFilterAsync(int userId, bool profanityFilter)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var user = await context.Users.FindAsync(userId);
-        if (user == null) throw new UnauthorizedAccessException("a user with that id does not exist");
-        user.ProfanityFiltering = profanityFilter;
         await context.SaveChangesAsync();
     }
 }

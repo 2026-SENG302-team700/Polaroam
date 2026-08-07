@@ -106,8 +106,7 @@ public class UserController : ControllerBase
                 userId,
                 updateUserRequest.Email,
                 updateUserRequest.DisplayName,
-                updateUserRequest.Country,
-                updateUserRequest.ProfanityFiltering);
+                updateUserRequest.Country);
 
             if (user == null)
             {
@@ -213,7 +212,7 @@ public class UserController : ControllerBase
         await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);
         return Ok();
     }
-    
+
 
     /// <summary>
     /// Gets a user's profile picture and sends it as a form
@@ -248,30 +247,5 @@ public class UserController : ControllerBase
         Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
 
         return File(fileBytes, customFile.MimeType);
-    }
-    
-    /// <summary>
-    /// API Endpoint for toggling the profanity filter on and off.
-    /// </summary>
-    /// <param name="profanityFilter">A boolean with true representing profanity filtering on and false representing off</param>
-    /// <returns>
-    /// Unauthorized - If user is unauthorized to change the profanity filter of the requested user
-    /// Ok - If profanity filter has been set.
-    /// </returns>
-    [Authorize]
-    [HttpPatch("profanity-filter")]
-    public async Task<ActionResult> ToggleProfanityFilter([FromBody] bool profanityFilter)
-    {
-        // get the logged in user id
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized();
-        }
-        
-        var userId = int.Parse(userIdString);
-
-        await _userService.ToggleProfanityFilterAsync(userId, profanityFilter);
-        return Ok();
     }
 }

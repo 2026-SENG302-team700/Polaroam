@@ -161,9 +161,6 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("ProfanityFiltering")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("ProfilePicture")
                         .HasColumnType("integer");
 

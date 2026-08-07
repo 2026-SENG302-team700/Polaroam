@@ -26,13 +26,12 @@ public static class PostValidator
     }
 
     /// <summary>
-    /// given a PostRequest interface and a bool to determine whether profanity is on,
+    /// given a PostRequest interface,
     /// this method invokes validation methods on all post fields to ensure they
-    /// meet ACs, and do not contain profanity. Every violation of the post rules is added
+    /// meet ACs. Every violation of the post rules is added
     /// to a dictionary, and returned, containing all errors.
     /// </summary>
     /// <param name="post"></param>
-    /// <param name="profanityFiltering"></param>
     /// <returns>Dictionary<string, string></returns>
     public static Dictionary<string, List<string>> ValidatePostFields(IPostRequest postRequest, Post? post = null)
     {

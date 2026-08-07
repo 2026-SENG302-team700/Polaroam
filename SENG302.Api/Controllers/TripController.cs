@@ -126,6 +126,7 @@ public class TripController : ControllerBase
             }
 
             await _tripService.DeleteTripByIdAsync(id);
+            await _postService.DeleteAllPostOfTrip(id);
             return Ok();
         }
         catch (ArgumentException)

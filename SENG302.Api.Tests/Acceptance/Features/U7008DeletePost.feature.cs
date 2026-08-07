@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7008DeletePost.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U7008DeletePost.feature.ndjson", 4);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -134,16 +134,16 @@ namespace SENG302.Api.Tests.Acceptance.Features
             await this.TestTearDownAsync();
         }
         
-        [global::Xunit.SkippableFactAttribute(DisplayName="AC2 - Confirm post deletion")]
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC1 - Delete Posts within given trip")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U7008_As Benji I want to delete posts So that I can remove posts that I no longer" +
             " want on Polaroam.")]
-        [global::Xunit.TraitAttribute("Description", "AC2 - Confirm post deletion")]
-        public async global::System.Threading.Tasks.Task AC2_ConfirmPostDeletion()
+        [global::Xunit.TraitAttribute("Description", "AC1 - Delete Posts within given trip")]
+        public async global::System.Threading.Tasks.Task AC1_DeletePostsWithinGivenTrip()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "0";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC2 - Confirm post deletion", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC1 - Delete Posts within given trip", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 3
@@ -157,21 +157,59 @@ namespace SENG302.Api.Tests.Acceptance.Features
             {
                 await this.ScenarioStartAsync();
 #line 4
-        await testRunner.GivenAsync("I have an existing post to delete", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("I am viewing a trip and the trip contains posts", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 5
-        await testRunner.WhenAsync("I confirm deletion of the post", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+        await testRunner.WhenAsync("I delete the tripp", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 6
-        await testRunner.ThenAsync("the post deletion is successful", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+        await testRunner.ThenAsync("the posts are removed", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 7
+        await testRunner.AndAsync("their contents within trip are deleted as well", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC2 - Confirm post deletion")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U7008_As Benji I want to delete posts So that I can remove posts that I no longer" +
+            " want on Polaroam.")]
+        [global::Xunit.TraitAttribute("Description", "AC2 - Confirm post deletion")]
+        public async global::System.Threading.Tasks.Task AC2_ConfirmPostDeletion()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "1";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC2 - Confirm post deletion", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 9
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 10
+        await testRunner.GivenAsync("I have an existing post to delete", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 11
+        await testRunner.WhenAsync("I confirm deletion of the post", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 12
+        await testRunner.ThenAsync("the post deletion is successful", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 13
         await testRunner.AndAsync("the post is removed from the database", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 8
+#line 14
         await testRunner.AndAsync("the post location is removed from the database", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 9
+#line 15
         await testRunner.AndAsync("the trip containing the post remains", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }

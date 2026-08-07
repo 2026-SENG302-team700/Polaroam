@@ -30,25 +30,14 @@ public class TripService : ITripService
     }
 
     /// <summary>
-    /// Gets all trips associated with a user's email and checks for profanity if applicable
+    /// Gets all trips associated with a user's email
     /// </summary>
     /// <param name="userId"></param>
     /// <returns></returns>
     public async Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         var trips = await context.Set<Trip>().Where(t => t.UserId == userId).ToListAsync();
-
-        var user = await _userService.GetUserByIdAsync(userId);
-        // check for profanity filtering
-        if (user?.ProfanityFiltering != true) return trips;
-
-        var profanityFiltering = new ProfanityFilter.ProfanityFilter();
-        foreach (Trip trip in trips)
-        {
-            trip.Title = profanityFiltering.CensorString(trip.Title);
-        }
         return trips;
     }
 
@@ -141,6 +130,7 @@ public class TripService : ITripService
 
         return trip;
     }
+
 
     /// <summary>
     /// Delete the trip from the database
