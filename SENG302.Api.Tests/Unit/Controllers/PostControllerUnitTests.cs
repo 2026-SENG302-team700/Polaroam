@@ -1,11 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using SENG302.Api.Controllers;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
@@ -69,7 +71,7 @@ public class PostControllerUnitTests
             Title = "Updated title",
             Content = "Updated content",
             OsmId = 123,
-            Date = DateTimeOffset.UtcNow.AddDays(-1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
 
@@ -85,7 +87,7 @@ public class PostControllerUnitTests
             Title = "New post",
             Content = "Post content",
             OsmId = 123,
-            Date = DateTimeOffset.UtcNow.AddDays(-1)
+            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
 

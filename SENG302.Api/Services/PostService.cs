@@ -2,7 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
-using SENG302.Api.Helpers.Validators;
+using SENG302.Api.Helpers;
 
 
 namespace SENG302.Api.Services;
@@ -74,7 +74,6 @@ public class PostService : IPostService
         postRequest.Content = postRequest.Content.Trim();
         photos ??= [];
 
-
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
@@ -82,11 +81,11 @@ public class PostService : IPostService
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidator.IsValidFilesize(photo))
+            if (!ImageValidationTools.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
             }
-            else if (!ImageValidator.IsValidMimeType(photo))
+            else if (!ImageValidationTools.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -130,11 +129,11 @@ public class PostService : IPostService
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
-            CreationTime = _timeProvider.GetUtcNow(),
+            creationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
-            LocationName = location.Name,
+            LocationName = location.name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -143,10 +142,10 @@ public class PostService : IPostService
         {
             OsmId = postRequest.OsmId,
             PostId = newPost.PostId,
-            Lat = location.Latitude,
-            Lon = location.Longitude,
-            Name = location.Name,
-            DisplayName = location.DisplayName,
+            Lat = location.lat,
+            Lon = location.lon,
+            Name = location.name,
+            DisplayName = location.display_name,
         });
 
         await context.SaveChangesAsync();
@@ -215,7 +214,7 @@ public class PostService : IPostService
         if (postUpdates.OsmId != post.OsmId)
         {
             var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
-            if (location is null)
+            if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
                 {
@@ -223,7 +222,7 @@ public class PostService : IPostService
                 });
             }
             post.OsmId = postUpdates.OsmId;
-            post.LocationName = location.Name;
+            post.LocationName = location.name;
         }
 
         context.Posts.Update(post);
@@ -278,13 +277,13 @@ public class PostService : IPostService
 
         foreach (var file in files)
         {
-            if (!ImageValidator.IsValidFilesize(file))
+            if (!ImageValidationTools.IsValidFilesize(file))
             {
                 validationErrors.Add($"{file.FileName}: Image too large, maximum file size is 10MB");
                 continue;
             }
 
-            if (!ImageValidator.IsValidMimeType(file))
+            if (!ImageValidationTools.IsValidMimeType(file))
             {
                 validationErrors.Add($"{file.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -376,7 +375,7 @@ public class PostService : IPostService
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
-
+    
     /// <summary>
     /// Deletes all posts of a given trip. Used when a trip is deleted.
     /// </summary>
@@ -391,7 +390,7 @@ public class PostService : IPostService
         {
             await DeletePostByIdAsync(posts[i].PostId);
         }
-
+        
     }
 
 

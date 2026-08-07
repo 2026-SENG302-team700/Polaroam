@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace SENG302.Api.Models.Responses;
 
@@ -9,18 +8,9 @@ namespace SENG302.Api.Models.Responses;
 public class GeoLocationSearchResult
 {
     [Key]
-    [JsonPropertyName("osm_id")]
-    public required long OsmId { get; set; }
-
-    [JsonPropertyName("lat")]
-    public required string Latitude { get; set; }
-
-    [JsonPropertyName("lon")]
-    public required string Longitude { get; set; }
-
-    [JsonPropertyName("name")]
-    public required string Name { get; set; }
-
-    [JsonPropertyName("display_name")]
-    public required string DisplayName { get; set; }
+    public required long osm_id { get; set; }
+    public required string lat { get; set; }
+    public required string lon { get; set; }
+    public required string name { get; set; }
+    public required string display_name { get; set; }
 }
