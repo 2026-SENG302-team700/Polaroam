@@ -33,6 +33,14 @@ public class ResetPasswordUnitTests
             _mockUserService,
             _mockCodeService,
             _mockEmailService);
+        
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IAuthenticationService)).Returns(_mockAuthService);
+        
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { RequestServices = serviceProvider }
+        };
     }
 
     /// <summary>
@@ -121,46 +129,63 @@ public class ResetPasswordUnitTests
 
 
     [Fact]
-    public async Task ValidateResetPasswordCode_ValidEmailAndCode_ReturnsOk()
-    {
-        var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+public async Task ValidateResetPasswordCode_ValidEmailAndCode_ReturnsOk()
+{
+    var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+    var user = new User { DisplayName = "Test", Email = "test@test.com", Country = "NZ"};
 
-        SetupForgotPasswordContext(request.Email, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), request.Code, false);
+    _mockUserService.GetUserFromEmailAsync(request.Email).Returns(user);
+    _mockCodeService.GetEpochTime().Returns(1_000L);
+    _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
+        .Returns(CodeVerificationResult.CodeSuccessful);
+    _mockUserService.UpdateUserOneTimeCode(user.Email, "", 0, true).Returns(user);
 
-        var result = await _controller.ValidateResetPasswordCode(request);
-        result.Result.ShouldBeOfType<OkResult>();
-    }
+    var result = await _controller.ValidateResetPasswordCode(request);
 
-    [Fact]
-    public async Task ValidateResetPasswordCode_IncorrectEmail_ReturnsBadRequest()
-    {
-        var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+    result.Result.ShouldBeOfType<OkResult>();
+}
 
-        SetupForgotPasswordContext("test@example.com", DateTimeOffset.UtcNow.ToUnixTimeSeconds(), request.Code, false);
+[Fact]
+public async Task ValidateResetPasswordCode_IncorrectEmail_ReturnsBadRequest()
+{
+    var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
 
-        var result = await _controller.ValidateResetPasswordCode(request);
-        result.Result.ShouldBeOfType<BadRequestObjectResult>();
-    }
+    _mockUserService.GetUserFromEmailAsync(request.Email).Returns((User)null);
 
-    [Fact]
-    public async Task ValidateResetPasswordCode_IncorrectCode_ReturnsBadRequest()
-    {
-        var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+    var result = await _controller.ValidateResetPasswordCode(request);
 
-        SetupForgotPasswordContext("test@test.com", DateTimeOffset.UtcNow.ToUnixTimeSeconds(), "222222", false);
+    result.Result.ShouldBeOfType<BadRequestObjectResult>();
+}
 
-        var result = await _controller.ValidateResetPasswordCode(request);
-        result.Result.ShouldBeOfType<BadRequestObjectResult>();
-    }
+[Fact]
+public async Task ValidateResetPasswordCode_IncorrectCode_ReturnsBadRequest()
+{
+    var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+    var user = new User { DisplayName = "Test", Email = "test@test.com", Country = "NZ"};
 
-    [Fact]
-    public async Task ValidateResetPasswordCode_TimedOutCode_ReturnsBadRequest()
-    {
-        var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+    _mockUserService.GetUserFromEmailAsync(request.Email).Returns(user);
+    _mockCodeService.GetEpochTime().Returns(1_000L);
+    _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
+        .Returns(CodeVerificationResult.CodeIncorrect);
 
-        SetupForgotPasswordContext("test@test.com", DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400, "111222", true);
+    var result = await _controller.ValidateResetPasswordCode(request);
 
-        var result = await _controller.ValidateResetPasswordCode(request);
-        result.Result.ShouldBeOfType<BadRequestObjectResult>();
-    }
+    result.Result.ShouldBeOfType<BadRequestObjectResult>();
+}
+
+[Fact]
+public async Task ValidateResetPasswordCode_TimedOutCode_ReturnsBadRequest()
+{
+    var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+    var user = new User { DisplayName = "Test", Email = "test@test.com", Country = "NZ"};
+
+    _mockUserService.GetUserFromEmailAsync(request.Email).Returns(user);
+    _mockCodeService.GetEpochTime().Returns(1_000L);
+    _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
+        .Returns(CodeVerificationResult.CodeExpired);
+
+    var result = await _controller.ValidateResetPasswordCode(request);
+
+    result.Result.ShouldBeOfType<BadRequestObjectResult>();
+}
 }
