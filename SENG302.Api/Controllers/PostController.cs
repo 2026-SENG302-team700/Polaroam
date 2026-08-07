@@ -172,7 +172,7 @@ public class PostController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized("You do not have authorisation to upload photos to this post!");
+            return Unauthorized("You do not have authorisation to view the images in this post");
         }
 
         var post = await _postService.GetPostAsync(postId);
