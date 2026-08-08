@@ -3,6 +3,7 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import ClickableImage from "./clickable-image.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import ExpandableErrorDisplay from "$lib/components/forms/expandable-error-display.svelte";
 
     let {
         images = $bindable([]),
@@ -82,6 +83,7 @@
     <p>No image selected</p>
     {@render children?.()}
 {/if}
+<ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
         bind:show={confirmationModalShown}
