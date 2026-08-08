@@ -77,7 +77,7 @@ public class GeoService : IGeoService
             { "osm_ids", $"N{osmId},W{osmId},R{osmId}" },
             { "format", "json" }
         };
-
+        
         var response = await _httpClient.GetAsync($"lookup{q}");
 
         if (!response.IsSuccessStatusCode)

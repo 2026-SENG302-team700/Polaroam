@@ -244,7 +244,9 @@
                 errors.photos = data.errors?.photos ?? [];
 
                 if (
-                    errors.content.length === 1 &&
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
                     !errors.date &&
                     errors.generic.length === 0 &&
@@ -317,7 +319,7 @@
             bind:location
             bind:error={errors.location}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} />
+        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
         <ImageDisplay
             bind:images={files}
             errors={[...errors.photos, ...fileErrors]}

@@ -128,7 +128,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
 
         post.Title.ShouldBe("New post");
         post.TripId.ShouldBe(1);
@@ -168,38 +168,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task AddPhotoToPost_InvalidPostId_ReturnsNull()
-    {
-        var result = await ServiceUnderTest.AddPhotosToPost([1, 2], 1);
-        result.ShouldBeNull();
-    }
-
-    [Fact]
-    public async Task AddPhotoToPost_ValidRequest_ReturnsPost()
-    {
-        await SetupUserAndTrip(1, 1);
-        SetupGeoMock();
-
-        var request = new NewPostRequest
-        {
-            TripId = 1,
-            Title = "New post",
-            Content = "Some description",
-            OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
-        };
-
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
-
-        List<int> photoIds = [1, 2];
-        var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
-
-        updatedPost.ShouldNotBeNull();
-        updatedPost.PhotoIds.ShouldBe(photoIds);
-        updatedPost.PostId.ShouldBe(post.PostId);
-    }
-
-    [Fact]
     public async Task CreateNewPostAsync_InvalidLocation_ThrowsAndDoesNotPersist()
     {
         await SetupUserAndTrip(1, 1);
@@ -215,7 +183,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
+                () => ServiceUnderTest.CreateNewPostAsync(request, 1, [])
             );
 
         exception.Errors["location"]
@@ -244,7 +212,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
+                () => ServiceUnderTest.CreateNewPostAsync(request, 1, [])
             );
 
         exception.Errors.ShouldContainKey("title");
@@ -357,7 +325,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.UpdatePostAsync(request)
+                () => ServiceUnderTest.UpdatePostAsync(request, 1, new List<IFormFile>())
             );
 
         exception.Errors["location"]
@@ -654,7 +622,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.UpdatePostAsync(request)
+                () => ServiceUnderTest.UpdatePostAsync(request, 1, new List<IFormFile>())
             );
 
         exception.Errors["title"]
@@ -705,7 +673,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.UpdatePostAsync(request)
+                () => ServiceUnderTest.UpdatePostAsync(request, 1, new List<IFormFile>())
             );
 
         exception.Errors["date"][0]
