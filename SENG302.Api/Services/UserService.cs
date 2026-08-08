@@ -506,14 +506,20 @@ public class UserService : IUserService
     /// Switches the state of the "AiTaggingEnabled" field in a user.
     /// </summary>
     /// <param name="userId">ID of user toggling AI tagging</param>
+    /// <exception cref="PrivacyPolicyNotAcceptedException">User has not accepted the AI privacy policy</exception>
     public async Task ToggleAiTaggingAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        
-        user!.AiTaggingEnabled = !user.AiTaggingEnabled;
-        
+
+        if (!user!.AcceptedAiPrivacyPolicy)
+        {
+            throw new PrivacyPolicyNotAcceptedException("You must accept the AI privacy policy in order to turn on AI image tagging");
+        }
+
+        user.AiTaggingEnabled = !user.AiTaggingEnabled;
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
     }

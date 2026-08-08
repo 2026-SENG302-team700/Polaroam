@@ -59,16 +59,21 @@ public class UserControllerTests : BaseIntegrationTestFixture
         };
     }
     
-    
-
-    
-    
     private async Task SetupTestUser()
     {
         await AddTestUser();
         SetupUserContext("1", "Test User", "test@example.com");
     }
 
+    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(), ContentType = mimeType
+        };
+    }
+        
     [Fact]
     public async Task UpdateUser_Success_ReturnOk()
     {
@@ -188,17 +193,112 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
     }
     
-    
-
-    
-
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    [Fact]
+    public async Task AcceptPrivacyPolicy_Success_UpdatesAndOk()
     {
-        var stream = new MemoryStream(content);
-        return new FormFile(stream, 0, stream.Length, "file", filename)
+        await AddTestUser();
+
+        var response = await HttpClient.PutAsync("/api/user/accept-policy", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AcceptedAiPrivacyPolicy.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ToggleAiTagging_PolicyAccepted_TogglesAndOk()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
         {
-            Headers = new HeaderDictionary(),
-            ContentType = mimeType
-        };
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "vulad@nispor.md",
+                DisplayName = "Vulad Nispor",
+                PasswordKey = "P4$$word",
+                Country = "MD",
+                AcceptedAiPrivacyPolicy = true
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeTrue();
+    }
+    
+    [Fact] 
+    public async Task ToggleAiTagging_AiTaggingOn_TogglesAndOk()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "vulad@nispor.md",
+                DisplayName = "Vulad Nispor",
+                PasswordKey = "P4$$word",
+                Country = "MD",
+                AcceptedAiPrivacyPolicy = true,
+                AiTaggingEnabled = true
+            });
+            await context.SaveChangesAsync();
+        }
+    
+        var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+    
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleAiTagging_ToggleTwice_AiTaggingDisabledAndOk()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1, 
+                Email = "vulad@nispor.md",
+                DisplayName = "Vulad Nispor",
+                PasswordKey = "P4$$word",
+                Country = "MD",
+                AcceptedAiPrivacyPolicy = true
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var response1 = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+        var response2 = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleAiTagging_PrivacyPolicyNotAccepted_ReturnsForbiddenNoAiToggle()
+    {
+        await AddTestUser();
+
+        var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeFalse();
     }
 }

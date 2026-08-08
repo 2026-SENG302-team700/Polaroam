@@ -298,14 +298,15 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        var acceptedPrivacyPolicy = await _userService.PrivacyPolicyCheckAsync(userId);
-
-        if (!acceptedPrivacyPolicy)
+        try
         {
-            return Forbid();
+            await _userService.ToggleAiTaggingAsync(userId);
         }
-        
-        await _userService.ToggleAiTaggingAsync(userId);
+        catch (PrivacyPolicyNotAcceptedException e)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, e.Message);
+        }
+
         return Ok();
     }
 }
