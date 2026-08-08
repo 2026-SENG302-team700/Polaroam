@@ -257,6 +257,13 @@ public class UserController : ControllerBase
         return File(fileBytes, customFile.MimeType);
     }
 
+    /// <summary>
+    /// Set's a flag in the user that the user has agreed to Polaroam's Privacy Policy.
+    /// </summary>
+    /// <returns>
+    /// Unauthorized: No cookie saved
+    /// Ok: User flagged to have accepted the privacy policy.
+    /// </returns>
     [HttpPut("accept-policy")]
     public async Task<IActionResult> AcceptPrivacyPolicy()
     {
@@ -268,7 +275,37 @@ public class UserController : ControllerBase
         
         var userId = int.Parse(userIdString);
 
-        await _userService.AcceptPrivacyPolicy(userId);
+        await _userService.AcceptPrivacyPolicyAsync(userId);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Endpoint allowing for a user to toggle their AI tagging settings.
+    /// </summary>
+    /// <returns>
+    /// Unauthorized: No cookie saved
+    /// Forbidden: User hasn't accepted the privacy policy yet.
+    /// Ok: Setting has been toggled.
+    /// </returns>
+    [HttpPut("ai-toggle")]
+    public async Task<IActionResult> ToggleAiSetting()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var userId = int.Parse(userIdString);
+
+        var acceptedPrivacyPolicy = await _userService.PrivacyPolicyCheckAsync(userId);
+
+        if (!acceptedPrivacyPolicy)
+        {
+            return Forbid();
+        }
+        
+        await _userService.ToggleAiTaggingAsync(userId);
         return Ok();
     }
 }

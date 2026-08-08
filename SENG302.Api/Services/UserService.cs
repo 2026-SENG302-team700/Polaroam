@@ -20,7 +20,10 @@ public interface IUserService
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
     Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
-    Task AcceptPrivacyPolicy(int userId);
+    Task AcceptPrivacyPolicyAsync(int userId);
+    Task<bool> PrivacyPolicyCheckAsync(int userId);
+    Task ToggleAiTaggingAsync(int userId);
+    Task<bool> UserAiTaggingCheckAsync(int userId);
 }
 
 public enum UserVerificationResult
@@ -473,7 +476,7 @@ public class UserService : IUserService
     /// Sets a flag to show that the user has accepted the AI privacy policy.
     /// </summary>
     /// <param name="userId">User that has accepted the AI privacy policy</param>
-    public async Task AcceptPrivacyPolicy(int userId)
+    public async Task AcceptPrivacyPolicyAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -483,5 +486,56 @@ public class UserService : IUserService
         
         context.Users.Update(user);
         await context.SaveChangesAsync();
+    }
+
+
+    public async Task<bool> PrivacyPolicyCheckAsync(int userId)
+    {
+        User? user = await GetUserByIdAsync(userId);
+        
+        // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Id didn't match any user");
+        }
+
+        return user.AcceptedAiPrivacyPolicy;
+    }
+    
+    /// <summary>
+    /// Switches the state of the "AiTaggingEnabled" field in a user.
+    /// </summary>
+    /// <param name="userId">ID of user toggling AI tagging</param>
+    public async Task ToggleAiTaggingAsync(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        
+        user!.AiTaggingEnabled = !user.AiTaggingEnabled;
+        
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Returns whether or not the user has enabled ai tagging or not.
+    /// </summary>
+    /// <param name="userId">ID of the user being checked for their AI tagging settings</param>
+    /// <returns>
+    /// True: User has AI tagging enabled.
+    /// False: User does not have AI tagging enabled.
+    /// </returns>
+    public async Task<bool> UserAiTaggingCheckAsync(int userId)
+    {
+        User? user = await GetUserByIdAsync(userId);
+        
+        // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Id didn't match any user");
+        }
+
+        return user.AiTaggingEnabled;
     }
 }

@@ -9,6 +9,7 @@ using SENG302.Api.Services;
 using NSubstitute;
 using Shouldly;
 using SENG302.Api.Controllers.UserController;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
@@ -62,8 +63,7 @@ public class UserControllerUnitTests
         var result = await _controller.GetUser();
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var user = okResult.Value.ShouldBeOfType<User>();
-        user.PasswordKey.ShouldBe("---");
+        var user = okResult.Value.ShouldBeOfType<GetUserResponse>();
     }
     
     [Fact]
