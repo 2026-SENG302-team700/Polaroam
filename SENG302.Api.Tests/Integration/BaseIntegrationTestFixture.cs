@@ -83,6 +83,9 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
                 services.RemoveAll<IGeoService>();
                 services.AddSingleton(GeoServiceMock);
+                
+                services.RemoveAll<IImageTaggingService>();
+                services.AddSingleton(ImageTaggingServiceMock);
 
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });

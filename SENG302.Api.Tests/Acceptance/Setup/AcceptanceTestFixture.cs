@@ -18,7 +18,6 @@ public class AcceptanceTestFixture : BaseIntegrationTestFixture
     public new IDbContextFactory<DatabaseContext> DbContextFactory => base.DbContextFactory;
     public IEmailService EmailMock => ServiceProvider.GetRequiredService<IEmailService>();
     public new IGeoService GeoServiceMock => base.GeoServiceMock;
-    public new IImageTaggingService ImageTaggingServiceMock => base.ImageTaggingServiceMock;
 
 
     public AcceptanceTestFixture(WebApplicationFactory<Program> factory) : base(factory)
