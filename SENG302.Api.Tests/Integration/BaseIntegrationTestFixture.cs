@@ -11,6 +11,7 @@ using NSubstitute;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Reqnroll.Assist;
+using SENG302.Api.Services.ImageTagging;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -26,6 +27,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     protected IDbContextFactory<DatabaseContext> DbContextFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
 
     protected IGeoService GeoServiceMock { get; }
+    protected IImageTaggingService ImageTaggingServiceMock { get; }
 
     // As our tests run, time passes, which can make it difficult to check exactly when something happened.
     // For this reason, we fake (similar to mocking) our time provider, effectively freezing time while we run our tests.
@@ -44,6 +46,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         GeoServiceMock = Substitute.For<IGeoService>();
+        ImageTaggingServiceMock = Substitute.For<IImageTaggingService>();
 
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();

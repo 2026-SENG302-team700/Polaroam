@@ -1,4 +1,4 @@
-namespace SENG302.Api.Services;
+namespace SENG302.Api.Services.ImageTagging;
 
 public class ImageTaggingBackgroundService : BackgroundService
 {

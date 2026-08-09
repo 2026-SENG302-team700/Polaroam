@@ -1,6 +1,8 @@
 using System.Threading.Channels;
 using SENG302.Api.Models.Jobs;
 
+namespace SENG302.Api.Services.ImageTagging;
+
 public interface IImageTaggingQueue
 {
     ValueTask QueueImageTaggingAsync(ImageTaggingJob job);

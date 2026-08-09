@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.ImageTagging;
 
 
 namespace SENG302.Api.Services;
