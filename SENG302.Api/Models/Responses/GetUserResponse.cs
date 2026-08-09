@@ -18,5 +18,7 @@ public class GetUserResponse
 
     public float ProfilePictureZoom { get; set; } = 1;
     
-    public bool AcceptedAiPrivacyPolicy { get; set; } = false;
+    public bool AcceptedAiPrivacyPolicy { get; set; }
+    
+    public bool AiTagging { get; set; }
 }

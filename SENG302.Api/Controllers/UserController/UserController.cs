@@ -63,6 +63,7 @@ public class UserController : ControllerBase
             ProfilePictureOffsetX = user.ProfilePictureOffsetX,
             ProfilePictureOffsetY = user.ProfilePictureOffsetY,
             AcceptedAiPrivacyPolicy = user.AcceptedAiPrivacyPolicy,
+            AiTagging = user.AiTaggingEnabled
         });
     }
 

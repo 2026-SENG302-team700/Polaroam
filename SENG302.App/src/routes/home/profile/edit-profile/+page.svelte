@@ -190,6 +190,7 @@
             displayName = data.displayName;
             country = data.country;
             userAcceptedPrivacyPolicy = data.acceptedAiPrivacyPolicy;
+            aiToggle = data.aiTagging;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -234,8 +235,19 @@
             );
 
             if (response.ok) {
-                aiToggle = true;
                 userAcceptedPrivacyPolicy = true;
+                const result = await toggleAiTaggingOnBackend();
+
+                if (result.success) {
+                    aiToggle = true;
+                } else {
+                    addToast(
+                        result.message || "Failed to enable AI tagging.",
+                        "error",
+                    );
+                }
+            } else {
+                addToast("Failed to accept privacy policy.", "error");
             }
         } catch (err) {
             addToast((err as Error).message);
@@ -505,15 +517,53 @@
         }
     }
 
-    async function updateAiToggle(aiToggleState: boolean) {
+    /**
+     * Sends a request to the backend to toggle AI tagging setting.
+     */
+    async function toggleAiTaggingOnBackend(): Promise<{
+        success: boolean;
+        message?: string;
+    }> {
         try {
-            // implement api call to backend.
-            if (!userAcceptedPrivacyPolicy) {
-                aiToggle = false;
-                privacyPolicyModalShown = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/ai-toggle` as any),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                },
+            );
+
+            if (response.ok) {
+                return { 
+                    success: true 
+                };
             }
-        } catch (error) {
-            addToast("Failed to update AI tagging preference.", "error");
+
+            const message = await response.text().catch(() => "");
+            return { 
+                success: false, 
+                message 
+            };
+        } catch (err) {
+            return { 
+                success: false
+            };
+        }
+    }
+
+    async function updateAiToggle(aiToggleState: boolean) {
+        if (!userAcceptedPrivacyPolicy) {
+            aiToggle = false;
+            privacyPolicyModalShown = true;
+            return;
+        }
+
+        const result = await toggleAiTaggingOnBackend();
+        if (!result.success) {
+            addToast(
+                result.message || "Failed to update AI tagging preference.",
+                "error",
+            );
             aiToggle = !aiToggleState;
         }
     }
