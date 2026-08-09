@@ -405,7 +405,6 @@ public class PostService : IPostService
             // Tagging cant cause the image uplaod to fail
             Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
         }
-
         // Add queuing later to make sure the tag generation is awaited.
     }
 }
