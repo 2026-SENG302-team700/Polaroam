@@ -113,7 +113,7 @@ sonarqube-report:
 
       # begin report analysis from test jobs
     - dotnet sonarscanner begin /k:"$SONAR_PROJECT_KEY" /d:sonar.host.url="https://sonarqube.csse.canterbury.ac.nz"
-      /d:sonar.token="$SONARQUBE_TOKEN" /d:sonar.cs.opencover.reportPaths="SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml"
+      /d:sonar.token="$SONARQUBE_TOKEN" /d:sonar.cs.opencover.reportsPaths="SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml"
 
     # build required for sonarqube to analyse compiled output
     - dotnet build SENG302.Api/SENG302.Api.csproj -c Release

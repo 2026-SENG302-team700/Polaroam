@@ -3,7 +3,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { uploadPhotos } from "$lib/posts/images";
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
@@ -62,6 +61,7 @@
     });
     let content = $state("");
     let files: File[] | null | undefined = $state([]);
+    let fileErrors: string[] = $state([]);
     let noContentAllowed = $state(false);
     let showConfirmationModal = $state(false);
 
@@ -107,7 +107,9 @@
                 errors.generic = data.message ?? "";
                 errors.photos = data.errors?.photos ?? [];
                 if (
-                    errors.content.length === 1 &&
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
                     !errors.date &&
@@ -165,13 +167,17 @@
             bind:location
             bind:error={errors.location}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay 
-                bind:images={files} 
-                letDelete={true} 
-                errors="{errors.photos}"
+        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
+        <ImageDisplay
+                bind:images={files}
+                letDelete={true}
+                errors={[...errors.photos, ...fileErrors]}
         >
-            <ImagePicker bind:filesList={files} errors={errors.photos} />
+            <ImagePicker
+                bind:filesList={files}
+                errors={errors.photos}
+                bind:fileErrors
+            />
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">

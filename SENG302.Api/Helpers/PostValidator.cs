@@ -104,11 +104,18 @@ public class PostValidator
     /// <returns>The errors</returns>
     public static List<string> ValidatePostContent(string content, bool noContentAllowed)
     {
+        var errors = new List<string>();
 
         if (content.Length == 0 && (!noContentAllowed))
         {
-            return ["Post contains no content, are you sure you want to create post?"];
+            errors.Add("Post contains no content, are you sure you want to create post?");
         }
-        return [];
+
+        if (content.Length > 8196)
+        {
+            errors.Add("Content needs to be less than 8196 characters long");
+        }
+
+        return errors;
     }
 }

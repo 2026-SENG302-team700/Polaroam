@@ -125,6 +125,20 @@ public class UserCredentialsValidatorTests : DatabaseUnitTestFixture
     }
 
     [Theory]
+    [InlineData("John")] // Sanity Check
+    [InlineData("Mary Jane")] // Spaces
+    [InlineData("Anne-Marie")] // Hyphens
+    [InlineData("D'Arcy")] // Apostrophes
+    [InlineData("Amy")] // 3 chars
+    [InlineData("ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKL")] // 64 chars
+    [InlineData("'''")] // All Apostrophes (no Unicode letters)
+    public void ValidateDisplayName_ValidName_NoErrors(string name)
+    {
+        var errors = UserCredentialsValidator.ValidateDisplayName(name);
+        errors.ShouldBeEmpty();
+    }
+
+    [Theory]
     [InlineData("a")]
     [InlineData("bc")]
     [InlineData("this-name-is-definitely-longer-than-sixty-four-characters-for-testing-purposes")]
