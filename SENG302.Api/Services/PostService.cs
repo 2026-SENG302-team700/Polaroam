@@ -432,15 +432,25 @@ public class PostService : IPostService
     {
         try
         {
-            await _imageTaggingQueue.QueueImageTaggingAsync(new ImageTaggingJob(image, imageId));
+            var ms = new MemoryStream();
+            await image.CopyToAsync(ms);
+            ms.Position = 0;
+
+            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = image.ContentType
+            };
+
+            await _imageTaggingQueue.QueueImageTaggingAsync(
+                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
+            );
         }
         catch (Exception ex)
         {
             // Tagging cant cause the image uplaod to fail
             Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
         }
-
-        // Add queuing later to make sure the tag generation is awaited.
     }
 }
 
