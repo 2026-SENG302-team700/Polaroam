@@ -90,7 +90,7 @@ public class AlbumService: IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<String> photoErrors = ValidateAlbumImages(photos);
+        List<string> photoErrors = ValidateAlbumImages(photos);
         
         if (errors.Count > 0)
         {
