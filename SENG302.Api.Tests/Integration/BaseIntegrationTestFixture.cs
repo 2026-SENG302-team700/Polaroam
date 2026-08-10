@@ -12,6 +12,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Reqnroll.Assist;
 using SENG302.Api.Services.ImageTagging;
+using Microsoft.Extensions.Hosting;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -27,7 +28,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     protected IDbContextFactory<DatabaseContext> DbContextFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
 
     protected IGeoService GeoServiceMock { get; }
-    protected IImageTaggingService ImageTaggingServiceMock { get; }
+    protected IImageTaggingQueue ImageTaggingQueueMock { get; }
 
     // As our tests run, time passes, which can make it difficult to check exactly when something happened.
     // For this reason, we fake (similar to mocking) our time provider, effectively freezing time while we run our tests.
@@ -46,8 +47,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         GeoServiceMock = Substitute.For<IGeoService>();
-        ImageTaggingServiceMock = Substitute.For<IImageTaggingService>();
-
+        ImageTaggingQueueMock = Substitute.For<IImageTaggingQueue>();
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
@@ -83,9 +83,20 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
                 services.RemoveAll<IGeoService>();
                 services.AddSingleton(GeoServiceMock);
-                
-                services.RemoveAll<IImageTaggingService>();
-                services.AddSingleton(ImageTaggingServiceMock);
+
+                services.RemoveAll<IImageTaggingQueue>();
+                services.AddSingleton(ImageTaggingQueueMock);
+
+                // replace the real image tagging background service with a mock
+                // so that we don't actually try to tag images in our tests
+                var imageTaggingWorker = services.FirstOrDefault(descriptor =>
+                    descriptor.ServiceType == typeof(IHostedService) &&
+                    descriptor.ImplementationType == typeof(ImageTaggingBackgroundService));
+
+                if (imageTaggingWorker != null)
+                {
+                    services.Remove(imageTaggingWorker);
+                }
 
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
