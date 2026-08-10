@@ -8,8 +8,8 @@
     type TripFormErrors = {
         title: string[];
         description: string[];
-        dateOne: string,
-        dateTwo: string,
+        dateOne: string;
+        dateTwo: string;
         generic: string;
     };
 
@@ -42,7 +42,6 @@
         loading?: boolean;
         onSubmit: () => void | Promise<void>;
     } = $props();
-    
 </script>
 
 <div class="container max-w-md">
@@ -50,30 +49,38 @@
         <CancelButton path={cancelPath} />
         <h1 class="text-center mb-4">{heading}</h1>
     </div>
-    
+
     <form>
-        <TitleForm bind:name={title} type="trip" errors={errors.title} {loading} />
-        <DescriptionForm bind:description errors={errors.description} {loading} />
+        <TitleForm
+            bind:name={title}
+            type="trip"
+            errors={errors.title}
+            {loading}
+        />
+        <DescriptionForm
+            bind:description
+            errors={errors.description}
+            {loading}
+        />
 
         <div class="date-picker-wrapper">
             <div class="date-field">
                 <label for="trip-start-date">Start Date</label>
                 <Datepicker
-                        bind:value={startDate}
-                        disabled={loading}
-                        error={errors.dateOne}
+                    bind:value={startDate}
+                    disabled={loading}
+                    error={errors.dateOne}
                 />
             </div>
             <div class="date-field">
                 <label for="trip-end-date">End Date</label>
                 <Datepicker
-                        bind:value={endDate}
-                        disabled={loading}
-                        error={errors.dateTwo}
+                    bind:value={endDate}
+                    disabled={loading}
+                    error={errors.dateTwo}
                 />
             </div>
         </div>
-        
 
         {#if errors.generic}
             <div class="alert alert-danger" role="alert">
@@ -85,7 +92,6 @@
             <CreationButton onClick={onSubmit} text={submitText} />
         </div>
     </form>
-    
 </div>
 
 <style>

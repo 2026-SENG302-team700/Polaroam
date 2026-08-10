@@ -46,19 +46,19 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         Title = "Test Trip",
         Description = "Test",
-        StartDate = new DateOnly(2025, 11, 21),
-        EndDate = new DateOnly(2025, 12, 21)
+        StartDate = DateToDateTimeOffset(2025, 11, 21),
+        EndDate = DateToDateTimeOffset(2025, 12, 21)
     };
-    
+
     private void SetupGeoMock()
     {
         GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
@@ -81,8 +81,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "T",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -113,8 +113,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -132,8 +132,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 10, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 10, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -158,7 +158,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Invalid date, date must be formatted ");
+        message.ShouldContain("Date is invalid");
     }
 
 
@@ -190,7 +190,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
         responseMessage.ShouldBe("");
     }
-    
+
     private MultipartFormDataContent BuildPostForm(
         long osmId = 1,
         IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
@@ -211,14 +211,14 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         return content;
     }
-    
+
     [Fact]
     public async Task DeleteTrip_TripExistsTripPostExists_Success()
     {
         await AddTestUser();
         var postResponse = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
         var trip = await postResponse.Content.ReadFromJsonAsync<Trip>();
-        
+
         SetupGeoMock();
 
         var invalidBytesOne = new byte[] { 0x00, 0x01, 0x02, 0x03 };
@@ -286,8 +286,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         Assert.NotNull(createdTrip);
 
-        var newStartDate = new DateOnly(2026, 8, 1);
-        var newEndDate = new DateOnly(2026, 8, 10);
+        var newStartDate = DateToDateTimeOffset(2026, 8, 1);
+        var newEndDate = DateToDateTimeOffset(2026, 8, 10);
 
         var request = new UpdateTripRequest
         {
