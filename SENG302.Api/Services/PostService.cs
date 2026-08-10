@@ -32,10 +32,10 @@ public class PostService : IPostService
     private readonly IImageTaggingQueue _imageTaggingQueue;
 
     public PostService(
-        IDbContextFactory<DatabaseContext> dbContextFactory, 
-        TimeProvider timeProvider, 
-        IFileService fileService, 
-        IGeoService geoService, 
+        IDbContextFactory<DatabaseContext> dbContextFactory,
+        TimeProvider timeProvider,
+        IFileService fileService,
+        IGeoService geoService,
         IImageTaggingQueue imageTaggingQueue)
     {
         _dbContextFactory = dbContextFactory;
@@ -73,8 +73,8 @@ public class PostService : IPostService
     /// <param name="photos"></param>
     /// <returns>the newly created postItem</returns>
     public async Task<Post> CreateNewPostAsync(
-        NewPostRequest postRequest, 
-        int userId, 
+        NewPostRequest postRequest,
+        int userId,
         List<IFormFile>? photos = null
         )
     {
@@ -199,8 +199,8 @@ public class PostService : IPostService
     /// <param name="photos"></param>
     /// <returns>The updated Post item</returns>
     public async Task<Post?> UpdatePostAsync(
-        UpdatePostRequest postUpdates, 
-        int userId, 
+        UpdatePostRequest postUpdates,
+        int userId,
         List<IFormFile>? photos = null
         )
     {
@@ -208,10 +208,10 @@ public class PostService : IPostService
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
         photos ??= [];
-        
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postUpdates);
-        
+
         // Image Validation
         var photoErrors = new List<string>();
         foreach (var photo in photos)
@@ -244,10 +244,10 @@ public class PostService : IPostService
         {
             throw new KeyNotFoundException();
         }
-        
+
         // Location Validation
         GeoLocationSearchResult? location = null;
-        
+
         if (postUpdates.OsmId != post.OsmId)
         {
             location = await _geoService.GetLocationAsync(postUpdates.OsmId);
@@ -259,7 +259,7 @@ public class PostService : IPostService
                 });
             }
         }
-        
+
         // Add / Remove Photos 
         List<int> customFileIds = [];
 
@@ -267,8 +267,10 @@ public class PostService : IPostService
         {
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
+
+            await GenerateImageTags(photo, customFile.Id);
         }
-        
+
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
@@ -276,7 +278,7 @@ public class PostService : IPostService
         post.OsmId = postUpdates.OsmId;
         post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.name : post.LocationName;
-        
+
         // Save Changes
         context.Posts.Update(post);
         await context.SaveChangesAsync();
@@ -341,7 +343,7 @@ public class PostService : IPostService
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Deletes all posts of a given trip. Used when a trip is deleted.
     /// </summary>
@@ -356,7 +358,7 @@ public class PostService : IPostService
         {
             await DeletePostByIdAsync(posts[i].PostId);
         }
-        
+
     }
 
 

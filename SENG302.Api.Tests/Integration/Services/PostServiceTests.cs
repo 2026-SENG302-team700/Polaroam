@@ -974,8 +974,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var post = await ServiceUnderTest.CreateNewPostAsync(
             request,
-            [image],
-            1
+            1,
+            [image]
         );
 
         post.PhotoIds.ShouldNotBeNull();
@@ -1004,7 +1004,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
         };
 
-        await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
+        await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
 
         await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
             Arg.Any<ImageTaggingJob>()
@@ -1034,8 +1034,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var post = await ServiceUnderTest.CreateNewPostAsync(
             request,
-            [image],
-            1
+            1,
+            [image]
         );
 
         ImageTaggingQueueMock.ClearReceivedCalls();
@@ -1050,7 +1050,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = post.Date
         };
 
-        await ServiceUnderTest.UpdatePostAsync(updateRequest);
+        await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, []);
 
         await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
             Arg.Any<ImageTaggingJob>()
@@ -1072,7 +1072,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
 
         var updateRequest = new UpdatePostRequest
         {
@@ -1084,8 +1084,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = post.Date
         };
 
-        await ServiceUnderTest.UpdatePostAsync(updateRequest);
-
         byte[] pngBytes =
             [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
@@ -1095,18 +1093,15 @@ public class PostServiceTests : BaseIntegrationTestFixture
             "image/png"
         );
 
-        var uploadedImageIds =
-            await ServiceUnderTest.UploadPhotosToPostAsync(
-                [image],
-                post.PostId,
-                1
-            );
+        var updatedPost = await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, [image]);
 
-        uploadedImageIds.Count.ShouldBe(1);
+        updatedPost.ShouldNotBeNull();
+        updatedPost.PhotoIds.ShouldNotBeNull();
+        updatedPost.PhotoIds.Count.ShouldBe(1);
 
         await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
             Arg.Is<ImageTaggingJob>(job =>
-                job.ImageId == uploadedImageIds[0] &&
+                job.ImageId == updatedPost.PhotoIds[0] &&
                 job.Image.FileName == "test.png" &&
                 job.Image.ContentType == "image/png")
         );
