@@ -3,6 +3,8 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.ImageTagging;
 
 
 namespace SENG302.Api.Services;
@@ -27,20 +29,20 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingService _imageTaggingService;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
 
     public PostService(
-        IDbContextFactory<DatabaseContext> dbContextFactory, 
-        TimeProvider timeProvider, 
-        IFileService fileService, 
-        IGeoService geoService, 
-        IImageTaggingService imageTaggingService)
+        IDbContextFactory<DatabaseContext> dbContextFactory,
+        TimeProvider timeProvider,
+        IFileService fileService,
+        IGeoService geoService,
+        IImageTaggingQueue imageTaggingQueue)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
-        _imageTaggingService = imageTaggingService;
+        _imageTaggingQueue = imageTaggingQueue;
     }
 
     /// <summary>
@@ -71,8 +73,8 @@ public class PostService : IPostService
     /// <param name="photos"></param>
     /// <returns>the newly created postItem</returns>
     public async Task<Post> CreateNewPostAsync(
-        NewPostRequest postRequest, 
-        int userId, 
+        NewPostRequest postRequest,
+        int userId,
         List<IFormFile>? photos = null
         )
     {
@@ -197,8 +199,8 @@ public class PostService : IPostService
     /// <param name="photos"></param>
     /// <returns>The updated Post item</returns>
     public async Task<Post?> UpdatePostAsync(
-        UpdatePostRequest postUpdates, 
-        int userId, 
+        UpdatePostRequest postUpdates,
+        int userId,
         List<IFormFile>? photos = null
         )
     {
@@ -206,10 +208,10 @@ public class PostService : IPostService
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
         photos ??= [];
-        
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postUpdates);
-        
+
         // Image Validation
         var photoErrors = new List<string>();
         foreach (var photo in photos)
@@ -242,10 +244,10 @@ public class PostService : IPostService
         {
             throw new KeyNotFoundException();
         }
-        
+
         // Location Validation
         GeoLocationSearchResult? location = null;
-        
+
         if (postUpdates.OsmId != post.OsmId)
         {
             location = await _geoService.GetLocationAsync(postUpdates.OsmId);
@@ -257,7 +259,7 @@ public class PostService : IPostService
                 });
             }
         }
-        
+
         // Add / Remove Photos 
         List<int> customFileIds = [];
 
@@ -265,8 +267,10 @@ public class PostService : IPostService
         {
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
+
+            await GenerateImageTags(photo, customFile.Id);
         }
-        
+
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
@@ -274,7 +278,7 @@ public class PostService : IPostService
         post.OsmId = postUpdates.OsmId;
         post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.name : post.LocationName;
-        
+
         // Save Changes
         context.Posts.Update(post);
         await context.SaveChangesAsync();
@@ -339,7 +343,7 @@ public class PostService : IPostService
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Deletes all posts of a given trip. Used when a trip is deleted.
     /// </summary>
@@ -354,7 +358,7 @@ public class PostService : IPostService
         {
             await DeletePostByIdAsync(posts[i].PostId);
         }
-        
+
     }
 
 
@@ -395,18 +399,25 @@ public class PostService : IPostService
     {
         try
         {
-            var tags = await _imageTaggingService.GenerateTagsAsync(image);
+            var ms = new MemoryStream();
+            await image.CopyToAsync(ms);
+            ms.Position = 0;
 
-            //Save to db in the future
-            Console.WriteLine($"\n\n\n\nGenerated tags for image {imageId}: " + string.Join(", ", tags) + "\n\n\n\n");
+            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = image.ContentType
+            };
+
+            await _imageTaggingQueue.QueueImageTaggingAsync(
+                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
+            );
         }
         catch (Exception ex)
         {
             // Tagging cant cause the image uplaod to fail
             Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
         }
-
-        // Add queuing later to make sure the tag generation is awaited.
     }
 }
 

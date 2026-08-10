@@ -18,4 +18,7 @@ public class CustomFile
     public required string MimeType { get; set; }
 
     public long FileSize { get; set; }
+
+    public List<string>? Tags { get; set; }
+
 }

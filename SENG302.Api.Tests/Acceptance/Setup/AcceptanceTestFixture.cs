@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.Extensions.DependencyInjection;
+using SENG302.Api.Services.ImageTagging;
 using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Acceptance.Setup;
