@@ -3,6 +3,8 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using SENG302.Api.Helpers;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.ImageTagging;
 
 public interface IAlbumService
 {
@@ -15,13 +17,13 @@ public class AlbumService: IAlbumService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingService _imageTaggingService;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
     public AlbumService(IFileService fileService, 
                         IDbContextFactory<DatabaseContext> dbContextFactory,
-                        IImageTaggingService imageTaggingService)
+                        IImageTaggingQueue imageTaggingQueue)
     {
         _fileService = fileService;
-        _imageTaggingService = imageTaggingService;
+        _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
     }
     private static List<String> ValidateAlbumImages(List<IFormFile> photos)
@@ -116,13 +118,18 @@ public class AlbumService: IAlbumService
 
             try
             {
-                var tags = await _imageTaggingService.GenerateTagsAsync(photo);
+                FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
+
+                await _imageTaggingQueue.QueueImageTaggingAsync(
+                    new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
+                );
             }
             catch (Exception ex)
             {
+                // Tagging cant cause the image uplaod to fail
                 Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
-            }    
-        }
+            }
+        }  
 
         await context.SaveChangesAsync();
 

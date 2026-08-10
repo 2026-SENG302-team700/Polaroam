@@ -399,15 +399,7 @@ public class PostService : IPostService
     {
         try
         {
-            var ms = new MemoryStream();
-            await image.CopyToAsync(ms);
-            ms.Position = 0;
-
-            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = image.ContentType
-            };
+            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
 
             await _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
