@@ -20,7 +20,7 @@
             displayName: "",
         }),
         error = $bindable(""),
-        loading = false,
+        loading = $bindable(false),
     } = $props();
 
     let isOpen = $state(false);
@@ -121,12 +121,14 @@
             oninput={handleInput}
             onkeydown={handleKeydown}
             onblur={() => setTimeout(() => (isOpen = false), 200)}
+            disabled={loading}
         />
         <button
             type="button"
             title="search your trips using the provided query."
             class="btn btn-outline-secondary"
             onclick={getSearchResults}
+            disabled={loading}
         >
             {#if loading}
                 <div
