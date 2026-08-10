@@ -5,15 +5,22 @@ using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 using SENG302.Api.Models.Responses;
-using Microsoft.AspNetCore.Http.HttpResults;
 using System.Net.Http.Headers;
 using NSubstitute;
+using Microsoft.EntityFrameworkCore;
+using Xunit.Abstractions;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class TripControllerTests : BaseIntegrationTestFixture
 {
-    public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
+    private ITestOutputHelper _output;
+
+    public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
+        base(webApplicationFactory)
+    {
+        _output = output;
+    }
 
     /// <summary>
     /// Creates and adds to the database a test user for these tests
@@ -359,5 +366,62 @@ public class TripControllerTests : BaseIntegrationTestFixture
         updatedTrip.StartDate.ShouldBe(createdTrip.StartDate);
         updatedTrip.EndDate.ShouldBe(createdTrip.EndDate);
         updatedTrip.UserId.ShouldBe(createdTrip.UserId);
+    }
+    
+    [Fact]
+    public async Task GetTripLocations_MultipleTripsWithPosts_ReturnsOnlyLocationsForGivenTrip()
+    {
+        await AddTestUser();
+
+        // Create two trips via the API so they're persisted with a valid user
+        var trip1Response = await HttpClient.PostAsJsonAsync("/api/trip", tripTestData);
+        var trip1 = await trip1Response.Content.ReadFromJsonAsync<Trip>();
+        Assert.NotNull(trip1);
+
+        var trip2Response = await HttpClient.PostAsJsonAsync("/api/trip", new NewTripRequest
+        {
+            Title = "Second Trip",
+            Description = "Test",
+            StartDate = new DateOnly(2025, 11, 21),
+            EndDate = new DateOnly(2025, 12, 21)
+        });
+        var trip2 = await trip2Response.Content.ReadFromJsonAsync<Trip>();
+        Assert.NotNull(trip2);
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Locations.AddRange(
+            new Location
+                { OsmId = 1, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 1 },
+            new Location
+                { OsmId = 2, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 2 },
+            new Location
+                { OsmId = 3, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 3 }
+        );
+
+        context.Posts.AddRange(
+            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content"},
+            new Post { PostId = 2, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
+            new Post { PostId = 3, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
+        );
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _output.WriteLine(ex.InnerException?.Message ?? ex.Message);
+            throw;
+        }
+        
+
+        var response = await HttpClient.GetAsync($"/api/trip/locations/{trip1.Id}");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var locations = await response.Content.ReadFromJsonAsync<List<Location>>();
+
+        // Assert
+        Assert.NotNull(locations);
+        locations.Count.ShouldBe(2);
+        locations.ShouldNotContain(l => l.OsmId == 3);
     }
 }

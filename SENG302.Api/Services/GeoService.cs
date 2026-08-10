@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
+using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
@@ -17,10 +20,12 @@ public interface IGeoService
 public class GeoService : IGeoService
 {
     private readonly HttpClient _httpClient;
+    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
-    public GeoService(HttpClient httpClient)
+    public GeoService(HttpClient httpClient, IDbContextFactory<DatabaseContext> dbContextFactory)
     {
         _httpClient = httpClient;
+        _dbContextFactory = dbContextFactory;
     }
     
     /// <summary>
@@ -89,4 +94,5 @@ public class GeoService : IGeoService
 
         return results.FirstOrDefault();
     }
+    
 }

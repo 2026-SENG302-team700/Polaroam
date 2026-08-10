@@ -16,7 +16,6 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class UserControllerTests : BaseIntegrationTestFixture
 {
-    private readonly IEmailService _mockEmailService;
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
     private readonly IFileService _mockFileService;
     private readonly UserController _controller;
@@ -25,12 +24,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
     public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
         _mockFileService = Substitute.For<IFileService>();
         _controller =
-            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService, _mockEmailService);
+            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService);
     }
-    
+
 
     private async Task AddTestUser()
     {
@@ -46,7 +44,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
     }
-    
+
     private void SetupUserContext(string userId, string name, string email)
     {
         var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId), new Claim(ClaimTypes.Name, name), new Claim(ClaimTypes.Email, email) };
@@ -58,11 +56,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
-    
-    
 
-    
-    
+
+
+
+
     private async Task SetupTestUser()
     {
         await AddTestUser();
@@ -187,10 +185,10 @@ public class UserControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
     }
-    
-    
 
-    
+
+
+
 
     private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
     {
