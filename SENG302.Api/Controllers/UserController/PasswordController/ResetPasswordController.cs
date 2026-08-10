@@ -6,6 +6,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using SENG302.Api.Filters;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.Email;
+
 namespace SENG302.Api.Controllers.UserController.PasswordController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -15,14 +18,14 @@ namespace SENG302.Api.Controllers.UserController.PasswordController;
 public class ResetPasswordController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IEmailService _emailService;
+    private readonly IEmailQueue _emailQueue;
     private readonly IOneTimeCodeService _codeService;
 
-    public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailService emailService)
+    public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailQueue emailQueue)
     {
         _userService = userService;
         _codeService = codeService;
-        _emailService = emailService;
+        _emailQueue = emailQueue;
     }
 
     /// <summary>
@@ -42,7 +45,7 @@ public class ResetPasswordController : ControllerBase
         long timerStartTime = _codeService.GetEpochTime();
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user == null) return Ok();
-        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code,  timerStartTime, user.EmailVerified);
+        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified);
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -50,12 +53,13 @@ public class ResetPasswordController : ControllerBase
             {"MINUTES", "5"},
             {"CODE", code}
         };
-        await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
+
+        await _emailQueue.QueueEmailAsync(new EmailJob(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary));
 
         // return ok no matter if there is a user or not
         return Ok();
     }
-    
+
     /// <summary>
     /// Validates the code entered by the user on the reset password forms. Compares the provided code and email with
     /// the database and if valid creates a temporary session cookie that can be used to reset the users password
@@ -73,29 +77,29 @@ public class ResetPasswordController : ControllerBase
         {
             return BadRequest(new { message = "An email is required" });
         }
-        
+
         var user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return BadRequest(new { message = "Invalid Code" });
-        
+
         long codeEnteredTime = _codeService.GetEpochTime();
         CodeVerificationResult codeVerificationResult =
             _codeService.VerfiyCode(user, codeEnteredTime, validationRequest.Code);
-        
+
         if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
-        
+
         if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
         {
             return BadRequest(new { message = "Invalid Code" });
         }
-        
+
         if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
         {
             var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
             if (userUpdated == null) return Problem();
-            
+
             long codeExpirationTime = _codeService.GetEpochTime() + 300;
             var claims = new List<Claim>
             {
@@ -114,7 +118,7 @@ public class ResetPasswordController : ControllerBase
                 ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
             });
         }
-        
+
         return Ok();
     }
 
@@ -168,13 +172,7 @@ public class ResetPasswordController : ControllerBase
             {
                 {"DISPLAY_NAME", user.DisplayName}
             };
-
-            await _emailService.SendEmailAsync(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
-        }
-        else
-        {
-            // Hacky, but to disguise that this email does not exist
-            Thread.Sleep(4000);
+            await _emailQueue.QueueEmailAsync(new EmailJob(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary));
         }
 
         return Ok("Code cancelled");
@@ -210,19 +208,19 @@ public class ResetPasswordController : ControllerBase
 
             // Create a dictionary of important values to send in the email, then call function to send email
             var user = await _userService.GetUserFromEmailAsync(userEmail);
-            if (user ==null)
+            if (user == null)
             {
                 return Unauthorized(new
                 {
                     message = "A user with that email does not exist."
                 });
             }
-            
+
             var emailDictionary = new Dictionary<string, string>
             {
                 {"DISPLAY_NAME", user.Email}
             };
-            await _emailService.SendEmailAsync(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary);
+            await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary));
             return Ok();
         }
         catch (UnauthorizedAccessException e)

@@ -19,15 +19,13 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IEmailService _emailService;
     private readonly IOneTimeCodeService _codeService;
 
-    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService, IEmailService emailService)
+    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService)
     {
         _userService = userService;
         _fileService = fileService;
         _codeService = codeService;
-        _emailService = emailService;
     }
 
     /// <summary>
