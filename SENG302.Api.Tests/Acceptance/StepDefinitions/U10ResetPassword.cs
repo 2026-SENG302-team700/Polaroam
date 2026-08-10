@@ -8,6 +8,7 @@ using Shouldly;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using SENG302.Api.Services;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions
 {

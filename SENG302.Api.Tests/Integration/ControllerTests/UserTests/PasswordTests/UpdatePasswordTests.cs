@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers.UserController.PasswordController;
 using SENG302.Api.Models.Requests.Password;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
