@@ -201,7 +201,12 @@ public class TripController : ControllerBase
         var taskList = await _postService.GetPostsByTripAsync(tripId);
         return Ok(taskList);
     }
-    
+
+     /// <summary>
+     /// Gets all locations associated with a trip.
+     /// </summary>
+     /// <param name="tripId"></param>
+     /// <returns>A list of location objects</returns>
     [Authorize]
     [HttpGet("locations/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Location>>> GetPostLocations(int tripId)

@@ -244,6 +244,11 @@ public class TripService : ITripService
         return trip;
     }
     
+    /// <summary>
+    /// Gets all locations that have been posted in a trip
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>List of location objects</returns>
     public async Task<List<Location>> GetTripLocations(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
