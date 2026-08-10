@@ -8,7 +8,8 @@
     type TripFormErrors = {
         title: string[];
         description: string[];
-        date: string;
+        dateOne: string,
+        dateTwo: string,
         generic: string;
     };
 

@@ -89,10 +89,14 @@ public class U7005ImageValidation
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(_contentType);
         content.Add(fileContent, "files", _fileName);
 
-        content.Add(new StringContent("1"), "postId");
-        content.Add(new StringContent("1"), "tripId");
+        content.Add(new StringContent("1"), "Id");
+        content.Add(new StringContent("1"), "TripId");
+        content.Add(new StringContent("My post"), "Title");
+        content.Add(new StringContent(""), "Content");
+        content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
 
-        _lastResponse = await _fixture.HttpClient.PutAsync("api/post/images", content);
+        _lastResponse = await _fixture.HttpClient.PutAsync("api/post/1", content);
     }
 
     [Then(@"I see an image validation error message '(.*)'")]

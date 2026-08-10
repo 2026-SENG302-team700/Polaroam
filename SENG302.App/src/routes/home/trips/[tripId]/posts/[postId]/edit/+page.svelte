@@ -24,6 +24,7 @@
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0);
+    let fileErrors: string[] = $state([]);
     let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
@@ -243,7 +244,9 @@
                 errors.photos = data.errors?.photos ?? [];
 
                 if (
-                    errors.content.length === 1 &&
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
                     !errors.date &&
                     errors.generic.length === 0 &&
@@ -316,10 +319,10 @@
             bind:location
             bind:error={errors.location}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} />
+        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
         <ImageDisplay
             bind:images={files}
-            errors={errors.photos}
+            errors={[...errors.photos, ...fileErrors]}
             letDelete={true}
             ondelete={removePhoto}
         >
@@ -327,6 +330,7 @@
                 bind:filesList={files}
                 errors={errors.photos}
                 bind:newUploadsCount
+                bind:fileErrors
             />
         </ImageDisplay>
         <MultipleErrorDisplay errors={[errors.generic]} />

@@ -11,6 +11,8 @@ using NSubstitute;
 using Shouldly;
 using SENG302.Api.Controllers.UserController.PasswordController;
 using Microsoft.AspNetCore.Http.HttpResults;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
@@ -18,7 +20,7 @@ public class ResetPasswordUnitTests
 {
     private readonly IUserService _mockUserService;
     private readonly IOneTimeCodeService _mockCodeService;
-    private readonly IEmailService _mockEmailService;
+    private readonly IEmailQueue _mockEmailQueue;
     private readonly ResetPasswordController _controller;
     private readonly IAuthenticationService _mockAuthService;
 
@@ -26,13 +28,21 @@ public class ResetPasswordUnitTests
     {
         _mockUserService = Substitute.For<IUserService>();
         _mockCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
+        _mockEmailQueue = Substitute.For<IEmailQueue>();
         _mockAuthService = Substitute.For<IAuthenticationService>();
 
         _controller = new ResetPasswordController(
             _mockUserService,
             _mockCodeService,
-            _mockEmailService);
+            _mockEmailQueue);
+
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IAuthenticationService)).Returns(_mockAuthService);
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { RequestServices = serviceProvider }
+        };
     }
 
     /// <summary>
@@ -111,12 +121,19 @@ public class ResetPasswordUnitTests
             {"MINUTES", "5"},
             {"CODE", code}
         };
-        _mockEmailService.SendEmailAsync("test@test.com", EmailTemplate.ChangePasswordCode, emailDictionary).Returns(Task.CompletedTask);
-
         SetupForgotPasswordContext(request.Email, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), code, false);
 
         var result = await _controller.GenerateResetPasswordCode(request);
         result.Result.ShouldBeOfType<OkResult>();
+
+        await _mockEmailQueue.Received(1).QueueEmailAsync(
+            Arg.Is<EmailJob>(job =>
+                job.toEmail == "test@test.com" &&
+                job.Template == EmailTemplate.ChangePasswordCode &&
+                job.Model["MINUTES"] == "5" &&
+                job.Model["CODE"] == code),
+            Arg.Any<CancellationToken>()
+        );
     }
 
 
@@ -124,10 +141,16 @@ public class ResetPasswordUnitTests
     public async Task ValidateResetPasswordCode_ValidEmailAndCode_ReturnsOk()
     {
         var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+        var user = new User { DisplayName = "Test", Email = "test@test.com", Country = "NZ" };
 
-        SetupForgotPasswordContext(request.Email, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), request.Code, false);
+        _mockUserService.GetUserFromEmailAsync(request.Email).Returns(user);
+        _mockCodeService.GetEpochTime().Returns(1_000L);
+        _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
+            .Returns(CodeVerificationResult.CodeSuccessful);
+        _mockUserService.UpdateUserOneTimeCode(user.Email, "", 0, true).Returns(user);
 
         var result = await _controller.ValidateResetPasswordCode(request);
+
         result.Result.ShouldBeOfType<OkResult>();
     }
 
@@ -136,9 +159,10 @@ public class ResetPasswordUnitTests
     {
         var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
 
-        SetupForgotPasswordContext("test@example.com", DateTimeOffset.UtcNow.ToUnixTimeSeconds(), request.Code, false);
+        _mockUserService.GetUserFromEmailAsync(request.Email).Returns((User)null);
 
         var result = await _controller.ValidateResetPasswordCode(request);
+
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
     }
 
@@ -146,10 +170,15 @@ public class ResetPasswordUnitTests
     public async Task ValidateResetPasswordCode_IncorrectCode_ReturnsBadRequest()
     {
         var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+        var user = new User { DisplayName = "Test", Email = "test@test.com", Country = "NZ" };
 
-        SetupForgotPasswordContext("test@test.com", DateTimeOffset.UtcNow.ToUnixTimeSeconds(), "222222", false);
+        _mockUserService.GetUserFromEmailAsync(request.Email).Returns(user);
+        _mockCodeService.GetEpochTime().Returns(1_000L);
+        _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
+            .Returns(CodeVerificationResult.CodeIncorrect);
 
         var result = await _controller.ValidateResetPasswordCode(request);
+
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
     }
 
@@ -157,10 +186,15 @@ public class ResetPasswordUnitTests
     public async Task ValidateResetPasswordCode_TimedOutCode_ReturnsBadRequest()
     {
         var request = new ValidateOneTimeCodeRequest { Email = "test@test.com", Code = "111222" };
+        var user = new User { DisplayName = "Test", Email = "test@test.com", Country = "NZ" };
 
-        SetupForgotPasswordContext("test@test.com", DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400, "111222", true);
+        _mockUserService.GetUserFromEmailAsync(request.Email).Returns(user);
+        _mockCodeService.GetEpochTime().Returns(1_000L);
+        _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
+            .Returns(CodeVerificationResult.CodeExpired);
 
         var result = await _controller.ValidateResetPasswordCode(request);
+
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
     }
 }

@@ -7,11 +7,13 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
+using SENG302.Api.Models.Jobs;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
 public class PostServiceTests : BaseIntegrationTestFixture
 {
+    byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
     /// <summary>
     /// Creates a mock file with a given filename, content, and type
     /// </summary>
@@ -128,7 +130,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
         };
 
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
 
         post.Title.ShouldBe("New post");
         post.TripId.ShouldBe(1);
@@ -168,38 +170,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task AddPhotoToPost_InvalidPostId_ReturnsNull()
-    {
-        var result = await ServiceUnderTest.AddPhotosToPost([1, 2], 1);
-        result.ShouldBeNull();
-    }
-
-    [Fact]
-    public async Task AddPhotoToPost_ValidRequest_ReturnsPost()
-    {
-        await SetupUserAndTrip(1, 1);
-        SetupGeoMock();
-
-        var request = new NewPostRequest
-        {
-            TripId = 1,
-            Title = "New post",
-            Content = "Some description",
-            OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
-        };
-
-        var post = await ServiceUnderTest.CreateNewPostAsync(request, [], 1);
-
-        List<int> photoIds = [1, 2];
-        var updatedPost = await ServiceUnderTest.AddPhotosToPost(photoIds, post.PostId);
-
-        updatedPost.ShouldNotBeNull();
-        updatedPost.PhotoIds.ShouldBe(photoIds);
-        updatedPost.PostId.ShouldBe(post.PostId);
-    }
-
-    [Fact]
     public async Task CreateNewPostAsync_InvalidLocation_ThrowsAndDoesNotPersist()
     {
         await SetupUserAndTrip(1, 1);
@@ -215,7 +185,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
+                () => ServiceUnderTest.CreateNewPostAsync(request, 1, [])
             );
 
         exception.Errors["location"]
@@ -244,7 +214,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.CreateNewPostAsync(request, [], 1)
+                () => ServiceUnderTest.CreateNewPostAsync(request, 1, [])
             );
 
         exception.Errors.ShouldContainKey("title");
@@ -357,7 +327,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.UpdatePostAsync(request)
+                () => ServiceUnderTest.UpdatePostAsync(request, 1, new List<IFormFile>())
             );
 
         exception.Errors["location"]
@@ -373,7 +343,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.OsmId.ShouldBe(123);
         post.LocationName.ShouldBe("Christchurch");
     }
-    
+
     [Fact]
     public async Task DeleteTrip_ExistingPost_DeletesSinglePosts()
     {
@@ -452,7 +422,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             await context.SaveChangesAsync();
 
             postId1 = post1.PostId;
-            
+
             var post2 = new Post
             {
                 TripId = 1,
@@ -465,9 +435,9 @@ public class PostServiceTests : BaseIntegrationTestFixture
             };
 
             context.Posts.Add(post2);
-            
+
             await context.SaveChangesAsync();
-            
+
             postId2 = post2.PostId;
 
             context.Locations.Add(new Location
@@ -479,7 +449,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Name = "Christchurch",
                 DisplayName = "Christchurch, New Zealand"
             });
-            
+
             context.Locations.Add(new Location
             {
                 PostId = postId1,
@@ -507,7 +477,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         postExists.ShouldBeFalse();
         locationExists.ShouldBeFalse();
     }
-    
+
     [Fact]
     public async Task DeleteTrip_ExistingPosts_DeletesOnlyTripPosts()
     {
@@ -527,7 +497,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 StartDate = new DateOnly(2017, 10, 08),
                 EndDate = new DateOnly(2017, 10, 21)
             });
-            
+
             var post1 = new Post
             {
                 TripId = 1,
@@ -543,7 +513,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             await context.SaveChangesAsync();
 
             postId1 = post1.PostId;
-            
+
             var post2 = new Post
             {
                 TripId = 2,
@@ -556,11 +526,11 @@ public class PostServiceTests : BaseIntegrationTestFixture
             };
 
             context.Posts.Add(post2);
-            
+
             await context.SaveChangesAsync();
-            
+
             postId2 = post2.PostId;
-            
+
             context.Locations.Add(new Location
             {
                 PostId = postId1,
@@ -597,7 +567,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         post1Exists.ShouldBeFalse();
         location1Exists.ShouldBeFalse();
-        
+
         var post2Exists = await assertContext.Posts
             .AnyAsync(post => post.TripId == 2);
 
@@ -607,12 +577,12 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post2Exists.ShouldBeTrue();
         location2Exists.ShouldBeTrue();
     }
-    
+
     [Fact]
     public async Task DeleteTrip_NoPosts_RunsSuccessfully()
     {
         await SetupUserAndTrip(1, 1);
-        
+
 
         await Should.NotThrowAsync(ServiceUnderTest.DeleteAllPostOfTrip(1));
     }
@@ -654,7 +624,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.UpdatePostAsync(request)
+                () => ServiceUnderTest.UpdatePostAsync(request, 1, new List<IFormFile>())
             );
 
         exception.Errors["title"]
@@ -705,7 +675,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         var exception =
             await Should.ThrowAsync<MultipleValidationListException>(
-                () => ServiceUnderTest.UpdatePostAsync(request)
+                () => ServiceUnderTest.UpdatePostAsync(request, 1, new List<IFormFile>())
             );
 
         exception.Errors["date"][0]
@@ -979,5 +949,161 @@ public class PostServiceTests : BaseIntegrationTestFixture
         updatedPost.ShouldNotBeNull();
         updatedPost!.PhotoIds.ShouldNotContain(fileIdToDelete);
         updatedPost.PhotoIds.ShouldContain(fileIdToKeep);
+    }
+
+    [Fact]
+    public async Task CreateNewPostAsync_WithImage_QueuesImageForTagging()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "test post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(
+            request,
+            1,
+            [image]
+        );
+
+        post.PhotoIds.ShouldNotBeNull();
+        post.PhotoIds.Count.ShouldBe(1);
+
+        await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
+            Arg.Is<ImageTaggingJob>(job =>
+                job.ImageId == post.PhotoIds[0] &&
+                job.Image.FileName == "test.png" &&
+                job.Image.ContentType == "image/png")
+        );
+    }
+
+    [Fact]
+    public async Task CreateNewPostAsync_WithoutImages_DoesNotQueueImageTagging()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "test post with no images",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+
+        await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
+
+        await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
+            Arg.Any<ImageTaggingJob>()
+        );
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_WithoutNewImages_DoesNotQueueImageTagging()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "original post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(
+            request,
+            1,
+            [image]
+        );
+
+        ImageTaggingQueueMock.ClearReceivedCalls();
+
+        var updateRequest = new UpdatePostRequest
+        {
+            Id = post.PostId,
+            TripId = post.TripId,
+            Title = "Updated title",
+            Content = "Updated content",
+            OsmId = post.OsmId,
+            Date = post.Date
+        };
+
+        await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, []);
+
+        await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
+            Arg.Any<ImageTaggingJob>()
+        );
+    }
+
+    [Fact]
+    public async Task UploadPhotosToPostAsync_WithNewImage_QueuesImageForTagging()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "original post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
+
+        var updateRequest = new UpdatePostRequest
+        {
+            Id = post.PostId,
+            TripId = post.TripId,
+            Title = "updated title",
+            Content = "updated content",
+            OsmId = post.OsmId,
+            Date = post.Date
+        };
+
+        byte[] pngBytes =
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var updatedPost = await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, [image]);
+
+        updatedPost.ShouldNotBeNull();
+        updatedPost.PhotoIds.ShouldNotBeNull();
+        updatedPost.PhotoIds.Count.ShouldBe(1);
+
+        await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
+            Arg.Is<ImageTaggingJob>(job =>
+                job.ImageId == updatedPost.PhotoIds[0] &&
+                job.Image.FileName == "test.png" &&
+                job.Image.ContentType == "image/png")
+        );
     }
 }

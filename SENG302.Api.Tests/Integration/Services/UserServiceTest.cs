@@ -63,7 +63,6 @@ public class UserServiceTest : BaseIntegrationTestFixture
         singleItemInDB.Email.ShouldBe(email);
         singleItemInDB.DisplayName.ShouldBe(name);
         singleItemInDB.Country.ShouldBe(country);
-        singleItemInDB.ProfanityFiltering.ShouldBe(false);
 
         // Make sure the password verifies properly
         var passwordHasher = new PasswordHasher<User>();
@@ -147,24 +146,6 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
         errors.Errors.Keys.ShouldContain("displayName");
         errors.Errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
-    }
-
-    [Fact]
-    public async Task CreateNewUser_ProfanitiesInDisplayName_MultipleValidationException()
-    {
-        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
-        {
-            await ServiceUnderTest.CreateNewUserAsync(
-                "vlad@nistor.me",
-                "fuck", // Should throw exception
-                "12345678Ab$",
-                "12345678Ab$",
-                "RO"
-            );
-        });
-
-        errors.Errors.Keys.ShouldContain("displayName");
-        errors.Errors.Values.ShouldContain("Display Name Contains Profanities! Remove Profanities!");
     }
 
     [Fact]
@@ -315,36 +296,4 @@ public class UserServiceTest : BaseIntegrationTestFixture
         context.Users.ShouldBeEmpty();
     }
 
-    [Fact]
-    public async Task UpdateUser_ToggleProfanityFilter_ProfanityFilterToggles()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-
-        var email = "hello@polaroam.com";
-        var name = "Polaroam";
-        var country = "NZ";
-
-        context.Users.Add(new User
-        {
-            Email = email,
-            DisplayName = name,
-            PasswordKey = "B3rn$uisse",
-            Country = country
-        });
-
-        await context.SaveChangesAsync();
-
-        int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
-
-        // First Toggle from False -> True (user should start off with profanity filtering set to off)
-        User? updatedUser1 = await ServiceUnderTest.UpdateUser((int)id!, email, name, country, true);
-
-        updatedUser1.ShouldNotBeNull();
-        updatedUser1.ProfanityFiltering.ShouldBeTrue();
-
-        // Second toggle from True -> False
-        User? updateUser2 = await ServiceUnderTest.UpdateUser((int)id!, email, name, country, false);
-
-        updateUser2.ProfanityFiltering.ShouldBeFalse();
-    }
 }
