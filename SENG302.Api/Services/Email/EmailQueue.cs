@@ -1,7 +1,7 @@
 using System.Threading.Channels;
 using SENG302.Api.Models.Jobs;
 
-namespace SENG302.Api.Services;
+namespace SENG302.Api.Services.Email;
 
 public interface IEmailQueue
 {

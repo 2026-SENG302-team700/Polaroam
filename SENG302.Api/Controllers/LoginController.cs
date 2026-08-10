@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.Email;
 
 
 namespace SENG302.Api.Controllers;

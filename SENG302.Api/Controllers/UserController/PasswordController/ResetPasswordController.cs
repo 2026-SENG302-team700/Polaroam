@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.Email;
+
 namespace SENG302.Api.Controllers.UserController.PasswordController;
 
 [ConditionalValidateAntiForgeryToken]
