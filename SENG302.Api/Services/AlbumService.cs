@@ -56,11 +56,16 @@ public class AlbumService: IAlbumService
         }
         if (album.PhotoIds.Remove(photoId))
         {
-            var file = await _fileService.GetFileByIdAsync(photoId);
-            if (file == null)
+            CustomFile file;
+            try
             {
-                throw new FileNotFoundException("Photo does not exist with that key.");
+                file = await _fileService.GetFileByIdAsync(photoId);
             }
+            catch (KeyNotFoundException e)
+            {
+                throw new FileNotFoundException(e.Message);
+            }
+            
             await _fileService.DeleteFileAsync(file.FileKey);
         } else
         {
@@ -92,7 +97,7 @@ public class AlbumService: IAlbumService
 
         List<string> photoErrors = ValidateAlbumImages(photos);
         
-        if (errors.Count > 0)
+        if (photoErrors.Count > 0)
         {
             errors["photos"] = photoErrors;
             throw new MultipleValidationListException(errors);
@@ -115,7 +120,6 @@ public class AlbumService: IAlbumService
             }
             catch (Exception ex)
             {
-
                 Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
             }    
         }
@@ -136,6 +140,13 @@ public class AlbumService: IAlbumService
     public async Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Set<Trip>().Where(trip => trip.Id == tripId).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new KeyNotFoundException("Trip with that Id does not exist.");
+        }
+        
         var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
 
         if (album == null)
@@ -152,6 +163,5 @@ public class AlbumService: IAlbumService
         }
 
         return files;
-
     }
 }
