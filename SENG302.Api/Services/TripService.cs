@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Helpers.Validators;
 
 namespace SENG302.Api.Services;
 
