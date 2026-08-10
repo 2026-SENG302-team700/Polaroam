@@ -53,11 +53,6 @@ public class ResetPasswordController : ControllerBase
         };
 
         await _emailQueue.QueueEmailAsync(new EmailJob(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary));
-        else
-        {
-            // Hacky, but to disguise that this email does not exist
-            Thread.Sleep(4000);
-        }
 
         // return ok no matter if there is a user or not
         return Ok();
