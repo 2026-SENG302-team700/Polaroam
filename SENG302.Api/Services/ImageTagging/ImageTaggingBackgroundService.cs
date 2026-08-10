@@ -10,7 +10,12 @@ public class ImageTaggingBackgroundService : BackgroundService
         _queue = queue;
         _scopeFactory = scopeFactory;
     }
-
+    
+    /// <summary>
+    /// Reads from the queue and processes the images.
+    /// This method runs in the background.
+    /// </summary>
+    /// <param name="cancellationToken"></param>
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         await foreach (var job in _queue.ReadAllAsync(cancellationToken))
