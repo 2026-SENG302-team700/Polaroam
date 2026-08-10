@@ -50,6 +50,12 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
+    <ItemGroup>
+      <None Remove="resources\render.png" />
+      <Content Include="resources\render.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
     
     <ItemGroup>
         <None Update="**\*.feature">

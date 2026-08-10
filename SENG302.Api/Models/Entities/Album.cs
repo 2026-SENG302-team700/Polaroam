@@ -5,7 +5,7 @@ namespace SENG302.Api.Models.Entities;
 /// <summary>
 /// Keeps track of all photos in the trip's album.
 /// </summary>
-public class TripAlbum
+public class Album
 {
     [Key]
     public required int TripId { get; set; }

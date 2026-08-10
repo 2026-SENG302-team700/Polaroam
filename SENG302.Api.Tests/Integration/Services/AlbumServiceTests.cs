@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Reqnroll.Assist;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 
@@ -23,7 +22,7 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UploadAlbumImages_ValidImages_ReturnsAlbumWithPhotoId()
+    public async Task UploadAlbumImages_SingleValidImage_ReturnsAlbumWithPhotoId()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
@@ -44,12 +43,12 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             StartDate = new DateOnly(2017, 10, 08),
             EndDate = new DateOnly(2017, 10, 21)
         });
-        context.Albums.Add(new TripAlbum
+        context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = []
         });
-
+        await context.SaveChangesAsync();
         
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
@@ -64,4 +63,172 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(1);
     }
+
+    [Fact]
+    public async Task UploadAlbumImages_MultipleValidImage_ReturnsAlbumWithPhotoId()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        await context.SaveChangesAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var mockFileContent1 = File.ReadAllBytes("resources/render.png");
+
+        var mockFile1 = GetMockFile(
+            "render",
+            mockFileContent,
+            "render/png");
+        List<IFormFile> photos = [mockFile, mockFile1];
+
+        var album = await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
+        album.ShouldNotBeNull();
+        album.PhotoIds.Count.ShouldBe(2);
+        album.PhotoIds.ShouldContain(1);
+        album.PhotoIds.ShouldContain(2);
+    }
+    [Fact]
+    public async Task UploadAlbumImages_NonExistentAlbum_ThrowsKeyNotFoundException()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        await context.SaveChangesAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        List<IFormFile> photos = [mockFile];
+
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
+           
+        });
+        ex.Message.ShouldContain("Album with that Id does not exist.");
+    }
+    [Fact]
+    public async Task UploadAlbumImages_NonExistentTrip_ThrowsKeyNotFoundException()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        
+        await context.SaveChangesAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        List<IFormFile> photos = [mockFile];
+
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
+           
+        });
+        ex.Message.ShouldContain("Trip does not exist");
+    }
+
+    // [Theory]
+    // [InlineData(10000001)]
+
+    // public async Task UploadImageAlbumImages_InvalidImageSize_ThrowsMultipleValidationListException(Int64 fileSize)
+    // {
+    //     await using var context = await DbContextFactory.CreateDbContextAsync();
+
+    //     context.Users.Add(new User
+    //     {
+    //         Id = 1,
+    //         Email = $"test{1}@test.com",
+    //         DisplayName = "Test User",
+    //         PasswordKey = "password",
+    //         Country = "Test Country"
+    //     });
+    //     context.Trips.Add(new Trip
+    //     {
+    //         Id = 1,
+    //         Title = "Test List",
+    //         UserId = 1,
+    //         Description = "Test",
+    //         StartDate = new DateOnly(2017, 10, 08),
+    //         EndDate = new DateOnly(2017, 10, 21)
+    //     });
+    //     context.Albums.Add(new Album
+    //     {
+    //         TripId = 1,
+    //         PhotoIds = []
+    //     });
+    //     await context.SaveChangesAsync();
+
+    //     var file = GetMockFile("test", new byte[fileSize] , "image/png");
+
+    //     List<IFormFile> photos = [file];
+
+    //     MultipleValidationListException ex = await Should.ThrowAsync<MultipleValidationListException>(async () =>
+    //     {
+    //         await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
+    //     });
+    //     ex.Errors["photos"].ShouldContain("test: Image to large, maximum file size is 10MB");
+    // }
 }

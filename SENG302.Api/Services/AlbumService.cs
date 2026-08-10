@@ -7,7 +7,7 @@ using SENG302.Api.Helpers;
 public interface IAlbumService
 {
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
-    public Task<TripAlbum>  UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
+    public Task<Album>  UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task DeleteImageFromAlbumAsync(int photoId, int tripId);
 }
 
@@ -49,7 +49,7 @@ public class AlbumService: IAlbumService
     public async Task DeleteImageFromAlbumAsync(int photoId, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var album = await context.Set<TripAlbum>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
+        var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
         if (album == null)
         {
             throw new KeyNotFoundException("Album with that Id does not exist.");
@@ -79,10 +79,10 @@ public class AlbumService: IAlbumService
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
     /// <exception cref="MultipleValidationListException"></exception>
-    public async Task<TripAlbum> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId)
+    public async Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var album = await context.Set<TripAlbum>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == tripId);
         var errors = new Dictionary<string, List<string>>();
 
         if (album == null)
@@ -136,7 +136,7 @@ public class AlbumService: IAlbumService
     public async Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var album = await context.Set<TripAlbum>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
+        var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
 
         if (album == null)
         {
