@@ -11,6 +11,7 @@ using NSubstitute;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Reqnroll.Assist;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Integration;
 

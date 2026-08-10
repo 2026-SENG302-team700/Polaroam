@@ -17,25 +17,22 @@ public class UserControllerUnitTests
     private readonly IUserService _mockUserService;
     private readonly IFileService _mockFileService;
     private readonly IOneTimeCodeService _mockCodeService;
-    private readonly IEmailService _mockEmailService;
     private readonly UserController _controller;
-    private readonly  IAuthenticationService _mockAuthService;
-    
+    private readonly IAuthenticationService _mockAuthService;
+
     public UserControllerUnitTests()
     {
         _mockUserService = Substitute.For<IUserService>();
         _mockFileService = Substitute.For<IFileService>();
         _mockCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
         _mockAuthService = Substitute.For<IAuthenticationService>();
 
         _controller = new UserController(
-            _mockUserService, 
-            _mockFileService, 
-            _mockCodeService, 
-            _mockEmailService);
+            _mockUserService,
+            _mockFileService,
+            _mockCodeService);
     }
-    
+
     /// <summary>
     /// Helper method to show a logged in user by injecting the claims into the controller
     /// </summary>
@@ -50,10 +47,10 @@ public class UserControllerUnitTests
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
-    
-    
-    
-    
+
+
+
+
     [Fact]
     public async Task GetUser_UserExists_ReturnsOkWithNoPassword()
     {
@@ -66,7 +63,7 @@ public class UserControllerUnitTests
         var user = okResult.Value.ShouldBeOfType<User>();
         user.PasswordKey.ShouldBe("---");
     }
-    
+
     [Fact]
     public async Task GetUser_UserNotFound_ReturnsNotFound()
     {
@@ -77,13 +74,13 @@ public class UserControllerUnitTests
 
         result.Result.ShouldBeOfType<NotFoundResult>();
     }
-    
+
     [Fact]
     public async Task GetUserVerificationCountdown_ValidTime_ReturnsRemainingSeconds()
     {
         var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
         var mockUser = new User { Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 };
-        
+
         _mockUserService.GetUserFromEmailAsync(request.Email).Returns(mockUser);
         _mockCodeService.GetEpochTime().Returns(1050);
         _mockCodeService.TimeoutTimeSeconds.Returns(300);
@@ -93,13 +90,13 @@ public class UserControllerUnitTests
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(250L);
     }
-    
+
     [Fact]
     public async Task GetUserVerificationCountdown_ExpiredCode_ReturnsUnauthorized()
     {
         var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
         var mockUser = new User { Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 };
-        
+
         _mockUserService.GetUserFromEmailAsync(request.Email).Returns(mockUser);
         _mockCodeService.GetEpochTime().Returns(2000); // past timeout
         _mockCodeService.TimeoutTimeSeconds.Returns(300);
@@ -116,7 +113,7 @@ public class UserControllerUnitTests
         mockfile.ContentType.Returns(mimeType);
         mockfile.OpenReadStream().Returns(stream);
 
-        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
+        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 };
         var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = mimeType };
         var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = mimeType };
 
@@ -132,7 +129,7 @@ public class UserControllerUnitTests
     public async Task UploadProfilePicture_ValidImage_ReplacesOldAndReturnsOk()
     {
         SetupUserContext("10");
-        var mockfile = CreateMockFile([ 0x89, 0x50, 0x4e, 0x47 ], "image/png");
+        var mockfile = CreateMockFile([0x89, 0x50, 0x4e, 0x47], "image/png");
 
         var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
         result.Result.ShouldBeOfType<OkResult>();
@@ -147,7 +144,7 @@ public class UserControllerUnitTests
     public async Task UploadProfilePicture_ImageInvalidRealMime_UnsupportedType()
     {
         SetupUserContext("10");
-        var mockfile = CreateMockFile([ 0x89, 0x50, 0x4e, 0xff ], "image/png");
+        var mockfile = CreateMockFile([0x89, 0x50, 0x4e, 0xff], "image/png");
 
         var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
@@ -159,13 +156,13 @@ public class UserControllerUnitTests
     {
         SetupUserContext("10");
 
-        var stream = new MemoryStream([ 0x89, 0x50, 0x4e, 0x47 ]);
+        var stream = new MemoryStream([0x89, 0x50, 0x4e, 0x47]);
         var mockfile = Substitute.For<IFormFile>();
         mockfile.ContentType.Returns("image/png");
         mockfile.Length.Returns(10000001);
         mockfile.OpenReadStream().Returns(stream);
 
-        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
+        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 };
         var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = "image/png" };
         var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = "image/png" };
 

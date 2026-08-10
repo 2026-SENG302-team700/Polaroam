@@ -2,6 +2,7 @@ using Xunit;
 using NSubstitute;
 using SENG302.Api.Services;
 using MimeKit;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Unit.Services;
 

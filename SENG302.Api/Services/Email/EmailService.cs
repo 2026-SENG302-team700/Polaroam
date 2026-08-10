@@ -1,8 +1,7 @@
-using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 
-namespace SENG302.Api.Services;
+namespace SENG302.Api.Services.Email;
 
 /**
  * All the different email templates
