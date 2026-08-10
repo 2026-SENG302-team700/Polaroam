@@ -36,13 +36,12 @@ public class PostValidator
     }
 
     /// <summary>
-    /// given a PostRequest interface and a bool to determine whether profanity is on,
+    /// given a PostRequest interface,
     /// this method invokes validation methods on all post fields to ensure they
-    /// meet ACs, and do not contain profanity. Every violation of the post rules is added
+    /// meet ACs. Every violation of the post rules is added
     /// to a dictionary, and returned, containing all errors.
     /// </summary>
     /// <param name="post"></param>
-    /// <param name="profanityFiltering"></param>
     /// <returns>Dictionary<string, string></returns>
     public static Dictionary<string, List<string>> ValidatePostFields(IPostRequest postRequest, Post? post = null)
     {
@@ -105,11 +104,18 @@ public class PostValidator
     /// <returns>The errors</returns>
     public static List<string> ValidatePostContent(string content, bool noContentAllowed)
     {
+        var errors = new List<string>();
 
         if (content.Length == 0 && (!noContentAllowed))
         {
-            return ["Post contains no content, are you sure you want to create post?"];
+            errors.Add("Post contains no content, are you sure you want to create post?");
         }
-        return [];
+
+        if (content.Length > 8196)
+        {
+            errors.Add("Content needs to be less than 8196 characters long");
+        }
+
+        return errors;
     }
 }

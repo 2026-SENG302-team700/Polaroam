@@ -137,8 +137,10 @@ public class TripServiceTests : BaseIntegrationTestFixture
         }
     }
 
-    [Fact]
-    public async Task CreateNewTrip_LongDescription_ThrowValidationException()
+    [Theory]
+    [InlineData(2049)] // just over
+    [InlineData(3000)] // way over
+    public async Task CreateNewTrip_LongDescription_ThrowValidationException(int descriptionLength)
     {
         // Add a user to the database with the email that we are testing with
         await using var context = DbContextFactory.CreateDbContext();
@@ -186,7 +188,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         NewTripRequest tripRequest = new NewTripRequest
         {
             Title = "test",
-            Description = "Test",
+            Description = "test",
             StartDate =  new DateOnly(2022, 1, 1),
             EndDate = new DateOnly(2022, 1, 7)
         };

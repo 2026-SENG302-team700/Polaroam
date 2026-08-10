@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using SENG302.Api.Constants;
@@ -8,7 +9,7 @@ using SENG302.Api.Services;
 
 public class UserCredentialsValidator
 {
-     /// <summary>
+    /// <summary>
     /// Checks to see if display name length is between 3-64 characters
     /// </summary>
     /// <param name="displayName">String representing display name of the user</param>
@@ -44,43 +45,34 @@ public class UserCredentialsValidator
     /// </returns>
     public static bool CheckEmailFormat(string email)
     {
-        // Gotten from C# docs
-        try
-        {
-            
-            email = Regex.Replace(email, @"(@)(.+)$", DomainMapper,
-                                      RegexOptions.None, TimeSpan.FromMilliseconds(200));
+        if (string.IsNullOrEmpty(email)) return false;
 
-            // Examines the domain part of the email and normalizes it.
+        int atIndex = email.IndexOf('@'); // returns -1 if not found
+        if (atIndex <= 0 || atIndex != email.LastIndexOf('@')) return false;
 
-            string DomainMapper(Match match)
-            {
-                // Use IdnMapping class to convert Unicode domain names.
-                var idn = new IdnMapping();
+        string local = email.Substring(0, atIndex);
+        string domain = email.Substring(atIndex + 1);
 
-                // Pull out and process domain name (throws ArgumentException on invalid)
-                string domainName = idn.GetAscii(match.Groups[2].Value);
+        if (local.Length == 0 || local.Length > 64) return false;
+        if (domain.Length == 0 || domain.Length > 255) return false;
 
-                return match.Groups[1].Value + domainName;
-            }
+        if (!email.All(c => c < 128)) return false; // ASCII only
 
-        }
-        catch (RegexMatchTimeoutException)
+        const string localAtom = @"[A-Za-z0-9!#$%&*+\-/=?^_`'{|}]+";
+        if (!Regex.IsMatch(local, $@"\A{localAtom}(\.{localAtom})*\z")) return false;
+
+        string[] labels = domain.Split('.');
+        if (labels.Length < 2) return false; // require domain + top level domain
+
+        foreach (var label in labels)
         {
-            return false;
+            if (label.Length == 0 || label.Length > 63) return false;
+            if (!Regex.IsMatch(label, @"\A[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\z")) return false;
         }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-        try
-        {
-            return ValidationPatterns.UserEmail.IsMatch(email);
-        }
-        catch (RegexMatchTimeoutException)
-        {
-            return false;
-        }
+
+        if (Regex.IsMatch(labels[^1], @"\A\d+\z")) return false; // TLD can't be all-numeric
+
+        return true;
     }
 
     /// <summary>
@@ -117,7 +109,7 @@ public class UserCredentialsValidator
     public static Dictionary<string, string> ValidateEmail(DatabaseContext context, string email)
     {
         var errors = new Dictionary<string, string>();
-        
+
         if (context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Any())
         {
             errors["email"] = "This email address is already in use by another account";
@@ -140,23 +132,17 @@ public class UserCredentialsValidator
         if (DisplayNameLength(displayName))
         {
             errors["displayName"] = "Display name must be between 3 and 64 characters";
+            return errors;
         }
 
         if (!DisplayNameChars(displayName))
         {
             errors["displayName"] = "Display name must only include letters, spaces, hyphens or apostrophes";
         }
-        
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        var swearList = profanityFilter.DetectAllProfanities(displayName);
-        if (swearList.Count > 0)
-        {
-            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
-        }
 
         return errors;
     }
-    
+
     /// <summary>
     /// Runs all password validations and throws relavent excpetions
     /// </summary>
@@ -218,7 +204,7 @@ public class UserCredentialsValidator
         PasswordHasher<User> passwordHasher = new();
         return passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
     }
-    
+
     /// <summary>
     /// Performs all validation for the update password request
     /// </summary>
@@ -239,13 +225,13 @@ public class UserCredentialsValidator
         {
             throw new MismatchedPasswordException("Old password does not match password on file");
         }
-        
+
         // Validate new passwords match
         if (!PasswordMatching(newPassword, newPasswordConfirm))
         {
             throw new MismatchedPasswordException("Passwords do not match");
         }
-        
+
         // validate password is of valid form
         if (!CheckPassword(newPassword))
         {
@@ -253,7 +239,7 @@ public class UserCredentialsValidator
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
             );
         }
-        
+
         // Validate new password not the same as old password
         if (PasswordMatching(newPassword, oldPassword))
         {

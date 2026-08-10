@@ -62,7 +62,6 @@ public class TripController : ControllerBase
     public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        Console.WriteLine("\n\n" + "id: " + userIdString + "\n\n");
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
@@ -129,6 +128,7 @@ public class TripController : ControllerBase
             }
 
             await _tripService.DeleteTripByIdAsync(id);
+            await _postService.DeleteAllPostOfTrip(id);
             return Ok();
         }
         catch (ArgumentException)

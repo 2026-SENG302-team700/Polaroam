@@ -44,6 +44,21 @@ public class PostValidatorTests
         errrors.Count.ShouldBe(0);
     }
 
+    [Fact]
+    public void ValidatePostContent_ContentAtMaxLength_ReturnsNoErrors()
+    {
+        var errors = PostValidator.ValidatePostContent(new string('a', 8196), false);
+        errors.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public void ValidatePostContent_ContentOverMaxLength_ReturnsError()
+    {
+        var errors = PostValidator.ValidatePostContent(new string('a', 8197), false);
+        errors.Count.ShouldBe(1);
+        errors.ShouldContain("Content needs to be less than 8196 characters long");
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]

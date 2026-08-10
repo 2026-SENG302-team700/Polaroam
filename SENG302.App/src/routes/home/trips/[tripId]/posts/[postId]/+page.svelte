@@ -120,7 +120,6 @@
                     return new File([blob], meta.fileName, { type: meta.mimeType });
                 }),
             );
-
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
