@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -200,7 +201,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -382,8 +383,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Second Trip",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         });
         var trip2 = await trip2Response.Content.ReadFromJsonAsync<Trip>();
         Assert.NotNull(trip2);

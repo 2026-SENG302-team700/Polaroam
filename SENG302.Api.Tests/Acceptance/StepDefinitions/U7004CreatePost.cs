@@ -167,7 +167,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = new string('a', 8197);
-        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
+        _date = DateTimeOffset.UtcNow.AddDays(-1);
     }
 
     [Then(@"I see an error message '(.*)'")]

@@ -332,8 +332,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 Title = "Test trip",
                 Description = "Test description",
                 UserId = 1,
-                StartDate = new DateOnly(2026, 7, 1),
-                EndDate = new DateOnly(2026, 7, 10)
+                StartDate = DateToDateTimeOffset(2026, 7, 1),
+                EndDate = DateToDateTimeOffset(2026, 7, 10)
             });
             
             await context.SaveChangesAsync();
@@ -344,7 +344,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("title"), "Title");
         content.Add(new StringContent(new string('a', 8197)), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(new DateOnly(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
 
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

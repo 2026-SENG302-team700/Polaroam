@@ -8,6 +8,7 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 using SENG302.Api.Models.Jobs;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -977,7 +978,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "test post",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var image = GetMockFile(
@@ -1015,7 +1016,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "test post with no images",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
@@ -1037,7 +1038,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "original post",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var image = GetMockFile(
@@ -1083,7 +1084,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "original post",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
