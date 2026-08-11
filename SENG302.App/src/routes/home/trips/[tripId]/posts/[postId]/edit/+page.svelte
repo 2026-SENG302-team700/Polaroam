@@ -316,6 +316,7 @@
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
     <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+
     <LocationForm
         bind:searchQuery
         bind:location

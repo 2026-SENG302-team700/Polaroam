@@ -101,12 +101,18 @@
                         "Upload too large, please upload less photos at a time";
                     return;
                 }
-                errors.title = data.errors?.title ?? [];
-                errors.date = data.errors?.date?.[0] ?? "";
-                errors.content = data.errors?.content ?? [];
-                errors.location = data.errors?.location?.[0] ?? "";
+                errors.title = data.errors?.title ?? data.errors?.Title ?? [];
+                errors.date =
+                    data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
+                errors.content =
+                    data.errors?.content ?? data.errors?.Content ?? [];
+                errors.location =
+                    data.errors?.location?.[0] ??
+                    data.errors?.Location?.[0] ??
+                    "";
                 errors.generic = data.message ?? "";
-                errors.photos = data.errors?.photos ?? [];
+                errors.photos =
+                    data.errors?.photos ?? data.errors?.Photos ?? [];
                 if (
                     errors.content.includes(
                         "Post contains no content, are you sure you want to create post?",
