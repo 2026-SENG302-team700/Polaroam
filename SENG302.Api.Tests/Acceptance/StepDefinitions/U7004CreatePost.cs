@@ -100,7 +100,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = "Valid post content";
-        _date = DateTimeOffset.Now.AddDays(-1);
+        _date = DateTimeOffset.UtcNow.AddDays(-1);
 
         // Text was entered, but no search result was selected.
         _location = "Made up location";
@@ -115,7 +115,7 @@ public class U7004CreatePost
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
         form.Add(new StringContent("1"), "TripId");
-        form.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? string.Empty), "Date");
+        form.Add(new StringContent(_date == null ? string.Empty : (_date?.ToString("s") + "Z")), "Date");
 
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
@@ -158,6 +158,7 @@ public class U7004CreatePost
         _title = "Valid post title";
         _content = "Valid post content";
         _date = DateTimeOffset.UtcNow.AddDays(1);
+
     }
 
     [Given(@"I enter content longer than 8196 characters long")]
@@ -175,16 +176,8 @@ public class U7004CreatePost
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var error = await _lastResponse.Content.ReadAsStringAsync();
 
-        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
-        {
-            error.ShouldContain(
-                "Invalid date, date must be formatted ");
-        }
-        else
-        {
-            error.ShouldContain(expectedMessage);
-        }
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain(expectedMessage);
     }
 }

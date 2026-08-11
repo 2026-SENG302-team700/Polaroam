@@ -24,7 +24,7 @@ Feature: U7004_As Benji I want to be able to create posts So that I can log key 
         Given I enter location text without selecting a suggested location
         When I click 'Create Post'
         Then I see an error message 'This isn't a valid location'
-        
+
     Scenario: AC3 - Create Post with too long content
         Given I enter content longer than 8196 characters long
         When I click 'Create Post'

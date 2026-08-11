@@ -95,7 +95,7 @@ public class U7005ImageValidation
         content.Add(new StringContent("My post"), "Title");
         content.Add(new StringContent(""), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         _lastResponse = await _fixture.HttpClient.PutAsync("api/post/1", content);
     }

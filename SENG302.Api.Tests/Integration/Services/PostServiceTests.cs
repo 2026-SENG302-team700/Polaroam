@@ -180,7 +180,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "Valid title",
             Content = "Valid content",
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
             OsmId = 0
         };
 
@@ -246,7 +246,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "Post content",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateTimeOffset.Now.AddDays(-1),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -307,7 +307,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateTimeOffset.Now.AddDays(-2),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -322,7 +322,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "updated title",
             Content = "updated content",
-            Date = DateTimeOffset.Now.AddDays(-1),
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
             OsmId = 0
         };
 

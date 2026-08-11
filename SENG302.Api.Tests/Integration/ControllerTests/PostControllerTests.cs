@@ -66,7 +66,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -225,7 +225,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
 
@@ -256,7 +256,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
         content.Add(new StringContent("true"), "NoContentAllowed");
 
         var message = await HttpClient.PostAsync("/api/post", content);
@@ -295,9 +295,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("ab"), "Title");
         content.Add(new StringContent("Some content"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("s") + "Z"), "Date");
 
-        var response = await HttpClient.PostAsync("/api/post", content); 
+        var response = await HttpClient.PostAsync("/api/post", content);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
@@ -335,7 +335,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 StartDate = DateToDateTimeOffset(2026, 7, 1),
                 EndDate = DateToDateTimeOffset(2026, 7, 10)
             });
-            
+
             await context.SaveChangesAsync();
         }
 
@@ -344,7 +344,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("title"), "Title");
         content.Add(new StringContent(new string('a', 8197)), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("s") + "Z"), "Date");
 
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -385,7 +385,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -699,7 +699,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -737,7 +737,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PutAsync(
             "/api/post/1",
             updateForm);
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         await using var context =

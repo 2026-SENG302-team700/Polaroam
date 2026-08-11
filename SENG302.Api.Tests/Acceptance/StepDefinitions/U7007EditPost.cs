@@ -99,7 +99,7 @@ public class U7007EditPost
         content.Add(new StringContent(_title), "Title");
         content.Add(new StringContent(_content), "Content");
         content.Add(new StringContent(_osmId.ToString()), "OsmId");
-        content.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? ""), "Date");
+        content.Add(new StringContent(_date == null ? string.Empty : (_date?.ToString("s") + "Z")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -223,7 +223,7 @@ public class U7007EditPost
         if (_date != null)
         {
             form.Add(
-                new StringContent(_date.Value.ToString("yyyy-MM-dd")),
+                new StringContent(_date.Value.ToString("s") + "Z"),
                 "Date");
         }
 
@@ -252,7 +252,7 @@ public class U7007EditPost
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
-        
+
         post.ShouldNotBeNull();
         post.Title.ShouldBe(_title);
         post.Content.ShouldBe(_content);

@@ -201,7 +201,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -368,7 +368,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         updatedTrip.EndDate.ShouldBe(createdTrip.EndDate);
         updatedTrip.UserId.ShouldBe(createdTrip.UserId);
     }
-    
+
     [Fact]
     public async Task GetTripLocations_MultipleTripsWithPosts_ReturnsOnlyLocationsForGivenTrip()
     {
@@ -388,19 +388,19 @@ public class TripControllerTests : BaseIntegrationTestFixture
         });
         var trip2 = await trip2Response.Content.ReadFromJsonAsync<Trip>();
         Assert.NotNull(trip2);
-        
+
         await using var context = DbContextFactory.CreateDbContext();
         context.Locations.AddRange(
             new Location
-                { OsmId = 1, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 1 },
+            { OsmId = 1, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 1 },
             new Location
-                { OsmId = 2, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 2 },
+            { OsmId = 2, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 2 },
             new Location
-                { OsmId = 3, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 3 }
+            { OsmId = 3, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 3 }
         );
 
         context.Posts.AddRange(
-            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content"},
+            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content" },
             new Post { PostId = 2, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
             new Post { PostId = 3, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
         );
@@ -413,7 +413,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
             _output.WriteLine(ex.InnerException?.Message ?? ex.Message);
             throw;
         }
-        
+
 
         var response = await HttpClient.GetAsync($"/api/trip/locations/{trip1.Id}");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);

@@ -60,8 +60,8 @@ public class U7005DeletePost
             OsmId = 1,
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateTimeOffset.Now.AddDays(-1),
-            CreationTime = DateTimeOffset.Now
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
+            CreationTime = DateTimeOffset.UtcNow
         };
 
         context.Users.Add(user);
