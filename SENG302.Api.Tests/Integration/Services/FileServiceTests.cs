@@ -131,4 +131,41 @@ public class FileServiceTests : BaseIntegrationTestFixture
             await ServiceUnderTest.GetFileByIdAsync(fileEntity.Id);
         });
     }
+
+    [Fact]
+    public async Task CheckFileOwnership_OwnerOwns_ReturnTrue()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        
+        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,0);
+        owns.ShouldBeTrue();
+    }
+
+
+    [Fact]
+    public async Task CheckFileOwnership_OwnerDoesntOwn_ReturnFalse()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        
+        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,1);
+        owns.ShouldBeFalse();
+    }
 }

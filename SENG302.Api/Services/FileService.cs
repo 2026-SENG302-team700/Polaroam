@@ -11,6 +11,7 @@ public interface IFileService
     Task DeleteFileAsync(string fileKey);
     Task<byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
+    Task<bool> CheckFileOwnership(int fileId, int userId);
 }
 
 public class FileService : IFileService
@@ -88,6 +89,18 @@ public class FileService : IFileService
         await context.SaveChangesAsync();
 
         return customFile;
+    }
+
+    /// <summary>
+    /// checks if the given user id matches the ownerid of the file whose id is passed as fileid.
+    /// </summary>
+    /// <param name="fileId"></param>
+    /// <param name="userId"></param>
+    /// <returns>true if owner is user id, false otherwise</returns>
+    public async Task<bool> CheckFileOwnership(int fileId, int userId)
+    {
+        var file = await GetFileByIdAsync(fileId);
+        return file.OwnerId == userId;
     }
         
     /// <summary>

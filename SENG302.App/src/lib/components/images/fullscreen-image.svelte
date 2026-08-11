@@ -2,16 +2,19 @@
     import CloseButton from "../buttons/close-button.svelte";
     import RightArrowButton from "../buttons/right-arrow-button.svelte"
     import LeftArrowButton from "../buttons/left-arrow-button.svelte"
+    import TagPill from "../content/tag-pill.svelte";
 
     let {
-        image,
-        enlarged = $bindable(false),
+       image,
+       enlarged = $bindable(false),
        index,
-       images  
+       images,
+       tags,
     }: { image: File,
          enlarged: boolean, 
        index: number, 
-       images: File[] | null; } = $props();
+       images: File[] | null,
+       tags: string[]; } = $props();
 
     function moveToLeftImage()
     {
@@ -54,6 +57,9 @@
          {#if images !== null && images?.length > 1 && index !== 0}
             <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
          {/if}
+         {#each tags as tag}
+            <TagPill {tag}/>
+         {/each}
       </div>    
    </div>  
 </div>
