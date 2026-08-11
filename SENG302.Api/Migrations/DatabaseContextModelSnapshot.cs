@@ -49,6 +49,9 @@ namespace SENG302.Api.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
 
+                    b.PrimitiveCollection<List<string>>("Tags")
+                        .HasColumnType("text[]");
+
                     b.HasKey("Id");
 
                     b.ToTable("CustomFiles");
