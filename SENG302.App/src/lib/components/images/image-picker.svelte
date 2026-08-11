@@ -19,7 +19,7 @@
         errors = [],
         newUploadsCount = $bindable(0),
         fileErrors = $bindable<string[]>([]),
-        loading = $bindable(false)
+        loading = $bindable(false),
     }: {
         filesList: File[] | null | undefined;
         errors: string[];
@@ -36,7 +36,9 @@
      * @param file the image file
      */
     async function getRealValidMime(file: File) {
-        const magicNumber = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+        const magicNumber = new Uint8Array(
+            await file.slice(0, 12).arrayBuffer(),
+        );
         const dict = Object.entries(mimeMagicNumbers);
 
         for (let mimeI = 0; mimeI < dict.length; mimeI++) {
@@ -80,12 +82,20 @@
         const shortName = truncateFilename(file.name);
 
         if (file.size > MAX_IMAGE_SIZE) {
-            fileErrors.push(`${shortName}: Image too large, maximum file size is 10MB`);
+            fileErrors.push(
+                `${shortName}: Image too large, maximum file size is 10MB`,
+            );
         }
 
         const realMimeType = await getRealValidMime(file);
-        if (!mimeTypes.includes(file.type) || realMimeType === undefined || file.type !== realMimeType) {
-            fileErrors.push(`${shortName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp`);
+        if (
+            !mimeTypes.includes(file.type) ||
+            realMimeType === undefined ||
+            file.type !== realMimeType
+        ) {
+            fileErrors.push(
+                `${shortName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp`,
+            );
         }
 
         return fileErrors;
@@ -104,37 +114,67 @@
             if (fileError.length > 0) {
                 newFileErrors.push(...fileError);
             } else {
-                newUploadsCount += 1
+                newUploadsCount += 1;
                 filesList?.push(file);
             }
         }
 
         fileErrors = newFileErrors;
     }
-    
 </script>
+
 <div class="d-flex flex-column mb-2">
     <button
-            type="button"
-            class="btn btn-sm btn-primary"
-            class:is-invalid={displayedErrors.length > 0}
-            onclick={() => {
-          pfpInput.value = "";
-          pfpInput.click();
+        type="button"
+        class="btn image-picker-button"
+        class:is-invalid={displayedErrors.length > 0}
+        onclick={() => {
+            pfpInput.value = "";
+            pfpInput.click();
         }}
-            disabled={loading}
+        disabled={loading}
     >
         <i class="bi-plus"></i>
         <i class="bi-images"></i>
     </button>
     <input
-            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-            type="file"
-            bind:files
-            bind:this={pfpInput}
-            class="d-none"
-            id="image-picker"
-            multiple
-            onchange={appendImages}
+        accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+        type="file"
+        bind:files
+        bind:this={pfpInput}
+        class="d-none"
+        id="image-picker"
+        multiple
+        onchange={appendImages}
     />
 </div>
+
+<style>
+    .image-picker-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        width: 70%;
+        padding: 0.75rem 1rem;
+        border: 2px dashed #686868;
+        background: #fff8e8;
+        color: #686868;
+        font-weight: 700;
+        align-self: center;
+    }
+
+    .image-picker-button:hover {
+        border-style: solid;
+        background: #f3ead7;
+    }
+
+    .image-picker-button i {
+        font-size: 1.2rem;
+    }
+
+    .image-picker-button.is-invalid {
+        border-color: var(--bs-danger);
+        color: var(--bs-danger);
+    }
+</style>

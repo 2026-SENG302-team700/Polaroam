@@ -1,7 +1,8 @@
 <script lang="ts">
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import PostForm from "$lib/components/forms/post-form.svelte";
+    import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
@@ -307,42 +308,59 @@
     }
 </script>
 
-<div class="container d-flex justify-content-center align-items-center">
-    <div class="w-100" style="max-width: 600px;">
-        <TitleForm bind:name={title} errors={errors.title} />
-        <DatePicker bind:value={date} error={errors.date} />
-        <LocationForm
-            bind:searchQuery
-            bind:location
-            bind:error={errors.location}
-        />
-        <DescriptionForm
-            placeholder="Content"
-            bind:description={content}
-            errors={errors.content}
-        />
-        <ImageDisplay
-            bind:images={files}
-            errors={[...errors.photos, ...fileErrors]}
-            letDelete={true}
-            ondelete={removePhoto}
-        >
-            <ImagePicker
-                bind:filesList={files}
-                errors={errors.photos}
-                bind:newUploadsCount
-                bind:fileErrors
-            />
-        </ImageDisplay>
-        <MultipleErrorDisplay errors={[errors.generic]} />
-        <div class="d-grid">
-            <CreationButton onClick={updatePost} text="Update Post" />
-        </div>
-        <div class="d-grid mt-3">
-            <CancelButton path={`/home/trips/${page.params.tripId}`} />
-        </div>
+<PostForm heading="Edit Post">
+    <div class="section-heading">
+        <i class="bi bi-pencil-square"></i>
+        <h2>Post Details</h2>
     </div>
-</div>
+    <TitleForm bind:name={title} errors={errors.title} {loading} />
+
+    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+    <LocationForm
+        bind:searchQuery
+        bind:location
+        bind:error={errors.location}
+        bind:loading
+    />
+    <DescriptionForm
+        placeholder="Content"
+        bind:description={content}
+        errors={errors.content}
+    />
+    <div class="section-divider"></div>
+
+    <div class="section-heading">
+        <i class="bi bi-camera"></i>
+        <h2>Photos</h2>
+    </div>
+
+    <ImageDisplay
+        bind:images={files}
+        errors={[...errors.photos, ...fileErrors]}
+        letDelete={true}
+        ondelete={removePhoto}
+    >
+        <ImagePicker
+            bind:filesList={files}
+            errors={errors.photos}
+            bind:newUploadsCount
+            bind:fileErrors
+            {loading}
+        />
+    </ImageDisplay>
+
+    <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
+
+    <div class="post-form-actions">
+        <ConfirmCancelButton
+            path={`/home/trips/${tripId}`}
+            option1Text="Back to your Trip"
+            option2Text="Stay on This Page"
+        />
+
+        <CreationButton onClick={updatePost} text="Update Post" {loading} />
+    </div>
+</PostForm>
 
 <ConfirmationModal
     bind:show={confirmationModalShown}
@@ -356,3 +374,42 @@
     }}
     onOption2={() => (confirmationModalShown = false)}
 />
+
+<style>
+    .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 1.25rem 0 1rem;
+        color: #686868;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .section-heading i {
+        font-size: 1.15rem;
+    }
+
+    .section-divider {
+        margin: 1.75rem 0;
+        border-top: 2px dashed #686868;
+        opacity: 0.65;
+    }
+
+    .post-form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1.75rem;
+    }
+
+    @media (max-width: 500px) {
+        .post-form-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
