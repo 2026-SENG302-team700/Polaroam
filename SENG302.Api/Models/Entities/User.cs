@@ -36,4 +36,6 @@ public class User
 
     public bool EmailVerified { get; set; } = false;
 
+    public bool PreferenceMapVisible { get; set; } = true;
+
 }

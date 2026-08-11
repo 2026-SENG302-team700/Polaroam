@@ -245,4 +245,34 @@ public class UserController : ControllerBase
 
         return File(fileBytes, customFile.MimeType);
     }
+
+    [HttpPut("preference/mapvisible")]
+    public async Task<IActionResult> SetMapShownPreference([FromBody] bool mapVisible)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to update the map visible preference");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        await _userService.SetPreferenceMapVisibleAsync(userId, mapVisible);
+        return Ok();
+    }
+
+    [HttpGet("preference/mapvisible")]
+    public async Task<IActionResult> GetMapShownPreference()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to get the map visible preference");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        await _userService.GetPreferenceMapVisibleAsync(userId);
+        return Ok();
+    }
 }

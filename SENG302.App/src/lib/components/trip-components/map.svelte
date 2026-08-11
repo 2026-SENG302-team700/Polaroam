@@ -1,11 +1,20 @@
 <script lang="ts">
     import { MapLibre, Marker, Popup } from 'svelte-maplibre';
     import {resolve} from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf.js";
+    import { json } from 'node:stream/consumers';
+    import { onMount } from 'svelte';
     
     let { locations } = $props();
 
     let map = $state();
+    let mapVisible = $state(false);
+    let mapToggleError = $state("");
     const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+
+    onMount(async () => {
+        mapVisible = await getMapVisibility();
+    })
 
     /**
      * Recenter the map to fit all the locations
@@ -44,6 +53,56 @@
         );
     }
     
+
+    /**
+     * Toggle the map visibility, sending a request to the backend to save the user's preference
+     */
+    async function toggleMapVisibility() {
+        mapVisible = !mapVisible;
+
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/preference/mapvisible` as any),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    body: JSON.stringify({mapVisible})
+                },
+            );
+            const data = await response.json();
+
+            if (!response.ok) {
+                mapToggleError = data.message || "Failed to toggle map";
+                return;
+            }
+
+        } catch (err) {
+            mapToggleError = "Failed to toggle map: " + (err as Error).message;
+        }
+    }
+
+    async function getMapVisibility() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/preference/mapvisible` as any),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    body: JSON.stringify({mapVisible})
+                },
+            );
+            const data = await response.json();
+
+            if (!response.ok) {
+                mapToggleError = data.message || "Failed to toggle map";
+                return;
+            }
+
+        } catch (err) {
+            mapToggleError = "Failed to toggle map: " + (err as Error).message;
+        }
+    }
+
     $effect(() => {
         recenterMap();
     });
@@ -70,7 +129,7 @@
             <button
                 class="btn btn-secondary"
                 style="width: 34px; height: 34px; padding: 0;"
-                onclick={recenterMap}
+                onclick={toggleMapVisibility}
                 type="button"
                 aria-label="Recenter map"
             >
