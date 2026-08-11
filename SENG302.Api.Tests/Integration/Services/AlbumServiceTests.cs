@@ -23,6 +23,39 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task GetAlbumById_ValidId_ReturnsAlbum()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        await context.SaveChangesAsync();
+        var album = await ServiceUnderTest.GetAlbumByIdAsync(1);
+        album.ShouldNotBeNull();
+        album.PhotoIds.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task GetAlbumById_InvalidId_ThrowsKeyNotFoundError()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        await context.SaveChangesAsync();
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetAlbumByIdAsync(2);
+           
+        });
+        ex.Message.ShouldContain("Album with that Id does not exist.");
+    }
+
+    [Fact]
     public async Task UploadAlbumImages_SingleValidImage_ReturnsAlbumWithPhotoId()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();

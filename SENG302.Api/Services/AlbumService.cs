@@ -46,9 +46,32 @@ public class AlbumService: IAlbumService
     }
 
     /// <summary>
-    /// Deletes content from bucket first, then from db.
+    /// given a trip id, return the album associated with that trip. 
+    /// Throws KeyNotFoundException if the album does not exist (or the trip doesn't exist)
     /// </summary>
-    /// <param name="fileKey">fileKey of item to be deleted.</param>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    public async Task<Album> GetAlbumByIdAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
+        if (album == null)
+        {
+
+            throw new KeyNotFoundException("Album with that Id does not exist.");
+        }
+        return album;
+    }
+
+    /// <summary>
+    /// ***NOT DONE***
+    /// </summary>
+    /// <param name="photoId"></param>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    /// <exception cref="FileNotFoundException"></exception>
     public async Task DeleteImageFromAlbumAsync(int photoId, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();

@@ -56,6 +56,11 @@ public class PostServiceTests : BaseIntegrationTestFixture
             StartDate = new DateOnly(2017, 10, 08),
             EndDate = new DateOnly(2017, 10, 21)
         });
+        context.Albums.Add(new Album
+        {
+            TripId = tripId,
+            PhotoIds = [],
+        });
         await context.SaveChangesAsync();
     }
 
