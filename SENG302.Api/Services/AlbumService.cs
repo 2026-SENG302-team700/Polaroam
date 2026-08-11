@@ -28,6 +28,12 @@ public class AlbumService: IAlbumService
         _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
     }
+    
+    /// <summary>
+    /// Validation for the album images
+    /// </summary>
+    /// <param name="photos"></param>
+    /// <returns>List of error strings</returns>
     private static List<String> ValidateAlbumImages(List<IFormFile> photos)
     {
         var photoErrors = new List<string>();
