@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
@@ -15,11 +16,13 @@ public class TripController : ControllerBase
 {
     private readonly ITripService _tripService;
     private readonly IPostService _postService;
+    private readonly IGeoService _geoService;
 
-    public TripController(ITripService tripService,IPostService postService)
+    public TripController(ITripService tripService,IPostService postService, IGeoService geoService)
     {
         _tripService = tripService;
         _postService = postService;
+        _geoService = geoService;
     }
 
     /// <summary>
@@ -197,6 +200,19 @@ public class TripController : ControllerBase
         }
         var taskList = await _postService.GetPostsByTripAsync(tripId);
         return Ok(taskList);
+    }
+
+     /// <summary>
+     /// Gets all locations associated with a trip.
+     /// </summary>
+     /// <param name="tripId"></param>
+     /// <returns>A list of location objects</returns>
+    [Authorize]
+    [HttpGet("locations/{tripId:int}")]
+    public async Task<ActionResult<IEnumerable<Location>>> GetPostLocations(int tripId)
+    {
+        var locations = await _tripService.GetTripLocations(tripId);
+        return Ok(locations);
     }
 
 }

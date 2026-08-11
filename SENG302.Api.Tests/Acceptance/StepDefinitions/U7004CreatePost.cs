@@ -157,6 +157,16 @@ public class U7004CreatePost
         _date = DateOnly.FromDateTime(DateTime.Now).AddDays(1);
     }
 
+    [Given(@"I enter content longer than 8196 characters long")]
+    public async Task GivenIEnterContentLongerThan8196Characters()
+    {
+        await SetupUserAndTrip();
+
+        _title = "Valid post title";
+        _content = new string('a', 8197);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
+    }
+
     [Then(@"I see an error message '(.*)'")]
     public async Task CheckFutureDateErrorMessage(string expectedMessage)
     {

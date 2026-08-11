@@ -19,11 +19,13 @@
         errors = [],
         newUploadsCount = $bindable(0),
         fileErrors = $bindable<string[]>([]),
+        loading = $bindable(false)
     }: {
         filesList: File[] | null | undefined;
         errors: string[];
         newUploadsCount?: number;
         fileErrors?: string[];
+        loading: boolean;
     } = $props();
 
     let displayedErrors = $derived([...errors, ...fileErrors]);
@@ -120,6 +122,7 @@
           pfpInput.value = "";
           pfpInput.click();
         }}
+            disabled={loading}
     >
         <i class="bi-plus"></i>
         <i class="bi-images"></i>

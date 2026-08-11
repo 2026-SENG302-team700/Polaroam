@@ -3,6 +3,8 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.ImageTagging;
 
 
 namespace SENG302.Api.Services;
@@ -11,14 +13,12 @@ public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId);
-    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, List<IFormFile>? photos, int userId);
+    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos);
     Task<Post?> GetPostAsync(int id);
-    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates);
+    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos);
     Task<bool> UserOwnsPost(int userId, int tripId);
-    Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId);
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
-    Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
 }
 
@@ -29,15 +29,20 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingService _imageTaggingService;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
 
-    public PostService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IFileService fileService, IGeoService geoService, IImageTaggingService imageTaggingService)
+    public PostService(
+        IDbContextFactory<DatabaseContext> dbContextFactory,
+        TimeProvider timeProvider,
+        IFileService fileService,
+        IGeoService geoService,
+        IImageTaggingQueue imageTaggingQueue)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
-        _imageTaggingService = imageTaggingService;
+        _imageTaggingQueue = imageTaggingQueue;
     }
 
     /// <summary>
@@ -64,10 +69,14 @@ public class PostService : IPostService
     /// dueDate must be in the future, and currentStatus will be automatically set to
     /// </summary>
     /// <param name="postRequest"></param>
-    /// <param name="photos"></param>
     /// <param name="userId"></param>
+    /// <param name="photos"></param>
     /// <returns>the newly created postItem</returns>
-    public async Task<Post> CreateNewPostAsync(NewPostRequest postRequest, List<IFormFile>? photos, int userId)
+    public async Task<Post> CreateNewPostAsync(
+        NewPostRequest postRequest,
+        int userId,
+        List<IFormFile>? photos = null
+        )
     {
         // Clean Request
         postRequest.Title = postRequest.Title.Trim();
@@ -186,34 +195,62 @@ public class PostService : IPostService
     /// Updates the content then pushes to DB.
     /// </summary>
     /// <param name="postUpdates">Incoming Post Item Request</param>
+    /// <param name="userId"></param>
+    /// <param name="photos"></param>
     /// <returns>The updated Post item</returns>
-    public async Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates)
+    public async Task<Post?> UpdatePostAsync(
+        UpdatePostRequest postUpdates,
+        int userId,
+        List<IFormFile>? photos = null
+        )
     {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
-        if (post == null)
-        {
-            return null;
-        }
-
+        // Clean Request
         postUpdates.Title = postUpdates.Title.Trim();
         postUpdates.Content = postUpdates.Content.Trim();
+        photos ??= [];
 
-        var errors = PostValidator.ValidatePostFields(postUpdates, post);
+        // Validation
+        var errors = PostValidator.ValidatePostFields(postUpdates);
+
+        // Image Validation
+        var photoErrors = new List<string>();
+        foreach (var photo in photos)
+        {
+            if (!ImageValidationTools.IsValidFilesize(photo))
+            {
+                photoErrors.Add($"{photo.FileName}: Image too large, maximum file size is 10MB");
+            }
+            else if (!ImageValidationTools.IsValidMimeType(photo))
+            {
+                photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+            }
+        }
+
+        if (photoErrors.Count > 0)
+        {
+            errors["photos"] = photoErrors;
+        }
 
         if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
         }
 
-        post.Title = postUpdates.Title;
-        post.Content = postUpdates.Content;
-        post.Date = postUpdates.Date;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        // Select post
+        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postUpdates.Id);
+        if (post == null)
+        {
+            throw new KeyNotFoundException();
+        }
+
+        // Location Validation
+        GeoLocationSearchResult? location = null;
 
         if (postUpdates.OsmId != post.OsmId)
         {
-            var location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -221,96 +258,31 @@ public class PostService : IPostService
                     ["location"] = ["This isn't a valid location"]
                 });
             }
-            post.OsmId = postUpdates.OsmId;
-            post.LocationName = location.name;
         }
 
-        context.Posts.Update(post);
-        await context.SaveChangesAsync();
-        return post;
-    }
-
-    /// <summary>
-    /// Adds photos to an existing posts. Called both when post initially created and you want to add extra photos
-    /// later on
-    /// </summary>
-    /// <param name="photoFileIds">List of the custom file Ids corresponding to the photos</param>
-    /// <param name="postId">The Ids of the post</param>
-    /// <returns></returns>
-    public async Task<Post?> AddPhotosToPost(List<int> photoFileIds, int postId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var post = await context.Posts.FirstOrDefaultAsync(u => u.PostId == postId);
-
-        if (post == null)
-        {
-            return null;
-        }
-        if (post.PhotoIds == null)
-        {
-            return null;
-        }
-
-        for (int i = 0; i < photoFileIds.Count; i++)
-        {
-            post.PhotoIds.Add(photoFileIds[i]);
-        }
-
-        context.Posts.Update(post);
-        await context.SaveChangesAsync();
-        return post;
-    }
-
-    /// <summary>
-    /// Validates and saves photos uploaded for a post, then attaches them to the post.
-    /// Deletes the post if any photo fails validation.
-    /// currently useless but will be implemented with edit post.
-    /// </summary>
-    /// <param name="files">The photo files being uploaded</param>
-    /// <param name="postId">The id of the post the photos belong to</param>
-    /// <param name="userId">The id of the user uploading the photos</param>
-    /// <returns>The ids of the newly created custom files for the photos</returns>
-    public async Task<List<int>> UploadPhotosToPostAsync(List<IFormFile> files, int postId, int userId)
-    {
-        var validationErrors = new List<string>();
-
-        foreach (var file in files)
-        {
-            if (!ImageValidationTools.IsValidFilesize(file))
-            {
-                validationErrors.Add($"{file.FileName}: Image too large, maximum file size is 10MB");
-                continue;
-            }
-
-            if (!ImageValidationTools.IsValidMimeType(file))
-            {
-                validationErrors.Add($"{file.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
-            }
-        }
-
-        if (validationErrors.Count > 0)
-        {
-            throw new MultipleValidationListException(
-                new Dictionary<string, List<string>> {
-                    { "photos", validationErrors }
-                }
-                );
-        }
-
+        // Add / Remove Photos 
         List<int> customFileIds = [];
 
-        foreach (var file in files)
+        foreach (var photo in photos)
         {
-            var customFile = await _fileService.SaveFileAsync(file, userId);
+            var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(file, customFile.Id);
+            await GenerateImageTags(photo, customFile.Id);
         }
 
-        await AddPhotosToPost(customFileIds, postId);
+        // Update post content
+        post.Title = postUpdates.Title;
+        post.Content = postUpdates.Content;
+        post.Date = postUpdates.Date;
+        post.OsmId = postUpdates.OsmId;
+        post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.LocationName = location != null ? location.name : post.LocationName;
 
-        return customFileIds;
+        // Save Changes
+        context.Posts.Update(post);
+        await context.SaveChangesAsync();
+        return post;
     }
 
     /// <summary>
@@ -328,11 +300,7 @@ public class PostService : IPostService
         {
             return false;
         }
-        if (trip.UserId != userId)
-        {
-            return false;
-        }
-        return true;
+        return trip.UserId == userId;
     }
 
     /// <summary>
@@ -375,7 +343,7 @@ public class PostService : IPostService
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Deletes all posts of a given trip. Used when a trip is deleted.
     /// </summary>
@@ -390,7 +358,7 @@ public class PostService : IPostService
         {
             await DeletePostByIdAsync(posts[i].PostId);
         }
-        
+
     }
 
 
@@ -431,18 +399,25 @@ public class PostService : IPostService
     {
         try
         {
-            var tags = await _imageTaggingService.GenerateTagsAsync(image);
+            var ms = new MemoryStream();
+            await image.CopyToAsync(ms);
+            ms.Position = 0;
 
-            //Save to db in the future
-            Console.WriteLine($"\n\n\n\nGenerated tags for image {imageId}: " + string.Join(", ", tags) + "\n\n\n\n");
+            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = image.ContentType
+            };
+
+            await _imageTaggingQueue.QueueImageTaggingAsync(
+                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
+            );
         }
         catch (Exception ex)
         {
             // Tagging cant cause the image uplaod to fail
             Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
         }
-
-        // Add queuing later to make sure the tag generation is awaited.
     }
 }
 

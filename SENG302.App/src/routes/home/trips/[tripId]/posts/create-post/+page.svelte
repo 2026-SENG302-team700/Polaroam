@@ -3,7 +3,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { uploadPhotos } from "$lib/posts/images";
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
@@ -108,7 +107,9 @@
                 errors.generic = data.message ?? "";
                 errors.photos = data.errors?.photos ?? [];
                 if (
-                    errors.content.length === 1 &&
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
                     !errors.date &&
@@ -160,13 +161,14 @@
         </div>
 
         <TitleForm bind:name={title} errors={errors.title} {loading} />
-        <DatePicker bind:value={date} error={errors.date} />
+        <DatePicker bind:value={date} error={errors.date} disabled={loading} />
         <LocationForm
             bind:searchQuery
             bind:location
             bind:error={errors.location}
+            bind:loading={loading}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} />
+        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} bind:loading={loading}/>
         <ImageDisplay
                 bind:images={files}
                 letDelete={true}
@@ -176,11 +178,12 @@
                 bind:filesList={files}
                 errors={errors.photos}
                 bind:fileErrors
+                loading={loading}
             />
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
-            <CreationButton onClick={createPost} text="Create Post" />
+            <CreationButton onClick={createPost} text="Create Post" loading={loading} />
         </div>
     </div>
 </div>

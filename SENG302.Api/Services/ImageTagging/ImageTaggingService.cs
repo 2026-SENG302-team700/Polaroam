@@ -1,14 +1,15 @@
-using System.Net.Http.Json;
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SENG302.Api.DataAccess;
 
-namespace SENG302.Api.Services;
+namespace SENG302.Api.Services.ImageTagging;
 
 public interface IImageTaggingService
 {
-    Task<IReadOnlyList<string>> GenerateTagsAsync(
-        IFormFile image, CancellationToken cancellationToken = default
+    Task GenerateTagsAsync(
+        IFormFile image, 
+        int imageId, 
+        CancellationToken cancellationToken = default
     );
 }
 
@@ -16,33 +17,47 @@ public class ImageTaggingService : IImageTaggingService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
+    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
     public ImageTaggingService(
         HttpClient httpClient,
-        IConfiguration configuration
+        IConfiguration configuration,
+        IDbContextFactory<DatabaseContext> dbContextFactory
     )
     {
         _httpClient = httpClient;
         _configuration = configuration;
+        _dbContextFactory = dbContextFactory;
     }
 
     /// <summary>
     /// Sends a image to the LLM API and returns validated image tags
-    /// 
-    /// TODO: this method should eventually be called by a background queue worker.
-    /// The controller would enquee new images (id) instead of waiting for the LLM request to complete.
+    /// The controller would enqueue new images (id) instead of waiting for the LLM request to complete.
     /// </summary>
-    /// <param name="image"></param>
+    /// <param name="image">An image file to be tagged</param>
+    /// <param name="imageId">The id of the image to tag</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task<IReadOnlyList<string>> GenerateTagsAsync(
-        IFormFile image, CancellationToken cancellationToken = default)
+    public async Task GenerateTagsAsync(
+        IFormFile image, int imageId, CancellationToken cancellationToken = default)
     {
-        // checkl the image is valid
         ValidateImage(image);
-
+        var request = await GenerateRequest(image, cancellationToken);
+        var content = await ProcessRequest(request, cancellationToken);
+        await ParseValidateAndSetTags(content, imageId);
+    }
+    
+    /// <summary>
+    /// Private method to generate the request to the LLM API.
+    /// </summary>
+    /// <param name="image">An image to generate tags for</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An HttpRequest that can be used to call the llm</returns>
+    /// <exception cref="InvalidOperationException">Thrown if no api key provided</exception>
+    private async Task<HttpRequestMessage> GenerateRequest(IFormFile image, CancellationToken cancellationToken)
+    {
         var apiKey = _configuration["LLM_API_KEY"];
 
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -97,14 +112,25 @@ public class ImageTaggingService : IImageTaggingService
             temperature = 0.2
         };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
+        var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
         // use the api key as a header
         request.Headers.TryAddWithoutValidation(
             "Authorization", apiKey
         );
 
         request.Content = JsonContent.Create(requestBody);
-
+        return request;
+    }
+    
+    /// <summary>
+    /// Private method that sends the request to the LLM API and returns the response.
+    /// </summary>
+    /// <param name="request">The request method obtained from the GenerateRequest Method</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>The json string returned from the request</returns>
+    /// <exception cref="HttpRequestException">Thrown if received a non-success response code</exception>
+    private async Task<string?> ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
         using var response = await _httpClient.SendAsync(
             request,
             cancellationToken
@@ -118,22 +144,22 @@ public class ImageTaggingService : IImageTaggingService
         }
 
         using var responseDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken),
-        cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken);
 
         var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
 
         var content = responseContentElement.GetString();
-
-        return ParseAndValidateTags(content);
+        return content;
     }
-
+    
     /// <summary>
     /// Private method to interpret and parse the raw response from API.
     /// </summary>
-    /// <param name="content"></param>
+    /// <param name="content">Response returned from ProccessRequest</param>
+    /// <param name="imageId">The image Id that was tagged</param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    private static IReadOnlyList<string> ParseAndValidateTags(string? content)
+    private async Task ParseValidateAndSetTags(string? content, int imageId)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
@@ -168,14 +194,25 @@ public class ImageTaggingService : IImageTaggingService
                     PropertyNameCaseInsensitive = true
                 }
             );
+            if (tagResponse == null) return;
+            
+            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            var image = context.CustomFiles.FirstOrDefault(f => f.Id == imageId);
+            if (image == null) return;
+            image.Tags = tagResponse.Tags;
+            context.CustomFiles.Update(image);
+            await context.SaveChangesAsync();
+            
+            Console.WriteLine("Tags set for image: " + imageId);
+            
         }
         catch (JsonException exception)
         {
             throw new InvalidOperationException("The LLM did not return valid JSON", exception);
         }
 
-        // get the tags from the tag response and split into list
-        var tags = tagResponse?.Tags?
+        // get the tags from the tag response and split into a list
+        var tags = tagResponse?.Tags
         .Select(tag => tag.Trim().ToLowerInvariant())
         .Where(tag => tag.Length > 0 && tag.Length <= 50).Distinct().Take(5).ToList();
 
@@ -183,12 +220,10 @@ public class ImageTaggingService : IImageTaggingService
         {
             throw new InvalidOperationException("The LLM did not return any tags");
         }
-
-        return tags;
     }
 
     /// <summary>
-    /// Validate the image type provided, ensure it is one the API can process.
+    /// Validate the image type provided, ensure it is one that the API can process.
     /// </summary>
     /// <param name="image"></param>
     /// <exception cref="ArgumentException"></exception>

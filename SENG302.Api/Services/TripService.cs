@@ -2,6 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
@@ -13,6 +14,7 @@ public interface ITripService
     Task DeleteTripByIdAsync(int tripId);
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
     Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
+    Task<List<Location>> GetTripLocations(int tripId);
 }
 
 public class TripService : ITripService
@@ -230,5 +232,26 @@ public class TripService : ITripService
         await context.SaveChangesAsync();
 
         return trip;
+    }
+    
+    /// <summary>
+    /// Gets all locations that have been posted in a trip
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>List of location objects</returns>
+    public async Task<List<Location>> GetTripLocations(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var locations = await context.Set<Post>()
+            .Where(p => p.TripId == tripId)
+            .Join(context.Set<Location>(),
+                post => post.OsmId,
+                location => location.OsmId,
+                (post, location) => location)
+            .Distinct()
+            .ToListAsync();
+
+        return locations;
     }
 }
