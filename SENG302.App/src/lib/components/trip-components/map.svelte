@@ -65,15 +65,29 @@
             {/each}
         </MapLibre>
 
-        <button
-                class="btn btn-secondary position-absolute top-0 end-0 m-2"
+        <div class="position-absolute top-0 end-0 m-2">
+
+            <button
+                class="btn btn-secondary"
                 style="width: 34px; height: 34px; padding: 0;"
                 onclick={recenterMap}
                 type="button"
                 aria-label="Recenter map"
-        >
-            ⤢
-        </button>
+            >
+                <i class="bi bi-map"></i>
+            </button>
+
+            <button
+                    class="btn btn-secondary m-1"
+                    style="width: 34px; height: 34px; padding: 0;"
+                    onclick={recenterMap}
+                    type="button"
+                    aria-label="Recenter map"
+            >
+                <i class="bi bi-arrows-angle-expand"></i>
+            </button>
+        
+        </div>
     </div>
 </div>
 
