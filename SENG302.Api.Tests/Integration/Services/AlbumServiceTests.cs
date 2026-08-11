@@ -2,13 +2,17 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
+using SENG302.Api.Services;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
 public class AlbumServiceTests :BaseIntegrationTestFixture
 { 
+    private IPostService _postService => ServiceProvider.GetRequiredService<IPostService>();
     private IAlbumService ServiceUnderTest => ServiceProvider.GetRequiredService<IAlbumService>();
     public AlbumServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
@@ -20,6 +24,18 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Headers = new HeaderDictionary(),
             ContentType = mimeType
         };
+    }
+    
+    private void SetupGeoMock()
+    {
+        GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        {
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
+        });
     }
 
     [Fact]
@@ -489,6 +505,66 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task DeleteImageFromAlbum_PhotoBelongsToAPost_ExceptionThrown()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test1@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
+        await context.SaveChangesAsync();
+        
+        SetupGeoMock();
+        
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "test post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+        
+        byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var post = await _postService.CreateNewPostAsync(
+            request,
+            1,
+            [image]
+        );
+        
+        Exception ex = await Should.ThrowAsync<Exception>(async () =>
+        {
+            await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+        });
+        
+        ex.Message.ShouldContain("Selected image belongs to a post");
+    }
+
+    [Fact]
     public async Task GetImagesFromAlbum_ValidTripId_GetCustomFiles()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
@@ -617,4 +693,66 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         
         ex.Message.ShouldContain("Trip with that Id does not exist.");
     }
+
+    [Fact]
+    public async Task CreateNewAlbum_ValidTripId_AlbumCreated()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        await context.SaveChangesAsync();
+
+        await Should.NotThrowAsync(async () =>
+        {
+            await ServiceUnderTest.CreateNewAlbumAsync(1);
+        });
+
+        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+
+        album.ShouldNotBeNull();
+    }
+    
+    [Fact]
+    public async Task CreateNewAlbum_InvalidTripId_KeyNotFoundExceptionThrown()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewAlbumAsync(2);
+        });
+        ex.Message.ShouldBe("Trip with that Id does not exist.");
+
+        var album = await context.Set<Album>().Where(album => album.TripId == 2).FirstOrDefaultAsync();
+
+        album.ShouldBeNull();
+    }
+    
+    
 }

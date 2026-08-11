@@ -11,6 +11,7 @@ public interface IAlbumService
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
     public Task<Album>  UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task DeleteImageFromAlbumAsync(int photoId, int tripId);
+    public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
 }
 
@@ -80,6 +81,21 @@ public class AlbumService: IAlbumService
         {
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
+
+        var posts = await context.Set<Post>().Where(post => post.TripId == tripId).ToListAsync();
+
+        List<int> photoAttachedToPosts = [];
+        foreach (Post post in posts)
+        {
+             photoAttachedToPosts.AddRange(post.PhotoIds);   
+        }
+
+        if (photoAttachedToPosts.Contains(photoId))
+        {
+            throw new Exception("Selected image belongs to a post");
+        }
+        
+        
         if (album.PhotoIds.Remove(photoId))
         {
             CustomFile file;
@@ -195,4 +211,32 @@ public class AlbumService: IAlbumService
 
         return files;
     }
+    
+    /// <summary>
+    /// Create a new album for a given trip
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    public async Task<Album> CreateNewAlbumAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var trip = await context.Set<Trip>().Where(trip => trip.Id == tripId).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new KeyNotFoundException("Trip with that Id does not exist.");
+        }
+        
+        var newAlbum = new Album()
+        {
+            TripId = tripId,
+            PhotoIds = []
+        };
+        context.Set<Album>().Add(newAlbum);
+        
+        await context.SaveChangesAsync();
+
+        return newAlbum;
+    }
+    
 }

@@ -957,6 +957,91 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreateNewPostAsync_WithImage_ImagesAddedToAlbum()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "test post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+        
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(
+            request,
+            1,
+            [image]
+        );
+
+        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        
+        album.PhotoIds.Count.ShouldBe(1);
+        album.PhotoIds.ShouldContain(post.PhotoIds[0]);
+    }
+    
+    [Fact]
+    public async Task UpdatePostAsync_WithNewImages_ImagesAddedToAlbum()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "original post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
+        
+        await context.SaveChangesAsync();
+
+        var updateRequest = new UpdatePostRequest
+        {
+            Id = post.PostId,
+            TripId = post.TripId,
+            Title = "updated title",
+            Content = "updated content",
+            OsmId = post.OsmId,
+            Date = post.Date
+        };
+
+        byte[] pngBytes =
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var updatedPost = await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, [image]);
+        
+        await context.SaveChangesAsync();
+
+        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        
+        album.PhotoIds.Count.ShouldBe(1);
+        album.PhotoIds.ShouldContain(updatedPost.PhotoIds[0]);
+    }
+
+    [Fact]
     public async Task CreateNewPostAsync_WithImage_QueuesImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
@@ -993,6 +1078,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 job.Image.ContentType == "image/png")
         );
     }
+    
+
 
     [Fact]
     public async Task CreateNewPostAsync_WithoutImages_DoesNotQueueImageTagging()
@@ -1111,4 +1198,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 job.Image.ContentType == "image/png")
         );
     }
+    
+    
 }

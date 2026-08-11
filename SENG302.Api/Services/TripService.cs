@@ -107,12 +107,8 @@ public class TripService : ITripService
             StartDate = trip.StartDate,
             EndDate = trip.EndDate
         };
-        var tripItem = context.Set<Trip>().Add(newTrip);
-        var newAlbum = new Album()
-        {
-            TripId = tripItem.Entity.Id,
-        };
-        var album =context.Set<Album>().Add(newAlbum);
+        context.Set<Trip>().Add(newTrip);
+        
         await context.SaveChangesAsync();
         return newTrip;
     }

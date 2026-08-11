@@ -125,6 +125,13 @@ public class PostService : IPostService
             await GenerateImageTags(photo, file.Id);
         }
 
+        Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
+       
+        album.PhotoIds.AddRange(photoIds);
+        context.Albums.Update(album);
+        
+        await context.SaveChangesAsync();
+
         // Add location
         var location = await _geoService.GetLocationAsync(postRequest.OsmId);
         if (location == null)
@@ -274,6 +281,15 @@ public class PostService : IPostService
 
             await GenerateImageTags(photo, customFile.Id);
         }
+        
+        // get the album and add new photo Ids
+        Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
+       
+        album.PhotoIds.AddRange(customFileIds);
+        context.Albums.Update(album);
+        
+        await context.SaveChangesAsync();
+        
 
         // Update post content
         post.Title = postUpdates.Title;
