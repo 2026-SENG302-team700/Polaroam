@@ -1,5 +1,4 @@
 using Shouldly;
-using System.Globalization;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
@@ -76,38 +75,5 @@ public class PostValidatorTests
         var errors = PostValidator.ValidatePostLocation(123);
 
         errors.ShouldBeEmpty();
-    }
-
-    [Theory]
-    [InlineData("en-US")]
-    [InlineData("en-NZ")]
-    [InlineData("en-GB")]
-    [InlineData("de-DE")]
-    [InlineData("ja-JP")]
-    public void ValidatePostDate_NullDate_UsesLocaleDateFormat(string cultureName)
-    {
-        var culture = new CultureInfo(cultureName);
-        var expectedFormat = culture.DateTimeFormat.ShortDatePattern;
-
-        var errors = PostValidator.ValidatePostDate(null, culture);
-
-        errors.Count.ShouldBe(1);
-        errors[0].ShouldBe($"Invalid date, date must be formatted {expectedFormat}");
-    }
-
-    [Fact]
-    public void ValidatePostDate_DifferentLocales_ReturnDifferentFormats()
-    {
-        var nzErrors = PostValidator.ValidatePostDate(
-            null,
-            new CultureInfo("en-NZ")
-        );
-
-        var usErrors = PostValidator.ValidatePostDate(
-            null,
-            new CultureInfo("en-US")
-        );
-
-        nzErrors[0].ShouldNotBe(usErrors[0]);
     }
 }

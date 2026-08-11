@@ -22,12 +22,12 @@ public class PostValidator
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="date"></param>
-    public static List<string> ValidatePostDate(DateOnly? date, CultureInfo? culture = null)
+    public static List<string> ValidatePostDate(DateOnly? date)
     {
         var errors = new List<string>();
         if (date == null)
         {
-            errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(culture)}");
+            errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
             return errors;
         }
 
