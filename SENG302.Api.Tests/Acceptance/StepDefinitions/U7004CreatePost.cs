@@ -115,8 +115,7 @@ public class U7004CreatePost
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
         form.Add(new StringContent("1"), "TripId");
-        form.Add(new StringContent((_date?.ToString("s") + "Z") ?? string.Empty), "Date");
-
+        form.Add(new StringContent(_date == null ? string.Empty : (_date?.ToString("s") + "Z")), "Date");
 
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
@@ -177,16 +176,8 @@ public class U7004CreatePost
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var error = await _lastResponse.Content.ReadAsStringAsync();
 
-        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
-        {
-            error.ShouldContain(
-                "Invalid date, date must be formatted ");
-        }
-        else
-        {
-            error.ShouldContain(expectedMessage);
-        }
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain(expectedMessage);
     }
 }

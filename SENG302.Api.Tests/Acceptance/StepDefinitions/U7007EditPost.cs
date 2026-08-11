@@ -99,7 +99,7 @@ public class U7007EditPost
         content.Add(new StringContent(_title), "Title");
         content.Add(new StringContent(_content), "Content");
         content.Add(new StringContent(_osmId.ToString()), "OsmId");
-        content.Add(new StringContent((_date?.ToString("s") + "Z") ?? ""), "Date");
+        content.Add(new StringContent(_date == null ? string.Empty : (_date?.ToString("s") + "Z")), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
