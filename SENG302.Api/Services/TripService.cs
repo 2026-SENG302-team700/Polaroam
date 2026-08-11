@@ -54,7 +54,6 @@ public class TripService : ITripService
     {
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         // Clean request
         trip.Title = trip.Title.Trim();
         trip.Description = trip.Description.Trim();
@@ -108,7 +107,12 @@ public class TripService : ITripService
             StartDate = trip.StartDate,
             EndDate = trip.EndDate
         };
-        context.Set<Trip>().Add(newTrip);
+        var tripItem = context.Set<Trip>().Add(newTrip);
+        var newAlbum = new Album()
+        {
+            TripId = tripItem.Entity.Id,
+        };
+        var album =context.Set<Album>().Add(newAlbum);
         await context.SaveChangesAsync();
         return newTrip;
     }

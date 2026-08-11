@@ -30,14 +30,17 @@ public class PostService : IPostService
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IAlbumService _albumService;
 
     public PostService(
+        IAlbumService albumService,
         IDbContextFactory<DatabaseContext> dbContextFactory,
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
         IImageTaggingQueue imageTaggingQueue)
     {
+        _albumService = albumService;
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
@@ -144,6 +147,7 @@ public class PostService : IPostService
             OsmId = postRequest.OsmId,
             LocationName = location.name,
         };
+        //var album = _albumService.
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
 

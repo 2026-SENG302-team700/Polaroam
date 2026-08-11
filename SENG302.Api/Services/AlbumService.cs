@@ -11,6 +11,7 @@ public interface IAlbumService
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
     public Task<Album>  UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task DeleteImageFromAlbumAsync(int photoId, int tripId);
+    public Task<Album> GetAlbumByIdAsync(int tripId);
 }
 
 public class AlbumService: IAlbumService
