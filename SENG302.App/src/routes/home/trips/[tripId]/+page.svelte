@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { MapLibre, Marker, Popup } from 'svelte-maplibre';
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -28,7 +27,7 @@
         endDate: "9999-12-31",
         userId: 0,
     });
-    
+
     let postLocations = $state([]);
     let posts = $state([]);
 
@@ -37,8 +36,6 @@
         fetchPosts();
         fetchLocations();
     });
-
-    
 
     /**
      * Fetches the trip from the backend corresponding
@@ -169,7 +166,7 @@
             <p>No description</p>
         {/if}
     </div>
-    <Map locations={postLocations} />
+    <Map locations={postLocations} {posts} />
     <PostSection {posts} />
 </div>
 
@@ -229,5 +226,4 @@
         color: #dc2626;
         font-size: 0.9rem;
     }
-
 </style>
