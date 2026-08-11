@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
 using SENG302.Api.Services.ImageTagging;
 using SENG302.Api.Services.Email;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 
 namespace SENG302.Api;
 
@@ -162,6 +164,22 @@ public class Program
         builder.Services.AddSingleton<IImageTaggingQueue, ImageTaggingQueue>();
         builder.Services.AddHostedService<ImageTaggingBackgroundService>();
 
+        // get all possible cultures for localization (for date formatting)
+        var supportedCultures = CultureInfo
+            .GetCultures(CultureTypes.SpecificCultures)
+            .Where(culture => !string.IsNullOrWhiteSpace(culture.Name))
+            .ToArray();
+
+        builder.Services.Configure<RequestLocalizationOptions>(options =>
+        {
+            options.DefaultRequestCulture = new RequestCulture("en-NZ");
+            options.SupportedCultures = supportedCultures;
+            options.SupportedUICultures = supportedCultures;
+
+            options.FallBackToParentCultures = true;
+            options.FallBackToParentUICultures = true;
+        });
+
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -193,6 +211,8 @@ public class Program
         {
             app.UseCors("AllowFrontend");
         }
+
+        app.UseRequestLocalization();
 
         // Tell app to use authentication and authorization middleware
         app.UseAuthentication();

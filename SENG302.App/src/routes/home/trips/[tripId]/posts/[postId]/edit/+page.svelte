@@ -311,15 +311,16 @@
     <div class="w-100" style="max-width: 600px;">
         <TitleForm bind:name={title} errors={errors.title} />
         <DatePicker bind:value={date} error={errors.date} />
-        {#if errors.date}
-            <div class="invalid-feedback d-block">{errors.date}</div>
-        {/if}
         <LocationForm
             bind:searchQuery
             bind:location
             bind:error={errors.location}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
+        <DescriptionForm
+            placeholder="Content"
+            bind:description={content}
+            errors={errors.content}
+        />
         <ImageDisplay
             bind:images={files}
             errors={[...errors.photos, ...fileErrors]}
