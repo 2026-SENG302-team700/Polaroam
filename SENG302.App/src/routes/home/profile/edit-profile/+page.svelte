@@ -16,7 +16,8 @@
     import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
     import PasswordForm from "$lib/components/forms/password-form.svelte";
     import ToggleForm from "$lib/components/forms/toggle-form.svelte";
-    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import PolicyModal from "$lib/components/modals/policy-modal.svelte";
+    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -882,13 +883,16 @@
 </div>
 
 <!-- ai privacy policy confirmation modal -->
-<ConfirmationModal
+<PolicyModal
     bind:show={privacyPolicyModalShown}
-    message="If you leave this page all progress will be lost"
     option1Text={"Accept"}
     option2Text={"Reject"}
     onOption1={() => acceptPrivacyPolicy()}
     onOption2={() => {
         privacyPolicyModalShown = false;
     }}
-/>
+>
+    {#snippet children()}
+        <AiPrivacyPolicy />
+    {/snippet}
+</PolicyModal>

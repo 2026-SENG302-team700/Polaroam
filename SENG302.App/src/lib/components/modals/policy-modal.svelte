@@ -1,13 +1,15 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
+
     let {
-        message,
+        children,
         option1Text = "Confirm",
         option2Text = "Cancel",
         onOption1,
         onOption2,
         show = $bindable(false),
     }: {
-        message: string;
+        children: Snippet;
         option1Text?: string;
         option2Text?: string;
         onOption1: () => void;
@@ -29,10 +31,10 @@
 {#if show}
     <div class="modal-backdrop show"></div>
     <div class="modal d-block" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-body">
-                    <p class="mb-0">{message}</p>
+                    {@render children()}
                 </div>
                 <div class="modal-footer d-flex gap-2">
                     <button
@@ -44,7 +46,7 @@
                     </button>
                     <button
                             type="button"
-                            class="btn btn-danger flex-fill"
+                            class="btn btn-primary flex-fill"
                             onclick={handleOption1}
                     >
                         {option1Text}
