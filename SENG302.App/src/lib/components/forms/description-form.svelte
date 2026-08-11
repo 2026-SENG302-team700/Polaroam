@@ -1,11 +1,6 @@
 ﻿<script>
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    let {
-        description = $bindable(""), 
-        errors = [], 
-        loading = false, 
-        placeholder="Description" 
-    } = $props();
+    let {description = $bindable(""), errors = [], loading = $bindable(false), placeholder="Description" } = $props();
 </script>
 
 

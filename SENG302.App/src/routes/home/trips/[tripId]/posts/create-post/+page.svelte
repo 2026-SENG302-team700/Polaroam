@@ -161,13 +161,14 @@
         </div>
 
         <TitleForm bind:name={title} errors={errors.title} {loading} />
-        <DatePicker bind:value={date} error={errors.date} />
+        <DatePicker bind:value={date} error={errors.date} disabled={loading} />
         <LocationForm
             bind:searchQuery
             bind:location
             bind:error={errors.location}
+            bind:loading={loading}
         />
-        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} />
+        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} bind:loading={loading}/>
         <ImageDisplay
                 bind:images={files}
                 letDelete={true}
@@ -177,11 +178,12 @@
                 bind:filesList={files}
                 errors={errors.photos}
                 bind:fileErrors
+                loading={loading}
             />
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
-            <CreationButton onClick={createPost} text="Create Post" />
+            <CreationButton onClick={createPost} text="Create Post" loading={loading} />
         </div>
     </div>
 </div>
