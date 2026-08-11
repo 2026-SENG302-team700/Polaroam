@@ -8,16 +8,15 @@
     } = $props();
 </script>
 
-
 <div class="mb-3">
     <textarea
-            class="form-control"
-            class:is-invalid={errors.length > 0}
-            style="field-sizing: content;"
-            {placeholder}
-            bind:value={description}
-            disabled={loading}
+        class="form-control"
+        class:is-invalid={errors.length > 0}
+        style="field-sizing: content;"
+        {placeholder}
+        bind:value={description}
+        disabled={loading}
     >
     </textarea>
-    <ErrorDisplay errors={errors} />
+    <ErrorDisplay {errors} />
 </div>
