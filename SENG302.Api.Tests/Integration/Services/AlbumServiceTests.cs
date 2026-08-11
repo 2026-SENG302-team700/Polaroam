@@ -556,7 +556,7 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             [image]
         );
         
-        Exception ex = await Should.ThrowAsync<Exception>(async () =>
+        InvalidOperationException ex = await Should.ThrowAsync<InvalidOperationException>(async () =>
         {
             await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
         });

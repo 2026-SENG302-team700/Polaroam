@@ -30,7 +30,9 @@ public class AlbumService: IAlbumService
     }
     
     /// <summary>
-    /// Validation for the album images
+    /// Validates that the images given to it are less than 10MB in size, and that they are of a specified type.
+    /// For each image that violates these requirements, an error string is added to a list, which is returned 
+    /// when all of the images in the input list is exhausted.
     /// </summary>
     /// <param name="photos"></param>
     /// <returns>List of error strings</returns>
@@ -72,7 +74,12 @@ public class AlbumService: IAlbumService
     }
 
     /// <summary>
-    /// ***NOT DONE***
+    /// Upon being given a trip Id and a Photo Id, this method checks if the album exists 
+    /// and then checks to ensure that the image is not a part of a post. If it is, returns
+    /// an invalid operation exception.
+    /// If the image was not part of the album, it will throw a key not found exception.
+    /// Only after this, will it attempt deletion, using the fileservice delete file method
+    /// and removing it from the album.
     /// </summary>
     /// <param name="photoId"></param>
     /// <param name="tripId"></param>
@@ -93,12 +100,12 @@ public class AlbumService: IAlbumService
         List<int> photoAttachedToPosts = [];
         foreach (Post post in posts)
         {
-             photoAttachedToPosts.AddRange(post.PhotoIds);   
+            photoAttachedToPosts.AddRange(post.PhotoIds);   
         }
 
         if (photoAttachedToPosts.Contains(photoId))
         {
-            throw new Exception("Selected image belongs to a post");
+            throw new InvalidOperationException("Selected image belongs to a post");
         }
         
         
@@ -217,12 +224,15 @@ public class AlbumService: IAlbumService
 
         return files;
     }
-    
+
+     
     /// <summary>
-    /// Create a new album for a given trip
+    /// Create a new album for a given trip, and returns the album.
+    /// Fails if a trip does not exist with that id, and throws a KeyNotFoundException.
     /// </summary>
     /// <param name="tripId"></param>
-    /// <returns></returns>
+    /// <returns>new album object</returns>
+    /// <exception cref="KeyNotFoundException"></exception>
     public async Task<Album> CreateNewAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();

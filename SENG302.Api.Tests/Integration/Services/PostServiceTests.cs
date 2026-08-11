@@ -885,7 +885,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 OsmId = 1,
                 LocationName = "Christchurch",
                 Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
-                PhotoIds = null
+                PhotoIds = []
             };
 
             context.Posts.Add(post);
