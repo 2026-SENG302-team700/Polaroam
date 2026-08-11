@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Helpers.Validators;
 
 namespace SENG302.Api.Services;
 
@@ -58,8 +59,8 @@ public class TripService : ITripService
         // Clean request
         trip.Title = trip.Title.Trim();
         trip.Description = trip.Description.Trim();
-        trip.StartDate = trip.StartDate == DateOnly.MinValue ? null : trip.StartDate;
-        trip.EndDate = trip.EndDate == DateOnly.MinValue ? null : trip.EndDate;
+        trip.StartDate = trip.StartDate.HasValue ? trip.StartDate : null;
+        trip.EndDate = trip.EndDate.HasValue ? trip.EndDate : null;
 
         // Validation
         var errors = new Dictionary<string, List<string>>();

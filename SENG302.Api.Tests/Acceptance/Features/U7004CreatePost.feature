@@ -13,7 +13,7 @@ Feature: U7004_As Benji I want to be able to create posts So that I can log key 
     Scenario: AC4 - Create Post with invalid date
         Given I am on the create post form And I enter a miss-formed or null date
         When I click 'Create Post'
-        Then I see an error message 'Invalid date, date must be formatted [INSERT LOCALISED FORMAT]'
+        Then I see an error message 'Date is invalid'
 
     Scenario: AC5 - Create Post with date in the future
         Given I am on the create post form And I enter a date in the future

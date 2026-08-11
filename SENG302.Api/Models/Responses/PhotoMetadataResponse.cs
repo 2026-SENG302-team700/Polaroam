@@ -1,3 +1,5 @@
+namespace SENG302.Api.Models.Responses;
+
 public class PhotoMetadataResponse
 {
     public int PhotoId { get; set; }

@@ -33,7 +33,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     // As our tests run, time passes, which can make it difficult to check exactly when something happened.
     // For this reason, we fake (similar to mocking) our time provider, effectively freezing time while we run our tests.
-    // Note: This will only work if we remember to use a TimeProvider instead of DateTime.Now or DateTimeOffset.Now in our code.
+    // Note: This will only work if we remember to use a TimeProvider instead of DateTimeOffset.UtcNow in our code.
     protected DateTimeOffset TestNow;
     protected readonly FakeTimeProvider FakeTimeProvider;
     protected string FakeTestDirectory; // Fake Test Directory for Unit Tests regarding FileService
