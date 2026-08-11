@@ -9,7 +9,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using Shouldly;
-using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Unit.Services;
 
@@ -19,8 +18,8 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
     {
         Title = "test trip",
         Description = "Description",
-        StartDate = DateToDateTimeOffset(2021, 12, 29),
-        EndDate = DateToDateTimeOffset(2022, 12, 31),
+        StartDate = new DateOnly(2021, 12, 29),
+        EndDate = new DateOnly(2022, 12, 31),
     };
 
     private readonly ITripService _tripService;
@@ -57,8 +56,8 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         {
             Title = "test trip",
             Description = "Description",
-            StartDate = DateToDateTimeOffset(2022, 12, 29),
-            EndDate = DateToDateTimeOffset(2022, 11, 30),
+            StartDate = new DateOnly(2022, 12, 29),
+            EndDate = new DateOnly(2022, 11, 30),
         };
 
         await Should.ThrowAsync<MultipleValidationListException>(async () => await _tripService.CreateNewTripAsync(newTripRequest, -1));
@@ -124,8 +123,8 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
     public async Task UpdateTrip_ValidRequest_UpdatesTrip()
     {
         var trip = await CreateTestTripWithUserId(1);
-        var newStartDate = DateToDateTimeOffset(2026, 8, 1);
-        var newEndDate = DateToDateTimeOffset(2026, 8, 10);
+        var newStartDate = new DateOnly(2026, 8, 1);
+        var newEndDate = new DateOnly(2026, 8, 10);
 
         var request = new UpdateTripRequest
         {
@@ -203,7 +202,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         var originalTitle = trip.Title;
         var originalDescription = trip.Description;
         var originalEndDate = trip.EndDate;
-        var newStartDate = DateToDateTimeOffset(2022, 10, 10);
+        var newStartDate = new DateOnly(2022, 10, 10);
 
         var request = new UpdateTripRequest
         {
@@ -234,7 +233,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         {
             Id = trip.Id,
             StartDate = originalStartDate,
-            EndDate = DateToDateTimeOffset(2023, 10, 10)
+            EndDate = new DateOnly(2023, 10, 10)
         };
 
         await _tripService.UpdateTripAsync(request, 1);
@@ -244,7 +243,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
         savedTrip.Title.ShouldBe(originalTitle);
         savedTrip.Description.ShouldBe(originalDescription);
         savedTrip.StartDate.ShouldBe(originalStartDate);
-        savedTrip.EndDate.ShouldBe(DateToDateTimeOffset(2023, 10, 10));
+        savedTrip.EndDate.ShouldBe(new DateOnly(2023, 10, 10));
     }
 
     [Fact]
@@ -301,8 +300,8 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
             Id = trip.Id,
             Title = "Updated trip",
             Description = "Updated description",
-            StartDate = DateToDateTimeOffset(2026, 8, 10),
-            EndDate = DateToDateTimeOffset(2026, 8, 1)
+            StartDate = new DateOnly(2026, 8, 10),
+            EndDate = new DateOnly(2026, 8, 1)
         };
 
         var exception =
@@ -339,7 +338,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
             Title = "Updated trip",
             Description = "Updated description",
             StartDate = null,
-            EndDate = DateToDateTimeOffset(2026, 8, 10)
+            EndDate = new DateOnly(2026, 8, 10)
         };
 
         var exception =
@@ -349,7 +348,7 @@ public class TripServiceUnitTest : DatabaseUnitTestFixture
 
         exception.Errors.ShouldContainKey("dateOne");
         exception.Errors["dateOne"][0].ShouldContain(
-            "Date is invalid"
+            "Invalid date, date must be formatted"
         );
 
         var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);

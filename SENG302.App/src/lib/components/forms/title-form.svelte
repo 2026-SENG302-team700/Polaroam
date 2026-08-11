@@ -5,6 +5,7 @@
         errors = [],
         loading = false,
         type = "task",
+        
     } = $props();
 </script>
 

@@ -7,7 +7,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
-using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -42,8 +41,8 @@ public class U7005ImageValidation
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = DateToDateTimeOffset(2026, 7, 1),
-            EndDate = DateToDateTimeOffset(2026, 7, 10),
+            StartDate = new DateOnly(2026, 7, 1),
+            EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
 
@@ -95,7 +94,7 @@ public class U7005ImageValidation
         content.Add(new StringContent("My post"), "Title");
         content.Add(new StringContent(""), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
 
         _lastResponse = await _fixture.HttpClient.PutAsync("api/post/1", content);
     }
