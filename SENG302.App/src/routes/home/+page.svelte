@@ -9,6 +9,13 @@
     let loading = $state(false);
     let error = $state("");
     let trips = $state([]);
+    
+    // search stuff
+    let searchQuery = $state("");
+    let inSearch = $state(false);
+    
+    let searchTrips = $state([]);
+    let searchPhotos = $state([]);
 
     onMount(() => {
         fetchTrips();
@@ -36,6 +43,32 @@
             loading = false;
         }
     }
+    
+    async function performSearch() {
+        console.log("hello??");
+        
+        inSearch = true;
+        
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(resolve(`/api/search/my-trips` as any), {
+                method: "GET",
+                credentials: "include",
+            });
+            
+            const data = await response.json();
+            if (!response.ok) {
+                error = "Failed to fetch search results.";
+                return;
+            }
+        } catch (err) {
+            error = "Failed to fetch search results: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
+    
+    
 </script>
 
 <div class="container">
@@ -45,23 +78,25 @@
         </h1>
     </div>
 
-    <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
         <AddButton path="/home/trips/create-trip" />
         <div>
-            <SearchForm />
+            <SearchForm bind:query={searchQuery} performSearch={performSearch} />
         </div>
     </div>
-
-    {#if trips.length > 0}
-        <div class="trip-object-wrapper">
-            {#each trips as trip}
-                <TripCard tripObject={trip} />
-            {/each}
-        </div>
+    {#if inSearch}
     {:else}
-        <div class="no-trips-message">
-            <p>You have no trips yet! Create one with the "+" button</p>
-        </div>
+        {#if trips.length > 0}
+            <div class="trip-object-wrapper">
+                {#each trips as trip}
+                    <TripCard tripObject={trip} />
+                {/each}
+            </div>
+        {:else}
+            <div class="no-trips-message">
+                <p>You have no trips yet! Create one with the "+" button</p>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -79,5 +114,9 @@
         position: absolute;
         align-items: center;
         text-align: center;
+    }
+    
+    .my-trips-top-bar {
+        margin-bottom: 10px;
     }
 </style>
