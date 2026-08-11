@@ -7,8 +7,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 
-namespace SENG302.Api.Helpers;
-
 public class UserCredentialsValidator
 {
     /// <summary>

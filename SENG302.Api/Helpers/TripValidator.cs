@@ -2,8 +2,6 @@ using System.Globalization;
 using System.Net.NetworkInformation;
 using SENG302.Api.Services;
 
-
-namespace SENG302.Api.Helpers;
 /// <summary>
 /// Class for validating trip data
 /// </summary>

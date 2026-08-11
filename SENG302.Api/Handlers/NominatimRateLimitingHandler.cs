@@ -1,7 +1,5 @@
 using System.Threading.RateLimiting;
 
-namespace SENG302.Api.Handlers;
-
 public class NominatimRateLimitingHandler : DelegatingHandler
 {
     private readonly TokenBucketRateLimiter _limiter ;
