@@ -6,6 +6,8 @@ using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
 
+namespace SENG302.Api.Services;
+
 public interface IAlbumService
 {
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);

@@ -1,3 +1,5 @@
+namespace SENG302.Api.Models;
+
 /// <summary>
 /// Exception to throw when the password formatting is invalid (doesn't meet requirements)
 /// </summary>

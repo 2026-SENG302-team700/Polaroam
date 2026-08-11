@@ -2,6 +2,8 @@ using System.Globalization;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Interfaces;
 
+namespace SENG302.Api.Helpers;
+
 public class PostValidator
 {
 
