@@ -5,6 +5,7 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 
 namespace SENG302.Api.Services;
@@ -334,13 +335,14 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var post = await context.Posts.FirstOrDefaultAsync(p => p.PostId == postId);
-
+        
         if (post == null)
         {
             throw new ArgumentException(
                 "Post with the provided ID does not exist."
             );
         }
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == post.TripId);
 
         var locations = await context.Locations
             .Where(location => location.PostId == postId)
@@ -357,6 +359,7 @@ public class PostService : IPostService
             foreach (var image in images)
             {
                 await _fileService.DeleteFileAsync(image.FileKey);
+                album.PhotoIds.Remove(image.Id);
             }
         }
 
@@ -393,18 +396,29 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var post = await context.Posts.FirstOrDefaultAsync(t => t.PostId == postId);
-
+        if (post == null)
+        {
+            throw new KeyNotFoundException(
+                "Post of this Id does not exist."
+            ); 
+        }
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
         {
             throw new KeyNotFoundException(
                 "This photo does not belong to this post."
             );
         }
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == post.TripId);
 
         var photo = await _fileService.GetFileByIdAsync(photoId);
         await _fileService.DeleteFileAsync(photo.FileKey);
 
         post.PhotoIds.Remove(photoId);
+        if (album != null)
+        {
+            album.PhotoIds.Remove(photoId);    
+        }
+        
         await context.SaveChangesAsync();
     }
 
