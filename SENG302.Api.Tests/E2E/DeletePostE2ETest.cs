@@ -70,7 +70,7 @@ public class DeletePostE2ETest : E2ETestFixture
             OsmId = OsmId,
             LocationName = "Christchurch",
             PhotoIds = [],
-            CreationTime = DateTimeOffset.Now
+            CreationTime = DateTimeOffset.UtcNow
         };
 
         context.Posts.Add(post);

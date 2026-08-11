@@ -100,7 +100,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = "Valid post content";
-        _date = DateTimeOffset.Now.AddDays(-1);
+        _date = DateTimeOffset.UtcNow.AddDays(-1);
 
         // Text was entered, but no search result was selected.
         _location = "Made up location";
@@ -115,7 +115,8 @@ public class U7004CreatePost
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
         form.Add(new StringContent("1"), "TripId");
-        form.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? string.Empty), "Date");
+        form.Add(new StringContent((_date?.ToString("s") + "Z") ?? string.Empty), "Date");
+
 
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
@@ -158,6 +159,7 @@ public class U7004CreatePost
         _title = "Valid post title";
         _content = "Valid post content";
         _date = DateTimeOffset.UtcNow.AddDays(1);
+
     }
 
     [Given(@"I enter content longer than 8196 characters long")]

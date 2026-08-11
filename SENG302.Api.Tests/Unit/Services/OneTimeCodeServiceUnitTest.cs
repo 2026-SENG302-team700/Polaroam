@@ -13,20 +13,20 @@ public class OneTimeCodeServiceUnitTest
 {
     private readonly FakeTimeProvider _fakeTimeProvider;
     private readonly IOneTimeCodeService _service;
-    
+
 
     public OneTimeCodeServiceUnitTest()
     {
-        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.Now);
+        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
 
         _service = new OneTimeCodeService(_fakeTimeProvider);
     }
-    
+
     [Fact]
     public void GetServerTime_ValidCall_ExpectUTCTimeSeconds()
     {
         long curTime = _service.GetEpochTime();
-        
+
         Assert.True(curTime == _fakeTimeProvider.GetUtcNow().ToUnixTimeSeconds());
         Assert.True(curTime > 0);
     }
@@ -37,14 +37,14 @@ public class OneTimeCodeServiceUnitTest
         Assert.True(_service.CompareTimes(1774126459, 1774126758));
         Assert.True(_service.CompareTimes(1774126459, 1774126460));
     }
-    
+
     [Fact]
     public void CompareTimes_DifferenceBelowTimeoutValue_ExpectFalse()
     {
         Assert.False(_service.CompareTimes(1774126459, 1774126760));
         Assert.False(_service.CompareTimes(1774126459, 1774126759));
     }
-    
+
 
     [Fact]
     public void CompareCodes_SameCodes_ExpectTrue()
@@ -52,14 +52,14 @@ public class OneTimeCodeServiceUnitTest
         Assert.True(_service.CompareCodes("987456", "987456"));
         Assert.True(_service.CompareCodes("000111", "000111"));
     }
-    
+
     [Fact]
     public void CompareCodes_DifferentCodes_ExpectFalse()
     {
         Assert.False(_service.CompareCodes("987456", "987546"));
         Assert.False(_service.CompareCodes("000111", "000123"));
     }
-    
+
     [Fact]
     public void CompareCodes_InvalidLengthCodes_ExpectFalse()
     {
@@ -74,5 +74,5 @@ public class OneTimeCodeServiceUnitTest
         Assert.True(code.Length == 6);
     }
 
-    
+
 }

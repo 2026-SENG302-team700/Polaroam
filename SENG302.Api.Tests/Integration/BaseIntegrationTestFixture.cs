@@ -43,7 +43,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     protected BaseIntegrationTestFixture(WebApplicationFactory<Program> webAppFactory)
     {
-        TestNow = DateTimeOffset.Now;
+        TestNow = DateTimeOffset.UtcNow;
         FakeTimeProvider = new FakeTimeProvider(TestNow);
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
