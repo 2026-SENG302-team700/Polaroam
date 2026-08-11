@@ -247,7 +247,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPut("preference/mapvisible")]
-    public async Task<IActionResult> SetMapShownPreference([FromBody] bool mapVisible)
+    public async Task<IActionResult> SetMapShownPreference([FromBody] MapVisibleObject mapVisibleObject)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
@@ -257,7 +257,7 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        await _userService.SetPreferenceMapVisibleAsync(userId, mapVisible);
+        await _userService.SetPreferenceMapVisibleAsync(userId, mapVisibleObject.MapVisible);
         return Ok();
     }
 
@@ -271,8 +271,7 @@ public class UserController : ControllerBase
         }
 
         var userId = int.Parse(userIdString);
-
-        await _userService.GetPreferenceMapVisibleAsync(userId);
-        return Ok();
+        var mapVisible = await _userService.GetPreferenceMapVisibleAsync(userId);
+        return Ok(new MapVisibleObject() {MapVisible = mapVisible});
     }
 }

@@ -2,7 +2,6 @@
     import { MapLibre, Marker, Popup } from 'svelte-maplibre';
     import {resolve} from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf.js";
-    import { json } from 'node:stream/consumers';
     import { onMount } from 'svelte';
     
     let { locations } = $props();
@@ -10,10 +9,11 @@
     let map = $state();
     let mapVisible = $state(false);
     let mapToggleError = $state("");
+    let mapPreferenceFetched = $state(false)
     const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
 
-    onMount(async () => {
-        mapVisible = await getMapVisibility();
+    onMount(() => {
+        fetchMapVisibility();
     })
 
     /**
@@ -66,14 +66,15 @@
                 {
                     method: "PUT",
                     credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify({mapVisible})
                 },
             );
-            const data = await response.json();
 
             if (!response.ok) {
-                mapToggleError = data.message || "Failed to toggle map";
-                return;
+                mapToggleError = "Failed to toggle map";
             }
 
         } catch (err) {
@@ -81,25 +82,33 @@
         }
     }
 
-    async function getMapVisibility() {
+    /**
+     * Fetch the map visibility and set mapVisible to that
+     */
+    async function fetchMapVisibility() {
         try {
-            const response = await fetchWithCsrf(
+            await fetchWithCsrf(
                 resolve(`/api/user/preference/mapvisible` as any),
                 {
-                    method: "PUT",
+                    method: "GET",
                     credentials: "include",
-                    body: JSON.stringify({mapVisible})
                 },
-            );
-            const data = await response.json();
+            ).then(async (response) => {
+                    mapPreferenceFetched = true;
 
-            if (!response.ok) {
-                mapToggleError = data.message || "Failed to toggle map";
-                return;
-            }
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        mapToggleError = data.message || "Failed to get map visiblitiy preference";
+                        return false;
+                    }
+                    
+                    mapVisible = data.mapVisible;
+                }
+            )
 
         } catch (err) {
-            mapToggleError = "Failed to toggle map: " + (err as Error).message;
+            mapToggleError = "Failed to get map visiblitiy preference: " + (err as Error).message;
         }
     }
 
@@ -109,23 +118,54 @@
     
 </script>
 
+
 <div class = "container">
-    <div class="position-relative rounded overflow-hidden" style="height: 480px;">
-        <MapLibre style={mapStyle} bind:map class="map">
-            {#each locations as location (location.osmId)}
-                <Marker lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}>
-                    <i class="bi bi-geo-fill text-danger fs-2"></i>
-                    <Popup offset={[0, -10]}>
-                        <div class="small" style="max-width: 220px;">
-                            <strong>{location.displayName}</strong>
-                        </div>
-                    </Popup>
-                </Marker>
-            {/each}
-        </MapLibre>
+    {#if mapVisible}
+        <div class="position-relative rounded overflow-hidden" style="height: 480px;">
+            <MapLibre style={mapStyle} bind:map class="map">
+                {#each locations as location (location.osmId)}
+                    <Marker lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}>
+                        <i class="bi bi-geo-fill text-danger fs-2"></i>
+                        <Popup offset={[0, -10]}>
+                            <div class="small" style="max-width: 220px;">
+                                <strong>{location.displayName}</strong>
+                            </div>
+                        </Popup>
+                    </Marker>
+                {/each}
+            </MapLibre>
 
-        <div class="position-absolute top-0 end-0 m-2">
+            <div class="position-absolute top-0 end-0 m-2">
 
+                <button
+                        class="btn btn-secondary"
+                        style="width: 34px; height: 34px; padding: 0;"
+                        onclick={recenterMap}
+                        type="button"
+                        aria-label="Recenter map"
+                >
+                    <i class="bi bi-arrows-angle-expand"></i>
+                </button>
+
+                <button
+                    class="btn btn-secondary m-1"
+                    style="width: 34px; height: 34px; padding: 0;"
+                    onclick={toggleMapVisibility}
+                    type="button"
+                    aria-label="Recenter map"
+                >
+                    <i class="bi bi-map"></i>
+                </button>
+            
+            </div>
+        </div>
+    {:else if mapPreferenceFetched == false}
+        <div class="menu-bar p-2 m-1 d-flex flex-row-reverse">
+            <div style="height: 34px; padding: 0;"></div>
+        </div>
+    {:else}
+        <div class="menu-bar p-2 m-1 d-flex flex-row-reverse">
+            
             <button
                 class="btn btn-secondary"
                 style="width: 34px; height: 34px; padding: 0;"
@@ -136,17 +176,12 @@
                 <i class="bi bi-map"></i>
             </button>
 
-            <button
-                    class="btn btn-secondary m-1"
-                    style="width: 34px; height: 34px; padding: 0;"
-                    onclick={recenterMap}
-                    type="button"
-                    aria-label="Recenter map"
-            >
-                <i class="bi bi-arrows-angle-expand"></i>
-            </button>
-        
+            <i class="m-1">Map hidden</i>
+            
         </div>
+    {/if}
+    <div class="invalid-feedback d-block date-error">
+        {mapToggleError}
     </div>
 </div>
 
