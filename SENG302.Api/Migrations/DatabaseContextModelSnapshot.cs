@@ -23,6 +23,23 @@ namespace SENG302.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Album", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Albums");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.CustomFile", b =>
                 {
                     b.Property<int>("Id")
@@ -48,6 +65,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
+
+                    b.PrimitiveCollection<List<string>>("Tags")
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -77,6 +97,7 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("bigint");
 
                     b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
                         .HasColumnType("integer[]");
 
                     b.Property<string>("Title")
