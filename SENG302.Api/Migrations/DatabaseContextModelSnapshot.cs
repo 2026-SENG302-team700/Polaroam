@@ -133,6 +133,12 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AcceptedAiPrivacyPolicy")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AiTaggingEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<long>("CodeGenerationTime")
                         .HasColumnType("bigint");
 
