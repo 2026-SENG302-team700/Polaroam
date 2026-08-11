@@ -2,6 +2,9 @@
     import { goto } from "$app/navigation";
     import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
 
+    /**
+     * Get's browser history, if not long just takes them to their browser homescreen.
+     */
     function goBack() {
         if (history.length > 1) {
             history.back();

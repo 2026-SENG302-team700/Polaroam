@@ -487,8 +487,15 @@ public class UserService : IUserService
         context.Users.Update(user);
         await context.SaveChangesAsync();
     }
-
-
+    
+    /// <summary>
+    /// Checks to see whether or not a user has accepted the AI privacy policy.
+    /// </summary>
+    /// <param name="userId">user id being checked against.</param>
+    /// <returns>
+    /// True: if the user has accepted the AI privacy policy.
+    /// False: if the user hasn't accepted the AI privacy policy.
+    /// </returns>
     public async Task<bool> PrivacyPolicyCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);

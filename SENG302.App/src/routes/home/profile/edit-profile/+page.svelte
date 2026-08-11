@@ -893,6 +893,7 @@
     }}
 >
     {#snippet children()}
+        <p>You must accept the AI privacy policy in order to turn on AI image tagging.</p>
         <AiPrivacyPolicy />
     {/snippet}
 </PolicyModal>
