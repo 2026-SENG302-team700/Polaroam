@@ -1,4 +1,3 @@
-using System.Net.Mime;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +7,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
-using SENG302.Api.Models.Jobs;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -881,7 +879,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 OsmId = 1,
                 LocationName = "Christchurch",
                 Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
-                PhotoIds = null
+                PhotoIds = []
             };
 
             context.Posts.Add(post);
