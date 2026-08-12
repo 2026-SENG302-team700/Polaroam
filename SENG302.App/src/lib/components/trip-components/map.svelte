@@ -3,7 +3,7 @@
     import { resolve } from "$app/paths";
     import { formatDate } from "$lib/datepicker/formatDate";
 
-    let { locations, posts } = $props();
+    let { locations, posts, hoveredPostId = null } = $props();
 
     let map = $state();
     const mapStyle = "https://tiles.openfreemap.org/styles/liberty";
@@ -66,6 +66,30 @@
     $effect(() => {
         recenterMap();
     });
+
+    $effect(() => {
+        const postId = hoveredPostId;
+        if (!map || postId === null) return;
+
+        const timeout = setTimeout(() => {
+            const location = locations.find((item) => item.postId === postId);
+
+            if (!location) return;
+
+            const longitude = parseFloat(location.lon);
+            const latitude = parseFloat(location.lat);
+
+            if (isNaN(longitude) || isNaN(latitude)) return;
+
+            map.stop();
+
+            map.easeTo({
+                center: [longitude, latitude],
+                zoom: Math.max(map.getZoom(), 2),
+                duration: 500,
+            });
+        }, 200);
+    });
 </script>
 
 <div class="container">
@@ -85,10 +109,11 @@
                 >
                     <button
                         class="post-marker"
+                        class:if-highlighted={hoveredPostId === location.postId}
                         type="button"
                         aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
                     >
-                        <i class="bi bi-camera-fill"></i>
+                        <i class="bi bi-geo-fill"></i>
                         <span>{index + 1}</span>
                     </button>
 
@@ -187,6 +212,13 @@
         font-size: 0.7rem;
         font-weight: 700;
         transform: rotate(45deg);
+    }
+
+    .post-marker.if-highlighted {
+        z-index: 3;
+        background: #ef6a67;
+        box-shadow: 5px 5px 0 #686868;
+        transform: translateY(-4px) scale(1.12);
     }
 
     .post-marker:hover {

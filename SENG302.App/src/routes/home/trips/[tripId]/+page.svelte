@@ -18,6 +18,7 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
+    let hoveredPostId: number | null = $state(null);
 
     let tripObject = $state({
         id: 0,
@@ -166,8 +167,12 @@
             <p>No description</p>
         {/if}
     </div>
-    <Map locations={postLocations} {posts} />
-    <PostSection {posts} />
+    <Map locations={postLocations} {posts} {hoveredPostId} />
+    <PostSection
+        {posts}
+        onPostHover={(postId: number) => (hoveredPostId = postId)}
+        onPostLeave={() => (hoveredPostId = null)}
+    />
 </div>
 
 <ConfirmationModal
