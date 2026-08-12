@@ -4,7 +4,7 @@
     let {
         value = $bindable<Date | null>(null),
         error = "",
-        disabled = false,
+        disabled = $bindable(false),
     }: {
         value: Date | null;
         error?: string;

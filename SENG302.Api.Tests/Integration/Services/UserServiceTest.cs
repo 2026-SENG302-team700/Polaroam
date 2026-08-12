@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
@@ -296,4 +297,224 @@ public class UserServiceTest : BaseIntegrationTestFixture
         context.Users.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task AcceptPrivacyPolicyAsync_UserExists_BecomesTrue()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ"
+        });
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.AcceptPrivacyPolicyAsync(1);
+
+        await using var newContext = DbContextFactory.CreateDbContext();
+        var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        user!.AcceptedAiPrivacyPolicy.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task PrivacyPolicyCheckAsync_PolicyAccepted_ReturnsTrue()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ",
+            AcceptedAiPrivacyPolicy = true
+        });
+        await context.SaveChangesAsync();
+
+        var result = await ServiceUnderTest.PrivacyPolicyCheckAsync(1);
+
+        result.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task PrivacyPolicyCheckAsync_PolicyNotAccepted_ReturnsFalse()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ",
+        });
+        await context.SaveChangesAsync();
+
+        var result = await ServiceUnderTest.PrivacyPolicyCheckAsync(1);
+
+        result.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleAiTaggingAsync_StartsDisabled_BecomesEnabled()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ",
+            AcceptedAiPrivacyPolicy = true
+        });
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.ToggleAiTaggingAsync(1);
+
+        await using var newContext = DbContextFactory.CreateDbContext();
+        var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        user!.AiTaggingEnabled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ToggleAiTaggingAsync_StartsEnabled_BecomesDisabled()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+                Email = "test@example.com",
+                DisplayName = "test",
+                PasswordKey = "P4$$word",
+                Country = "NZ",
+            AcceptedAiPrivacyPolicy = true,
+            AiTaggingEnabled = true
+        });
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.ToggleAiTaggingAsync(1);
+
+        await using var newContext = DbContextFactory.CreateDbContext();
+        var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        user!.AiTaggingEnabled.ShouldBeFalse();
+        }
+
+    [Fact]
+    public async Task ToggleAiTaggingAsync_CalledTwice_BecomesDisabled()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ",
+            AcceptedAiPrivacyPolicy = true
+        });
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.ToggleAiTaggingAsync(1);
+        await ServiceUnderTest.ToggleAiTaggingAsync(1);
+
+        await using var newContext = DbContextFactory.CreateDbContext();
+        var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        user!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleAiTaggingAsync_PolicyNotAccepted_ThrowsAndRemainsDisabled()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ"
+        });
+        await context.SaveChangesAsync();
+
+        await Should.ThrowAsync<PrivacyPolicyNotAcceptedException>(async () =>
+            await ServiceUnderTest.ToggleAiTaggingAsync(1));
+
+        await using var newContext = DbContextFactory.CreateDbContext();
+        var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        user!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task UserAiTaggingCheckAsync_Enabled_ReturnsTrue()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "testUser@gmail.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            AiTaggingEnabled = true
+        });
+        await context.SaveChangesAsync();
+
+        var result = await ServiceUnderTest.UserAiTaggingCheckAsync(1);
+
+        result.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task UserAiTaggingCheckAsync_Disabled_ReturnsFalse()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "testUser@gmail.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        var result = await ServiceUnderTest.UserAiTaggingCheckAsync(1);
+
+        result.ShouldBeFalse();
+    }
+    
+    [Fact] 
+    public async Task CreateNewUser_ValidInformation_AcceptedAiPrivacyPolicyFalse()
+    { 
+        await ServiceUnderTest.CreateNewUserAsync(
+            "jon@bler.com",
+            "Jon Bler", 
+            "paSSWord123#@%",
+            "paSSWord123#@%", 
+            "SK");
+    
+        await using var context = await DbContextFactory.CreateDbContextAsync(); 
+        var singleItemInDB = context.Users.ShouldHaveSingleItem();
+    
+        singleItemInDB.AcceptedAiPrivacyPolicy.ShouldBeFalse();
+    }
+    
+    [Fact]
+    public async Task CreateNewUser_ValidInformation_AiTaggingEnabledFalse()
+    {
+        await ServiceUnderTest.CreateNewUserAsync(
+            "jon@bler.com",
+            "Jon Bler",
+            "paSSWord123#@%",
+            "paSSWord123#@%",
+            "SK");
+    
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var singleItemInDB = context.Users.ShouldHaveSingleItem();
+    
+        singleItemInDB.AiTaggingEnabled.ShouldBeFalse();
+    }
 }
