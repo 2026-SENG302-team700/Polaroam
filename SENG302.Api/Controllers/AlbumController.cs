@@ -25,11 +25,38 @@ public class AlbumController : ControllerBase
     }
     
     /// <summary>
+    /// Gets all images from an album. This includes images added
+    /// directly to the album and images added to a post in the trip.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>List of images</returns>
+    [HttpGet("{tripId:int}")]
+    public async Task<ActionResult> GetImagesFromAlbum(int tripId)
+    {
+        try
+        {
+            // Get user and return unauthorized if not logged in or access to the trip
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+            
+            var images = await _albumService.GetImagesFromAlbumAsync(tripId);
+            return Ok(images);
+        }
+        catch
+        {
+            return BadRequest();
+        }
+    }
+    
+    /// <summary>
     /// Adds images to an album.
     /// </summary>
     /// <param name="tripId">The trips id</param>
     /// <param name="files">files being uploaded to the album</param>
-    /// <returns>Http response based on result:
+    /// <returns>Http response based on the result:
     /// Created - upload successful
     /// BadRequest - validation failed
     /// Unauthorized - user not logged in or does not have access to the trip

@@ -21,6 +21,6 @@ public class Post
     public DateOnly? Date { get; set; }
     public required long OsmId { get; set; }
     public required string LocationName { get; set; }
-    public List<int>? PhotoIds { get; set; }
+    public List<int> PhotoIds { get; set; } = new();
     public DateTimeOffset creationTime { get; set; }
 }

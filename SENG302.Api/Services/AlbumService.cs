@@ -28,11 +28,31 @@ public class AlbumService : IAlbumService
         _fileService = fileService;
         _imageTaggingQueue = imageTaggingQueue;
     }
-
+    
+    /// <summary>
+    /// Returns all images that have been added as part of the photo album and all images
+    /// that have been added to a post in the trip
+    /// </summary>
+    /// <param name="tripId">The trip we are returning all images for</param>
+    /// <returns>A list of images</returns>
     public async Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId)
     {
-        var images = new List<CustomFile>();
-        return images;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+        var postPhotoIds = await context.Posts
+            .Where(p => p.TripId == tripId)
+            .Select(p => p.PhotoIds)
+            .ToListAsync(); // List<List<int>>, materialized
+
+        var photoIds = (trip?.AlbumPhotoIds ?? [])
+            .Concat(postPhotoIds.SelectMany(ids => ids))
+            .Distinct()
+            .ToList();
+
+        return await context.CustomFiles
+            .Where(f => photoIds.Contains(f.Id))
+            .ToListAsync();
     }
     
     
