@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -982,10 +983,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.PhotoIds.Count.ShouldBe(1);
 
         await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
-            Arg.Is<ImageTaggingJob>(job =>
-                job.ImageId == post.PhotoIds[0] &&
-                job.Image.FileName == "test.png" &&
-                job.Image.ContentType == "image/png")
+            Arg.Is<IFormFile>(image),
+            Arg.Is<int>(id => id == post.PostId)
         );
     }
 
@@ -1007,7 +1006,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
 
         await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
-            Arg.Any<ImageTaggingJob>()
+            Arg.Any<IFormFile>(),
+            Arg.Any<int>()
         );
     }
 
@@ -1053,7 +1053,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, []);
 
         await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
-            Arg.Any<ImageTaggingJob>()
+            Arg.Any<IFormFile>(),
+            Arg.Any<int>()
         );
     }
 
@@ -1100,10 +1101,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
         updatedPost.PhotoIds.Count.ShouldBe(1);
 
         await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
-            Arg.Is<ImageTaggingJob>(job =>
-                job.ImageId == updatedPost.PhotoIds[0] &&
-                job.Image.FileName == "test.png" &&
-                job.Image.ContentType == "image/png")
+            Arg.Is<IFormFile>(image),
+            Arg.Is<int>(id => id == post.PostId)
         );
     }
 }
