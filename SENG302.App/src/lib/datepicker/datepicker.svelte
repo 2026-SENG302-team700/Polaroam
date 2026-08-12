@@ -46,7 +46,10 @@
     }
 </script>
 
-<div class="date-form-wrapper input-group w-auto">
+<div
+    class="date-form-wrapper input-group w-auto"
+    class:has-error={Boolean(error)}
+>
     <input
         type="date"
         class="form-control"
@@ -78,5 +81,9 @@
         align-items: center;
         gap: 2px;
         margin-bottom: 20px;
+    }
+
+    .date-form-wrapper.has-error {
+        margin-bottom: 0;
     }
 </style>
