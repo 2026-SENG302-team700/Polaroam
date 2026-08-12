@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260811221306_DateTimeOffsetUpdate")]
-    partial class DateTimeOffsetUpdate
+    [Migration("20260812000442_DateTimeOffsetNow")]
+    partial class DateTimeOffsetNow
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -138,6 +138,12 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AcceptedAiPrivacyPolicy")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AiTaggingEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("CodeGenerationTime")
                         .HasColumnType("bigint");
