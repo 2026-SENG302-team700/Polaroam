@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Services;
 using SENG302.Api.Services.ImageTagging;
 
+namespace SENG302.Api.Services;
 public interface IAlbumService
 {
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
     public Task UploadImagesToAlbumAsync(List<IFormFile>? images, int tripId, int userId);
-    public Task DeleteImageFromAlbumAsync(int photoId);
+    public Task DeleteImageFromAlbumAsync(int tripId, int photoId);
 }
 
 public class AlbumService : IAlbumService
@@ -57,11 +57,11 @@ public class AlbumService : IAlbumService
     
     
     /// <summary>
-    /// Validates, uploads, queues for tagging, and sets album images in trip
+    /// Validates, uploads, queues for tagging, and sets album images in the trip
     /// </summary>
     /// <param name="images">The images to be uploaded</param>
     /// <param name="tripId">The trip the photos are being uploaded to</param>
-    /// <param name="userId">The uploaders user Id</param>
+    /// <param name="userId">The uploaders user ID</param>
     /// <exception cref="ValidationListException">If the images contain any validation errors</exception>
     /// <exception cref="ArgumentException">If the trip is not found</exception>
     public async Task UploadImagesToAlbumAsync(List<IFormFile>? images, int tripId, int userId)
@@ -99,9 +99,34 @@ public class AlbumService : IAlbumService
         await context.SaveChangesAsync();
     }
 
-    public async Task DeleteImageFromAlbumAsync(int photoId)
+    public async Task DeleteImageFromAlbumAsync(int tripId, int photoId)
     {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
         
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+        if (trip == null) throw new ArgumentException("Trip not found");
+        
+        var image = await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == photoId);
+        if (image == null) throw new ArgumentException("Image not found");
+        
+        // Remove from trip album
+        if (trip.AlbumPhotoIds.Contains(photoId))
+        {
+            trip.AlbumPhotoIds.Remove(photoId);
+            context.CustomFiles.Remove(image);
+            await context.SaveChangesAsync();
+            return;
+        }
+        
+        // Check if it's in a post and if so, throw an exception with the post-ID
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.PhotoIds.Contains(photoId));
+        if (post != null)
+        {
+            throw new InvalidOperationException(post.PostId.ToString());
+        }
+        
+        // If not part of a post or trip album, throw an exception
+        throw new ArgumentException("Image does not belong to the trip");
     }
 
 }

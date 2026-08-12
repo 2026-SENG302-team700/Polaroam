@@ -91,4 +91,44 @@ public class AlbumController : ControllerBase
             return BadRequest("Failed to upload images.");
         }
     }
+    
+    /// <summary>
+    /// Deletes an image from an album.
+    /// </summary>
+    /// <param name="tripId">the trip the album is a part of</param>
+    /// <param name="imageId">The image to be deleted</param>
+    /// <returns>
+    /// NoContent - image deleted
+    /// Unauthorized - user not logged in or does not have access to the trip.
+    /// NotAllowed - image is a part of a post and cannot be deleted (return post-ID as well).
+    /// BadRequest - validation failed (With reason or generic on error).
+    /// </returns>
+    [HttpDelete("{tripId:int}/images/{imageId:int}")]
+    public async Task<ActionResult> DeleteAlbumImage(int tripId, int imageId)
+    {
+        try
+        {
+            // Get user and return unauthorized if not logged in or access to the trip
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+
+            await _albumService.DeleteImageFromAlbumAsync(tripId, imageId);
+            return NoContent();
+        }
+        catch (ArgumentException e) // Handled Exceptions
+        {
+            return BadRequest(e.Message);
+        }
+        catch (InvalidOperationException e) // Returned when the image is a part of a post and include the post-ID
+        {
+            return StatusCode(405, int.Parse(e.Message));
+        }
+        catch (Exception)
+        {
+            return BadRequest("Failed to delete image.");
+        }
+    }
 }

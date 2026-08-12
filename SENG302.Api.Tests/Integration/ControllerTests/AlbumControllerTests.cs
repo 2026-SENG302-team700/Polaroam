@@ -18,6 +18,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         _output = output;
     }
     
+    // Helper Functions
     private async Task SetupUserAndTrip(int userId, string email)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
@@ -54,6 +55,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
     
+    
+    // GetImagesFromAlbum Tests
     [Fact]
     public async Task GetImagesFromAlbum_AlbumImagesOnly_ReturnSuccess()
     {
@@ -97,7 +100,6 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     }
     
     
-    
     private MultipartFormDataContent CreateUploadImagesContent(
         IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
     {
@@ -113,6 +115,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         return content;
     }
     
+    
+    // AddImagesToAlbum Tests
     [Fact]
     public async Task AddImagesToAlbum_ValidImages_ReturnSuccess()
     {
