@@ -49,50 +49,86 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     private async Task AddAlbumImages()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        context.Trips.First(trip => trip.Id == 1).AlbumPhotoIds.AddRange([3, 4]);
+        context.Trips.First(trip => trip.Id == 1).AlbumPhotoIds.AddRange(3, 4);
         context.CustomFiles.Add(new CustomFile { Id = 3, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
         context.CustomFiles.Add(new CustomFile { Id = 4, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
         await context.SaveChangesAsync();
     }
     
+    // GetAlbumImage Tests
+    [Fact]
+    public async Task GetAlbumImage_ValidImage_ReturnSuccess()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/images/3");
+        response.EnsureSuccessStatusCode();
+    }
+    
+    [Fact]
+    public async Task GetAlbumImage_PostImage_ReturnSuccess()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/images/1");
+        response.EnsureSuccessStatusCode();
+    }
+    
+    [Fact]
+    public async Task GetAlbumImage_NotOwner_ReturnSuccess()
+    {
+        await SetupUserAndTrip(404, "notMe@example.com");
+        await AddAlbumImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/images/3");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+    
+    [Fact]
+    public async Task GetAlbumImage_NoImage_ReturnSuccess()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/images/5");
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
     
     // GetImagesFromAlbum Tests
     [Fact]
-    public async Task GetImagesFromAlbum_AlbumImagesOnly_ReturnSuccess()
+    public async Task GetAlbumImageMetadata_AlbumImagesOnly_ReturnSuccess()
     {
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1");
         response.EnsureSuccessStatusCode();
-        var images = await response.Content.ReadFromJsonAsync<CustomFile[]>();
+        var images = await response.Content.ReadFromJsonAsync<PhotoMetadataResponse[]>();
         images!.Length.ShouldBe(2);
     }
     
     [Fact]
-    public async Task GetImagesFromAlbum_PostImagesOnly_ReturnSuccess()
+    public async Task GetAlbumImageMetadata_PostImagesOnly_ReturnSuccess()
     {
         await SetupUserAndTrip(1, "test@example.com");
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/1");
         response.EnsureSuccessStatusCode();
-        var images = await response.Content.ReadFromJsonAsync<CustomFile[]>();
+        var images = await response.Content.ReadFromJsonAsync<PhotoMetadataResponse[]>();
         images!.Length.ShouldBe(2);
     }
     
     [Fact]
-    public async Task GetImagesFromAlbum_PostAndAlbumImages_ReturnSuccess()
+    public async Task GetAlbumImageMetadata_PostAndAlbumImages_ReturnSuccess()
     {
         await SetupUserAndTrip(1, "test@example.com");
         await AddPostImages();
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1");
         response.EnsureSuccessStatusCode();
-        var images = await response.Content.ReadFromJsonAsync<CustomFile[]>();
+        var images = await response.Content.ReadFromJsonAsync<PhotoMetadataResponse[]>();
         images!.Length.ShouldBe(4);
     }
 
     [Fact]
-    public async Task GetImagesFromAlbum_NotTripOwner_ReturnUnauthorized()
+    public async Task GetAlbumImageMetadata_NotTripOwner_ReturnUnauthorized()
     {
         await SetupUserAndTrip(404, "notMe@example.com");
         var response = await HttpClient.GetAsync($"/api/album/1");

@@ -8,6 +8,7 @@ using SENG302.Api.Services.ImageTagging;
 namespace SENG302.Api.Services;
 public interface IAlbumService
 {
+    public Task<CustomFile?> GetAlbumImage(int tripId, int imageId);
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
     public Task UploadImagesToAlbumAsync(List<IFormFile>? images, int tripId, int userId);
     public Task DeleteImageFromAlbumAsync(int tripId, int imageId);
@@ -28,6 +29,35 @@ public class AlbumService : IAlbumService
         _fileService = fileService;
         _imageTaggingQueue = imageTaggingQueue;
     }
+
+    /// <summary>
+    /// Validates the image is part of the specified trip and returns it if it is.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="imageId"></param>
+    /// <returns>The selected image</returns>
+    public async Task<CustomFile?> GetAlbumImage(int tripId, int imageId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+        if (trip == null) return null; // Trip not found
+        
+        if (trip.AlbumPhotoIds.Contains(imageId))
+        {
+            var image = await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == imageId);
+            return image;
+        }
+        
+        var isInPost = await context.Posts
+            .Where(p => p.TripId == tripId)
+            .AnyAsync(p => p.PhotoIds.Contains(imageId));
+        
+        if (!isInPost)
+            return null;
+        
+        return await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == imageId);
+    }
     
     /// <summary>
     /// Returns all images that have been added as part of the photo album and all images
@@ -43,7 +73,7 @@ public class AlbumService : IAlbumService
         var postPhotoIds = await context.Posts
             .Where(p => p.TripId == tripId)
             .Select(p => p.PhotoIds)
-            .ToListAsync(); // List<List<int>>, materialized
+            .ToListAsync();
 
         var photoIds = (trip?.AlbumPhotoIds ?? [])
             .Concat(postPhotoIds.SelectMany(ids => ids))

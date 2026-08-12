@@ -10,7 +10,7 @@ namespace SENG302.Api.Controllers;
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/album")]
+[Route("api/album/{tripId:int}")]
 public class AlbumController : ControllerBase
 {
     private readonly IAlbumService _albumService;
@@ -25,13 +25,47 @@ public class AlbumController : ControllerBase
     }
     
     /// <summary>
+    /// Gets an image from an album.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="imageId"></param>
+    /// <returns>
+    /// Ok - image found
+    /// Unauthorized - user not logged in or does not have access to the trip
+    /// NotFound - image not found
+    /// BadRequest - unhandled error
+    /// </returns>
+    [HttpGet("images/{imageId:int}")]
+    public async Task<ActionResult> GetAlbumImage(int tripId, int imageId)
+    {
+        try
+        {
+            // Get user and return unauthorized if not logged in or access to the trip
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+            
+            // Get the image
+            var image = await _albumService.GetAlbumImage(tripId, imageId);
+            if (image == null) return NotFound("Image not found");
+            return Ok(image);
+        }
+        catch (Exception e)
+        {
+            return BadRequest("Failed to get image: " + tripId);
+        }
+    }
+    
+    /// <summary>
     /// Gets all images from an album. This includes images added
     /// directly to the album and images added to a post in the trip.
     /// </summary>
     /// <param name="tripId"></param>
     /// <returns>List of images</returns>
-    [HttpGet("{tripId:int}")]
-    public async Task<ActionResult> GetImagesFromAlbum(int tripId)
+    [HttpGet]
+    public async Task<ActionResult> GetAlbumImageMetadata(int tripId)
     {
         try
         {
@@ -43,7 +77,20 @@ public class AlbumController : ControllerBase
                 return Unauthorized();
             
             var images = await _albumService.GetImagesFromAlbumAsync(tripId);
-            return Ok(images);
+            // Extract metadata from the images
+            List<PhotoMetadataResponse> imageData = [];
+            foreach (var image in images)
+            {
+                imageData.Add(
+                    new PhotoMetadataResponse
+                    {
+                        PhotoId = image.Id,
+                        FileName = image.OriginalFileName,
+                        MimeType = image.MimeType
+                    });
+            }
+            
+            return Ok(imageData);
         }
         catch
         {
@@ -62,7 +109,7 @@ public class AlbumController : ControllerBase
     /// Unauthorized - user not logged in or does not have access to the trip
     /// NotFound - trip not found
     /// </returns>
-    [HttpPost("{tripId:int}/images")]
+    [HttpPost("images")]
     public async Task<ActionResult> AddImagesToAlbum(int tripId, [FromForm] List<IFormFile>? files)
     {
         try
@@ -103,7 +150,7 @@ public class AlbumController : ControllerBase
     /// NotAllowed - image is a part of a post and cannot be deleted (return post-ID as well).
     /// BadRequest - validation failed (With reason or generic on error).
     /// </returns>
-    [HttpDelete("{tripId:int}/images/{imageId:int}")]
+    [HttpDelete("images/{imageId:int}")]
     public async Task<ActionResult> DeleteAlbumImage(int tripId, int imageId)
     {
         try
