@@ -10,7 +10,7 @@ public interface IAlbumService
 {
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
     public Task UploadImagesToAlbumAsync(List<IFormFile>? images, int tripId, int userId);
-    public Task DeleteImageFromAlbumAsync(int tripId, int photoId);
+    public Task DeleteImageFromAlbumAsync(int tripId, int imageId);
 }
 
 public class AlbumService : IAlbumService
@@ -98,28 +98,35 @@ public class AlbumService : IAlbumService
         trip.AlbumPhotoIds.AddRange(imageIds);
         await context.SaveChangesAsync();
     }
-
-    public async Task DeleteImageFromAlbumAsync(int tripId, int photoId)
+    
+    /// <summary>
+    /// Deletes an image from the album and removes it from the trip if it is part of the trip album.
+    /// </summary>
+    /// <param name="tripId">The trip the image is a part of</param>
+    /// <param name="imageId">The image to be deleted</param>
+    /// <exception cref="ArgumentException">For all validation errors</exception>
+    /// <exception cref="InvalidOperationException">If image is included in a post</exception>
+    public async Task DeleteImageFromAlbumAsync(int tripId, int imageId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         
         var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
         if (trip == null) throw new ArgumentException("Trip not found");
         
-        var image = await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == photoId);
+        var image = await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == imageId);
         if (image == null) throw new ArgumentException("Image not found");
         
         // Remove from trip album
-        if (trip.AlbumPhotoIds.Contains(photoId))
+        if (trip.AlbumPhotoIds.Contains(imageId))
         {
-            trip.AlbumPhotoIds.Remove(photoId);
+            trip.AlbumPhotoIds.Remove(imageId);
             context.CustomFiles.Remove(image);
             await context.SaveChangesAsync();
             return;
         }
         
         // Check if it's in a post and if so, throw an exception with the post-ID
-        var post = await context.Posts.FirstOrDefaultAsync(p => p.PhotoIds.Contains(photoId));
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.PhotoIds.Contains(imageId));
         if (post != null)
         {
             throw new InvalidOperationException(post.PostId.ToString());

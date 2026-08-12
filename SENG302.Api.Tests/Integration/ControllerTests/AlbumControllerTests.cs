@@ -132,7 +132,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
         response.EnsureSuccessStatusCode();
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         var trip = context.Trips.FirstOrDefault(trip => trip.Id == 1)!;
         trip.AlbumPhotoIds.Count.ShouldBe(2);
     }
@@ -174,7 +174,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task AddImagesToAlbum_NoTrip_ReturnBadRequest()
     {
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         await context.SaveChangesAsync();
         
@@ -188,4 +188,54 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+    
+    // DeleteAlbumImage Tests
+    [Fact]
+    public async Task DeleteAlbumImages_ImageInAlbum_ReturnNoContent()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        var response = await HttpClient.DeleteAsync($"/api/album/1/images/3");
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    
+        // Check that the image is removed from the album
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Trips.First(trip => trip.Id == 1).AlbumPhotoIds.Count.ShouldBe(1);
+    }
+    
+    [Fact]
+    public async Task DeleteAlbumImages_ImageInPost_ReturnNotAllowed()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddPostImages();
+        var response = await HttpClient.DeleteAsync($"/api/album/1/images/1");
+        response.StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
+        int.Parse(await response.Content.ReadAsStringAsync()).ShouldBe(1); // Post-Id from AddPostImages()
+        
+        // Check not deleted
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Posts.FirstOrDefault(post => post.TripId == 1)!.PhotoIds.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task DeleteAlbumImages_NotOwner_ReturnUnauthorized()
+    {
+        await SetupUserAndTrip(404, "notMe@example.com");
+        await AddAlbumImages();
+        var response = await HttpClient.DeleteAsync($"/api/album/1/images/3");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    
+        // Check that the image is not removed from the album
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Trips.First(trip => trip.Id == 1).AlbumPhotoIds.Count.ShouldBe(2);
+    }
+    
+    [Fact]
+    public async Task DeleteAlbumImages_ImageDoesNotExist_ReturnBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        var response = await HttpClient.DeleteAsync($"/api/album/1/images/3");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+    
 }
