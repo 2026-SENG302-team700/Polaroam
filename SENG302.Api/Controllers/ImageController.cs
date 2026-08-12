@@ -45,6 +45,12 @@ public class ImageController : ControllerBase
         try
         {
             var tags = _fileService.GetTagsAsync(photoId);
+
+            if (tags == null)
+            {
+                return NotFound("This photo has no tags.");
+            }
+            
             return Ok(tags);
         }
         catch (KeyNotFoundException e)
