@@ -155,7 +155,6 @@ public class PostService : IPostService
             OsmId = postRequest.OsmId,
             LocationName = location.name,
         };
-        //var album = _albumService.
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
 
@@ -297,7 +296,7 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.PhotoIds = post.PhotoIds.Count > 0 ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.name : post.LocationName;
 
         // Save Changes
@@ -350,7 +349,7 @@ public class PostService : IPostService
 
         context.Locations.RemoveRange(locations);
 
-        if (post.PhotoIds != null)
+        if (post.PhotoIds.Count > 0)
         {
             var images = await context.CustomFiles
                 .Where(file => post.PhotoIds.Contains(file.Id))

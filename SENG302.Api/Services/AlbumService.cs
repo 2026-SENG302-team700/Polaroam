@@ -8,11 +8,12 @@ using SENG302.Api.Services.ImageTagging;
 namespace SENG302.Api.Services;
 public interface IAlbumService
 {
-    public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
+    public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId);
     public Task<Album>  UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
-    public Task DeleteImageFromAlbumAsync(int photoId, int tripId);
+    public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
+    public Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
 }
 
 public class AlbumService: IAlbumService
@@ -76,17 +77,17 @@ public class AlbumService: IAlbumService
     /// <summary>
     /// Upon being given a trip-Id and a Photo-Id, this method checks if the album exists 
     /// and then checks to ensure that the image is not a part of a post. If it is, it returns
-    /// an invalid operation exception.
+    /// the post's id.
     /// If the image was not part of the album, it will throw a key not found exception.
     /// Only after this will it attempt deletion, using the fileService delete file method
     /// and removing it from the album.
     /// </summary>
     /// <param name="photoId"></param>
     /// <param name="tripId"></param>
-    /// <returns></returns>
+    /// <returns>postId if the photo is part of the post, null otherwise</returns>
     /// <exception cref="KeyNotFoundException"></exception>
     /// <exception cref="FileNotFoundException"></exception>
-    public async Task DeleteImageFromAlbumAsync(int photoId, int tripId)
+    public async Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
@@ -97,35 +98,23 @@ public class AlbumService: IAlbumService
 
         var posts = await context.Set<Post>().Where(post => post.TripId == tripId).ToListAsync();
 
-        List<int> photoAttachedToPosts = [];
         foreach (Post post in posts)
         {
-            photoAttachedToPosts.AddRange(post.PhotoIds);   
+            if (post.PhotoIds.Contains(photoId))
+            {
+                return post.PostId; //returns the postid if the image is part of a post
+            }
         }
-
-        if (photoAttachedToPosts.Contains(photoId))
-        {
-            throw new InvalidOperationException("Selected image belongs to a post");
-        }
-        
-        
         if (album.PhotoIds.Remove(photoId))
         {
             CustomFile file;
-            try
-            {
-                file = await _fileService.GetFileByIdAsync(photoId);
-            }
-            catch (KeyNotFoundException e)
-            {
-                throw new FileNotFoundException(e.Message);
-            }
-            
+            file = await _fileService.GetFileByIdAsync(photoId);
             await _fileService.DeleteFileAsync(file.FileKey);
         } else
         {
             throw new KeyNotFoundException("Photo with that Id does not exist in this album.");
         }
+        return null;
     }
 
 
@@ -191,13 +180,15 @@ public class AlbumService: IAlbumService
 
 
     /// <summary>
-    /// Gets all custom files from an album. Does this by retrieving an album and then
-    /// calling the file service to retrieve the custom file for all photo-Id.
+    /// Gets all custom files (metadata files) from an album. 
+    /// Does this by retrieving an album and then calling the 
+    /// file service to retrieve the custom file for all photo-Id.
+    /// Returns metadata, and not the actual images.
     /// </summary>
     /// <param name="tripId"></param>
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId)
+    public async Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -223,6 +214,37 @@ public class AlbumService: IAlbumService
         }
 
         return files;
+    }
+
+
+    /// <summary>
+    /// Gets a single customfile object from a trip, given a photoid and tripid.
+    /// Returns metadata, and not the actual image.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="photoId"></param>
+    /// <returns>a customfile object</returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    public async Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Set<Trip>().Where(trip => trip.Id == tripId).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new KeyNotFoundException("Trip with that Id does not exist.");
+        }
+        
+        var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
+
+        if (album == null)
+        {
+            throw new KeyNotFoundException("Album with that Id does not exist.");
+        }
+
+        var file = await _fileService.GetFileByIdAsync(photoId);
+  
+        return file;
     }
 
      

@@ -431,7 +431,7 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         
         await context.SaveChangesAsync();
 
-        FileNotFoundException ex = await Should.ThrowAsync<FileNotFoundException>(async () =>
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
             await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
         });
@@ -556,12 +556,10 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             [image]
         );
         
-        InvalidOperationException ex = await Should.ThrowAsync<InvalidOperationException>(async () =>
-        {
-            await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
-        });
         
-        ex.Message.ShouldContain("Selected image belongs to a post");
+        var postId = await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+        postId.ShouldNotBeNull();
+        postId.ShouldBe(post.PostId);
     }
 
     [Fact]
@@ -607,7 +605,54 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         
         await Should.NotThrowAsync(async () =>
         {
-            await ServiceUnderTest.GetImagesFromAlbumAsync(1);
+            await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(1);
+        });
+    }
+
+    [Fact]
+    public async Task GetSingleImageFromAlbum_ValidTripId_GetCustomFile()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        List<IFormFile> photos = [mockFile];
+        
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        
+        await context.SaveChangesAsync();
+        
+        await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
+        
+        await Should.NotThrowAsync(async () =>
+        {
+            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(1,1);
         });
     }
     
@@ -638,12 +683,45 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.GetImagesFromAlbumAsync(1);
+            await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(1);
         });
         
         ex.Message.ShouldContain("Album with that Id does not exist.");
     }
     
+    [Fact]
+    public async Task GetSingleImageFromAlbum_NoAlbum_ThrowsKeyNotFoundException()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        
+        await context.SaveChangesAsync();
+        
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(1,1);
+        });
+        
+        ex.Message.ShouldContain("Album with that Id does not exist.");
+    }
+
     [Fact]
     public async Task GetImagesFromAlbum_InvalidTripId_ThrowsKeyNotFoundException()
     {
@@ -688,7 +766,57 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.GetImagesFromAlbumAsync(2);
+            await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(2);
+        });
+        
+        ex.Message.ShouldContain("Trip with that Id does not exist.");
+    }
+
+    [Fact]
+    public async Task GetSingleImageFromAlbum_InvalidTripId_ThrowsKeyNotFoundException()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = $"test{1}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Test List",
+            UserId = 1,
+            Description = "Test",
+            StartDate = new DateOnly(2017, 10, 08),
+            EndDate = new DateOnly(2017, 10, 21)
+        });
+        
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        
+        await context.SaveChangesAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        List<IFormFile> photos = [mockFile];
+        
+        
+        await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
+        
+        KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(2,1);
         });
         
         ex.Message.ShouldContain("Trip with that Id does not exist.");
