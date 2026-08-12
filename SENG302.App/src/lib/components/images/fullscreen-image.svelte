@@ -3,18 +3,27 @@
     import RightArrowButton from "../buttons/right-arrow-button.svelte"
     import LeftArrowButton from "../buttons/left-arrow-button.svelte"
     import TagPill from "../content/tag-pill.svelte";
+    import { onMount } from "svelte";
+    import { fetchWithCsrf } from "$lib/csrf";
+    import { resolve } from "$app/paths";
 
+    onMount(() => fetchImageTags(photoId))
     let {
        image,
        enlarged = $bindable(false),
        index,
        images,
-       tags,
+       photoId,
+       photoIds,
     }: { image: File,
          enlarged: boolean, 
        index: number, 
        images: File[] | null,
-       tags: string[]; } = $props();
+       photoId:number,
+       photoIds:number[],
+       } = $props();
+
+   let tags: string[] = $state([]);
 
     function moveToLeftImage()
     {
@@ -23,6 +32,7 @@
        if (newImage !== undefined) {
           image = newImage
        }
+       fetchImageTags(photoIds[index])
     }
 
     function moveToRightImage()
@@ -32,7 +42,31 @@
        if (newImage !== undefined) {
           image = newImage
        }
+      fetchImageTags(photoIds[index])
     }
+
+    async function fetchImageTags(id: number) {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/image/${id}/` as any), {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                error = (await response.text()) || "Failed to fetch images.";
+                return;
+            }
+
+            tags = await response.json();
+
+         
+        } catch (err) {
+            error = "Failed to fetch images: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+      }
 </script>
 
 <svelte:window onkeydown={(e) => {

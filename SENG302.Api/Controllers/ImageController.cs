@@ -9,20 +9,17 @@ namespace SENG302.Api.Controllers;
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/post")]
+[Route("api/image")]
 public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IPostService _postService;
     private readonly IFileService _fileService;
-    private readonly ITripService _tripService;
 
-    public ImageController(IPostService postService, IUserService userService, IFileService fileService, ITripService tripService)
+    public ImageController(IUserService userService, IFileService fileService)
     {
-        _postService = postService;
         _userService = userService;
         _fileService = fileService;
-        _tripService = tripService;
+
 
     }
 
@@ -32,7 +29,7 @@ public class ImageController : ControllerBase
     /// <param name="photoId">id of photo</param>
     /// <returns>an array of strings containing the image tags</returns>
     [Authorize]
-    [HttpGet("{postId:int}/images/{photoId:int}/tags")]
+    [HttpGet("{photoId:int}/tags")]
     public async Task<IActionResult> GetPhotoTags(int photoId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

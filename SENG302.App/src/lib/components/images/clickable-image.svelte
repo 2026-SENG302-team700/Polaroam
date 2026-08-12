@@ -5,8 +5,12 @@
         image,
         index,
         images,
-        tags
-    }: { image: File, index: number, images: File[] | null, tags:string[]; } = $props();
+        photoId,
+        photoIds,
+        
+    }: { image: File, index: number, images: File[] | null, 
+                photoId: number, photoIds:number[];
+            } = $props();
     let enlarged = $state(false);
 
     function clicked() {
@@ -20,7 +24,7 @@
     <img src={URL.createObjectURL(image)} onclick={clicked} alt="Image" class="img-thumbnail clickable-image" />
 </div>
 {#if enlarged} 
-<FullscreenImage {image} {index} {images} {tags} bind:enlarged />
+<FullscreenImage {image} {index} {images} {photoId} {photoIds} bind:enlarged />
 {/if}
 
 <style>
