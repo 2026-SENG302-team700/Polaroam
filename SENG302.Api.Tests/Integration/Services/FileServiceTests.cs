@@ -3,6 +3,7 @@ using SENG302.Api.Services;
 using Shouldly;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using SENG302.Api.Models.Entities;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -167,5 +168,62 @@ public class FileServiceTests : BaseIntegrationTestFixture
         
         var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,1);
         owns.ShouldBeFalse();
+    }
+    
+    [Fact]
+    public async Task GetTagsAsync_HasTags_ReturnsTags()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        List<string> insertTags = new List<string>(["ich bin gut", "germanic", "ich bin sprechen ze deutsch"]);
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+            Tags = insertTags
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+        
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldNotBeNull();
+        tags.ShouldBeEquivalentTo(file.Tags);
+    }
+    
+    [Fact]
+    public async Task GetTagsAsync_HasNoTags_ReturnsFalse()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+        
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldBeNull();
+    }
+    
+    [Fact]
+    public async Task GetTagsAsync_ImageDoesntExist_ThrowsKeyNotFoundException()
+    {
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetTagsAsync(1);
+        });
     }
 }

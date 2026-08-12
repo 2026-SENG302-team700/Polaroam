@@ -27,11 +27,10 @@ public class ImageController : ControllerBase
     }
 
     /// <summary>
-    /// Streams a single photo back with correct types
+    /// Returns the tags of the requests photo
     /// </summary>
-    /// <param name="postId">post Id</param>
     /// <param name="photoId">id of photo</param>
-    /// <returns>an image file</returns>
+    /// <returns>an array of strings containing the image tags</returns>
     [Authorize]
     [HttpGet("{postId:int}/images/{photoId:int}/tags")]
     public async Task<IActionResult> GetPhotoTags(int photoId)
@@ -42,6 +41,15 @@ public class ImageController : ControllerBase
         { 
             return Unauthorized();
         }
-        
+
+        try
+        {
+            var tags = _fileService.GetTagsAsync(photoId);
+            return Ok(tags);
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
     }
 }
