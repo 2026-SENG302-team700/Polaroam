@@ -119,7 +119,7 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            await GenerateImageTags(photo, file.Id);
+            await _imageTaggingQueue.QueueImageTaggingAsync(photo, file.Id);
         }
 
         // Add location
@@ -268,7 +268,7 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(photo, customFile.Id);
+            await _imageTaggingQueue.QueueImageTaggingAsync(photo, customFile.Id);
         }
 
         // Update post content
@@ -386,38 +386,6 @@ public class PostService : IPostService
 
         post.PhotoIds.Remove(photoId);
         await context.SaveChangesAsync();
-    }
-
-    /// <summary>
-    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
-    /// while still allowing the image upload to continue
-    /// </summary>
-    /// <param name="image"></param>
-    /// <param name="imageId"></param>
-    /// <returns></returns>
-    private async Task GenerateImageTags(IFormFile image, int imageId)
-    {
-        try
-        {
-            var ms = new MemoryStream();
-            await image.CopyToAsync(ms);
-            ms.Position = 0;
-
-            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = image.ContentType
-            };
-
-            await _imageTaggingQueue.QueueImageTaggingAsync(
-                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
-            );
-        }
-        catch (Exception ex)
-        {
-            // Tagging cant cause the image uplaod to fail
-            Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
-        }
     }
 }
 
