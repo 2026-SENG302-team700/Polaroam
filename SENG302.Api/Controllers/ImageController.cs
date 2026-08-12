@@ -34,14 +34,14 @@ public class ImageController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
-        if (user == null || await _fileService.CheckFileOwnership(photoId, userId))
-        { 
+        if (user == null || !await _fileService.CheckFileOwnership(photoId, userId))
+        {
             return Unauthorized();
         }
 
         try
         {
-            var tags = _fileService.GetTagsAsync(photoId);
+            var tags = await _fileService.GetTagsAsync(photoId);
 
             if (tags == null)
             {

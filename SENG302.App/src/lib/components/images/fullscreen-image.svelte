@@ -7,7 +7,6 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
 
-    onMount(() => fetchImageTags(photoId))
     let {
        image,
        enlarged = $bindable(false),
@@ -16,14 +15,20 @@
        photoId,
        photoIds,
     }: { image: File,
-         enlarged: boolean, 
-       index: number, 
-       images: File[] | null,
-       photoId:number,
-       photoIds:number[],
+        enlarged: boolean,
+        index: number,
+        images: File[] | null,
+        photoId: number,
+        photoIds: number[],
        } = $props();
 
    let tags: string[] = $state([]);
+   let error = $state("");
+   let loading = $state(false);
+
+   onMount(() => {
+       fetchImageTags(photoId)
+   });
 
     function moveToLeftImage()
     {
@@ -42,27 +47,29 @@
        if (newImage !== undefined) {
           image = newImage
        }
-      fetchImageTags(photoIds[index])
+       fetchImageTags(photoIds[index])
     }
 
     async function fetchImageTags(id: number) {
         try {
+            loading = true;
+            tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/` as any), {
+                resolve(`/api/image/${id}/tags` as any), {
                     method: "GET",
                     credentials: "include",
                 },
             );
             if (!response.ok) {
-                error = (await response.text()) || "Failed to fetch images.";
+                if (response.status !== 404) {
+                    error = (await response.text()) || "Failed to fetch tags.";
+                }
                 return;
             }
 
             tags = await response.json();
-
-         
         } catch (err) {
-            error = "Failed to fetch images: " + (err as Error).message;
+            error = "Failed to fetch tags: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -91,11 +98,15 @@
          {#if images !== null && images?.length > 1 && index !== 0}
             <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
          {/if}
-         {#each tags as tag}
-            <TagPill {tag}/>
-         {/each}
-      </div>    
-   </div>  
+         {#if tags.length > 0}
+            <div class="tags-wrapper">
+               {#each tags as tag}
+                  <TagPill {tag}/>
+               {/each}
+            </div>
+         {/if}
+      </div>
+   </div>
 </div>
 
 <style>
@@ -123,6 +134,17 @@
  }
  .close-button-wrapper {
    position:relative;
+ }
+ .tags-wrapper {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    justify-content: center;
+    max-width: 90%;
  }
 
 </style>

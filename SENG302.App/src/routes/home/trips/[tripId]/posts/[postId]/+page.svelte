@@ -33,6 +33,7 @@
     });
     
     let photos: File[] = $state([]);
+    let photoIds: number[] = $state([]);
 
     onMount(() => {
         fetchPost();
@@ -118,6 +119,7 @@
                     return new File([blob], meta.fileName, { type: meta.mimeType });
                 }),
             );
+            photoIds = metadata.map((meta) => meta.photoId);
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -202,7 +204,7 @@
         <DeleteButton deleteAction={showConfirmationModal} />
         <ErrorDisplay errors={[error]} />
         
-        <PostDisplayCard post={postObject} userName={displayName} {photos}/>
+        <PostDisplayCard post={postObject} userName={displayName} {photos} {photoIds}/>
     </div>
 </div>
 
