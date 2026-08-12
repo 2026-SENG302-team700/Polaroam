@@ -119,7 +119,7 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            await GenerateImageTags(photo, file.Id);
+            string? taggingError = await GenerateImageTags(photo, file.Id);
         }
 
         // Add location
@@ -263,12 +263,14 @@ public class PostService : IPostService
         // Add / Remove Photos 
         List<int> customFileIds = [];
 
+        string[]? taggingErrors = [];
         foreach (var photo in photos)
         {
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(photo, customFile.Id);
+            taggingErrors.Append(await GenerateImageTags(photo, customFile.Id));
+            
         }
 
         // Update post content
@@ -395,7 +397,7 @@ public class PostService : IPostService
     /// <param name="image"></param>
     /// <param name="imageId"></param>
     /// <returns></returns>
-    private async Task GenerateImageTags(IFormFile image, int imageId)
+    private async Task<string?> GenerateImageTags(IFormFile image, int imageId)
     {
         try
         {
@@ -417,7 +419,10 @@ public class PostService : IPostService
         {
             // Tagging cant cause the image uplaod to fail
             Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
+            return $"Failed to generate tags for image {imageId}: {ex.Message}";
         }
+
+        return null;
     }
 }
 
