@@ -38,16 +38,16 @@ public class AlbumController : ControllerBase
     [HttpPost("{tripId:int}/images")]
     public async Task<ActionResult> AddImagesToAlbum(int tripId, [FromForm] List<IFormFile>? files)
     {
-        // Get user and return unauthorized if not logged in or access to the trip
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
-        if (user == null ||
-            ! await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
-            return Unauthorized();
-        
-        // Upload images to the album
         try
         {
+            // Get user and return unauthorized if not logged in or access to the trip
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                ! await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+            
+            // Upload images to the album
             await _albumService.UploadImagesToAlbumAsync(files, tripId, user.Id);
             return Created();
         }
@@ -63,6 +63,5 @@ public class AlbumController : ControllerBase
         {
             return BadRequest("Failed to upload images.");
         }
-        
     }
 }

@@ -268,6 +268,7 @@ public class Program
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IPostService, PostService>();
+        services.AddScoped<IAlbumService, AlbumService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {
