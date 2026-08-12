@@ -49,6 +49,9 @@ namespace SENG302.Api.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
 
+                    b.PrimitiveCollection<List<string>>("Tags")
+                        .HasColumnType("text[]");
+
                     b.HasKey("Id");
 
                     b.ToTable("CustomFiles");
@@ -77,6 +80,7 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("bigint");
 
                     b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
                         .HasColumnType("integer[]");
 
                     b.Property<string>("Title")
@@ -101,6 +105,10 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.PrimitiveCollection<List<int>>("AlbumPhotoIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
 
                     b.Property<string>("Description")
                         .IsRequired()
