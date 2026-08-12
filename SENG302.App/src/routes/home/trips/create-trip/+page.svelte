@@ -32,6 +32,25 @@
     }
 
     /**
+     * Serializes a Date object to a string in the format "YYYY-MM-DDT00:00:00".
+     * If the date is null or invalid, returns null.
+     *
+     * @param {Date | null} date - The date to serialize.
+     * @returns {string | null} The serialized date string or null.
+     */
+    function serializeLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
      * Validates and submits a new trip to the API, then navigates to it.
      *
      * Trims the title/description, POSTs to `/api/trip`, and on success
@@ -59,8 +78,8 @@
                 body: JSON.stringify({
                     Title: tripTitle,
                     Description: tripDescription,
-                    StartDate: startDate?.toISOString(),
-                    EndDate: endDate?.toISOString(),
+                    StartDate: serializeLocalDate(startDate),
+                    EndDate: serializeLocalDate(endDate),
                 }),
                 credentials: "include",
             });

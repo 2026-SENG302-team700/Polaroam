@@ -7,9 +7,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 
-namespace SENG302.Api.Helpers.Validators;
-
-public static class UserCredentialsValidator
+public class UserCredentialsValidator
 {
     /// <summary>
     /// Checks to see if display name length is between 3-64 characters

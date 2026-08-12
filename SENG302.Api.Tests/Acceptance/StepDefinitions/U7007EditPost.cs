@@ -7,10 +7,10 @@ using System.Net;
 using NSubstitute;
 using System.Net.Http.Headers;
 using SENG302.Api.Models.Responses;
+using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Requests;
-using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -22,7 +22,7 @@ public class U7007EditPost
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _content;
-    private DateTimeOffset? _date;
+    private DateOnly? _date;
     private string _location;
     private long _osmId;
 
@@ -33,7 +33,7 @@ public class U7007EditPost
         _fixture = fixture;
         _title = "";
         _content = "";
-        _date = new DateTimeOffset();
+        _date = new DateOnly();
         _location = "";
         _osmId = 1;
     }
@@ -42,11 +42,11 @@ public class U7007EditPost
     {
         _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
         {
-            OsmId = 1,
-            Latitude = "1",
-            Longitude = "1",
-            DisplayName = "Auckland",
-            Name = "Auckland, New Zealand"
+            osm_id = 1,
+            lat = "1",
+            lon = "1",
+            display_name = "Auckland",
+            name = "Auckland, New Zealand"
         });
     }
 
@@ -71,8 +71,8 @@ public class U7007EditPost
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = DateToDateTimeOffset(2026, 7, 1),
-            EndDate = DateToDateTimeOffset(2026, 7, 10),
+            StartDate = new DateOnly(2026, 7, 1),
+            EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
 
@@ -99,7 +99,7 @@ public class U7007EditPost
         content.Add(new StringContent(_title), "Title");
         content.Add(new StringContent(_content), "Content");
         content.Add(new StringContent(_osmId.ToString()), "OsmId");
-        content.Add(new StringContent(_date == null ? string.Empty : (_date?.ToString("s") + "Z")), "Date");
+        content.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? ""), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -119,7 +119,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateToDateTimeOffset(2025, 1, 7);
+        _date = DateOnly.Parse("2025-01-07");
     }
 
     [Given("I am editing an existing post with two valid images to add")]
@@ -129,7 +129,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTimeOffset.UtcNow.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
         _osmId = 1;
 
         var pandaBytes =
@@ -155,7 +155,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTimeOffset.UtcNow.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
         _osmId = 1;
 
         _images.Add((
@@ -172,7 +172,7 @@ public class U7007EditPost
 
         _title = "Updated title";
         _content = "Updated content";
-        _date = DateTimeOffset.UtcNow.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
         _osmId = 1;
 
         _images.Add((
@@ -191,7 +191,7 @@ public class U7007EditPost
 
         _title = "Valid updated title";
         _content = "Valid updated content";
-        _date = DateTimeOffset.UtcNow.AddDays(-1);
+        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
 
         // Text was entered without selecting a suggested location.
         _location = "Made up location";
@@ -223,7 +223,7 @@ public class U7007EditPost
         if (_date != null)
         {
             form.Add(
-                new StringContent(_date.Value.ToString("s") + "Z"),
+                new StringContent(_date.Value.ToString("yyyy-MM-dd")),
                 "Date");
         }
 

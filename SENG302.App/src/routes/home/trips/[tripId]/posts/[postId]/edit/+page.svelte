@@ -131,6 +131,33 @@
     }
 
     /**
+     * Parse date stored within database to the local format
+     * @param dateString the strin value of the date
+     */
+    function parseLocalDate(dateString: string): Date {
+        const datePart = dateString.split("T")[0];
+        const [year, month, day] = datePart.split("-").map(Number);
+
+        return new Date(year, month - 1, day);
+    }
+
+    /**
+     * Converts a local date to a date only string without UTC timezone shifting
+     * @param date
+     */
+    function serialiseLocalDate(date: Date | null): string | null {
+        if (!date || Number.isNaN(date.getTime())) {
+            return null;
+        }
+
+        const year = date.getFullYear().toString().padStart(4, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const day = date.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
      * Returns the details of a post to populate the form
      * the current information
      */
@@ -155,7 +182,7 @@
 
             title = data.title;
             content = data.content;
-            date = new Date(data.date);
+            date = parseLocalDate(data.date);
             location.osmId = data.osmId;
             photoIds = data.photoIds;
             searchQuery = data.locationName;
@@ -188,7 +215,7 @@
             form.append("Title", title);
             form.append("OsmId", location.osmId);
             form.append("Content", content);
-            form.append("Date", date?.toISOString() ?? "");
+            form.append("Date", serialiseLocalDate(date) ?? "");
             form.append("NoContentAllowed", noContentAllowed);
 
             const newUploadedFiles =

@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using SENG302.Api.Helpers;
-using SENG302.Api.Helpers.Validators;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Services;
@@ -31,7 +30,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_ValidImageButJustMime_Success(byte[] bytes, string expectedMime)
     {
         var file = GetMockFile("test", bytes);
-        ImageValidator.GetRealImageMime(file).ShouldBe(expectedMime);
+        ImageValidationTools.GetRealImageMime(file).ShouldBe(expectedMime);
     }
 
     [Theory]
@@ -44,7 +43,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_ValidImage_Success(byte[] bytes, string expectedMime)
     {
         var file = GetMockFile("test", bytes);
-        ImageValidator.GetRealImageMime(file).ShouldBe(expectedMime);
+        ImageValidationTools.GetRealImageMime(file).ShouldBe(expectedMime);
     }
     
     [Theory]
@@ -56,7 +55,7 @@ public class ImageTypeValidationTests
     public async Task GetMimeOfFile_InvalidImage_Fail(byte[] bytes)
     {
         var file = GetMockFile("test", bytes);
-        ImageValidator.GetRealImageMime(file).ShouldBe(ImageValidator.InvalidMimeString);
+        ImageValidationTools.GetRealImageMime(file).ShouldBe(ImageValidationTools.InvalidMimeString);
     }
 
     [Theory] 
@@ -65,34 +64,34 @@ public class ImageTypeValidationTests
     public async Task IsValidFilesize_AtOrUnderLimit_Success(long fileSize)
     {
         var file = GetMockFile("test", new byte[fileSize]);
-        ImageValidator.IsValidFilesize(file).ShouldBeTrue();
+        ImageValidationTools.IsValidFilesize(file).ShouldBeTrue();
     }
 
     [Fact]
     public async Task IsValidFilesize_ExceedsLimit_Fail()
     {
         var file = GetMockFile("test", new byte[10000001]);
-        ImageValidator.IsValidFilesize(file).ShouldBeFalse();
+        ImageValidationTools.IsValidFilesize(file).ShouldBeFalse();
     }
     
     [Fact] 
     public async Task IsValidMimeType_ValidMimeNoSpoof_Success()
     {
         var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png"); 
-        ImageValidator.IsValidMimeType(file).ShouldBeTrue();
+        ImageValidationTools.IsValidMimeType(file).ShouldBeTrue();
     }
 
     [Fact]
     public async Task IsValidMimeType_ValidMimeInvalidSpoof_Fail()
     {
         var file = GetMockFile("test", new byte[] { 0x00, 0x00, 0x00, 0x00 }, "image/png");
-        ImageValidator.IsValidMimeType(file).ShouldBeFalse();
+        ImageValidationTools.IsValidMimeType(file).ShouldBeFalse();
     }
 
     [Fact]
     public async Task IsValidMimeType_InvalidMimeValidSpoof_Fail()
     {
         var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "application/octet-stream");
-        ImageValidator.IsValidMimeType(file).ShouldBeFalse();
+        ImageValidationTools.IsValidMimeType(file).ShouldBeFalse();
     }
 }
