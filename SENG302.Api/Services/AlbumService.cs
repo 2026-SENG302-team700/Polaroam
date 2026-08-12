@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Services;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
 
+namespace SENG302.Api.Services;
 public interface IAlbumService
 {
     public Task<List<CustomFile>> GetImagesFromAlbumAsync(int tripId);
@@ -32,7 +32,7 @@ public class AlbumService: IAlbumService
     /// <summary>
     /// Validates that the images given to it are less than 10MB in size, and that they are of a specified type.
     /// For each image that violates these requirements, an error string is added to a list, which is returned 
-    /// when all of the images in the input list is exhausted.
+    /// when all the images in the input list are exhausted.
     /// </summary>
     /// <param name="photos"></param>
     /// <returns>List of error strings</returns>
@@ -55,7 +55,7 @@ public class AlbumService: IAlbumService
     }
 
     /// <summary>
-    /// given a trip id, return the album associated with that trip. 
+    /// Given a trip id, return the album associated with that trip. 
     /// Throws KeyNotFoundException if the album does not exist (or the trip doesn't exist)
     /// </summary>
     /// <param name="tripId"></param>
@@ -74,11 +74,11 @@ public class AlbumService: IAlbumService
     }
 
     /// <summary>
-    /// Upon being given a trip Id and a Photo Id, this method checks if the album exists 
-    /// and then checks to ensure that the image is not a part of a post. If it is, returns
+    /// Upon being given a trip-Id and a Photo-Id, this method checks if the album exists 
+    /// and then checks to ensure that the image is not a part of a post. If it is, it returns
     /// an invalid operation exception.
     /// If the image was not part of the album, it will throw a key not found exception.
-    /// Only after this, will it attempt deletion, using the fileservice delete file method
+    /// Only after this will it attempt deletion, using the fileService delete file method
     /// and removing it from the album.
     /// </summary>
     /// <param name="photoId"></param>
@@ -179,7 +179,7 @@ public class AlbumService: IAlbumService
             }
             catch (Exception ex)
             {
-                // Tagging cant cause the image uplaod to fail
+                // Tagging can't cause the image upload to fail
                 Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
             }
         }  
@@ -191,8 +191,8 @@ public class AlbumService: IAlbumService
 
 
     /// <summary>
-    /// Gets all customfiles from a album. Does this by retrieving an album, and then
-    /// calling the file service to retrieve the custom file for all photo Id.
+    /// Gets all custom files from an album. Does this by retrieving an album and then
+    /// calling the file service to retrieve the custom file for all photo-Id.
     /// </summary>
     /// <param name="tripId"></param>
     /// <returns></returns>
@@ -228,7 +228,7 @@ public class AlbumService: IAlbumService
      
     /// <summary>
     /// Create a new album for a given trip, and returns the album.
-    /// Fails if a trip does not exist with that id, and throws a KeyNotFoundException.
+    /// Fails if a trip does not exist with that id and throws a KeyNotFoundException.
     /// </summary>
     /// <param name="tripId"></param>
     /// <returns>new album object</returns>
