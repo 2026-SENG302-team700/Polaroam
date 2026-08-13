@@ -55,7 +55,7 @@ public class ImageController : ControllerBase
             var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
             return imageInQueue
-                ? Ok()
+                ? Ok("Tags are being generated.")
                 : NoContent();
         }
         catch (KeyNotFoundException e)
