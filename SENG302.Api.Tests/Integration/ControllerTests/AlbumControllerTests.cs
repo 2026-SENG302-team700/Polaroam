@@ -77,7 +77,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     }
     
     [Fact]
-    public async Task GetAlbumImage_NotOwner_ReturnSuccess()
+    public async Task GetAlbumImage_NotOwner_ReturnUnauthorized()
     {
         await SetupUserAndTrip(404, "notMe@example.com");
         await AddAlbumImages();
@@ -86,7 +86,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     }
     
     [Fact]
-    public async Task GetAlbumImage_NoImage_ReturnSuccess()
+    public async Task GetAlbumImage_NoImage_ReturnNotFound()
     {
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
