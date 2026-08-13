@@ -48,7 +48,6 @@ public class ResetPasswordController : ControllerBase
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user == null) return Ok();
         await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified);
-        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified);
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -220,13 +219,13 @@ public class ResetPasswordController : ControllerBase
             // Create a dictionary of important values to send in the email, then call function to send email
             var user = await _userService.GetUserFromEmailAsync(userEmail);
             if (user == null)
-            if (user == null)
-            {
-                return Unauthorized(new
+                if (user == null)
                 {
-                    message = "A user with that email does not exist."
-                });
-            }
+                    return Unauthorized(new
+                    {
+                        message = "A user with that email does not exist."
+                    });
+                }
 
 
             var emailDictionary = new Dictionary<string, string>
