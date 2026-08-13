@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 using SENG302.Api.Helpers;
+using SENG302.Api.Models.Responses;
+
 namespace SENG302.Api.Controllers.UserController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -49,10 +51,20 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
-
-        // Remove hashed password from user
-        user.PasswordKey = "---";
-        return Ok(user);
+        
+        return Ok(new GetUserResponse
+        {
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            Country = user.Country,
+            ProfilePicture = user.ProfilePicture,
+            ProfilePictureZoom = user.ProfilePictureZoom,
+            ProfilePictureOffsetX = user.ProfilePictureOffsetX,
+            ProfilePictureOffsetY = user.ProfilePictureOffsetY,
+            AcceptedAiPrivacyPolicy = user.AcceptedAiPrivacyPolicy,
+            AiTagging = user.AiTaggingEnabled
+        });
     }
 
     [AllowAnonymous]
@@ -244,5 +256,58 @@ public class UserController : ControllerBase
         Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
 
         return File(fileBytes, customFile.MimeType);
+    }
+
+    /// <summary>
+    /// Set's a flag in the user that the user has agreed to Polaroam's Privacy Policy.
+    /// </summary>
+    /// <returns>
+    /// Unauthorized: No cookie saved
+    /// Ok: User flagged to have accepted the privacy policy.
+    /// </returns>
+    [HttpPut("accept-policy")]
+    public async Task<IActionResult> AcceptPrivacyPolicy()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+        
+        var userId = int.Parse(userIdString);
+
+        await _userService.AcceptPrivacyPolicyAsync(userId);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Endpoint allowing for a user to toggle their AI tagging settings.
+    /// </summary>
+    /// <returns>
+    /// Unauthorized: No cookie saved
+    /// Forbidden: User hasn't accepted the privacy policy yet.
+    /// Ok: Setting has been toggled.
+    /// </returns>
+    [HttpPut("ai-toggle")]
+    public async Task<IActionResult> ToggleAiSetting()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var userId = int.Parse(userIdString);
+
+        try
+        {
+            await _userService.ToggleAiTaggingAsync(userId);
+        }
+        catch (PrivacyPolicyNotAcceptedException e)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, e.Message);
+        }
+
+        return Ok();
     }
 }
