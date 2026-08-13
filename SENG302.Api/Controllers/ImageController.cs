@@ -56,7 +56,7 @@ public class ImageController : ControllerBase
 
                 if (error != null)
                 {
-                    return Problem(error);
+                    return StatusCode(StatusCodes.Status500InternalServerError, error);
                 }
                 
                 var imageInQueue = await _fileService.GetTagQueueStatus(photoId);

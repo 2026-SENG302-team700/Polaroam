@@ -61,10 +61,12 @@
                 },
             );
             if (!response.ok) {
+               if (response.status === 500) {
+                  error = await response.text()
+               }
                 if (response.status !== 404) {
                     error = (await response.text()) || "Failed to fetch tags.";
                 }
-                return;
             }
 
             tags = await response.json();
@@ -109,6 +111,9 @@
          </div>
       </div>
    </div>
+   {#if error}
+      <span class="text-bg-secondary">{error}</span>
+   {/if}
 </div>
 
 <style>

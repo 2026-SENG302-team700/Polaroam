@@ -43,7 +43,17 @@ public class ImageTaggingService : IImageTaggingService
     public async Task GenerateTagsAsync(
         IFormFile image, int imageId, CancellationToken cancellationToken = default)
     {
-        ValidateImage(image);
+        try
+        {
+            ValidateImage(image);
+        }
+        catch (ArgumentException e)
+        {
+            Console.WriteLine("Image cannot be tagged");
+            return;
+        }
+        
+        
         var request = await GenerateRequest(image, cancellationToken);
 
         try

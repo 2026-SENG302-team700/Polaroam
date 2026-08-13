@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -30,19 +31,22 @@ public class PostService : IPostService
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IUserService _userService;
 
     public PostService(
         IDbContextFactory<DatabaseContext> dbContextFactory,
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
-        IImageTaggingQueue imageTaggingQueue)
+        IImageTaggingQueue imageTaggingQueue,
+        IUserService userService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
         _imageTaggingQueue = imageTaggingQueue;
+        _userService = userService;
     }
 
     /// <summary>
@@ -110,7 +114,12 @@ public class PostService : IPostService
             throw new MultipleValidationListException(errors);
         }
 
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User? user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
+        }
 
         // Add Photos
         var photoIds = new List<int>();
@@ -118,8 +127,12 @@ public class PostService : IPostService
         {
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
+
+            if (user.AcceptedAiPrivacyPolicy)
+            {
+                await GenerateImageTags(photo, file.Id);
+            }
             
-            await GenerateImageTags(photo, file.Id);
         }
 
         // Add location
@@ -144,6 +157,8 @@ public class PostService : IPostService
             OsmId = postRequest.OsmId,
             LocationName = location.name,
         };
+        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
 
@@ -259,6 +274,13 @@ public class PostService : IPostService
                 });
             }
         }
+        
+        User? user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
+        }
 
         // Add / Remove Photos 
         List<int> customFileIds = [];
@@ -268,7 +290,10 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(photo, customFile.Id);
+            if (user.AcceptedAiPrivacyPolicy)
+            {
+                await GenerateImageTags(photo, customFile.Id);
+            }
         }
 
         // Update post content
@@ -284,6 +309,8 @@ public class PostService : IPostService
         await context.SaveChangesAsync();
         return post;
     }
+    
+    
 
     /// <summary>
     /// Given a userId and the post's tripId, check if the user owns the trip
@@ -411,9 +438,21 @@ public class PostService : IPostService
 
             await _fileService.SetTagQueueStatus(imageId);
             
-            await _imageTaggingQueue.QueueImageTaggingAsync(
+            bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
             );
+
+            if (!queued)
+            {
+                await using var context = await _dbContextFactory.CreateDbContextAsync();
+                var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
+                if (imageFile != null)
+                {
+                    imageFile.TagError = "tagging failed: Queue was full";
+                    context.CustomFiles.Update(imageFile);
+                    await context.SaveChangesAsync();
+                }
+            }
         }
         catch (Exception ex)
         {
