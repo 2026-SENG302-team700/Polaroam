@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
+using SENG302.Api.Services.ImageTagging;
+
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -14,13 +16,18 @@ public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
 
-    public ImageController(IUserService userService, IFileService fileService)
+
+    public ImageController(
+        IUserService userService, 
+        IFileService fileService, 
+        IImageTaggingQueue imageTaggingQueue
+    )
     {
         _userService = userService;
         _fileService = fileService;
-
-
+        _imageTaggingQueue = imageTaggingQueue;
     }
 
     /// <summary>
@@ -42,12 +49,14 @@ public class ImageController : ControllerBase
         try
         {
             var tags = await _fileService.GetTagsAsync(photoId);
-
             if (tags == null)
             {
-                return NotFound("This photo has no tags.");
+                var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
+
+                return imageInQueue
+                    ? Ok("Tags are being generated.")
+                    : StatusCode(StatusCodes.Status204NoContent, "This photo has no tags.");
             }
-            
             return Ok(tags);
         }
         catch (KeyNotFoundException e)

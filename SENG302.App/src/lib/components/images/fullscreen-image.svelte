@@ -98,13 +98,15 @@
          {#if images !== null && images?.length > 1 && index !== 0}
             <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
          {/if}
-         {#if tags.length > 0}
-            <div class="tags-wrapper">
-               {#each tags as tag}
-                  <TagPill {tag}/>
-               {/each}
-            </div>
-         {/if}
+         <div class="tags-wrapper">
+            {#if tags.length > 0}
+            {#each tags as tag}
+               <TagPill {tag}/>
+            {/each}
+            {:else}
+            <TagPill tag="No tags available"/>
+            {/if}
+         </div>
       </div>
    </div>
 </div>
@@ -128,7 +130,9 @@
     align-items: center;
  }
  .image {
+   border-radius: 5px;
     position: relative;
+    min-width: 20vw;
     max-height: 70vh;
     max-width: 70vw;
  }
@@ -136,15 +140,12 @@
    position:relative;
  }
  .tags-wrapper {
-    position: absolute;
-    bottom: 0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     gap: 0.375rem;
     justify-content: center;
-    max-width: 90%;
+    margin-top: 2%;
  }
 
 </style>

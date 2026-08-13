@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Services.ImageTagging;
 
 namespace SENG302.Api.Services;
 
@@ -13,6 +14,8 @@ public interface IFileService
     string GenerateFileKey(IFormFile file);
     Task<bool> CheckFileOwnership(int fileId, int userId);
     Task<List<string>?> GetTagsAsync(int id);
+    Task SetTagQueueStatus(int id);
+    Task<bool> GetTagQueueStatus(int id);
 }
 
 public class FileService : IFileService
@@ -20,10 +23,11 @@ public class FileService : IFileService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly string _basePath;
 
+
     public FileService(
         IDbContextFactory<DatabaseContext> dbContextFactory,
         IConfiguration config
-    )
+        )
     {
         _dbContextFactory = dbContextFactory;
         _basePath = config["FileStorage:BasePath"];
@@ -177,10 +181,43 @@ public class FileService : IFileService
     /// Null: File has no tags.
     /// Array of strings that are the tags.
     /// </returns>
-    /// <exception cref="KeyNotFoundException">File doesn't exist.</exception>
     public async Task<List<string>?> GetTagsAsync(int id)
     {
         var file = await GetFileByIdAsync(id);
         return file.Tags;
+    }
+
+    /// <summary>
+    /// Sets the status of a file that it is in the queue to be tagged or the job is being performed.
+    /// </summary>
+    /// <param name="id">ID of the image to be set as being tagged</param>
+    /// <exception cref="KeyNotFoundException">File not found.</exception>
+    public async Task SetTagQueueStatus(int id)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var file = await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == id);
+
+        if (file == null)
+        {
+            throw new KeyNotFoundException("File not found.");
+        }
+        
+        file.InTagQueue = true;
+        context.CustomFiles.Update(file);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Checks to see whether a file is within the tagging queue or job is being performed.
+    /// </summary>
+    /// <param name="id">ID of the image to be checked if being tagged</param>
+    /// <returns>
+    /// True: File is in the queue or being processed.
+    /// False: File is not in the queue and not being processed.
+    /// </returns>
+    public async Task<bool> GetTagQueueStatus(int id)
+    {
+        var file = await GetFileByIdAsync(id);
+        return file.InTagQueue;
     }
 }

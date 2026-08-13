@@ -23,4 +23,5 @@ public class CustomFile
     
     public String? TagErrors { get; set; }
 
+    public bool InTagQueue { get; set; } = false;
 }
