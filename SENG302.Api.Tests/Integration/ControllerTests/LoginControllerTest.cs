@@ -28,7 +28,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             DisplayName = userDisplayName,
             Country = userCountry,
             EmailVerified = true,
-            TimeCreated = DateTime.UtcNow
+            TimeCreated = DateTimeOffset.UtcNow
         };
         user.PasswordKey = passwordHasher.HashPassword(user, passwordString);
         context.Users.Add(user);
@@ -96,7 +96,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             DisplayName = "JJ Devy",
             Country = "AU",
             EmailVerified = true,
-            TimeCreated = DateTime.UtcNow
+            TimeCreated = DateTimeOffset.UtcNow
         };
         user.PasswordKey = passwordHasher.HashPassword(user, "c00lPasSw0rdont@ME");
         context.Users.Add(user);
@@ -129,7 +129,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             DisplayName = "JJ Devy",
             Country = "AU",
             EmailVerified = true,
-            TimeCreated = DateTime.UtcNow
+            TimeCreated = DateTimeOffset.UtcNow
         };
         user.PasswordKey = passwordHasher.HashPassword(user, "c00lPasSw0rdont@ME");
         context.Users.Add(user);
@@ -207,7 +207,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Country = "NZ",
             EmailVerified = false,
             CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20,
-            TimeCreated = DateTime.UtcNow
+            TimeCreated = DateTimeOffset.UtcNow
         };
         user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
         context.Users.Add(user);
@@ -240,7 +240,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Country = "NZ",
             EmailVerified = false,
             CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400,
-            TimeCreated = DateTime.UtcNow
+            TimeCreated = DateTimeOffset.UtcNow
         };
         user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
         context.Users.Add(user);

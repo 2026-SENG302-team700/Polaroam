@@ -14,10 +14,10 @@ public class Post
     public int PostId { get; init; }
     public required int TripId { get; set; }
     public required string Title { get; set; }
-    public string Content { get; set; }
-    public DateOnly? Date { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public DateTimeOffset? Date { get; set; }
     public required long OsmId { get; set; }
     public required string LocationName { get; set; }
     public List<int> PhotoIds { get; set; } = [];
-    public DateTimeOffset creationTime { get; set; }
+    public DateTimeOffset CreationTime { get; set; }
 }
