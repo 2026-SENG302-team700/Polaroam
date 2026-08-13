@@ -45,8 +45,26 @@ public class ImageTaggingService : IImageTaggingService
     {
         ValidateImage(image);
         var request = await GenerateRequest(image, cancellationToken);
-        var content = await ProcessRequest(request, cancellationToken, imageId);
-        await ParseValidateAndSetTags(content, imageId);
+
+        try
+        {
+            var content = await ProcessRequest(request, cancellationToken, imageId);
+            await ParseValidateAndSetTags(content, imageId);
+        }
+        catch (HttpRequestException exception)
+        {
+            String errorMessage = exception.Message;
+            await SetTagErrors(imageId, errorMessage);
+
+        }
+        catch (OperationCanceledException exception)
+        {
+            if (exception.InnerException is TimeoutException)
+            {
+                await SetTagErrors(imageId, "LLM request has timed out. Tags cannot be generated");
+            }
+            await SetTagErrors(imageId, exception.Message);
+        }
     }
     
     /// <summary>
@@ -132,36 +150,27 @@ public class ImageTaggingService : IImageTaggingService
     /// <exception cref="HttpRequestException">Thrown if received a non-success response code</exception>
     private async Task<string?> ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken, int imageId)
     {
-        String content = "";
-        try
+        using var response = await _httpClient.SendAsync(
+            request,
+            cancellationToken
+        );
+        
+        if (!response.IsSuccessStatusCode)
         {
-            using var response = await _httpClient.SendAsync(
-                request,
-                cancellationToken
-            );
             
-            if (!response.IsSuccessStatusCode)
-            {
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                throw new HttpRequestException($"LLM request failed with status {(int)response.StatusCode}: {responseContent}");
-            }
             await SetTagStatusOff(imageId);
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
             throw new HttpRequestException($"LLM request failed with status {(int)response.StatusCode}: {responseContent}");
         }
 
-            using var responseDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
+        using var responseDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken),
+            cancellationToken: cancellationToken);
 
-            var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
+        var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
 
-            content = responseContentElement.GetString();
-            
-        }
-        catch (HttpRequestException)
-        {
-            
-        }
+        String? content = responseContentElement.GetString();
         
         return content;
     }
@@ -286,6 +295,26 @@ public class ImageTaggingService : IImageTaggingService
         }
         
         image.InTagQueue = false;
+        context.CustomFiles.Update(image);
+        await context.SaveChangesAsync();
+    }
+    
+    /// <summary>
+    /// Sets the tagging status to off.
+    /// </summary>
+    /// <param name="photoId"></param>
+    /// <param name="errorMessage"></param>
+    private async Task SetTagErrors(int photoId, string errorMessage)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var image = context.CustomFiles.FirstOrDefault(f => f.Id == photoId);
+
+        if (image == null)
+        {
+            return;
+        }
+        
+        image.TagError = errorMessage;
         context.CustomFiles.Update(image);
         await context.SaveChangesAsync();
     }

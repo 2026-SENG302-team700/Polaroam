@@ -51,6 +51,14 @@ public class ImageController : ControllerBase
             var tags = await _fileService.GetTagsAsync(photoId);
             if (tags == null)
             {
+
+                var error = await _fileService.GetTagErrors(photoId);
+
+                if (error != null)
+                {
+                    return Problem(error);
+                }
+                
                 var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
                 return imageInQueue
@@ -64,4 +72,6 @@ public class ImageController : ControllerBase
             return NotFound(e.Message);
         }
     }
+    
+     
 }

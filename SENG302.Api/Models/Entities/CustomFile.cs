@@ -20,8 +20,8 @@ public class CustomFile
     public long FileSize { get; set; }
 
     public List<string>? Tags { get; set; }
-    
-    public String? TagErrors { get; set; }
+
+    public String? TagError { get; set; }
 
     public bool InTagQueue { get; set; } = false;
 }
