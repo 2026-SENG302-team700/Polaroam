@@ -57,7 +57,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddTaggedImagesToAlbum(1, (1, ["beach", "sunset", "mountain"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
 
@@ -71,7 +71,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddTaggedImagesToAlbum(1, (1, ["beachside", "sunset"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -84,7 +84,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddTaggedImagesToAlbum(1, (1, ["Beach", "Sunset"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -97,7 +97,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddTaggedImagesToAlbum(1, (1, ["mountain", "forest"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -109,7 +109,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
     {
         await SetupUserAndTrip(1, "test@example.com");
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -122,7 +122,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddTaggedImagesToAlbum(1, (1, null), (2, ["beach"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -137,7 +137,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             (1, ["beach", "sunset"]),
             (2, ["beach", "mountain"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -152,7 +152,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await AddTaggedImagesToAlbum(1, (1, ["beachfront"]));
         await AddTaggedImagesToAlbum(2, (2, ["beachball"]));
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -175,7 +175,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             await context.SaveChangesAsync();
         }
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
@@ -186,7 +186,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
     public async Task GetSuggestedTags_UserDoesNotExist_ReturnsUnauthorized()
     {
         // No user seeded in the DB for the authenticated id
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
@@ -200,7 +200,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             .ToArray();
         await AddTaggedImagesToAlbum(1, files);
 
-        var response = await HttpClient.GetAsync("/api/image/tags/beach");
+        var response = await HttpClient.GetAsync("/api/image/tags?query=beach");
         response.EnsureSuccessStatusCode();
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
