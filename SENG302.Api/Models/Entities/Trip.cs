@@ -23,6 +23,4 @@ public class Trip
     public DateOnly? StartDate { get; set; }
     [Required]
     public DateOnly? EndDate { get; set; }
-
-    public List<int> AlbumPhotoIds { get; set; } = new ();
 }

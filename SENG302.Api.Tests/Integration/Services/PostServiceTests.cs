@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Jobs;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
@@ -1151,8 +1152,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.PhotoIds.Count.ShouldBe(1);
 
         await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
-            Arg.Is<IFormFile>(image),
-            Arg.Is<int>(id => id == post.PostId)
+            Arg.Any<ImageTaggingJob>()
         );
     }
     
@@ -1176,8 +1176,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
 
         await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
-            Arg.Any<IFormFile>(),
-            Arg.Any<int>()
+            Arg.Any<ImageTaggingJob>()
         );
     }
 
@@ -1223,8 +1222,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, []);
 
         await ImageTaggingQueueMock.DidNotReceive().QueueImageTaggingAsync(
-            Arg.Any<IFormFile>(),
-            Arg.Any<int>()
+            Arg.Any<ImageTaggingJob>()
         );
     }
 
@@ -1271,8 +1269,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         updatedPost.PhotoIds.Count.ShouldBe(1);
 
         await ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
-            Arg.Is<IFormFile>(image),
-            Arg.Is<int>(id => id == post.PostId)
+            Arg.Any<ImageTaggingJob>()
         );
     }
     

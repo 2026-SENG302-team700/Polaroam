@@ -16,12 +16,14 @@ public class AlbumController : ControllerBase
     private readonly IAlbumService _albumService;
     private readonly IUserService _userService;
     private readonly ITripService _tripService;
+    private readonly IFileService _fileService;
     
-    public AlbumController(IAlbumService albumService, IUserService userService, ITripService tripService)
+    public AlbumController(IAlbumService albumService, IUserService userService, ITripService tripService, IFileService fileService)
     {
         _albumService = albumService;
         _userService = userService;
         _tripService = tripService;
+        _fileService = fileService;
     }
     
     /// <summary>
@@ -32,7 +34,7 @@ public class AlbumController : ControllerBase
     /// <returns>
     /// Ok - image found
     /// Unauthorized - user not logged in or does not have access to the trip
-    /// NotFound - image not found
+    /// NotFound - image/album not found
     /// BadRequest - unhandled error
     /// </returns>
     [HttpGet("images/{imageId:int}")]
@@ -46,15 +48,18 @@ public class AlbumController : ControllerBase
             if (user == null ||
                 !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
                 return Unauthorized();
-            
+
             // Get the image
-            var image = await _albumService.GetAlbumImage(tripId, imageId);
-            if (image == null) return NotFound("Image not found");
+            var image = await _fileService.GetFileByIdAsync(imageId);
             return Ok(image);
         }
-        catch (Exception e)
+        catch (KeyNotFoundException)
         {
-            return BadRequest("Failed to get image: " + tripId);
+            return NotFound("Image not found");
+        }
+        catch (Exception)
+        {
+            return BadRequest("Failed to get image: " + imageId);
         }
     }
     
@@ -75,22 +80,13 @@ public class AlbumController : ControllerBase
             if (user == null ||
                 !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
                 return Unauthorized();
-            
-            var images = await _albumService.GetImagesFromAlbumAsync(tripId);
-            // Extract metadata from the images
-            List<PhotoMetadataResponse> imageData = [];
-            foreach (var image in images)
-            {
-                imageData.Add(
-                    new PhotoMetadataResponse
-                    {
-                        PhotoId = image.Id,
-                        FileName = image.OriginalFileName,
-                        MimeType = image.MimeType
-                    });
-            }
-            
-            return Ok(imageData);
+
+            var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId);
+            return Ok(images);
+        }
+        catch (KeyNotFoundException e) // Trip or Album not found
+        {
+            return NotFound(e.Message);
         }
         catch
         {
@@ -118,22 +114,24 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                ! await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
                 return Unauthorized();
-            
+
+            if (files == null) return BadRequest("No files were uploaded.");
+
             // Upload images to the album
-            await _albumService.UploadImagesToAlbumAsync(files, tripId, user.Id);
+            await _albumService.UploadImagesToAlbumAsync(files, tripId);
             return Created();
         }
-        catch (ValidationListException e) // Image validation failed
+        catch (MultipleValidationListException e) // Image validation failed
         {
             return BadRequest(e.Errors);
         }
-        catch (ArgumentException e) // Trip not found
+        catch (KeyNotFoundException e) // Album or Trip not found
         {
             return NotFound(e.Message);
         }
-        catch (Exception) // Other exceptions
+        catch (Exception e) // Other exceptions
         {
             return BadRequest("Failed to upload images.");
         }
@@ -162,20 +160,17 @@ public class AlbumController : ControllerBase
                 !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
-            await _albumService.DeleteImageFromAlbumAsync(tripId, imageId);
-            return NoContent();
+            var postId = await _albumService.DeleteImageFromAlbumAsync(imageId, tripId);
+            if (postId != null) return StatusCode(405, postId); // Return NotAllowed if the image is a part of a post with the post-ID
+            return NoContent(); // Success
         }
-        catch (ArgumentException e) // Handled Exceptions
+        catch (KeyNotFoundException e) // Image not found, or album not found
         {
-            return BadRequest(e.Message);
-        }
-        catch (InvalidOperationException e) // Returned when the image is a part of a post and include the post-ID
-        {
-            return StatusCode(405, int.Parse(e.Message));
+            return NotFound(e.Message);
         }
         catch (Exception)
         {
-            return BadRequest("Failed to delete image.");
+            return BadRequest("Failed to delete image");
         }
     }
 }
