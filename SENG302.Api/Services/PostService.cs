@@ -141,6 +141,8 @@ public class PostService : IPostService
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         album.PhotoIds.AddRange(photoIds);
         context.Albums.Update(album);
         
@@ -169,7 +171,7 @@ public class PostService : IPostService
             LocationName = location.name,
         };
         
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
 

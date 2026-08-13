@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
@@ -21,13 +22,16 @@ public class AlbumService: IAlbumService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IUserService _userService;
     public AlbumService(IFileService fileService, 
                         IDbContextFactory<DatabaseContext> dbContextFactory,
-                        IImageTaggingQueue imageTaggingQueue)
+                        IImageTaggingQueue imageTaggingQueue,
+                        IUserService userService)
     {
         _fileService = fileService;
         _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
+        _userService = userService;
     }
     
     /// <summary>
@@ -152,25 +156,48 @@ public class AlbumService: IAlbumService
         {
             throw new KeyNotFoundException("Trip does not exist");
         }
+        
+        
+        User? user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
+        }
 
         foreach (var photo in photos)
         {
             var file = await _fileService.SaveFileAsync(photo, trip.UserId);
             album.PhotoIds.Add(file.Id);
 
-            try
+            if (user.AcceptedAiPrivacyPolicy)
             {
-                FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
+                try
+                {
+                    FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
 
-                await _imageTaggingQueue.QueueImageTaggingAsync(
-                    new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
-                );
+                    bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
+                        new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
+                    );
+                    
+                    if (!queued)
+                    {
+                        var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == file.Id);
+                        if (imageFile != null)
+                        {
+                            imageFile.TagError = "tagging failed: Queue was full";
+                            context.CustomFiles.Update(imageFile);
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Tagging can't cause the image upload to fail
+                    Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                // Tagging can't cause the image upload to fail
-                Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
-            }
+            
         }  
 
         await context.SaveChangesAsync();
