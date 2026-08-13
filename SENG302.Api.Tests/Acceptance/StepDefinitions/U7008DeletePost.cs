@@ -23,8 +23,8 @@ public class U7005DeletePost
     {
         _fixture = fixture;
     }
-    
-    
+
+
 
     [Given("I have an existing post to delete")]
     public async Task GivenIHaveAnExistingPostToDelete()
@@ -57,6 +57,7 @@ public class U7005DeletePost
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
             Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
@@ -73,6 +74,7 @@ public class U7005DeletePost
         {
             PostId = post.PostId,
             OsmId = post.OsmId,
+            OsmType = post.OsmType,
             Lat = "-43.532",
             Lon = "172.636",
             Name = "Christchurch",
@@ -91,7 +93,7 @@ public class U7005DeletePost
     {
         await using var context =
             await _fixture.DbContextFactory.CreateDbContextAsync();
-        
+
         var user = new User
         {
             Id = 1,
@@ -117,6 +119,7 @@ public class U7005DeletePost
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
             Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
@@ -133,6 +136,7 @@ public class U7005DeletePost
         {
             PostId = post.PostId,
             OsmId = post.OsmId,
+            OsmType = post.OsmType,
             Lat = "-43.532",
             Lon = "172.636",
             Name = "Christchurch",
@@ -141,8 +145,8 @@ public class U7005DeletePost
 
         context.Locations.Add(location);
         await context.SaveChangesAsync();
-        
-        
+
+
         var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         using var content = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(fileBytes);
@@ -159,7 +163,7 @@ public class U7005DeletePost
         _postId = post.PostId;
         _tripId = trip.Id;
     }
-    
+
     [When("I delete the tripp")]
     public async Task WhenIDeleteTheTrip()
     {
@@ -194,7 +198,7 @@ public class U7005DeletePost
         int.TryParse(_photoId, out numericPhotoId);
         var locationExists = await context.Set<Location>().AnyAsync(p => p.PostId == _postId);
         var imageExists = await context.Set<CustomFile>().AnyAsync(p => p.Id == numericPhotoId);
-        
+
         locationExists.ShouldBe(false);
         imageExists.ShouldBe(false);
     }

@@ -9,6 +9,7 @@ public class GeoLocationSearchResult
 {
     [Key]
     public required long osm_id { get; set; }
+    public required string osm_type { get; set; }
     public required string lat { get; set; }
     public required string lon { get; set; }
     public required string name { get; set; }

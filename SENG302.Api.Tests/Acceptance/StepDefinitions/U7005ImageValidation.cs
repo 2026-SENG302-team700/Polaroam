@@ -54,6 +54,7 @@ public class U7005ImageValidation
             Content = "",
             PhotoIds = [],
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch"
         });
 
@@ -94,6 +95,7 @@ public class U7005ImageValidation
         content.Add(new StringContent("My post"), "Title");
         content.Add(new StringContent(""), "Content");
         content.Add(new StringContent("1"), "osmId");
+        content.Add(new StringContent("node"), "osmType");
         content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
 
         _lastResponse = await _fixture.HttpClient.PutAsync("api/post/1", content);

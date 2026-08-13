@@ -25,6 +25,7 @@ public class U7007EditPost
     private DateOnly? _date;
     private string _location;
     private long _osmId;
+    private string _osmType = "node";
 
     private readonly List<(byte[] Bytes, string FileName, string ContentType)> _images = [];
 
@@ -36,13 +37,15 @@ public class U7007EditPost
         _date = new DateOnly();
         _location = "";
         _osmId = 1;
+        _osmType = "node";
     }
 
     private void SetupGeoMock()
     {
-        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>(), Arg.Any<string>()).Returns(new GeoLocationSearchResult
         {
             osm_id = 1,
+            osm_type = "node",
             lat = "1",
             lon = "1",
             display_name = "Auckland",
@@ -84,31 +87,10 @@ public class U7007EditPost
             Content = "",
             PhotoIds = [],
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch"
         });
         await context.SaveChangesAsync();
-    }
-
-    private MultipartFormDataContent BuildUpdatePostForm(
-        long osmId = 1,
-        IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
-    {
-        var content = new MultipartFormDataContent();
-        content.Add(new StringContent("1"), "Id");
-        content.Add(new StringContent("1"), "TripId");
-        content.Add(new StringContent(_title), "Title");
-        content.Add(new StringContent(_content), "Content");
-        content.Add(new StringContent(_osmId.ToString()), "OsmId");
-        content.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? ""), "Date");
-
-        foreach (var (bytes, fileName, contentType) in photos ?? [])
-        {
-            var fileContent = new ByteArrayContent(bytes);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-            content.Add(fileContent, "files", fileName);
-        }
-
-        return content;
     }
 
     [Given(
@@ -219,6 +201,7 @@ public class U7007EditPost
         form.Add(new StringContent(_title), "Title");
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
+        form.Add(new StringContent(_osmType), "osmType");
 
         if (_date != null)
         {

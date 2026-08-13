@@ -54,6 +54,7 @@
     let searchQuery = $state("");
     let location = $state({
         osmId: 0,
+        osmType: "",
         lat: 0,
         lon: 0,
         name: "",
@@ -78,6 +79,7 @@
             form.append("TripId", tripId);
             form.append("Title", title);
             form.append("OsmId", location.osmId);
+            form.append("OsmType", location.osmType);
             form.append("Content", content);
             form.append("Date", serialiseLocalDate(date) ?? "");
             form.append("NoContentAllowed", noContentAllowed);
@@ -166,24 +168,29 @@
             bind:searchQuery
             bind:location
             bind:error={errors.location}
-            bind:loading={loading}
+            bind:loading
         />
-        <DescriptionForm placeholder="Content" bind:description={content} errors={errors.content} bind:loading={loading}/>
+        <DescriptionForm
+            placeholder="Content"
+            bind:description={content}
+            errors={errors.content}
+            bind:loading
+        />
         <ImageDisplay
-                bind:images={files}
-                letDelete={true}
-                errors={[...errors.photos, ...fileErrors]}
+            bind:images={files}
+            letDelete={true}
+            errors={[...errors.photos, ...fileErrors]}
         >
             <ImagePicker
                 bind:filesList={files}
                 errors={errors.photos}
                 bind:fileErrors
-                loading={loading}
+                {loading}
             />
         </ImageDisplay>
         <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
         <div class="d-grid">
-            <CreationButton onClick={createPost} text="Create Post" loading={loading} />
+            <CreationButton onClick={createPost} text="Create Post" {loading} />
         </div>
     </div>
 </div>

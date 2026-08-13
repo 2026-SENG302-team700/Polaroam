@@ -8,12 +8,12 @@ namespace SENG302.Api.Controllers;
 public class GeoController : ControllerBase
 {
     private readonly IGeoService _geoService;
-    
+
     public GeoController(IGeoService geoService)
     {
         _geoService = geoService;
     }
-    
+
     /// <summary>
     /// Searches for locations based on the query string
     /// </summary>
@@ -23,23 +23,24 @@ public class GeoController : ControllerBase
     /// <returns></returns>
     [HttpGet("search")]
     public async Task<IActionResult> SearchLocationsAsync(
-        [FromQuery] string query, 
-        [FromHeader(Name = "Accept-Language")] string? acceptLanguage, 
+        [FromQuery] string query,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage,
         CancellationToken cancellationToken)
     {
         var results = await _geoService.GetLocationsAsync(query, acceptLanguage, cancellationToken);
         return Ok(results);
     }
-    
+
     /// <summary>
     /// Gets the location of a given OSM id
     /// </summary>
     /// <param name="osmId">Id for a location</param>
+    /// <param name="osmType">Type of the OSM element</param>
     /// <returns></returns>
     [HttpGet("location")]
-    public async Task<IActionResult> GetLocationAsync([FromQuery] long osmId)
+    public async Task<IActionResult> GetLocationAsync([FromQuery] long osmId, [FromQuery] string osmType)
     {
-        var result = await _geoService.GetLocationAsync(osmId);
+        var result = await _geoService.GetLocationAsync(osmId, osmType);
         return Ok(result);
     }
 }

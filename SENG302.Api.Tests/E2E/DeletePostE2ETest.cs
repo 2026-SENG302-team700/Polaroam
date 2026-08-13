@@ -12,6 +12,7 @@ public class DeletePostE2ETest : E2ETestFixture
 {
     private const string PostTitle = "E2E post deletion test";
     private const long OsmId = 123;
+    private const string OsmType = "node";
 
     public DeletePostE2ETest(
         WebApplicationFactory<Program> factory)
@@ -25,10 +26,11 @@ public class DeletePostE2ETest : E2ETestFixture
     /// </summary>
     private async Task<(int TripId, int PostId)> CreatePostAsync()
     {
-        GeoServiceMock.GetLocationAsync(OsmId).Returns(
+        GeoServiceMock.GetLocationAsync(OsmId, OsmType).Returns(
               new GeoLocationSearchResult
               {
                   osm_id = OsmId,
+                  osm_type = OsmType,
                   lat = "-43.532",
                   lon = "172.636",
                   name = "Christchurch",
@@ -68,6 +70,7 @@ public class DeletePostE2ETest : E2ETestFixture
             Content = "Content that should be gone",
             Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
             OsmId = OsmId,
+            OsmType = OsmType,
             LocationName = "Christchurch",
             PhotoIds = [],
             creationTime = DateTimeOffset.Now
@@ -80,6 +83,7 @@ public class DeletePostE2ETest : E2ETestFixture
         {
             PostId = post.PostId,
             OsmId = OsmId,
+            OsmType = OsmType,
             Lat = "-43.532",
             Lon = "172.636",
             Name = "Christchurch",

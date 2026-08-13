@@ -11,6 +11,7 @@ public class NewPostRequest : IPostRequest
     public required int TripId { get; set; }
     public required string Title { get; set; }
     public required long OsmId { get; set; }
+    public required string OsmType { get; set; }
 
     [Required(AllowEmptyStrings = true)]
     [DisplayFormat(ConvertEmptyStringToNull = false)]

@@ -71,6 +71,7 @@ public class PostControllerUnitTests
             Title = "Updated title",
             Content = "Updated content",
             OsmId = 123,
+            OsmType = "node",
             Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
@@ -87,6 +88,7 @@ public class PostControllerUnitTests
             Title = "New post",
             Content = "Post content",
             OsmId = 123,
+            OsmType = "node",
             Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
         };
     }
@@ -103,6 +105,7 @@ public class PostControllerUnitTests
             Title = "Post to delete",
             Content = "",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = []
         };
@@ -206,6 +209,7 @@ public class PostControllerUnitTests
             Title = "Test post",
             Content = "Test content",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = []
         };
@@ -233,13 +237,13 @@ public class PostControllerUnitTests
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
-        
+
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
 
@@ -307,7 +311,7 @@ public class PostControllerUnitTests
     public async Task UpdatePost_UserDoesNotOwnPost_ReturnsUnauthorized()
     {
         SetupUserContext("1");
-        
+
         var user = new User
         {
             Id = 1,
@@ -316,9 +320,9 @@ public class PostControllerUnitTests
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         _mockPostService.UserOwnsPost(1, request.TripId).Returns(false);
@@ -345,9 +349,9 @@ public class PostControllerUnitTests
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         var updatedPost = new Post
@@ -357,6 +361,7 @@ public class PostControllerUnitTests
             Title = request.Title,
             Content = request.Content,
             OsmId = request.OsmId,
+            OsmType = request.OsmType,
             LocationName = "Christchurch",
             Date = request.Date,
             PhotoIds = []
@@ -387,9 +392,9 @@ public class PostControllerUnitTests
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         var errors = new Dictionary<string, List<string>>{
@@ -455,6 +460,7 @@ public class PostControllerUnitTests
             Title = "Someone else post",
             Content = "",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = []
         };
@@ -481,6 +487,7 @@ public class PostControllerUnitTests
             Title = "Test post",
             Content = "",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = []
         };
@@ -508,6 +515,7 @@ public class PostControllerUnitTests
             Title = "Post to delete",
             Content = "",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [15]
         };
@@ -542,6 +550,7 @@ public class PostControllerUnitTests
             Title = "Post to delete",
             Content = "",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [15]
         };

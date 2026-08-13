@@ -20,6 +20,7 @@ public class U7004CreatePost
     private DateOnly? _date;
     private string _location;
     private long _osmId;
+    private string _osmType = "node";
 
     public U7004CreatePost(AcceptanceTestFixture fixture)
     {
@@ -29,13 +30,15 @@ public class U7004CreatePost
         _date = new DateOnly();
         _location = "";
         _osmId = 292806332;
+        _osmType = "node";
     }
 
     private void SetupGeoMock()
     {
-        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
+        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>(), Arg.Any<string>()).Returns(new GeoLocationSearchResult
         {
             osm_id = 1,
+            osm_type = "node",
             lat = "1",
             lon = "1",
             display_name = "Auckland",
@@ -113,6 +116,7 @@ public class U7004CreatePost
         form.Add(new StringContent(_title), "Title");
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
+        form.Add(new StringContent(_osmType), "osmType");
         form.Add(new StringContent("1"), "TripId");
         form.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? string.Empty), "Date");
 

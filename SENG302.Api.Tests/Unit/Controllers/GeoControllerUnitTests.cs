@@ -27,6 +27,7 @@ public class GeoControllerUnitTests
           {
               new() {
                   osm_id = 123,
+                  osm_type = "node",
                   lat = "-43.5321",
                   lon = "172.6362",
                   name = "Christchurch",
@@ -74,6 +75,7 @@ public class GeoControllerUnitTests
         GeoLocationSearchResult
         {
             osm_id = 123,
+            osm_type = "node",
             lat = "-43.5321",
             lon = "172.6362",
             name = "Christchurch",
@@ -81,29 +83,29 @@ public class GeoControllerUnitTests
         };
 
         _mockGeoService
-            .GetLocationAsync(123)
+            .GetLocationAsync(123, "node")
             .Returns(expectedLocation);
 
-        var result = await _controller.GetLocationAsync(123);
+        var result = await _controller.GetLocationAsync(123, "node");
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(expectedLocation);
 
-        await _mockGeoService.Received(1).GetLocationAsync(123);
+        await _mockGeoService.Received(1).GetLocationAsync(123, "node");
     }
 
     [Fact]
     public async Task GetLocationAsync_LocationDoesNotExist_ReturnsOkWithNull()
     {
         _mockGeoService
-            .GetLocationAsync(999)
+            .GetLocationAsync(999, "node")
             .Returns((GeoLocationSearchResult?)null);
 
-        var result = await _controller.GetLocationAsync(999);
+        var result = await _controller.GetLocationAsync(999, "node");
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBeNull();
 
-        await _mockGeoService.Received(1).GetLocationAsync(999);
+        await _mockGeoService.Received(1).GetLocationAsync(999, "node");
     }
 }

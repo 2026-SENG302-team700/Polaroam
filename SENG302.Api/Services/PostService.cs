@@ -123,7 +123,7 @@ public class PostService : IPostService
         }
 
         // Add location
-        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId, postRequest.OsmType);
         if (location == null)
         {
             throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -142,6 +142,7 @@ public class PostService : IPostService
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
+            OsmType = postRequest.OsmType,
             LocationName = location.name,
         };
         context.Set<Post>().Add(newPost);
@@ -150,6 +151,7 @@ public class PostService : IPostService
         context.Set<Location>().Add(new Location
         {
             OsmId = postRequest.OsmId,
+            OsmType = postRequest.OsmType,
             PostId = newPost.PostId,
             Lat = location.lat,
             Lon = location.lon,
@@ -248,9 +250,9 @@ public class PostService : IPostService
         // Location Validation
         GeoLocationSearchResult? location = null;
 
-        if (postUpdates.OsmId != post.OsmId)
+        if (postUpdates.OsmId != post.OsmId || !string.Equals(postUpdates.OsmType, post.OsmType, StringComparison.OrdinalIgnoreCase))
         {
-            location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>

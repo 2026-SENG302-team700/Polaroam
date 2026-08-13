@@ -60,11 +60,11 @@ public class PostValidatorTests
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void ValidatePostLocation_InvalidOsmId_ReturnsError(long osmId)
+    [InlineData(0, "node")]
+    [InlineData(-1, "node")]
+    public void ValidatePostLocation_InvalidOsmId_ReturnsError(long osmId, string osmType)
     {
-        var errors = PostValidator.ValidatePostLocation(osmId);
+        var errors = PostValidator.ValidatePostLocation(osmId, osmType);
 
         errors.ShouldContain("This isn't a valid location");
     }
@@ -72,7 +72,7 @@ public class PostValidatorTests
     [Fact]
     public void ValidatePostLocation_ValidOsmId_ReturnsNoErrors()
     {
-        var errors = PostValidator.ValidatePostLocation(123);
+        var errors = PostValidator.ValidatePostLocation(123, "node");
 
         errors.ShouldBeEmpty();
     }

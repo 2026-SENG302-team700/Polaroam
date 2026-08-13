@@ -79,6 +79,10 @@ namespace SENG302.Api.Migrations
                     b.Property<long>("OsmId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("OsmType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.PrimitiveCollection<List<int>>("PhotoIds")
                         .HasColumnType("integer[]");
 
@@ -214,6 +218,10 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OsmType")
                         .IsRequired()
                         .HasColumnType("text");
 
