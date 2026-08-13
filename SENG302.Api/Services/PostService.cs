@@ -118,7 +118,7 @@ public class PostService : IPostService
         {
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
-
+            
             await GenerateImageTags(photo, file.Id);
         }
 
@@ -409,6 +409,8 @@ public class PostService : IPostService
                 ContentType = image.ContentType
             };
 
+            await _fileService.SetTagQueueStatus(imageId);
+            
             await _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
             );

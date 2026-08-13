@@ -9,6 +9,7 @@ using SENG302.Api.Services;
 using NSubstitute;
 using Shouldly;
 using SENG302.Api.Controllers.UserController;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
@@ -47,10 +48,7 @@ public class UserControllerUnitTests
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
-
-
-
-
+    
     [Fact]
     public async Task GetUser_UserExists_ReturnsOkWithNoPassword()
     {
@@ -60,8 +58,7 @@ public class UserControllerUnitTests
         var result = await _controller.GetUser();
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var user = okResult.Value.ShouldBeOfType<User>();
-        user.PasswordKey.ShouldBe("---");
+        var user = okResult.Value.ShouldBeOfType<GetUserResponse>();
     }
 
     [Fact]
@@ -74,13 +71,13 @@ public class UserControllerUnitTests
 
         result.Result.ShouldBeOfType<NotFoundResult>();
     }
-
+    
     [Fact]
     public async Task GetUserVerificationCountdown_ValidTime_ReturnsRemainingSeconds()
     {
         var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
         var mockUser = new User { Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 };
-
+        
         _mockUserService.GetUserFromEmailAsync(request.Email).Returns(mockUser);
         _mockCodeService.GetEpochTime().Returns(1050);
         _mockCodeService.TimeoutTimeSeconds.Returns(300);
@@ -113,7 +110,7 @@ public class UserControllerUnitTests
         mockfile.ContentType.Returns(mimeType);
         mockfile.OpenReadStream().Returns(stream);
 
-        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 };
+        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
         var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = mimeType };
         var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = mimeType };
 
