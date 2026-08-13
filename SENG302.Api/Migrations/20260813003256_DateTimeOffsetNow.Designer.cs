@@ -13,7 +13,7 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260812000442_DateTimeOffsetNow")]
+    [Migration("20260813003256_DateTimeOffsetNow")]
     partial class DateTimeOffsetNow
     {
         /// <inheritdoc />
