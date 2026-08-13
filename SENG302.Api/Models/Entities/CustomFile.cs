@@ -24,4 +24,6 @@ public class CustomFile
     public String? TagError { get; set; }
 
     public bool InTagQueue { get; set; } = false;
+
+    public bool CanRetryTagging { get; set; } = true;
 }

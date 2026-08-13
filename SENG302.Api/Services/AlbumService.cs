@@ -179,13 +179,13 @@ public class AlbumService: IAlbumService
                     bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
                         new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
                     );
-                    
                     if (!queued)
                     {
                         var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == file.Id);
                         if (imageFile != null)
                         {
                             imageFile.TagError = "tagging failed: Queue was full";
+                            imageFile.CanRetryTagging = true;
                             context.CustomFiles.Update(imageFile);
                             await context.SaveChangesAsync();
                         }

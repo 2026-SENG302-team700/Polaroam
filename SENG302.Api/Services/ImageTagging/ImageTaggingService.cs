@@ -1,6 +1,8 @@
+using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
 
 namespace SENG302.Api.Services.ImageTagging;
 
@@ -49,7 +51,7 @@ public class ImageTaggingService : IImageTaggingService
         }
         catch (ArgumentException e)
         {
-            Console.WriteLine("Image cannot be tagged");
+            await SetTagErrors(imageId, "Tag cannot be generated");
             return;
         }
         
@@ -229,17 +231,26 @@ public class ImageTaggingService : IImageTaggingService
                     PropertyNameCaseInsensitive = true
                 }
             );
-            if (tagResponse == null) return;
             
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             var image = context.CustomFiles.FirstOrDefault(f => f.Id == imageId);
+            
             if (image == null)
             {
                 return;
             }
             
+            if (tagResponse == null)
+            {
+                image.TagError = "Tagging Failure: No tags were found by the AI";
+                image.CanRetryTagging = false;
+                context.CustomFiles.Update(image);
+                await context.SaveChangesAsync();
+            }
+            
             image.InTagQueue = false;
             image.Tags = tagResponse.Tags;
+            image.CanRetryTagging = false;
             context.CustomFiles.Update(image);
             await context.SaveChangesAsync();
             
@@ -325,6 +336,7 @@ public class ImageTaggingService : IImageTaggingService
         }
         
         image.TagError = errorMessage;
+        image.CanRetryTagging = false;
         context.CustomFiles.Update(image);
         await context.SaveChangesAsync();
     }

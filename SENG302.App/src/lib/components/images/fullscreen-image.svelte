@@ -60,16 +60,26 @@
                     credentials: "include",
                 },
             );
+           
             if (!response.ok) {
                if (response.status === 500) {
-                  error = await response.text()
+                  const data = await response.json()
+                  error = "Failed to fetch tags: " + data?.detail
+                  return
+               } else {
+                  error = (await response.text()) || "Failed to fetch tags.";
+                  return
                }
-                if (response.status !== 404) {
-                    error = (await response.text()) || "Failed to fetch tags.";
-                }
             }
 
-            tags = await response.json();
+           if (response.status === 204) {
+              error = "Tags not available for image";
+           } else if (response.status == 202) {
+              error = "Tags are being generated."
+           } else {
+              tags = await response.json();
+           }
+
         } catch (err) {
             error = "Failed to fetch tags: " + (err as Error).message;
         } finally {
@@ -106,14 +116,11 @@
                <TagPill {tag}/>
             {/each}
             {:else}
-            <TagPill tag="No tags available"/>
+            <TagPill tag={error}/>
             {/if}
          </div>
       </div>
    </div>
-   {#if error}
-      <span class="text-bg-secondary">{error}</span>
-   {/if}
 </div>
 
 <style>

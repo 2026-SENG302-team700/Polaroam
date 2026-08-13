@@ -53,17 +53,17 @@ public class ImageController : ControllerBase
             {
 
                 var error = await _fileService.GetTagErrors(photoId);
-
+                
                 if (error != null)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, error);
+                    return Problem(detail: error,
+                        statusCode: 500);
                 }
                 
                 var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
-
                 return imageInQueue
-                    ? Ok("Tags are being generated.")
-                    : StatusCode(StatusCodes.Status204NoContent, "This photo has no tags.");
+                    ? StatusCode(StatusCodes.Status202Accepted)
+                    : StatusCode(StatusCodes.Status204NoContent);
             }
             return Ok(tags);
         }

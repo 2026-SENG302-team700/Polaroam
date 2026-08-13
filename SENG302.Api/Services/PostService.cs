@@ -468,14 +468,14 @@ public class PostService : IPostService
             bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
             );
-
             if (!queued)
             {
                 await using var context = await _dbContextFactory.CreateDbContextAsync();
                 var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
                 if (imageFile != null)
                 {
-                    imageFile.TagError = "tagging failed: Queue was full";
+                    imageFile.TagError = "Queue was full";
+                    imageFile.CanRetryTagging = true;
                     context.CustomFiles.Update(imageFile);
                     await context.SaveChangesAsync();
                 }
