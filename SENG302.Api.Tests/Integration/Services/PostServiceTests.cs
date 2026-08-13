@@ -30,7 +30,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         };
     }
 
-
+    private IAlbumService _albumService => ServiceProvider.GetRequiredService<IAlbumService>();
     private IFileService _fileService => ServiceProvider.GetRequiredService<IFileService>();
     private IPostService ServiceUnderTest => ServiceProvider.GetRequiredService<IPostService>();
     public PostServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
@@ -54,6 +54,11 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Description = "Test",
             StartDate = new DateOnly(2017, 10, 08),
             EndDate = new DateOnly(2017, 10, 21)
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = tripId,
+            PhotoIds = [],
         });
         await context.SaveChangesAsync();
     }
@@ -692,7 +697,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeletePost_ExistingPostWithImage_DeletesImageAndPost()
+    public async Task DeletePost_ExistingPostWithImage_DeletesImageAndPostAndRemovesFromAlbum()
     {
         await SetupUserAndTrip(1, 1);
 
@@ -722,6 +727,9 @@ public class PostServiceTests : BaseIntegrationTestFixture
             };
 
             context.Posts.Add(post);
+            var currentAlbum = await _albumService.GetAlbumByIdAsync(1);
+
+            currentAlbum.PhotoIds.Add(fileEntity.Id);
             await context.SaveChangesAsync();
 
             postId = post.PostId;
@@ -741,7 +749,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var file = await _fileService.GetFileByIdAsync(fileId);
         file.ShouldNotBeNull();
         await ServiceUnderTest.DeletePostByIdAsync(postId);
-
+        var album = await _albumService.GetAlbumByIdAsync(1);
+        album.PhotoIds.Count.ShouldBe(0);
         await using var assertContext =
             DbContextFactory.CreateDbContext();
 
@@ -812,6 +821,81 @@ public class PostServiceTests : BaseIntegrationTestFixture
         });
 
         await ServiceUnderTest.GetPostAsync(postId).ShouldNotThrowAsync();
+    }
+
+    [Fact]
+    public async Task DeletePhotoFromPost_ExistingPostWithImage_DeletesImageFromAlbum()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        int postId;
+        var fileId = 0;
+
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+            var mockFile = GetMockFile(
+                "mocka",
+                mockFileContent,
+                "image/webp");
+
+            var fileEntity = await _fileService.SaveFileAsync(mockFile, 1);
+            fileId = fileEntity.Id;
+            var post = new Post
+            {
+                TripId = 1,
+                Title = "del post",
+                Content = "dfsdofdskjofdsjnlksdfjlnsdfjnlfsdjlsdljkndsfljkndfsljdfsjldfsljk",
+                OsmId = 1,
+                LocationName = "Christchurch",
+                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                PhotoIds = [fileEntity.Id]
+            };
+
+            context.Posts.Add(post);
+            await context.SaveChangesAsync();
+
+            postId = post.PostId;
+
+            context.Locations.Add(new Location
+            {
+                PostId = postId,
+                OsmId = 123,
+                Lat = "-43.532",
+                Lon = "172.636",
+                Name = "Christchurch",
+                DisplayName = "Christchurch, New Zealand"
+            });
+
+            await context.SaveChangesAsync();
+        }
+
+        var file = await _fileService.GetFileByIdAsync(fileId);
+        file.ShouldNotBeNull();
+
+        await ServiceUnderTest.DeletePhotoFromPostAsync(postId, fileId);
+
+        await using var assertContext = DbContextFactory.CreateDbContext();
+
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await _fileService.GetFileByIdAsync(fileId);
+        });
+
+        var album = await _albumService.GetAlbumByIdAsync(1);
+        album.PhotoIds.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task DeletePhotoFromPost_NonExistentPost_KeyNotFoundException()
+    {
+        await SetupUserAndTrip(1, 1);     
+
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.DeletePhotoFromPostAsync(0, 0);
+        });
     }
 
     [Fact]
@@ -896,6 +980,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         exception.Message.ShouldBe("This photo does not belong to this post.");
     }
 
+
     [Fact]
     public async Task DeletePhotoFromPost_PostHasMultiplePhotos_OnlyDeletesTargetedPhoto()
     {
@@ -951,6 +1036,91 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreateNewPostAsync_WithImage_ImagesAddedToAlbum()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "test post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+        
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(
+            request,
+            1,
+            [image]
+        );
+
+        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        
+        album.PhotoIds.Count.ShouldBe(1);
+        album.PhotoIds.ShouldContain(post.PhotoIds[0]);
+    }
+    
+    [Fact]
+    public async Task UpdatePostAsync_WithNewImages_ImagesAddedToAlbum()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "original post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+        };
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
+        
+        await context.SaveChangesAsync();
+
+        var updateRequest = new UpdatePostRequest
+        {
+            Id = post.PostId,
+            TripId = post.TripId,
+            Title = "updated title",
+            Content = "updated content",
+            OsmId = post.OsmId,
+            Date = post.Date
+        };
+
+        byte[] pngBytes =
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        var updatedPost = await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, [image]);
+        
+        await context.SaveChangesAsync();
+
+        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        
+        album.PhotoIds.Count.ShouldBe(1);
+        album.PhotoIds.ShouldContain(updatedPost.PhotoIds[0]);
+    }
+
+    [Fact]
     public async Task CreateNewPostAsync_WithImage_QueuesImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
@@ -985,6 +1155,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Arg.Is<int>(id => id == post.PostId)
         );
     }
+    
+
 
     [Fact]
     public async Task CreateNewPostAsync_WithoutImages_DoesNotQueueImageTagging()
@@ -1103,4 +1275,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Arg.Is<int>(id => id == post.PostId)
         );
     }
+    
+    
 }

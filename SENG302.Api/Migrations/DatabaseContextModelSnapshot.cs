@@ -23,6 +23,23 @@ namespace SENG302.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Album", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Albums");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.CustomFile", b =>
                 {
                     b.Property<int>("Id")
@@ -140,6 +157,12 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AcceptedAiPrivacyPolicy")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AiTaggingEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("CodeGenerationTime")
                         .HasColumnType("bigint");

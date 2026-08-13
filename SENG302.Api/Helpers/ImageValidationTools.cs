@@ -80,4 +80,5 @@ public static class ImageValidationTools
 
         return !(!MimeTypeSets.Images.Contains(contentType) || realContentType == InvalidMimeString);
     }
+
 }

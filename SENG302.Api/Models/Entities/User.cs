@@ -35,5 +35,8 @@ public class User
     public DateTimeOffset TimeCreated { get; set; }
 
     public bool EmailVerified { get; set; } = false;
+    
+    public bool AcceptedAiPrivacyPolicy { get; set; } = false;
 
+    public bool AiTaggingEnabled { get; set; } = false;
 }

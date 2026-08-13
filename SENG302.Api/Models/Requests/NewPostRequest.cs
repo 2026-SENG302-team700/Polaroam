@@ -9,6 +9,8 @@ namespace SENG302.Api.Models.Entities;
 public class NewPostRequest : IPostRequest
 {
     public required int TripId { get; set; }
+    [Required(AllowEmptyStrings = true)]
+    [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Title { get; set; }
     public required long OsmId { get; set; }
 
