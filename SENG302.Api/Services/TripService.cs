@@ -109,7 +109,7 @@ public class TripService : ITripService
             EndDate = trip.EndDate
         };
         context.Set<Trip>().Add(newTrip);
-        
+
         await context.SaveChangesAsync();
         return newTrip;
     }
@@ -234,7 +234,7 @@ public class TripService : ITripService
 
         return trip;
     }
-    
+
     /// <summary>
     /// Gets all locations that have been posted in a trip
     /// </summary>
