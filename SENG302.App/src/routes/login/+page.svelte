@@ -67,6 +67,9 @@
         if (modalElement) {
             authModal = new BootstrapModal(modalElement);
         }
+        
+        newPassword = "";
+        confirmPassword = "";
     });
 
     /**
