@@ -289,7 +289,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         await testRunner.ThenAsync("the trip is not updated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 29
-        await testRunner.AndAsync("I see the edit trip error message \"Date is invalid\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+        await testRunner.AndAsync("I see the edit trip error message \"Invalid date, date must be formatted \"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

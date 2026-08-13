@@ -82,7 +82,6 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         var content = await message2.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         var errors = json.GetProperty("errors");
-
         errors.GetProperty("email").GetString().ShouldContain("This email address is already in use by another account");
     }
 

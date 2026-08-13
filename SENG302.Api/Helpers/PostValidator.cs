@@ -2,26 +2,36 @@ using System.Globalization;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Interfaces;
 
-namespace SENG302.Api.Helpers.Validators;
-
-public static class PostValidator
+public class PostValidator
 {
+
+    /// <summary>
+    /// Returns a string representing the date format of the users locale
+    /// </summary>
+    /// <param name="culture"></param>
+    /// <returns>dd/MM/yyyy or similar</returns>
+    public static string GetLocaleDateFormat(CultureInfo? culture = null)
+    {
+        culture ??= CultureInfo.CurrentCulture;
+        string pattern = culture.DateTimeFormat.ShortDatePattern;
+        return pattern;
+    }
 
     /// <summary>
     /// Checks the due date is valid
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="date"></param>
-    public static List<string> ValidatePostDate(DateTimeOffset? date)
+    public static List<string> ValidatePostDate(DateOnly? date)
     {
         var errors = new List<string>();
         if (date == null)
         {
-            errors.Add($"Date is invalid");
+            errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
             return errors;
         }
 
-        if (date > DateTimeOffset.UtcNow) errors.Add("Invalid date, date cannot be in the future");
+        if (date > DateOnly.FromDateTime(DateTime.Today)) errors.Add("Invalid date, date cannot be in the future");
         return errors;
     }
 

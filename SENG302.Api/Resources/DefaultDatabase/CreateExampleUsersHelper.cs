@@ -24,7 +24,7 @@ public static class CreateExampleUsersHelper
     private static async Task CreateExample_Admin(DatabaseContext dbContext)
     {
         // Add admin user
-        if (!dbContext.Users.Any(u => u.Email.ToLower().Equals("admin@outstanding.com")))
+        if (!dbContext.Users.Any(u => u.Email.ToLower() == "admin@outstanding.com"))
         {
             var user = new User
             {
@@ -36,8 +36,7 @@ public static class CreateExampleUsersHelper
             var hasher = new PasswordHasher<User>();
             user.PasswordKey = hasher.HashPassword(user, "Team700!");
             dbContext.Users.Add(user);
-
-            await dbContext.SaveChangesAsync();
+            dbContext.SaveChanges();
         }
     }
 
@@ -49,7 +48,7 @@ public static class CreateExampleUsersHelper
     /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_John(DatabaseContext dbContext)
     {
-        if (!dbContext.Users.Any(u => u.Email.ToLower().Equals("john@example.com")))
+        if (!dbContext.Users.Any(u => u.Email.ToLower() == "john@example.com"))
         {
             var user = new User
             {
@@ -69,8 +68,8 @@ public static class CreateExampleUsersHelper
                 {
                     Title = "Name_" + i.ToString(),
                     UserId = user.Id,
-                    StartDate = DateTimeOffset.UtcNow,
-                    EndDate = DateTimeOffset.UtcNow.AddDays(1),
+                    StartDate = DateOnly.FromDateTime(DateTime.Now),
+                    EndDate = DateOnly.FromDateTime(DateTime.Now).AddDays(1),
                 };
 
                 dbContext.Add(trip);
@@ -84,8 +83,8 @@ public static class CreateExampleUsersHelper
                         Title = "Post_" + j.ToString(),
                         TripId = trip.Id,
                         Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
-                        Date = DateTimeOffset.MaxValue,
-                        CreationTime = DateTimeOffset.UtcNow,
+                        Date = DateOnly.MaxValue,
+                        creationTime = DateTimeOffset.Now,
                         OsmId = 1,
                         LocationName = "Location_" + j
                     };
@@ -104,7 +103,7 @@ public static class CreateExampleUsersHelper
     /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_Jane(DatabaseContext dbContext)
     {
-        if (!dbContext.Users.Any(u => u.Email.ToLower().Equals("jane@example.com")))
+        if (!dbContext.Users.Any(u => u.Email.ToLower() == "jane@example.com"))
         {
             var user = new User
             {

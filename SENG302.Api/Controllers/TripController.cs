@@ -183,7 +183,7 @@ public class TripController : ControllerBase
         }
     }
 
-    /// <summary>
+     /// <summary>
     /// Fetches all posts associated to the id of the given trip. If
     /// no trip is provided, then throw a BadRequest Error.
     /// </summary>

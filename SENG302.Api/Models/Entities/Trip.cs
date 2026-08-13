@@ -20,7 +20,7 @@ public class Trip
 
     public string Description { get; set; } = string.Empty;
     [Required]
-    public DateTimeOffset? StartDate { get; set; }
+    public DateOnly? StartDate { get; set; }
     [Required]
-    public DateTimeOffset? EndDate { get; set; }
+    public DateOnly? EndDate { get; set; }
 }
