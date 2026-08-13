@@ -1,7 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -21,6 +18,6 @@ public class Post
     public DateTimeOffset? Date { get; set; }
     public required long OsmId { get; set; }
     public required string LocationName { get; set; }
-    public List<int>? PhotoIds { get; set; } 
+    public List<int> PhotoIds { get; set; } = [];
     public DateTimeOffset CreationTime { get; set; }
 }

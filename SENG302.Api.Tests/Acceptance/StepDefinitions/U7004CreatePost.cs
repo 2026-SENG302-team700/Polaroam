@@ -65,6 +65,12 @@ public class U7004CreatePost
             EndDate = DateToDateTimeOffset(2026, 7, 10),
             UserId = 1
         });
+        
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
         await context.SaveChangesAsync();
     }
 

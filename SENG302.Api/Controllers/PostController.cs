@@ -145,7 +145,7 @@ public class PostController : ControllerBase
                 Errors = e.Errors
             });
         }
-        catch (KeyNotFoundException e)
+        catch (KeyNotFoundException)
         {
             return NotFound(
                 "Post does not exist"

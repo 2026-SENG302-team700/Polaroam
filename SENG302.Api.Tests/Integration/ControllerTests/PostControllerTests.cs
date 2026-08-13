@@ -38,6 +38,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         SetupGeoMock();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Albums.Add(new Album { TripId = 1, PhotoIds = [] });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
     }
@@ -56,6 +57,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country"
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
         });
 
         await context.SaveChangesAsync();
@@ -83,8 +89,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         // Add a trip to each user
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-
+        context.Albums.Add(new Album
+        {
+            TripId = 2,
+            PhotoIds = [],
+        });
         // Add 1 post to each trip
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
@@ -104,6 +119,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My Trip", UserId = 1, Description = "", StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
@@ -123,8 +143,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         // Add a trip to each user
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-
+        context.Albums.Add(new Album
+        {
+            TripId = 2,
+            PhotoIds = [],
+        });
         // Add 1 post to each trip
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
@@ -151,6 +180,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country"
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
         });
 
         await context.SaveChangesAsync();
@@ -184,6 +218,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
 
         await context.SaveChangesAsync();
 
@@ -208,6 +247,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User
         {
             Id = 1,
@@ -239,6 +283,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User
         {
             Id = 1,
@@ -275,6 +324,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 DisplayName = "Test User",
                 PasswordKey = "password",
                 Country = "NZ"
+            });
+            context.Albums.Add(new Album
+            {
+                TripId = 1,
+                PhotoIds = [],
             });
 
             context.Trips.Add(new Trip
@@ -325,6 +379,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 DisplayName = "Test User",
                 PasswordKey = "password",
                 Country = "NZ"
+            });
+            context.Albums.Add(new Album
+            {
+                TripId = 1,
+                PhotoIds = [],
             });
             context.Trips.Add(new Trip
             {
@@ -381,6 +440,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
     {
         var content = new MultipartFormDataContent();
+
         content.Add(new StringContent("1"), "TripId");
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
@@ -401,6 +461,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task CreatePost_ValidPhotos_Ok()
     {
         await using var context = DbContextFactory.CreateDbContext();
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
         await context.SaveChangesAsync();
 
@@ -420,6 +485,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task CreatePost_MultipleValidPhotos_Ok()
     {
         await using var context = DbContextFactory.CreateDbContext();
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
         await context.SaveChangesAsync();
 
@@ -445,6 +515,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task CreatePost_NoPhotos_Ok()
     {
         await using var context = DbContextFactory.CreateDbContext();
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
         await context.SaveChangesAsync();
 
@@ -589,7 +664,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPostPhotoMetadata_ValidPostId_ReturnsPhotoMetaData()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
@@ -635,7 +714,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPostPhoto_ValidPostId_ReturnsPhoto()
     {
         await using var context = DbContextFactory.CreateDbContext();
-
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = [],
+        });
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my home" });
@@ -662,7 +745,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "my basement" });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my basement" });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post/1/images/1");
@@ -679,7 +762,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = null, OsmId = 1, LocationName = "a mysterious place" });
+        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "a mysterious place" });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post/1/images/5");
