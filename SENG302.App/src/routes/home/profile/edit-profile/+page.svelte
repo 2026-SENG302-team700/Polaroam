@@ -18,6 +18,7 @@
     import ToggleForm from "$lib/components/forms/toggle-form.svelte";
     import PolicyModal from "$lib/components/modals/policy-modal.svelte";
     import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
+    import CodeForm from "$lib/components/forms/code-form.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -685,63 +686,15 @@
                             We've sent a 6-digit verification code to <br />
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
-                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit1}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit2}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit3}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit4}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit5}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit6}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                        </div>
-
-                        {#if codeError}
-                            <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1" />
-                                {codeError}
-                            </div>
-                        {/if}
+                        <CodeForm
+                                bind:digit1
+                                bind:digit2
+                                bind:digit3
+                                bind:digit4
+                                bind:digit5
+                                bind:digit6
+                                error={codeError}
+                        />
 
                         <button
                             class="btn btn-link btn-sm text-decoration-none"

@@ -6,6 +6,7 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 
 namespace SENG302.Api.Services;
@@ -31,9 +32,11 @@ public class PostService : IPostService
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IAlbumService _albumService;
     private readonly IUserService _userService;
 
     public PostService(
+        IAlbumService albumService,
         IDbContextFactory<DatabaseContext> dbContextFactory,
         TimeProvider timeProvider,
         IFileService fileService,
@@ -41,6 +44,7 @@ public class PostService : IPostService
         IImageTaggingQueue imageTaggingQueue,
         IUserService userService)
     {
+        _albumService = albumService;
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
@@ -134,6 +138,13 @@ public class PostService : IPostService
             }
             
         }
+
+        Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
+       
+        album.PhotoIds.AddRange(photoIds);
+        context.Albums.Update(album);
+        
+        await context.SaveChangesAsync();
 
         // Add location
         var location = await _geoService.GetLocationAsync(postRequest.OsmId);
@@ -295,13 +306,22 @@ public class PostService : IPostService
                 await GenerateImageTags(photo, customFile.Id);
             }
         }
+        
+        // get the album and add new photo Ids
+        Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
+       
+        album.PhotoIds.AddRange(customFileIds);
+        context.Albums.Update(album);
+        
+        await context.SaveChangesAsync();
+        
 
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.PhotoIds = post.PhotoIds.Count > 0 ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.name : post.LocationName;
 
         // Save Changes
@@ -348,6 +368,7 @@ public class PostService : IPostService
                 "Post with the provided ID does not exist."
             );
         }
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == post.TripId);
 
         var locations = await context.Locations
             .Where(location => location.PostId == postId)
@@ -355,7 +376,7 @@ public class PostService : IPostService
 
         context.Locations.RemoveRange(locations);
 
-        if (post.PhotoIds != null)
+        if (post.PhotoIds.Count > 0)
         {
             var images = await context.CustomFiles
                 .Where(file => post.PhotoIds.Contains(file.Id))
@@ -364,6 +385,7 @@ public class PostService : IPostService
             foreach (var image in images)
             {
                 await _fileService.DeleteFileAsync(image.FileKey);
+                album.PhotoIds.Remove(image.Id);
             }
         }
 
@@ -400,18 +422,29 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var post = await context.Posts.FirstOrDefaultAsync(t => t.PostId == postId);
-
+        if (post == null)
+        {
+            throw new KeyNotFoundException(
+                "Post of this Id does not exist."
+            ); 
+        }
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
         {
             throw new KeyNotFoundException(
                 "This photo does not belong to this post."
             );
         }
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == post.TripId);
 
         var photo = await _fileService.GetFileByIdAsync(photoId);
         await _fileService.DeleteFileAsync(photo.FileKey);
 
         post.PhotoIds.Remove(photoId);
+        if (album != null)
+        {
+            album.PhotoIds.Remove(photoId);    
+        }
+        
         await context.SaveChangesAsync();
     }
 
@@ -426,15 +459,7 @@ public class PostService : IPostService
     {
         try
         {
-            var ms = new MemoryStream();
-            await image.CopyToAsync(ms);
-            ms.Position = 0;
-
-            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = image.ContentType
-            };
+            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
 
             await _fileService.SetTagQueueStatus(imageId);
             
