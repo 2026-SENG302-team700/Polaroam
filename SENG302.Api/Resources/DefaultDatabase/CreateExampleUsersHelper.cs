@@ -24,7 +24,7 @@ public static class CreateExampleUsersHelper
     private static async Task CreateExample_Admin(DatabaseContext dbContext)
     {
         // Add admin user
-        if (!dbContext.Users.Any(u => u.Email.Equals("admin@outstanding.com", StringComparison.CurrentCultureIgnoreCase)))
+        if (!dbContext.Users.Any(u => u.Email.ToLower().Equals("admin@outstanding.com")))
         {
             var user = new User
             {
@@ -49,7 +49,7 @@ public static class CreateExampleUsersHelper
     /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_John(DatabaseContext dbContext)
     {
-        if (!dbContext.Users.Any(u => u.Email.Equals("john@example.com", StringComparison.CurrentCultureIgnoreCase)))
+        if (!dbContext.Users.Any(u => u.Email.ToLower().Equals("john@example.com")))
         {
             var user = new User
             {
@@ -104,7 +104,7 @@ public static class CreateExampleUsersHelper
     /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_Jane(DatabaseContext dbContext)
     {
-        if (!dbContext.Users.Any(u => u.Email.Equals("jane@example.com", StringComparison.CurrentCultureIgnoreCase)))
+        if (!dbContext.Users.Any(u => u.Email.ToLower().Equals("jane@example.com")))
         {
             var user = new User
             {
