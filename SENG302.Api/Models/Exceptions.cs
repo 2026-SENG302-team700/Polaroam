@@ -74,15 +74,3 @@ public class MultipleValidationListException : Exception
         Errors = errors;
     }
 }
-
-/// <summary>
-/// Exception to throw when a single field can have multiple validation errors
-/// </summary>
-public class ValidationListException : Exception
-{
-    public List<string> Errors { get; }
-    public ValidationListException(List<string> errors) : base("validation errors occurred")
-    {
-        Errors = errors;
-    }
-}

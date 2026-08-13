@@ -21,22 +21,13 @@ public class ImageTaggingQueue : IImageTaggingQueue
     });
     
     /// <summary>
-    /// Creates a new job and adds it to the queue
+    /// Adds a job to the queue
     /// </summary>
-    /// <param name="job"> The image to be tagged</param>
-    /// The images ID
+    /// <param name="job"></param>
     /// <returns></returns>
-    public async ValueTask QueueImageTaggingAsync(ImageTaggingJob job)
+    public ValueTask QueueImageTaggingAsync(ImageTaggingJob job)
     {   
-        try
-        {
-            await _queue.Writer.WriteAsync(job);
-        }
-        catch (Exception ex)
-        {
-            // Tagging can't cause the image upload to fail
-            Console.WriteLine($"Failed to generate tags for image {job.ImageId}: {ex.Message}");
-        }
+        return _queue.Writer.WriteAsync(job);
     }
     
     /// <summary>
