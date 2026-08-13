@@ -8,9 +8,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
-using SENG302.Api.Helpers;
+using SENG302.Api.Helpers.Validators;
 using SENG302.Api.Models.Responses;
-
 namespace SENG302.Api.Controllers.UserController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -51,7 +50,7 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
-        
+
         return Ok(new GetUserResponse
         {
             Id = user.Id,
@@ -184,13 +183,13 @@ public class UserController : ControllerBase
             return Unauthorized("You do not have authorisation to change this profile picture!");
         }
 
-        if (!ImageValidationTools.IsValidFilesize(file))
+        if (!ImageValidator.IsValidFilesize(file))
         {
             return BadRequest("Image too large, maximum file size is 10MB");
         }
 
         // implement into one big callback function later.
-        if (!ImageValidationTools.IsValidMimeType(file))
+        if (!ImageValidator.IsValidMimeType(file))
         {
             return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
         }
@@ -273,7 +272,7 @@ public class UserController : ControllerBase
         {
             return Unauthorized();
         }
-        
+
         var userId = int.Parse(userIdString);
 
         await _userService.AcceptPrivacyPolicyAsync(userId);

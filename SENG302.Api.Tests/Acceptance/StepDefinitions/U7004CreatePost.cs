@@ -6,6 +6,7 @@ using Shouldly;
 using System.Net;
 using NSubstitute;
 using SENG302.Api.Models.Responses;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -17,7 +18,7 @@ public class U7004CreatePost
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _content;
-    private DateOnly? _date;
+    private DateTimeOffset? _date;
     private string _location;
     private long _osmId;
 
@@ -26,7 +27,7 @@ public class U7004CreatePost
         _fixture = fixture;
         _title = "";
         _content = "";
-        _date = new DateOnly();
+        _date = new DateTimeOffset();
         _location = "";
         _osmId = 292806332;
     }
@@ -35,11 +36,11 @@ public class U7004CreatePost
     {
         _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
@@ -60,8 +61,8 @@ public class U7004CreatePost
             Id = 1,
             Title = "Original trip",
             Description = "Original description",
-            StartDate = new DateOnly(2026, 7, 1),
-            EndDate = new DateOnly(2026, 7, 10),
+            StartDate = DateToDateTimeOffset(2026, 7, 1),
+            EndDate = DateToDateTimeOffset(2026, 7, 10),
             UserId = 1
         });
         await context.SaveChangesAsync();
@@ -76,7 +77,7 @@ public class U7004CreatePost
         _title = "Test Post";
         _content = "Test content";
         _location = "Test Locatiom";
-        _date = DateOnly.Parse("2025-01-07");
+        _date = DateToDateTimeOffset(2025, 1, 7);
 
 
     }
@@ -89,7 +90,7 @@ public class U7004CreatePost
 
         _title = "ab";
         _content = "Test content";
-        _date = DateOnly.Parse("2022-01-07");
+        _date = DateToDateTimeOffset(2022, 1, 7);
     }
 
     [Given(@"I enter location text without selecting a suggested location")]
@@ -99,7 +100,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = "Valid post content";
-        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
+        _date = DateTimeOffset.UtcNow.AddDays(-1);
 
         // Text was entered, but no search result was selected.
         _location = "Made up location";
@@ -114,7 +115,7 @@ public class U7004CreatePost
         form.Add(new StringContent(_content), "Content");
         form.Add(new StringContent(_osmId.ToString()), "OsmId");
         form.Add(new StringContent("1"), "TripId");
-        form.Add(new StringContent(_date?.ToString("yyyy-MM-dd") ?? string.Empty), "Date");
+        form.Add(new StringContent(_date == null ? string.Empty : (_date?.ToString("s") + "Z")), "Date");
 
         SetupGeoMock();
         _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
@@ -127,6 +128,8 @@ public class U7004CreatePost
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+
+        post.ShouldNotBeNull();
 
         var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}");
 
@@ -154,7 +157,8 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = "Valid post content";
-        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(1);
+        _date = DateTimeOffset.UtcNow.AddDays(1);
+
     }
 
     [Given(@"I enter content longer than 8196 characters long")]
@@ -164,7 +168,7 @@ public class U7004CreatePost
 
         _title = "Valid post title";
         _content = new string('a', 8197);
-        _date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
+        _date = DateTimeOffset.UtcNow.AddDays(-1);
     }
 
     [Then(@"I see an error message '(.*)'")]
@@ -172,16 +176,8 @@ public class U7004CreatePost
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var error = await _lastResponse.Content.ReadAsStringAsync();
 
-        if (expectedMessage.Contains("[INSERT LOCALISED FORMAT]"))
-        {
-            error.ShouldContain(
-                "Invalid date, date must be formatted ");
-        }
-        else
-        {
-            error.ShouldContain(expectedMessage);
-        }
+        var error = await _lastResponse.Content.ReadAsStringAsync();
+        error.ShouldContain(expectedMessage);
     }
 }
