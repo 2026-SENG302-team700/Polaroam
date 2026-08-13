@@ -26,6 +26,9 @@
    let error = $state("");
    let loading = $state(false);
 
+   let tagStatus = $state("No tags available");
+   let tagColour = $state("secondary");
+   
    onMount(() => {
        fetchImageTags(photoId)
    });
@@ -67,7 +70,18 @@
                 return;
             }
 
-            tags = await response.json();
+            console.log("hello");
+           
+            const message = await response.text();
+            console.log(message);
+            
+            if (message === "Tags are being generated.") {
+               tagStatus = "Tags are being generated. Come back later";
+               tagColour = "info";
+               return;
+            }
+           
+            tags = JSON.parse(message);
         } catch (err) {
             error = "Failed to fetch tags: " + (err as Error).message;
         } finally {
@@ -100,11 +114,11 @@
          {/if}
          <div class="tags-wrapper">
             {#if tags.length > 0}
-            {#each tags as tag}
-               <TagPill {tag}/>
-            {/each}
+               {#each tags as tag}
+                  <TagPill {tag}/>
+               {/each}
             {:else}
-            <TagPill tag="No tags available"/>
+               <TagPill {tagColour} tag={tagStatus}/>
             {/if}
          </div>
       </div>
@@ -145,7 +159,7 @@
     flex-wrap: wrap;
     gap: 0.375rem;
     justify-content: center;
-    margin-top: 2%;
+    margin-top: 6px;
  }
 
 </style>

@@ -30,19 +30,23 @@ public class PostService : IPostService
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IUserService _userService;
 
     public PostService(
         IDbContextFactory<DatabaseContext> dbContextFactory,
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
-        IImageTaggingQueue imageTaggingQueue)
+        IImageTaggingQueue imageTaggingQueue,
+        IUserService userService
+        )
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
         _imageTaggingQueue = imageTaggingQueue;
+        _userService = userService;
     }
 
     /// <summary>
@@ -118,8 +122,11 @@ public class PostService : IPostService
         {
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
-            
-            await GenerateImageTags(photo, file.Id);
+
+            if (await _userService.UserAiTaggingCheckAsync(userId))
+            {
+                await GenerateImageTags(photo, file.Id);
+            }
         }
 
         // Add location
@@ -268,7 +275,10 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(photo, customFile.Id);
+            if (await _userService.UserAiTaggingCheckAsync(userId))
+            {
+                await GenerateImageTags(photo, customFile.Id);
+            }
         }
 
         // Update post content

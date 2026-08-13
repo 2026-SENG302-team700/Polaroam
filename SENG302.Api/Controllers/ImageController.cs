@@ -16,18 +16,15 @@ public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
 
 
     public ImageController(
         IUserService userService, 
-        IFileService fileService, 
-        IImageTaggingQueue imageTaggingQueue
+        IFileService fileService
     )
     {
         _userService = userService;
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
     }
 
     /// <summary>
@@ -49,15 +46,17 @@ public class ImageController : ControllerBase
         try
         {
             var tags = await _fileService.GetTagsAsync(photoId);
-            if (tags == null)
-            {
-                var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
-                return imageInQueue
-                    ? Ok("Tags are being generated.")
-                    : StatusCode(StatusCodes.Status204NoContent, "This photo has no tags.");
+            if (tags != null)
+            {
+                return Ok(tags);
             }
-            return Ok(tags);
+            
+            var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
+
+            return imageInQueue
+                ? Ok()
+                : NoContent();
         }
         catch (KeyNotFoundException e)
         {
