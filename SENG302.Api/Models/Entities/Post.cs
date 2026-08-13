@@ -15,9 +15,29 @@ public class Post
     public required int TripId { get; set; }
     public required string Title { get; set; }
     public string Content { get; set; } = string.Empty;
-    public DateTimeOffset? Date { get; set; }
+    public DateTimeOffset? Date
+    {
+        get
+        {
+            return field?.ToUniversalTime();
+        }
+        set
+        {
+            field = value?.ToUniversalTime();
+        }
+    }
     public required long OsmId { get; set; }
     public required string LocationName { get; set; }
     public List<int> PhotoIds { get; set; } = [];
-    public DateTimeOffset CreationTime { get; set; }
+    public DateTimeOffset CreationTime
+    {
+        get
+        {
+            return field.ToUniversalTime();
+        }
+        set
+        {
+            field = value.ToUniversalTime();
+        }
+    }
 }

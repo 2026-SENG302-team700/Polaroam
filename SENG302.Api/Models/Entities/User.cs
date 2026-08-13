@@ -32,10 +32,20 @@ public class User
 
     public long CodeGenerationTime { get; set; }
 
-    public DateTimeOffset TimeCreated { get; set; }
+    public DateTimeOffset TimeCreated
+    {
+        get
+        {
+            return field.ToUniversalTime();
+        }
+        set
+        {
+            field = value.ToUniversalTime();
+        }
+    }
 
     public bool EmailVerified { get; set; } = false;
-    
+
     public bool AcceptedAiPrivacyPolicy { get; set; } = false;
 
     public bool AiTaggingEnabled { get; set; } = false;
