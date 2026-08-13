@@ -131,24 +131,34 @@ public class ImageTaggingService : IImageTaggingService
     /// <exception cref="HttpRequestException">Thrown if received a non-success response code</exception>
     private async Task<string?> ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.SendAsync(
-            request,
-            cancellationToken
-        );
-
-        if (!response.IsSuccessStatusCode)
+        String content = "";
+        try
         {
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var response = await _httpClient.SendAsync(
+                request,
+                cancellationToken
+            );
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            throw new HttpRequestException($"LLM request failed with status {(int)response.StatusCode}: {responseContent}");
+                throw new HttpRequestException($"LLM request failed with status {(int)response.StatusCode}: {responseContent}");
+            }
+
+            using var responseDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken),
+                cancellationToken: cancellationToken);
+
+            var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
+
+            content = responseContentElement.GetString();
+            
         }
-
-        using var responseDocument = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken),
-            cancellationToken: cancellationToken);
-
-        var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
-
-        var content = responseContentElement.GetString();
+        catch (HttpRequestException)
+        {
+            
+        }
+        
         return content;
     }
     

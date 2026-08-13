@@ -20,5 +20,7 @@ public class CustomFile
     public long FileSize { get; set; }
 
     public List<string>? Tags { get; set; }
+    
+    public String? TagErrors { get; set; }
 
 }
