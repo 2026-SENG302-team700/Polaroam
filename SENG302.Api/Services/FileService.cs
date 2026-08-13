@@ -11,6 +11,8 @@ public interface IFileService
     Task DeleteFileAsync(string fileKey);
     Task<byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
+    Task<bool> CheckFileOwnership(int fileId, int userId);
+    Task<List<string>?> GetTagsAsync(int id);
 }
 
 public class FileService : IFileService
@@ -89,6 +91,18 @@ public class FileService : IFileService
 
         return customFile;
     }
+
+    /// <summary>
+    /// checks if the given user id matches the ownerid of the file whose id is passed as fileid.
+    /// </summary>
+    /// <param name="fileId"></param>
+    /// <param name="userId"></param>
+    /// <returns>true if owner is user id, false otherwise</returns>
+    public async Task<bool> CheckFileOwnership(int fileId, int userId)
+    {
+        var file = await GetFileByIdAsync(fileId);
+        return file.OwnerId == userId;
+    }
         
     /// <summary>
     /// Takes an incoming file and follows the following steps
@@ -153,5 +167,20 @@ public class FileService : IFileService
         
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         await context.CustomFiles.Where(f => f.FileKey == fileKey).ExecuteDeleteAsync();
+    }
+    
+    /// <summary>
+    /// Returns a files tags.
+    /// </summary>
+    /// <param name="id">the file id.</param>
+    /// <returns>
+    /// Null: File has no tags.
+    /// Array of strings that are the tags.
+    /// </returns>
+    /// <exception cref="KeyNotFoundException">File doesn't exist.</exception>
+    public async Task<List<string>?> GetTagsAsync(int id)
+    {
+        var file = await GetFileByIdAsync(id);
+        return file.Tags;
     }
 }
