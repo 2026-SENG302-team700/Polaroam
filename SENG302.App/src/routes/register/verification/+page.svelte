@@ -4,13 +4,14 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import { onMount } from "svelte";
+    import CodeForm from "$lib/components/forms/code-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     let email = $state("");
     let serverTime = $state(0);
     let initialSeconds = 300;
     let remainingSeconds = $state(initialSeconds);
-    let intervalId;
+    let intervalId: number | Timeout;
     let timeRemainingText = $state("");
     let errorMessage = $state("");
     let resendLinkVisible = $state(false);
