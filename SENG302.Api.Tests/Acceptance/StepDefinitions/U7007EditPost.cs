@@ -78,6 +78,11 @@ public class U7007EditPost
             EndDate = new DateOnly(2026, 7, 10),
             UserId = 1
         });
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
 
         context.Posts.Add(new Post
         {

@@ -1,0 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace SENG302.Api.Models.Entities;
+
+/// <summary>
+/// Keeps track of all photos in the trip's album.
+/// </summary>
+public class Album
+{
+    [Key]
+    public required int TripId { get; set; }
+    public List<int> PhotoIds { get; set; } = [];
+}
