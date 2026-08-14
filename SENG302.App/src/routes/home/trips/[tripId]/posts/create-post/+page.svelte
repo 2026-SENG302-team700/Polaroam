@@ -117,7 +117,18 @@
                     errors.content.includes(
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
+                    errors.title.length === 0 &&if (
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
+                    errors.photos.length === 0 &&
+                    !errors.date &&
+                    !errors.generic &&
+                    !errors.location
+                ) {
+                    showConfirmationModal = true;
+                }
                     errors.photos.length === 0 &&
                     !errors.date &&
                     !errors.generic &&
