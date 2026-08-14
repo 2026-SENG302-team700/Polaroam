@@ -40,12 +40,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="resources\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="resources\panda.webp" />
-      <Content Include="resources\panda.webp">
+      <None Remove="resources\**" />
+      <Content Include="resources\**">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
