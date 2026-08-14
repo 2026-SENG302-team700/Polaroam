@@ -8,6 +8,7 @@
     import SearchView from "$lib/components/search-view.svelte"
 
     let loading = $state(false);
+    let trips = $state([]);
     let tripsError = $state("");
     let photosError = $state("");
     
@@ -40,7 +41,7 @@
                 tripsError = "Failed to fetch task lists.";
                 return;
             }
-            tripsError = data;
+            trips = data;
         } catch (err) {
             tripsError = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -49,6 +50,9 @@
     }
     
     async function performSearch() {
+        searchTrips = [];
+        searchPhotos = [];
+        
         inSearch = true;
         
         try {
@@ -119,9 +123,9 @@
     {#if inSearch}
         <SearchView trips={searchTrips} photos={searchPhotos} photoIds={photoIds}/>
     {:else}
-        {#if searchTrips.length > 0}
+        {#if trips.length > 0}
             <div class="trip-object-wrapper">
-                {#each searchTrips as trip}
+                {#each trips as trip}
                     <TripCard tripObject={trip} />
                 {/each}
             </div>

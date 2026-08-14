@@ -70,6 +70,8 @@ public class SearchController : ControllerBase
             foreach (int photo in photoIds)
             {
                 CustomFile file = await _fileService.GetFileByIdAsync(photo);
+                var fileTrip = await 
+                
                 photos.Add(new PhotoMetadataResponse
                 {
                     PhotoId = photo,

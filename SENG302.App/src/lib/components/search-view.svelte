@@ -10,6 +10,7 @@
     
 </script>
 <div>
+    <h1>Search Results</h1>
     <h2>Trips</h2>
     <div class="trip-object-wrapper">
         {#each trips as trip}
@@ -18,7 +19,6 @@
     </div>
     <h2>Photos</h2>
     <ImageDisplay images={photos} photoIds={photoIds}/>
-    <p>to be implemented...</p>
 </div>
 
 <style>
