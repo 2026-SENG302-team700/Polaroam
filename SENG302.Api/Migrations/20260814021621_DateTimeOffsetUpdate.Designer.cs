@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260813003256_DateTimeOffsetNow")]
-    partial class DateTimeOffsetNow
+    [Migration("20260814021621_DateTimeOffsetUpdate")]
+    partial class DateTimeOffsetUpdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,23 @@ namespace SENG302.Api.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Album", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Albums");
+                });
 
             modelBuilder.Entity("SENG302.Api.Models.Entities.CustomFile", b =>
                 {
@@ -86,6 +103,7 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("bigint");
 
                     b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
                         .HasColumnType("integer[]");
 
                     b.Property<string>("Title")
