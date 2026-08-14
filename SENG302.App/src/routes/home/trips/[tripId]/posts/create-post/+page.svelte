@@ -130,7 +130,7 @@
                     !errors.date &&
                     !errors.generic &&
                     !errors.location
-                ) {
+                {
                     showConfirmationModal = true;
                 }
                 return;
