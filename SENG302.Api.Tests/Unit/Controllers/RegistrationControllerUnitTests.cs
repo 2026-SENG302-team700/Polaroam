@@ -26,6 +26,7 @@ public class RegistrationControllerUnitTests
 
     }
 
+
     [Fact]
     public async Task GenerateCode_ValidEmail_ReturnOk()
     {
@@ -42,12 +43,14 @@ public class RegistrationControllerUnitTests
             EmailVerified = false,
         };
 
+
         var emailDictionary = new Dictionary<string, string>
         {
             {"DISPLAY_NAME", user.DisplayName},
             {"CODE", user.OneTimeCode},
             {"MINUTES", "5"}
         };
+
 
         _mockOneTimeCodeService.GenerateOneTimeCode().Returns(user.OneTimeCode);
         _mockOneTimeCodeService.GetEpochTime().Returns(codeGenerationTime);
