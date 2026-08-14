@@ -1,8 +1,8 @@
 using SENG302.Api.Constants;
 
-namespace SENG302.Api.Helpers;
+namespace SENG302.Api.Helpers.Validators;
 
-public static class ImageValidationTools
+public static class ImageValidator
 {
     public static readonly string InvalidMimeString = "INVALID MIME";
 

@@ -2,6 +2,7 @@ using System.Net;
 using Reqnroll;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -25,8 +26,8 @@ public class U7003DeleteTrip
             Id = tripId,
             Title = "title ya'll",
             Description = "description",
-            StartDate = DateOnly.Parse("2022-01-01"),
-            EndDate = DateOnly.Parse("2022-01-07"),
+            StartDate = DateToDateTimeOffset(2022, 1, 1),
+            EndDate = DateToDateTimeOffset(2022, 1, 7),
             UserId = 1
         });
 
