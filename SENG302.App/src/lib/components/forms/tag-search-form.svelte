@@ -73,7 +73,7 @@
     }
 </script>
 
-<div class="search-container mb-3">
+<div class="search-container">
     <div class="input-group search-group">
         <input
                 type="search"
@@ -139,6 +139,7 @@
 
     .dropdown-list {
         position: absolute;
+        top: 100%;
         width: 100%;
         max-height: 200px;
         overflow-y: auto;
