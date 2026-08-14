@@ -120,7 +120,7 @@
                 filesList?.push(file);
             }
         }
-        if (uploadFunc) {
+        if (uploadFunc != null) {
             uploadFunc();
         }
 

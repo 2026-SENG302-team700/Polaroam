@@ -126,13 +126,6 @@
                 ) {
                     showConfirmationModal = true;
                 }
-                    errors.photos.length === 0 &&
-                    !errors.date &&
-                    !errors.generic &&
-                    !errors.location
-                {
-                    showConfirmationModal = true;
-                }
                 return;
             }
 
