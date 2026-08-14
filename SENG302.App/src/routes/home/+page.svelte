@@ -66,6 +66,11 @@
                 method: "GET",
                 credentials: "include",
             });
+
+            const photosResponse = await fetchWithCsrf(resolve(`/api/search/photos?query=${encodeURIComponent(tagQuery)}` as any), {
+                method: "GET",
+                credentials: "include",
+            });
             
             if (tripsResponse.ok) {
                 searchTrips = await tripsResponse.json();

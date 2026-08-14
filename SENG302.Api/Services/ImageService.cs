@@ -9,6 +9,7 @@ public interface IImageService
 {
     public Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
     public Task<List<int>> GetImagesFromQueryAsync(string query);
+    public Task<int> GetTripIdFromTags(int userId, int photoId);
 }
 
 public class ImageService : IImageService
@@ -90,5 +91,31 @@ public class ImageService : IImageService
         var photoIds = await context.CustomFiles.Where(img => img.Tags.Contains(query)).Select(img => img.Id).ToListAsync();
 
         return photoIds;
+    }
+
+    public async Task<int> GetTripIdFromTags(int userId, int photoId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        // Trip ids owned by this user
+        var userTripIds = context.Trips
+            .Where(t => t.UserId == userId)
+            .Select(t => t.Id);
+        
+        // Start the query with albums that this user owns
+        // Query creation assisted by claude code
+        var album = await context.Albums
+            .Where(a => userTripIds.Contains(a.TripId) && a.PhotoIds.Contains(photoId)).FirstOrDefaultAsync();
+
+        if (album == null)
+        {
+            throw new KeyNotFoundException("Album not found");
+        }
+
+        return album.TripId;
+
+
+
+
     }
 }

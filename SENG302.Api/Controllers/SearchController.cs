@@ -13,16 +13,19 @@ public class SearchController : ControllerBase
     private readonly ITripService _tripService;
     private readonly IImageService _imageService;
     private readonly IFileService _fileService;
+    private readonly IPostService _postService;
     
     public SearchController(
         ITripService tripService,
         IImageService imageService,
-        IFileService fileService
+        IFileService fileService,
+        IPostService postService
         )
     {
         _tripService = tripService;
         _imageService = imageService;
         _fileService = fileService;
+        _postService = postService;
     }
     
     [HttpGet("my-trips")]
@@ -70,11 +73,13 @@ public class SearchController : ControllerBase
             foreach (int photo in photoIds)
             {
                 CustomFile file = await _fileService.GetFileByIdAsync(photo);
-                var fileTrip = await 
+
+                var tripId =  await _imageService.GetTripIdFromTags(int.Parse(userIdString), photo);
                 
                 photos.Add(new PhotoMetadataResponse
                 {
                     PhotoId = photo,
+                    TripId = tripId,
                     FileName = file.OriginalFileName,
                     MimeType = file.MimeType
                 });
