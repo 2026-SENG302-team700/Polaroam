@@ -12,7 +12,7 @@
     }
 </script>
 
-<div class="card mb-3">
+<div class="card mb-3" data-testid={`post-card-${post.postId}`}>
     <div class="card-body" onmouseenter={onHover} onmouseleave={onLeave}>
         <div
             class="card-body"

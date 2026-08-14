@@ -92,12 +92,12 @@
     });
 </script>
 
-<div class="container">
+<div class="container" data-testid="trip-map">
     <div
         class="position-relative rounded overflow-hidden"
         style="height: 480px;"
     >
-        <MapLibre style={mapStyle} bind:map class="map">
+        <MapLibre style={mapStyle} bind:map class="map" id="trip-map">
             {#each locations as location, index (location.postId)}
                 {@const post = getPosts(location.postId)}
                 <Marker
@@ -108,6 +108,7 @@
                     anchor="bottom"
                 >
                     <button
+                        data-testid={`post-marker-${location.postId}`}
                         class="post-marker"
                         class:if-highlighted={hoveredPostId === location.postId}
                         type="button"
