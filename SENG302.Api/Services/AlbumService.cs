@@ -21,20 +21,17 @@ public class AlbumService: IAlbumService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IUserService _userService;
-    private readonly IPostService _postService;
+    private readonly IImageTaggingService _imageTaggingService;
     public AlbumService(IFileService fileService, 
                         IDbContextFactory<DatabaseContext> dbContextFactory,
-                        IImageTaggingQueue imageTaggingQueue,
                         IUserService userService,
-                        IPostService postService)
+                        IImageTaggingService imageTaggingService)
     {
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
         _userService = userService;
-        _postService = postService;
+        _imageTaggingService = imageTaggingService;
     }
     
     /// <summary>
@@ -175,7 +172,7 @@ public class AlbumService: IAlbumService
 
             if (user.AcceptedAiPrivacyPolicy)
             {
-                await _postService.GenerateImageTags(photo, file.Id);
+               await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
             
         }  

@@ -2,7 +2,9 @@ using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Helpers;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Jobs;
 
 namespace SENG302.Api.Services.ImageTagging;
 
@@ -13,6 +15,7 @@ public interface IImageTaggingService
         int imageId, 
         CancellationToken cancellationToken = default
     );
+    Task QueueImageTaggingJobs(IFormFile image, int imageId);
 }
 
 public class ImageTaggingService : IImageTaggingService
@@ -20,16 +23,22 @@ public class ImageTaggingService : IImageTaggingService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IFileService _fileService;
 
     public ImageTaggingService(
         HttpClient httpClient,
         IConfiguration configuration,
-        IDbContextFactory<DatabaseContext> dbContextFactory
+        IDbContextFactory<DatabaseContext> dbContextFactory,
+        IImageTaggingQueue imageTaggingQueue,
+        IFileService fileService
     )
     {
         _httpClient = httpClient;
         _configuration = configuration;
         _dbContextFactory = dbContextFactory;
+        _imageTaggingQueue = imageTaggingQueue;
+        _fileService = fileService;
     }
 
     /// <summary>
@@ -339,6 +348,48 @@ public class ImageTaggingService : IImageTaggingService
         image.CanRetryTagging = false;
         context.CustomFiles.Update(image);
         await context.SaveChangesAsync();
+    }
+    
+    
+    /// <summary>
+    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
+    /// while still allowing the image upload to continue
+    /// </summary>
+    /// <param name="image"></param>
+    /// <param name="imageId"></param>
+    /// <returns></returns>
+    public async Task QueueImageTaggingJobs(IFormFile image, int imageId)
+    {
+        try
+        {
+            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
+            Console.WriteLine($"\n It creates safeFormFile correctly\n");
+            await _fileService.SetTagQueueStatus(imageId);
+            Console.WriteLine($"\n It set tag queue status correctly\n");
+            bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
+                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
+            );
+            Console.WriteLine($"\n TRies queuing it correctly\n");
+            if (!queued)
+            {
+                await using var context = await _dbContextFactory.CreateDbContextAsync();
+                var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
+                if (imageFile != null)
+                {
+                    imageFile.TagError = "Queue was full";
+                    imageFile.CanRetryTagging = true;
+                    context.CustomFiles.Update(imageFile);
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Tagging cant cause the image upload to fail
+            Console.WriteLine($"\n\nFailed to generate tags for image {imageId}: {ex.Message}\n\n");
+
+            throw new Exception($"Failed to generate tags for image {imageId}: {ex.Message}");
+        }
     }
 
     private record TagResponse(List<string> Tags);

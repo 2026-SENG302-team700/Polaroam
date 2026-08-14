@@ -20,7 +20,6 @@ public interface IPostService
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
-    Task GenerateImageTags(IFormFile image, int imageId);
 }
 
 
@@ -30,9 +29,9 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IAlbumService _albumService;
     private readonly IUserService _userService;
+    private readonly IImageTaggingService _imageTaggingService;
 
     public PostService(
         IAlbumService albumService,
@@ -40,16 +39,16 @@ public class PostService : IPostService
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
-        IImageTaggingQueue imageTaggingQueue,
-        IUserService userService)
+        IUserService userService,
+        IImageTaggingService imageTaggingService)
     {
         _albumService = albumService;
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
-        _imageTaggingQueue = imageTaggingQueue;
         _userService = userService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -133,7 +132,7 @@ public class PostService : IPostService
 
             if (user.AcceptedAiPrivacyPolicy)
             {
-                await GenerateImageTags(photo, file.Id);
+                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
         }
 
@@ -303,7 +302,7 @@ public class PostService : IPostService
 
             if (user.AcceptedAiPrivacyPolicy)
             {
-                await GenerateImageTags(photo, customFile.Id);
+                await _imageTaggingService.QueueImageTaggingJobs(photo, customFile.Id);
             }
         }
         
@@ -447,43 +446,6 @@ public class PostService : IPostService
         
         await context.SaveChangesAsync();
     }
-
-    /// <summary>
-    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
-    /// while still allowing the image upload to continue
-    /// </summary>
-    /// <param name="image"></param>
-    /// <param name="imageId"></param>
-    /// <returns></returns>
-    public async Task GenerateImageTags(IFormFile image, int imageId)
-    {
-        try
-        {
-            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
-
-            await _fileService.SetTagQueueStatus(imageId);
-            
-            bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
-                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
-            );
-            if (!queued)
-            {
-                await using var context = await _dbContextFactory.CreateDbContextAsync();
-                var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
-                if (imageFile != null)
-                {
-                    imageFile.TagError = "Queue was full";
-                    imageFile.CanRetryTagging = true;
-                    context.CustomFiles.Update(imageFile);
-                    await context.SaveChangesAsync();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            // Tagging cant cause the image upload to fail
-            Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
-        }
-    }
+    
 }
 

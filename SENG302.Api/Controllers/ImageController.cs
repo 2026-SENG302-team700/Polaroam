@@ -16,18 +16,18 @@ public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IPostService _postService;
+    private readonly IImageTaggingService _imageTaggingService;
 
 
     public ImageController(
         IUserService userService, 
         IFileService fileService,
-        IPostService postService
+        IImageTaggingService imageTaggingService
     )
     {
         _userService = userService;
         _fileService = fileService;
-        _postService = postService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -48,8 +48,28 @@ public class ImageController : ControllerBase
         
         // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
         CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy)
+        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && file.TagError != null && file.TagError.Contains("Queue"))
         {
+            Console.WriteLine("Does it reach here?");
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+            var stream = new MemoryStream(bytes);
+            IFormFile formFile = new FormFile(
+                baseStream: stream,
+                baseStreamOffset: 0,
+                length: stream.Length,
+                name: file.OriginalFileName,
+                fileName: file.OriginalFileName
+            );
+
+            try
+            {
+                await _imageTaggingService.QueueImageTaggingJobs(formFile, photoId);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
             
         }
         
