@@ -6,8 +6,6 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-
 
 namespace SENG302.Api.Services;
 
@@ -22,6 +20,7 @@ public interface IPostService
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
+    Task GenerateImageTags(IFormFile image, int imageId);
 }
 
 
@@ -136,7 +135,6 @@ public class PostService : IPostService
             {
                 await GenerateImageTags(photo, file.Id);
             }
-            
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
@@ -457,7 +455,7 @@ public class PostService : IPostService
     /// <param name="image"></param>
     /// <param name="imageId"></param>
     /// <returns></returns>
-    private async Task GenerateImageTags(IFormFile image, int imageId)
+    public async Task GenerateImageTags(IFormFile image, int imageId)
     {
         try
         {
@@ -483,7 +481,7 @@ public class PostService : IPostService
         }
         catch (Exception ex)
         {
-            // Tagging cant cause the image uplaod to fail
+            // Tagging cant cause the image upload to fail
             Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
         }
     }

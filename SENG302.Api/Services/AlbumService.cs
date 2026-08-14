@@ -23,15 +23,18 @@ public class AlbumService: IAlbumService
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IUserService _userService;
+    private readonly IPostService _postService;
     public AlbumService(IFileService fileService, 
                         IDbContextFactory<DatabaseContext> dbContextFactory,
                         IImageTaggingQueue imageTaggingQueue,
-                        IUserService userService)
+                        IUserService userService,
+                        IPostService postService)
     {
         _fileService = fileService;
         _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
         _userService = userService;
+        _postService = postService;
     }
     
     /// <summary>
@@ -172,30 +175,7 @@ public class AlbumService: IAlbumService
 
             if (user.AcceptedAiPrivacyPolicy)
             {
-                try
-                {
-                    FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
-
-                    bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
-                        new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
-                    );
-                    if (!queued)
-                    {
-                        var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == file.Id);
-                        if (imageFile != null)
-                        {
-                            imageFile.TagError = "tagging failed: Queue was full";
-                            imageFile.CanRetryTagging = true;
-                            context.CustomFiles.Update(imageFile);
-                            await context.SaveChangesAsync();
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Tagging can't cause the image upload to fail
-                    Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
-                }
+                await _postService.GenerateImageTags(photo, file.Id);
             }
             
         }  

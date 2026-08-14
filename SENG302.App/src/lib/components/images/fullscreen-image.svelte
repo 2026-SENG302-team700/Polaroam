@@ -25,6 +25,7 @@
    let tags: string[] = $state([]);
    let error = $state("");
    let loading = $state(false);
+   let showRetryTagging = $state(false);
 
    onMount(() => {
        fetchImageTags(photoId)
@@ -37,6 +38,7 @@
        if (newImage !== undefined) {
           image = newImage
        }
+       showRetryTagging = false
        fetchImageTags(photoIds[index])
     }
 
@@ -47,6 +49,7 @@
        if (newImage !== undefined) {
           image = newImage
        }
+       showRetryTagging = false
        fetchImageTags(photoIds[index])
     }
 
@@ -65,6 +68,11 @@
                if (response.status === 500) {
                   const data = await response.json()
                   error = "Failed to fetch tags: " + data?.detail
+                  
+                  if (error === "Failed to fetch tags: Queue was full") {
+                     showRetryTagging = true
+                  }
+                  
                   return
                } else {
                   error = (await response.text()) || "Failed to fetch tags.";
@@ -90,8 +98,10 @@
 
 <svelte:window onkeydown={(e) => {
          if (e.key === "ArrowLeft" && index!==0) {
+            showRetryTagging = false
             moveToLeftImage()
          } else if (e.key === "ArrowRight" && images !== null && index!==images.length-1) {
+            showRetryTagging = false
             moveToRightImage()
          } else if (e.key === "Escape") {
             enlarged = false
@@ -117,6 +127,17 @@
             {/each}
             {:else}
             <TagPill tag={error}/>
+            {/if}
+         </div>
+         <div class="tags-wrapper">
+            {#if showRetryTagging}
+               <button class="btn btn-primary" onclick={() => {
+                  showRetryTagging = false
+                  fetchImageTags(photoIds[index])
+               }}
+               >
+                  Retry Tagging
+               </button>
             {/if}
          </div>
       </div>

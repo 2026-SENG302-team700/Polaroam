@@ -16,18 +16,18 @@ public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IPostService _postService;
 
 
     public ImageController(
         IUserService userService, 
-        IFileService fileService, 
-        IImageTaggingQueue imageTaggingQueue
+        IFileService fileService,
+        IPostService postService
     )
     {
         _userService = userService;
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
+        _postService = postService;
     }
 
     /// <summary>
@@ -45,6 +45,14 @@ public class ImageController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
+        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy)
+        {
+            
+        }
+        
 
         try
         {
@@ -61,6 +69,7 @@ public class ImageController : ControllerBase
                 }
                 
                 var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
+                Console.WriteLine($"\n\nIs image in queue: {imageInQueue}\n\n");
                 return imageInQueue
                     ? StatusCode(StatusCodes.Status202Accepted)
                     : StatusCode(StatusCodes.Status204NoContent);
@@ -72,6 +81,4 @@ public class ImageController : ControllerBase
             return NotFound(e.Message);
         }
     }
-    
-     
 }
