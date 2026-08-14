@@ -165,7 +165,7 @@ $font-weight-bold: 700;
         opacity: 0.55;
     }
 
-    &:has(>option[value=""]:checked) {
+    &:has(> option[value=""]:checked) {
         color: rgba($ink, 0.75);
     }
 }

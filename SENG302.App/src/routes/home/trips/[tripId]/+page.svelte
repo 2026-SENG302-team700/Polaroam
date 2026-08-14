@@ -13,6 +13,7 @@
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
+    import AlbumButton from '$lib/components/buttons/album-button.svelte';
 
     let loading = $state(false);
     let error = $state("");
@@ -149,10 +150,16 @@
 </script>
 
 <div class="container trip-page-content">
-    <NavigationButton path="/home" text="Back" />
-    <AddButton path="/home/trips/{tripObject.id}/posts/create-post" />
-    <EditButton path={`/home/trips/${params.tripId}/edit`} />
-    <DeleteButton deleteAction={showConfirmationModal} />
+    <div class="button-wrapper">
+        <NavigationButton path="/home" text="Back" />
+        
+        <div class="modify-button-wrapper">
+            <AlbumButton tripid = {params.tripId}/>
+            <EditButton path={`/home/trips/${params.tripId}/edit`} />
+            <DeleteButton deleteAction={showConfirmationModal} />
+        </div>
+        
+    </div>
     <ErrorDisplay errors={[error]} />
     <div class="trip-page-header">
         <div class="trip-head-grid">
@@ -170,7 +177,8 @@
         {/if}
     </div>
     <Map locations={postLocations} />
-    <PostSection {posts} />
+
+    <PostSection {posts} tripId={tripObject.id}/>
 </div>
 
 <ConfirmationModal
@@ -183,6 +191,12 @@
 />
 
 <style>
+
+    .button-wrapper {
+        display: flex;
+        justify-content: space-between;
+
+    }
     .trip-head-grid {
         align-items: end;
         display: flex;
