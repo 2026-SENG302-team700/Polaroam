@@ -5,6 +5,7 @@
     import TripCard from "$lib/components/trip-components/trip-card.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
+    import SearchView from "$lib/components/search-view.svelte"
 
     let loading = $state(false);
     let error = $state("");
@@ -47,18 +48,17 @@
     }
     
     async function performSearch() {
-        console.log("hello??");
-        
         inSearch = true;
         
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/search/my-trips` as any), {
+            const response = await fetchWithCsrf(resolve(`/api/search/my-trips?query=${encodeURIComponent(tagQuery)}` as any), {
                 method: "GET",
                 credentials: "include",
             });
             
             const data = await response.json();
+            searchTrips = data;
             if (!response.ok) {
                 error = "Failed to fetch search results.";
                 return;
@@ -68,29 +68,6 @@
         } finally {
             loading = false;
         }
-    }
-    
-    
-
-    /**
-     * Fetches tag suggestions matching the given query for the current user's trips
-     * @param query - the partial tag text to search for
-     */
-    async function fetchTagSuggestions(query: string) {
-        const response = await fetchWithCsrf(
-            resolve(`/api/image/tags?query=${encodeURIComponent(query)}` as any),
-            {
-                method: "GET",
-                credentials: "include",
-            },
-        );
-        
-        if (!response.ok) {
-            throw new Error("Failed to fetch tag suggestions.");
-        }
-
-        const data = await response.json();
-        return data
     }
 </script>
 
@@ -104,10 +81,11 @@
     <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
         <AddButton path="/home/trips/create-trip" />
         <div>
-            <TagSearchForm bind:query={tagQuery} getSuggestions={fetchTagSuggestions} />
+            <TagSearchForm bind:query={tagQuery} {performSearch} />
         </div>
     </div>
     {#if inSearch}
+        <SearchView trips={searchTrips} />
     {:else}
         {#if trips.length > 0}
             <div class="trip-object-wrapper">

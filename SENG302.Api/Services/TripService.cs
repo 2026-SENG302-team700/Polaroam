@@ -15,6 +15,7 @@ public interface ITripService
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
     Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
     Task<List<Location>> GetTripLocations(int tripId);
+    Task<List<Trip>> GetTripsFromQuery(string query);
 }
 
 public class TripService : ITripService
@@ -253,5 +254,31 @@ public class TripService : ITripService
             .ToListAsync();
 
         return locations;
+    }
+
+    /// <summary>
+    /// Gets a list of trips based on the query provided, looks through a trips title and description.
+    /// </summary>
+    /// <param name="query">query to be queried</param>
+    /// <returns>List of trips that have matched the query</returns>
+    public async Task<List<Trip>> GetTripsFromQuery(string query)
+    {
+        query = query.Trim().ToLower();
+        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var tripsQueriedTitles = await context.Trips
+            .Where(trip => trip.Title
+                .ToLower()
+                .Contains(query))
+            .ToListAsync();
+        var tripsQueriedDescriptions = await context.Trips
+            .Where(trip => trip.Description
+                .ToLower()
+                .Contains(query))
+            .ToListAsync();
+
+        var trips = tripsQueriedTitles.Concat(tripsQueriedDescriptions).ToList();
+        return trips;
     }
 }

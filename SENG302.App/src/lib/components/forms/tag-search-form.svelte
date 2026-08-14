@@ -1,16 +1,17 @@
 <script lang="ts">
+    import { resolve } from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf";
+
     let {
         query = $bindable(""),
-        performSearch = $bindable(false),
         placeholder = "search your images",
         selectedTag = $bindable(""),
-        getSuggestions,
+        performSearch
     }: {
         query?: string;
-        performSearch?: boolean;
         placeholder?: string;
         selectedTag?: string;
-        getSuggestions: (query: string) => Promise<string[]>;
+        performSearch?: () => void;
     } = $props();
 
     let isOpen = $state(false);
@@ -18,6 +19,27 @@
     let loading = $state(false);
     let error = $state("");
 
+    /**
+     * Fetches tag suggestions matching the given query for the current user's trips
+     * @param query - the partial tag text to search for
+     */
+    async function fetchTagSuggestions(query: string) {
+        const response = await fetchWithCsrf(
+            resolve(`/api/image/tags?query=${encodeURIComponent(query)}` as any),
+            {
+                method: "GET",
+                credentials: "include",
+            },
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch tag suggestions.");
+        }
+
+        const data = await response.json();
+        return data;
+    }
+    
     /**
      * Fetches tag suggestions from the caller-provided function
      */
@@ -34,7 +56,7 @@
         try {
             loading = true;
             error = "";
-            items = await getSuggestions(trimmed);
+            items = await fetchTagSuggestions(trimmed);
             isOpen = true;
         } catch (err) {
             error = "Failed to fetch tag suggestions: " + (err as Error).message;
@@ -55,10 +77,12 @@
      * @param event - the keyboard event
      */
     function handleKeydown(event: KeyboardEvent) {
-        if (event.key !== "Enter") return;
+        if (event.key !== "Enter") {
+            return;
+        }
         event.preventDefault();
         isOpen = false;
-        performSearch = true;
+        performSearch();
     }
 
     /**
@@ -89,7 +113,7 @@
                 type="button"
                 title="search your trips using the provided query."
                 class="btn btn-outline-secondary"
-                onclick={() => (performSearch = true)}
+                onclick={performSearch}
         >
             {#if loading}
                 <div
