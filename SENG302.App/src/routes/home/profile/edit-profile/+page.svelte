@@ -536,6 +536,9 @@
             );
 
             if (response.ok) {
+                
+                sessionStorage.setItem("aiTaggingPreference", aiToggle.toString())
+                
                 return { 
                     success: true 
                 };

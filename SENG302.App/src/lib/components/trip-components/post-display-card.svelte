@@ -2,7 +2,7 @@
     import { formatDate } from "$lib/datepicker/formatDate";
     import ImageDisplay from "../images/image-display.svelte";
 
-    let { post, userName, photos } = $props();
+    let { post, userName, photos, photoIds } = $props();
 </script>
 
 <div class="card mb-2 post-wrapper">
@@ -29,7 +29,7 @@
     </div>
     <div class="card-footer text-muted images">
         {#if photos.length > 0}
-            <ImageDisplay images={photos} />
+            <ImageDisplay images={photos} photoIds={photoIds} />
         {/if}
     </div>
 </div>

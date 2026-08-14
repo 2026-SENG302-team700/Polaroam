@@ -26,9 +26,10 @@
    let error = $state("");
    let loading = $state(false);
    let showRetryTagging = $state(false);
+   let aiTaggingPreference: string | null = $state(null)
 
    onMount(() => {
-       fetchImageTags(photoId)
+      getUserPreferences()
    });
 
     function moveToLeftImage()
@@ -52,7 +53,41 @@
        showRetryTagging = false
        fetchImageTags(photoIds[index])
     }
+    
+    async function getUserPreferences() {
+       
+       aiTaggingPreference = sessionStorage.getItem("aiTaggingPreference")
+       
+       if (aiTaggingPreference === null) {
+          try {
+             loading = true;
+             const response = await fetchWithCsrf(
+                     resolve(`/api/user` as any), {
+                        method: "GET",
+                        credentials: "include",
+                     },
+             );
+             const data = await response.json();
+             if (!response.ok) {
+                error = data.error
+                return;
+             }
+             
+             sessionStorage.setItem("aiTaggingPreference", data.aiTagging)
+          }
+          catch (err) {
+             console.log("Cannot get user ai tagging preferences")
+          } finally {
+             loading = false;
+          }
+       } else {
+          if (aiTaggingPreference === "true") {
+             await fetchImageTags(photoId)
+          }
+       }
+    }
 
+    
     async function fetchImageTags(id: number) {
         try {
             loading = true;
@@ -94,6 +129,30 @@
             loading = false;
         }
       }
+      
+      async function retryImageTagging(id: number) {
+         loading = true;
+         try {
+            tags = [];
+            const response = await fetchWithCsrf(
+                    resolve(`/api/image/${id}/tags` as any), {
+                       method: "PATCH",
+                       credentials: "include",
+                    },
+            );
+
+            if (!response.ok) {
+               const data = await response.json()
+               error = "Failed to fetch tags: " + data.errors;
+            }
+            error = "Tags are being generated"
+         } catch (err) {
+            error = "Failed to retry tagging: " + (err as Error).message;
+         } finally {
+            loading = false;
+         }
+      }     
+      
 </script>
 
 <svelte:window onkeydown={(e) => {
@@ -120,26 +179,28 @@
          {#if images !== null && images?.length > 1 && index !== 0}
             <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
          {/if}
-         <div class="tags-wrapper">
-            {#if tags.length > 0}
-            {#each tags as tag}
-               <TagPill {tag}/>
-            {/each}
-            {:else}
-            <TagPill tag={error}/>
-            {/if}
-         </div>
-         <div class="tags-wrapper">
-            {#if showRetryTagging}
-               <button class="btn btn-primary" onclick={() => {
+         {#if aiTaggingPreference === "true"}
+            <div class="tags-wrapper">
+               {#if tags.length > 0}
+               {#each tags as tag}
+                  <TagPill {tag}/>
+               {/each}
+               {:else}
+               <TagPill tag={error}/>
+               {/if}
+            </div>
+            <div class="tags-wrapper">
+               {#if showRetryTagging}
+                  <button class="btn btn-primary" onclick={() => {
                   showRetryTagging = false
-                  fetchImageTags(photoIds[index])
+                  retryImageTagging(photoIds[index])
                }}
-               >
-                  Retry Tagging
-               </button>
-            {/if}
-         </div>
+                  >
+                     Retry Tagging
+                  </button>
+               {/if}
+            </div>
+         {/if}
       </div>
    </div>
 </div>

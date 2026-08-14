@@ -363,31 +363,38 @@ public class ImageTaggingService : IImageTaggingService
         try
         {
             FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
-            Console.WriteLine($"\n It creates safeFormFile correctly\n");
+            
             await _fileService.SetTagQueueStatus(imageId);
-            Console.WriteLine($"\n It set tag queue status correctly\n");
+            
+            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
+            imageFile?.TagError = null;
+            imageFile?.CanRetryTagging = false;
+            
+        
             bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
             );
-            Console.WriteLine($"\n TRies queuing it correctly\n");
+            
             if (!queued)
             {
-                await using var context = await _dbContextFactory.CreateDbContextAsync();
-                var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
                 if (imageFile != null)
                 {
                     imageFile.TagError = "Queue was full";
                     imageFile.CanRetryTagging = true;
-                    context.CustomFiles.Update(imageFile);
-                    await context.SaveChangesAsync();
                 }
             }
+
+            if (imageFile != null)
+            {
+                context.CustomFiles.Update(imageFile);
+                await context.SaveChangesAsync();
+            }
+            
+            
         }
         catch (Exception ex)
         {
-            // Tagging cant cause the image upload to fail
-            Console.WriteLine($"\n\nFailed to generate tags for image {imageId}: {ex.Message}\n\n");
-
             throw new Exception($"Failed to generate tags for image {imageId}: {ex.Message}");
         }
     }

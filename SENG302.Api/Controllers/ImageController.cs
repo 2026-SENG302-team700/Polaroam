@@ -45,34 +45,6 @@ public class ImageController : ControllerBase
         {
             return Unauthorized();
         }
-        
-        // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
-        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && file.TagError != null && file.TagError.Contains("Queue"))
-        {
-            Console.WriteLine("Does it reach here?");
-            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-            var stream = new MemoryStream(bytes);
-            IFormFile formFile = new FormFile(
-                baseStream: stream,
-                baseStreamOffset: 0,
-                length: stream.Length,
-                name: file.OriginalFileName,
-                fileName: file.OriginalFileName
-            );
-
-            try
-            {
-                await _imageTaggingService.QueueImageTaggingJobs(formFile, photoId);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            
-            
-        }
-        
 
         try
         {
@@ -100,5 +72,49 @@ public class ImageController : ControllerBase
         {
             return NotFound(e.Message);
         }
+    }
+
+    [Authorize]
+    [HttpPatch("{photoId:int}/tags")]
+    public async Task<IActionResult> RetryPhotoTagging(int photoId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        User? user = await _userService.GetUserByIdAsync(userId);
+        if (user == null || !await _fileService.CheckFileOwnership(photoId, userId))
+        {
+            return Unauthorized();
+        }
+        
+        // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
+        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && file.TagError != null && file.TagError.Contains("Queue"))
+        {
+            Console.WriteLine("Does it reach here?");
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+            var stream = new MemoryStream(bytes);
+            IFormFile formFile = new FormFile(
+                baseStream: stream,
+                baseStreamOffset: 0,
+                length: stream.Length,
+                name: file.OriginalFileName,
+                fileName: file.OriginalFileName
+            ){
+                Headers = new HeaderDictionary(),
+                ContentType = file.MimeType
+            };
+
+            try
+            {
+                await _imageTaggingService.QueueImageTaggingJobs(formFile, photoId);
+                
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        return BadRequest("Image cannot be tagged");
     }
 }
