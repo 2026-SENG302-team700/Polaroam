@@ -86,8 +86,11 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateOnly?>("Date")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("Date")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LocationName")
                         .IsRequired()
@@ -107,9 +110,6 @@ namespace SENG302.Api.Migrations
                     b.Property<int>("TripId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTimeOffset>("creationTime")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("PostId");
 
                     b.ToTable("Posts");
@@ -127,11 +127,11 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
