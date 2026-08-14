@@ -142,7 +142,7 @@ public class PostController : ControllerBase
                 Errors = e.Errors
             });
         }
-        catch (KeyNotFoundException e)
+        catch (KeyNotFoundException)
         {
             return NotFound(
                 "Post does not exist"
@@ -190,6 +190,7 @@ public class PostController : ControllerBase
 
         return Ok(photos);
     }
+
 
     /// <summary>
     /// Streams a single photo back with correct types

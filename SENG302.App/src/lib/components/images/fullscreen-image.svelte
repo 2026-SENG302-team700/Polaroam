@@ -2,16 +2,33 @@
     import CloseButton from "../buttons/close-button.svelte";
     import RightArrowButton from "../buttons/right-arrow-button.svelte"
     import LeftArrowButton from "../buttons/left-arrow-button.svelte"
+    import TagPill from "../content/tag-pill.svelte";
+    import { onMount } from "svelte";
+    import { fetchWithCsrf } from "$lib/csrf";
+    import { resolve } from "$app/paths";
 
     let {
-        image,
-        enlarged = $bindable(false),
+       image,
+       enlarged = $bindable(false),
        index,
-       images  
+       images,
+       photoId,
+       photoIds,
     }: { image: File,
-         enlarged: boolean, 
-       index: number, 
-       images: File[] | null; } = $props();
+        enlarged: boolean,
+        index: number,
+        images: File[] | null,
+        photoId: number,
+        photoIds: number[],
+       } = $props();
+
+   let tags: string[] = $state([]);
+   let error = $state("");
+   let loading = $state(false);
+
+   onMount(() => {
+       fetchImageTags(photoId)
+   });
 
     function moveToLeftImage()
     {
@@ -20,6 +37,7 @@
        if (newImage !== undefined) {
           image = newImage
        }
+       fetchImageTags(photoIds[index])
     }
 
     function moveToRightImage()
@@ -29,7 +47,33 @@
        if (newImage !== undefined) {
           image = newImage
        }
+       fetchImageTags(photoIds[index])
     }
+
+    async function fetchImageTags(id: number) {
+        try {
+            loading = true;
+            tags = [];
+            const response = await fetchWithCsrf(
+                resolve(`/api/image/${id}/tags` as any), {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                if (response.status !== 404) {
+                    error = (await response.text()) || "Failed to fetch tags.";
+                }
+                return;
+            }
+
+            tags = await response.json();
+        } catch (err) {
+            error = "Failed to fetch tags: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+      }
 </script>
 
 <svelte:window onkeydown={(e) => {
@@ -54,8 +98,17 @@
          {#if images !== null && images?.length > 1 && index !== 0}
             <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
          {/if}
-      </div>    
-   </div>  
+         <div class="tags-wrapper">
+            {#if tags.length > 0}
+            {#each tags as tag}
+               <TagPill {tag}/>
+            {/each}
+            {:else}
+            <TagPill tag="No tags available"/>
+            {/if}
+         </div>
+      </div>
+   </div>
 </div>
 
 <style>
@@ -77,12 +130,22 @@
     align-items: center;
  }
  .image {
+   border-radius: 5px;
     position: relative;
+    min-width: 20vw;
     max-height: 70vh;
     max-width: 70vw;
  }
  .close-button-wrapper {
    position:relative;
+ }
+ .tags-wrapper {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    justify-content: center;
+    margin-top: 2%;
  }
 
 </style>

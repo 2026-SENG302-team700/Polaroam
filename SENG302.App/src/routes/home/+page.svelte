@@ -1,7 +1,7 @@
 <script lang="ts">
     import { resolve } from "$app/paths";
     import AddButton from "$lib/components/buttons/add-button.svelte";
-    import SearchForm from "$lib/components/forms/search-form.svelte";
+    import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
     import TripCard from "$lib/components/trip-components/trip-card.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
@@ -16,6 +16,8 @@
     
     let searchTrips = $state([]);
     let searchPhotos = $state([]);
+    
+    let tagQuery = $state("");
 
     onMount(() => {
         fetchTrips();
@@ -69,6 +71,27 @@
     }
     
     
+
+    /**
+     * Fetches tag suggestions matching the given query for the current user's trips
+     * @param query - the partial tag text to search for
+     */
+    async function fetchTagSuggestions(query: string) {
+        const response = await fetchWithCsrf(
+            resolve(`/api/image/tags?query=${encodeURIComponent(query)}` as any),
+            {
+                method: "GET",
+                credentials: "include",
+            },
+        );
+        
+        if (!response.ok) {
+            throw new Error("Failed to fetch tag suggestions.");
+        }
+
+        const data = await response.json();
+        return data
+    }
 </script>
 
 <div class="container">
@@ -81,7 +104,7 @@
     <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
         <AddButton path="/home/trips/create-trip" />
         <div>
-            <SearchForm bind:query={searchQuery} performSearch={performSearch} />
+            <TagSearchForm bind:query={tagQuery} getSuggestions={fetchTagSuggestions} />
         </div>
     </div>
     {#if inSearch}

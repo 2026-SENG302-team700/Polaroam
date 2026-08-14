@@ -2,11 +2,8 @@ using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
 using SENG302.Api.Services.ImageTagging;
@@ -268,6 +265,8 @@ public class Program
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IPostService, PostService>();
+        services.AddScoped<IAlbumService, AlbumService>();
+        services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {

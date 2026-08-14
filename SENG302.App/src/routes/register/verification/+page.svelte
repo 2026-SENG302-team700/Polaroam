@@ -4,12 +4,14 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import { onMount } from "svelte";
+    import CodeForm from "$lib/components/forms/code-form.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     let email = $state("");
     let serverTime = $state(0);
     let initialSeconds = 300;
     let remainingSeconds = $state(initialSeconds);
-    let intervalId;
+    let intervalId: number | Timeout;
     let timeRemainingText = $state("");
     let errorMessage = $state("");
     let resendLinkVisible = $state(false);
@@ -24,6 +26,11 @@
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
+
+    let errors = $state({
+        codeError: "",
+    });
+
 
     onMount(async () => {
         email = localStorage.getItem("email") ?? "";
@@ -115,7 +122,7 @@
     function displayError(error: string, makeResendLinkVisible: boolean) {
         if (!(resendLinkVisible == makeResendLinkVisible))
             resendLinkVisible = makeResendLinkVisible;
-        errorMessage = error;
+        errors.codeError = error;
     }
 
     /**
@@ -338,62 +345,15 @@
                     {/if}
                 {/key}
                 <p class="text-danger">{errorMessage}</p>
-                <div id="code-input" class="input-group d-flex gap-2 mt-4 mb-4">
-                    <input
-                            id="code-input-1"
-                        type="text"
-                        class="form-control form-control-lg text-center"
-                        maxlength="1"
-                        bind:value={digit1}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
-                    />
-                    <input
-                            id="code-input-2"
-                        type="text"
-                        class="form-control form-control-lg text-center"
-                        maxlength="1"
-                        bind:value={digit2}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
-                    />
-                    <input
-                            id="code-input-3"
-                        type="text"
-                        class="form-control form-control-lg text-center"
-                        maxlength="1"
-                        bind:value={digit3}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
-                    />
-                    <input
-                            id="code-input-4"
-                        type="text"
-                        class="form-control form-control-lg text-center"
-                        maxlength="1"
-                        bind:value={digit4}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
-                    />
-                    <input
-                            id="code-input-5"
-                        type="text"
-                        class="form-control form-control-lg text-center"
-                        maxlength="1"
-                        bind:value={digit5}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
-                    />
-                    <input
-                            id="code-input-6"
-                        type="text"
-                        class="form-control form-control-lg text-center"
-                        maxlength="1"
-                        bind:value={digit6}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
-                    />
-                </div>
+                <CodeForm
+                        bind:digit1
+                        bind:digit2
+                        bind:digit3
+                        bind:digit4
+                        bind:digit5
+                        bind:digit6
+                        error={errors.codeError}
+                />
                 {#key buttonDisabled}
                     <button
                             id="confirm-verification-button"

@@ -20,6 +20,10 @@ public interface IUserService
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
     Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
+    Task AcceptPrivacyPolicyAsync(int userId);
+    Task<bool> PrivacyPolicyCheckAsync(int userId);
+    Task ToggleAiTaggingAsync(int userId);
+    Task<bool> UserAiTaggingCheckAsync(int userId);
 }
 
 public enum UserVerificationResult
@@ -466,5 +470,85 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         context.Users.Update(user);
         await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Sets a flag to show that the user has accepted the AI privacy policy.
+    /// </summary>
+    /// <param name="userId">User that has accepted the AI privacy policy</param>
+    public async Task AcceptPrivacyPolicyAsync(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        
+        user!.AcceptedAiPrivacyPolicy = true;
+        
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+    
+    /// <summary>
+    /// Checks to see whether or not a user has accepted the AI privacy policy.
+    /// </summary>
+    /// <param name="userId">user id being checked against.</param>
+    /// <returns>
+    /// True: if the user has accepted the AI privacy policy.
+    /// False: if the user hasn't accepted the AI privacy policy.
+    /// </returns>
+    public async Task<bool> PrivacyPolicyCheckAsync(int userId)
+    {
+        User? user = await GetUserByIdAsync(userId);
+        
+        // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Id didn't match any user");
+        }
+
+        return user.AcceptedAiPrivacyPolicy;
+    }
+    
+    /// <summary>
+    /// Switches the state of the "AiTaggingEnabled" field in a user.
+    /// </summary>
+    /// <param name="userId">ID of user toggling AI tagging</param>
+    /// <exception cref="PrivacyPolicyNotAcceptedException">User has not accepted the AI privacy policy</exception>
+    public async Task ToggleAiTaggingAsync(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (!user!.AcceptedAiPrivacyPolicy)
+        {
+            throw new PrivacyPolicyNotAcceptedException("You must accept the AI privacy policy in order to turn on AI image tagging");
+        }
+
+        user.AiTaggingEnabled = !user.AiTaggingEnabled;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Returns whether or not the user has enabled ai tagging or not.
+    /// </summary>
+    /// <param name="userId">ID of the user being checked for their AI tagging settings</param>
+    /// <returns>
+    /// True: User has AI tagging enabled.
+    /// False: User does not have AI tagging enabled.
+    /// </returns>
+    public async Task<bool> UserAiTaggingCheckAsync(int userId)
+    {
+        User? user = await GetUserByIdAsync(userId);
+        
+        // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Id didn't match any user");
+        }
+
+        return user.AiTaggingEnabled;
     }
 }
