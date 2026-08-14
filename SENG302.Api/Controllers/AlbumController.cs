@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
@@ -27,18 +28,33 @@ public class AlbumController : ControllerBase
     }
     
     /// <summary>
+    /// Helper function to get the content type of a file.
+    /// </summary>
+    /// <param name="fileKey"></param>
+    /// <returns>The contentType string</returns>
+    private static string GetContentType(string fileKey)
+    {
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(fileKey, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+        return contentType;
+    }
+    
+    /// <summary>
     /// Gets an image from an album.
     /// </summary>
     /// <param name="tripId"></param>
-    /// <param name="imageId"></param>
+    /// <param name="fileKey"></param>
     /// <returns>
     /// Ok - image found
     /// Unauthorized - user not logged in or does not have access to the trip
     /// NotFound - image/album not found
     /// BadRequest - unhandled error
     /// </returns>
-    [HttpGet("images/{imageId:int}")]
-    public async Task<ActionResult> GetAlbumImage(int tripId, int imageId)
+    [HttpGet("images/{fileKey}")]
+    public async Task<ActionResult> GetAlbumImage(int tripId, string fileKey)
     {
         try
         {
@@ -50,8 +66,9 @@ public class AlbumController : ControllerBase
                 return Unauthorized();
 
             // Get the image
-            var image = await _fileService.GetFileByIdAsync(imageId);
-            return Ok(image);
+            var image = await _fileService.GetFileContentAsync(fileKey);
+            var contentType = GetContentType(fileKey);
+            return File(image, contentType);
         }
         catch (KeyNotFoundException)
         {
@@ -59,7 +76,7 @@ public class AlbumController : ControllerBase
         }
         catch (Exception)
         {
-            return BadRequest("Failed to get image: " + imageId);
+            return BadRequest("Failed to get image: " + fileKey);
         }
     }
     
