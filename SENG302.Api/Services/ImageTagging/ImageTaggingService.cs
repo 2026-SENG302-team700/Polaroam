@@ -177,7 +177,7 @@ public class ImageTaggingService : IImageTaggingService
         try
         {
             // clean the response content
-            var cleanedContent = content.Trim();
+            var cleanedContent = content.Trim().ToLower();
             if (cleanedContent.StartsWith("```"))
             {
                 var firstLineEnd = cleanedContent.IndexOf('\n');

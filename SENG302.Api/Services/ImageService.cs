@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
 
 namespace SENG302.Api.Services;
 
 public interface IImageService
 {
     public Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
+    public Task<List<int>> GetImagesFromQueryAsync(string query);
 }
 
 public class ImageService : IImageService
@@ -78,5 +81,14 @@ public class ImageService : IImageService
             .ToList();
 
         return tags;
+    }
+
+    public async Task<List<int>> GetImagesFromQueryAsync(string query)
+    {
+        var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var photoIds = await context.CustomFiles.Where(img => img.Tags.Contains(query)).Select(img => img.Id).ToListAsync();
+
+        return photoIds;
     }
 }

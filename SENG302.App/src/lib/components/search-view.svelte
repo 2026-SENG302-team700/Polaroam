@@ -1,11 +1,14 @@
 <script>
     import TripCard from "$lib/components/trip-components/trip-card.svelte";
+    import ImageDisplay from "$lib/components/images/image-display.svelte";
     
     let { 
-        trips
+        trips,
+        photos,
+        photoIds
     } = $props();
+    
 </script>
-
 <div>
     <h2>Trips</h2>
     <div class="trip-object-wrapper">
@@ -14,6 +17,7 @@
         {/each}
     </div>
     <h2>Photos</h2>
+    <ImageDisplay images={photos} photoIds={photoIds}/>
     <p>to be implemented...</p>
 </div>
 

@@ -191,34 +191,6 @@ public class PostController : ControllerBase
         return Ok(photos);
     }
 
-
-    /// <summary>
-    /// Streams a single photo back with correct types
-    /// </summary>
-    /// <param name="postId">post Id</param>
-    /// <param name="photoId">id of photo</param>
-    /// <returns>an image file</returns>
-    [Authorize]
-    [HttpGet("{postId:int}/images/{photoId:int}")]
-    public async Task<IActionResult> GetPostPhoto(int postId, int photoId)
-    {
-        var post = await _postService.GetPostAsync(postId);
-        if (post == null)
-        {
-            return NotFound("Post not found");
-        }
-
-        if (post.PhotoIds is null || !post.PhotoIds.Contains(photoId))
-        {
-            return NotFound("Photo not found on this post.");
-        }
-
-        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-
-        return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
-    }
-
     /// <summary>
     /// Returns the users display name from the post id so that it can be displayed with a trip
     /// </summary>
