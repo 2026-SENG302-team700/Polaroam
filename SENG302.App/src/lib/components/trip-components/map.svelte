@@ -12,7 +12,7 @@
     let mapPreferenceFetched = $state(false);
     const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
 
-    
+
     onMount(() => {
         fetchMapVisibility();
     })
@@ -117,7 +117,6 @@
 
 
 <div class = "container">
-    {`visible: ${mapVisible}`}
     {#if mapVisible}
         <div class="position-relative rounded overflow-hidden" style="height: 480px;">
             <MapLibre style={mapStyle} bind:map class="map" onload={recenterMap}>
