@@ -311,7 +311,7 @@ public class PostService : IPostService
         post.PhotoIds = post.PhotoIds.Count > 0 
             ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
             : post.PhotoIds = customFileIds;
-        post.LocationName = location != null ? location.name : post.LocationName;
+        post.LocationName = location != null ? location.Name : post.LocationName;
 
         // Save Changes
         context.Posts.Update(post);
