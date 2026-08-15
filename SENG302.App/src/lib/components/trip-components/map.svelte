@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MapLibre, Marker, Popup } from 'svelte-maplibre';
-    import {resolve} from "$app/paths";
+    import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { onMount } from 'svelte';
     
@@ -9,9 +9,10 @@
     let map = $state();
     let mapVisible = $state(false);
     let mapToggleError = $state("");
-    let mapPreferenceFetched = $state(false)
+    let mapPreferenceFetched = $state(false);
     const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
 
+    
     onMount(() => {
         fetchMapVisibility();
     })
@@ -111,18 +112,15 @@
             mapToggleError = "Failed to get map visiblitiy preference: " + (err as Error).message;
         }
     }
-
-    $effect(() => {
-        recenterMap();
-    });
     
 </script>
 
 
 <div class = "container">
+    {`visible: ${mapVisible}`}
     {#if mapVisible}
         <div class="position-relative rounded overflow-hidden" style="height: 480px;">
-            <MapLibre style={mapStyle} bind:map class="map">
+            <MapLibre style={mapStyle} bind:map class="map" onload={recenterMap}>
                 {#each locations as location (location.osmId)}
                     <Marker lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}>
                         <i class="bi bi-geo-fill text-danger fs-2"></i>

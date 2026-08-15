@@ -96,7 +96,7 @@
                         EndDate: endDate == null ? null : endDate.toISOString(),
                     }),
                     credentials: "include",
-                },
+                }, 
             );
 
             const data = await response.json();
