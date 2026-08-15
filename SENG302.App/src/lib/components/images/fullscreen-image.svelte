@@ -70,10 +70,10 @@
                 return;
             }
 
-            console.log("hello");
+           
            
             const message = await response.text();
-            console.log(message);
+            
             
             if (message === "Tags are being generated.") {
                tagStatus = "Tags are being generated. Come back later";
