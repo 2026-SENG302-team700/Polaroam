@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260811223044_AddAlbumObject")]
-    partial class AddAlbumObject
+    [Migration("20260814002228_AddAlbumTable")]
+    partial class AddAlbumTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -156,6 +156,12 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AcceptedAiPrivacyPolicy")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AiTaggingEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("CodeGenerationTime")
                         .HasColumnType("bigint");

@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.EntityFrameworkCore;
 using Reqnroll;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Tests.Acceptance.Setup;
@@ -38,8 +37,8 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
             };
 
             context.Add(user);
-            context.SaveChanges();
 
+            await context.SaveChangesAsync();
         }
 
         // AC 8
@@ -55,7 +54,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
                 DisplayName = "Login User",
                 Country = "NZ",
                 EmailVerified = true,
-                TimeCreated = DateTime.UtcNow
+                TimeCreated = DateTimeOffset.UtcNow
             };
             user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
             context.Users.Add(user);
@@ -94,7 +93,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
         public void ThenIAmLoggedInSuccessfully()
         {
             _lastResponse.ShouldNotBeNull();
-            _lastResponse!.StatusCode.ShouldBe(HttpStatusCode.OK);
+            _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Then(@"a warning email is sent to me that the reset was cancelled")]

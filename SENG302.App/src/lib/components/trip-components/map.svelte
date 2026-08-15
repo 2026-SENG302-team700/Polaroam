@@ -1,6 +1,5 @@
 <script lang="ts">
     import { MapLibre, Marker, Popup } from 'svelte-maplibre';
-    import {resolve} from "$app/paths";
     
     let { locations } = $props();
 
