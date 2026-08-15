@@ -34,10 +34,10 @@
     }
 </script>
 
-<div id="code-input" class="d-flex gap-2 mt-2 mb-4">
+<div id="code-input" class="d-flex gap-1 gap-sm-2 mt-2 mb-4 flex-nowrap">
     <input
         type="text"
-        class="form-control form-control-lg text-center"
+        class="form-control text-center px-1 px-sm-3 fs-6 fs-sm-3"
         maxlength="1"
         bind:value={digit1}
         oninput={handleInput}
@@ -45,7 +45,7 @@
     />
     <input
         type="text"
-        class="form-control form-control-lg text-center"
+        class="form-control text-center px-1 px-sm-3 fs-6 fs-sm-3"
         maxlength="1"
         bind:value={digit2}
         oninput={handleInput}
@@ -53,7 +53,7 @@
     />
     <input
         type="text"
-        class="form-control form-control-lg text-center"
+        class="form-control text-center px-1 px-sm-3 fs-6 fs-sm-3"
         maxlength="1"
         bind:value={digit3}
         oninput={handleInput}
@@ -61,7 +61,7 @@
     />
     <input
         type="text"
-        class="form-control form-control-lg text-center"
+        class="form-control text-center px-1 px-sm-3 fs-6 fs-sm-3"
         maxlength="1"
         bind:value={digit4}
         oninput={handleInput}
@@ -69,7 +69,7 @@
     />
     <input
         type="text"
-        class="form-control form-control-lg text-center"
+        class="form-control text-center px-1 px-sm-3 fs-6 fs-sm-3"
         maxlength="1"
         bind:value={digit5}
         oninput={handleInput}
@@ -77,7 +77,7 @@
     />
     <input
         type="text"
-        class="form-control form-control-lg text-center"
+        class="form-control text-center px-1 px-sm-3 fs-6 fs-sm-3"
         maxlength="1"
         bind:value={digit6}
         oninput={handleInput}

@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Helpers.Validators;
 
 namespace SENG302.Api.Services;
 
@@ -54,12 +55,11 @@ public class TripService : ITripService
     {
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         // Clean request
         trip.Title = trip.Title.Trim();
         trip.Description = trip.Description.Trim();
-        trip.StartDate = trip.StartDate == DateOnly.MinValue ? null : trip.StartDate;
-        trip.EndDate = trip.EndDate == DateOnly.MinValue ? null : trip.EndDate;
+        trip.StartDate = trip.StartDate.HasValue ? trip.StartDate : null;
+        trip.EndDate = trip.EndDate.HasValue ? trip.EndDate : null;
 
         // Validation
         var errors = new Dictionary<string, List<string>>();
@@ -109,6 +109,7 @@ public class TripService : ITripService
             EndDate = trip.EndDate
         };
         context.Set<Trip>().Add(newTrip);
+
         await context.SaveChangesAsync();
         return newTrip;
     }
@@ -233,7 +234,7 @@ public class TripService : ITripService
 
         return trip;
     }
-    
+
     /// <summary>
     /// Gets all locations that have been posted in a trip
     /// </summary>

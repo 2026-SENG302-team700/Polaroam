@@ -16,13 +16,14 @@ public class TripController : ControllerBase
 {
     private readonly ITripService _tripService;
     private readonly IPostService _postService;
-    private readonly IGeoService _geoService;
+    private readonly IAlbumService _albumService;
+    
 
-    public TripController(ITripService tripService,IPostService postService, IGeoService geoService)
+    public TripController(ITripService tripService,IPostService postService, IAlbumService albumService)
     {
         _tripService = tripService;
         _postService = postService;
-        _geoService = geoService;
+        _albumService = albumService;
     }
 
     /// <summary>
@@ -87,6 +88,9 @@ public class TripController : ControllerBase
             if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized();
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
+
+            var album = await _albumService.CreateNewAlbumAsync(trip.Id);
+            
             return Ok(trip);
         }
         catch (MultipleValidationListException e)
@@ -179,7 +183,7 @@ public class TripController : ControllerBase
         }
     }
 
-     /// <summary>
+    /// <summary>
     /// Fetches all posts associated to the id of the given trip. If
     /// no trip is provided, then throw a BadRequest Error.
     /// </summary>

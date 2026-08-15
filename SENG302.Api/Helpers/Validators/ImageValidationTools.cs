@@ -3,9 +3,9 @@ using System.Text.Json;
 using Microsoft.Extensions.ObjectPool;
 using SENG302.Api.Constants;
 
-namespace SENG302.Api.Helpers;
+namespace SENG302.Api.Helpers.Validators;
 
-public static class ImageValidationTools
+public static class ImageValidator
 {
     public static readonly string InvalidMimeString = "INVALID MIME";
 
@@ -80,4 +80,5 @@ public static class ImageValidationTools
 
         return !(!MimeTypeSets.Images.Contains(contentType) || realContentType == InvalidMimeString);
     }
+
 }

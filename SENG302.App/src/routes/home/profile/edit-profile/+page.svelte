@@ -16,6 +16,9 @@
     import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
     import PasswordForm from "$lib/components/forms/password-form.svelte";
     import ToggleForm from "$lib/components/forms/toggle-form.svelte";
+    import PolicyModal from "$lib/components/modals/policy-modal.svelte";
+    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
+    import CodeForm from "$lib/components/forms/code-form.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -42,6 +45,8 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false);
+    let aiToggle = $state(false);
+    let privacyPolicyModalShown = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -62,6 +67,8 @@
             checkCode();
         }
     });
+
+    let userAcceptedPrivacyPolicy = $state(false);
 
     onMount(async () => {
         retrieveUserData();
@@ -184,6 +191,8 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
+            userAcceptedPrivacyPolicy = data.acceptedAiPrivacyPolicy;
+            aiToggle = data.aiTagging;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -215,11 +224,44 @@
     }
 
     /// <summary>
+    /// Accepts the ai privacy policy
+    /// </summary>
+    async function acceptPrivacyPolicy() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/accept-policy` as any),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                },
+            );
+
+            if (response.ok) {
+                userAcceptedPrivacyPolicy = true;
+                const result = await toggleAiTaggingOnBackend();
+
+                if (result.success) {
+                    aiToggle = true;
+                } else {
+                    addToast(
+                        result.message || "Failed to enable AI tagging.",
+                        "error",
+                    );
+                }
+            } else {
+                addToast("Failed to accept privacy policy.", "error");
+            }
+        } catch (err) {
+            addToast((err as Error).message);
+        }
+    }
+
+    /// <summary>
     /// Updates the users information with the provided information
     /// </summary>
     async function updateUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(resolve(`/api/user` as any), {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -476,6 +518,57 @@
             imageEditor.highlightError(true);
         }
     }
+
+    /**
+     * Sends a request to the backend to toggle AI tagging setting.
+     */
+    async function toggleAiTaggingOnBackend(): Promise<{
+        success: boolean;
+        message?: string;
+    }> {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/ai-toggle` as any),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                },
+            );
+
+            if (response.ok) {
+                return { 
+                    success: true 
+                };
+            }
+
+            const message = await response.text().catch(() => "");
+            return { 
+                success: false, 
+                message 
+            };
+        } catch (err) {
+            return { 
+                success: false
+            };
+        }
+    }
+
+    async function updateAiToggle(aiToggleState: boolean) {
+        if (!userAcceptedPrivacyPolicy) {
+            aiToggle = false;
+            privacyPolicyModalShown = true;
+            return;
+        }
+
+        const result = await toggleAiTaggingOnBackend();
+        if (!result.success) {
+            addToast(
+                result.message || "Failed to update AI tagging preference.",
+                "error",
+            );
+            aiToggle = !aiToggleState;
+        }
+    }
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
@@ -533,7 +626,18 @@
                 <div class="mt-5 mb-4">
                     <h5 class="text-muted mb-2">Preferences</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
-                    <p>****add ai tagging toggling here****</p>
+                    <div
+                        class="d-flex align-items-center justify-content-between"
+                    >
+                        <label for="aiToggle" class="form-label"
+                            >Photo Tagging w/ Artifical Intelligence</label
+                        >
+                        <ToggleForm
+                            id="aiToggle"
+                            bind:checked={aiToggle}
+                            onchange={() => updateAiToggle(aiToggle)}
+                        />
+                    </div>
                 </div>
 
                 <div class="mt-5 mb-4">
@@ -582,63 +686,15 @@
                             We've sent a 6-digit verification code to <br />
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
-                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit1}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit2}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit3}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit4}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit5}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit6}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                        </div>
-
-                        {#if codeError}
-                            <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1" />
-                                {codeError}
-                            </div>
-                        {/if}
+                        <CodeForm
+                                bind:digit1
+                                bind:digit2
+                                bind:digit3
+                                bind:digit4
+                                bind:digit5
+                                bind:digit6
+                                error={codeError}
+                        />
 
                         <button
                             class="btn btn-link btn-sm text-decoration-none"
@@ -778,3 +834,19 @@
         </div>
     </div>
 </div>
+
+<!-- ai privacy policy confirmation modal -->
+<PolicyModal
+    bind:show={privacyPolicyModalShown}
+    option1Text={"Accept"}
+    option2Text={"Reject"}
+    onOption1={() => acceptPrivacyPolicy()}
+    onOption2={() => {
+        privacyPolicyModalShown = false;
+    }}
+>
+    {#snippet children()}
+        <p>You must accept the AI privacy policy in order to turn on AI image tagging.</p>
+        <AiPrivacyPolicy />
+    {/snippet}
+</PolicyModal>

@@ -5,6 +5,8 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using SENG302.Api.Helpers.Validators;
 
 
 namespace SENG302.Api.Services;
@@ -30,14 +32,17 @@ public class PostService : IPostService
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IAlbumService _albumService;
 
     public PostService(
+        IAlbumService albumService,
         IDbContextFactory<DatabaseContext> dbContextFactory,
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
         IImageTaggingQueue imageTaggingQueue)
     {
+        _albumService = albumService;
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
@@ -83,6 +88,7 @@ public class PostService : IPostService
         postRequest.Content = postRequest.Content.Trim();
         photos ??= [];
 
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
@@ -90,11 +96,11 @@ public class PostService : IPostService
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidationTools.IsValidFilesize(photo))
+            if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
             }
-            else if (!ImageValidationTools.IsValidMimeType(photo))
+            else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -122,6 +128,13 @@ public class PostService : IPostService
             await GenerateImageTags(photo, file.Id);
         }
 
+        Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
+
+        album.PhotoIds.AddRange(photoIds);
+        context.Albums.Update(album);
+
+        await context.SaveChangesAsync();
+
         // Add location
         var location = await _geoService.GetLocationAsync(postRequest.OsmId);
         if (location == null)
@@ -138,11 +151,11 @@ public class PostService : IPostService
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
-            creationTime = _timeProvider.GetUtcNow(),
+            CreationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
-            LocationName = location.name,
+            LocationName = location.Name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -151,10 +164,10 @@ public class PostService : IPostService
         {
             OsmId = postRequest.OsmId,
             PostId = newPost.PostId,
-            Lat = location.lat,
-            Lon = location.lon,
-            Name = location.name,
-            DisplayName = location.display_name,
+            Lat = location.Latitude,
+            Lon = location.Longitude,
+            Name = location.Name,
+            DisplayName = location.DisplayName,
         });
 
         await context.SaveChangesAsync();
@@ -216,11 +229,11 @@ public class PostService : IPostService
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidationTools.IsValidFilesize(photo))
+            if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image too large, maximum file size is 10MB");
             }
-            else if (!ImageValidationTools.IsValidMimeType(photo))
+            else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -271,13 +284,22 @@ public class PostService : IPostService
             await GenerateImageTags(photo, customFile.Id);
         }
 
+        // get the album and add new photo Ids
+        Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
+
+        album.PhotoIds.AddRange(customFileIds);
+        context.Albums.Update(album);
+
+        await context.SaveChangesAsync();
+
+
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds != null ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
-        post.LocationName = location != null ? location.name : post.LocationName;
+        post.PhotoIds = post.PhotoIds.Count > 0 ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.LocationName = location != null ? location.Name : post.LocationName;
 
         // Save Changes
         context.Posts.Update(post);
@@ -321,6 +343,7 @@ public class PostService : IPostService
                 "Post with the provided ID does not exist."
             );
         }
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == post.TripId);
 
         var locations = await context.Locations
             .Where(location => location.PostId == postId)
@@ -328,7 +351,7 @@ public class PostService : IPostService
 
         context.Locations.RemoveRange(locations);
 
-        if (post.PhotoIds != null)
+        if (post.PhotoIds.Count > 0)
         {
             var images = await context.CustomFiles
                 .Where(file => post.PhotoIds.Contains(file.Id))
@@ -337,12 +360,14 @@ public class PostService : IPostService
             foreach (var image in images)
             {
                 await _fileService.DeleteFileAsync(image.FileKey);
+                album.PhotoIds.Remove(image.Id);
             }
         }
 
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
+
 
     /// <summary>
     /// Deletes all posts of a given trip. Used when a trip is deleted.
@@ -359,6 +384,7 @@ public class PostService : IPostService
             await DeletePostByIdAsync(posts[i].PostId);
         }
 
+
     }
 
 
@@ -373,18 +399,29 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var post = await context.Posts.FirstOrDefaultAsync(t => t.PostId == postId);
-
+        if (post == null)
+        {
+            throw new KeyNotFoundException(
+                "Post of this Id does not exist."
+            );
+        }
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
         {
             throw new KeyNotFoundException(
                 "This photo does not belong to this post."
             );
         }
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == post.TripId);
 
         var photo = await _fileService.GetFileByIdAsync(photoId);
         await _fileService.DeleteFileAsync(photo.FileKey);
 
         post.PhotoIds.Remove(photoId);
+        if (album != null)
+        {
+            album.PhotoIds.Remove(photoId);
+        }
+
         await context.SaveChangesAsync();
     }
 
@@ -399,15 +436,7 @@ public class PostService : IPostService
     {
         try
         {
-            var ms = new MemoryStream();
-            await image.CopyToAsync(ms);
-            ms.Position = 0;
-
-            var safeFormFile = new FormFile(ms, 0, ms.Length, image.Name, image.FileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = image.ContentType
-            };
+            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
 
             await _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)

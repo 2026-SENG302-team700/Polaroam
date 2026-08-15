@@ -2,36 +2,26 @@ using System.Globalization;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Interfaces;
 
-public class PostValidator
-{
+namespace SENG302.Api.Helpers.Validators;
 
-    /// <summary>
-    /// Returns a string representing the date format of the users locale
-    /// </summary>
-    /// <param name="culture"></param>
-    /// <returns>dd/MM/yyyy or similar</returns>
-    public static string GetLocaleDateFormat(CultureInfo? culture = null)
-    {
-        culture ??= CultureInfo.CurrentCulture;
-        string pattern = culture.DateTimeFormat.ShortDatePattern;
-        return pattern;
-    }
+public static class PostValidator
+{
 
     /// <summary>
     /// Checks the due date is valid
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="date"></param>
-    public static List<string> ValidatePostDate(DateOnly? date)
+    public static List<string> ValidatePostDate(DateTimeOffset? date)
     {
         var errors = new List<string>();
         if (date == null)
         {
-            errors.Add($"Invalid date, date must be formatted {GetLocaleDateFormat(CultureInfo.CurrentCulture)}");
+            errors.Add($"Date is invalid");
             return errors;
         }
 
-        if (date > DateOnly.FromDateTime(DateTime.Today)) errors.Add("Invalid date, date cannot be in the future");
+        if (date > DateTimeOffset.UtcNow) errors.Add("Invalid date, date cannot be in the future");
         return errors;
     }
 
@@ -51,12 +41,9 @@ public class PostValidator
             .Values
             .ToList();
 
-        errors["location"] = ValidatePostLocation(postRequest.OsmId);
+        errors["date"] = ValidatePostDate(postRequest.Date);
 
-        if (postRequest.DateSupplied)
-        {
-            errors["date"] = ValidatePostDate(postRequest.Date);
-        }
+        errors["location"] = ValidatePostLocation(postRequest.OsmId);
 
         errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 

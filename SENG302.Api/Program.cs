@@ -2,11 +2,8 @@ using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
 using SENG302.Api.Services.ImageTagging;
@@ -262,12 +259,13 @@ public class Program
 
     protected static void RegisterServices(IServiceCollection services)
     {
-        // Register a TimeProvider so we don't need to rely on DateTime.Now, and can mock the time in automated tests
+        // Register a TimeProvider so we don't need to rely on DateTimeOffset.UtcNow, and can mock the time in automated tests
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IPostService, PostService>();
+        services.AddScoped<IAlbumService, AlbumService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {

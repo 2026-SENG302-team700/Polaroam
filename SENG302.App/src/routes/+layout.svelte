@@ -28,8 +28,9 @@
 	<footer class="footerBar menu-bar ">
 		<div class="footerContent display: flex; flex-direction: row; align-items: center; padding-top: 5px; "
     >
-			<NavBarMenuButton path={`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`} text= {"Content Policy"}/>
-			<NavBarMenuButton path={`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`} text= {"Privacy Policy"}/>
+			<NavBarMenuButton path="/policies/content-policy" text= {"Content Policy"}/>
+			<NavBarMenuButton path="/policies/privacy-policy" text= {"Privacy Policy"}/>
+			<NavBarMenuButton path="/policies/ai-privacy-policy" text= {"AI Privacy Policy"}/>
 		</div>
 	</footer>
 {/key}

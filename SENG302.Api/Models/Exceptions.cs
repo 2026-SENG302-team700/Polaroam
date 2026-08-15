@@ -36,6 +36,18 @@ public class InvalidCountryException : Exception
 
 
 /// <summary>
+/// Exception to throw when a user attempts to enable AI tagging without having accepted the AI privacy policy
+/// </summary>
+public class PrivacyPolicyNotAcceptedException : Exception
+{
+    public PrivacyPolicyNotAcceptedException() { }
+
+    public PrivacyPolicyNotAcceptedException(string message) : base(message) { }
+
+    public PrivacyPolicyNotAcceptedException(string message, Exception inner) : base(message, inner) { }
+}
+
+/// <summary>
 /// Exception to throw when general, and multiple validation error(s) occur.
 /// </summary>
 public class MultipleValidationException : Exception
@@ -61,5 +73,4 @@ public class MultipleValidationListException : Exception
     {
         Errors = errors;
     }
-    
 }

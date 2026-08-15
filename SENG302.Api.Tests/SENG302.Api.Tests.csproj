@@ -28,7 +28,6 @@
         <PackageReference Include="Microsoft.Playwright" Version="1.61.0" />
         <PackageReference Include="xunit" Version="2.9.3" />
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
-        <PackageReference Include="Microsoft.Playwright" Version="1.61.0" />
         
     </ItemGroup>
 
@@ -41,12 +40,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="resources\" />
+      <None Remove="resources\**" />
+      <Content Include="resources\**">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
-
     <ItemGroup>
-      <None Remove="resources\panda.webp" />
-      <Content Include="resources\panda.webp">
+      <None Remove="resources\render.png" />
+      <Content Include="resources\render.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
