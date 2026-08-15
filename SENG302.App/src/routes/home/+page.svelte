@@ -17,9 +17,13 @@
     let inSearch = $state(false);
     
     let searchTrips = $state([]);
-    let searchPhotos: File[] = $state([]);
-    let photoIds: Number[] = $state([]);
-    
+    let searchPhotoTrips: { 
+        tripId: number; 
+        tripTitle: string; 
+        photos: File[]; 
+        photoIds: number[] 
+    }[] = $state([]);
+
     let tagQuery = $state("");
 
     onMount(() => {
@@ -51,10 +55,10 @@
     
     async function performSearch() {
         searchTrips = [];
-        searchPhotos = [];
-        
+        searchPhotoTrips = [];
+
         inSearch = true;
-        
+
         try {
             loading = true;
             const tripsResponse = await fetchWithCsrf(resolve(`/api/search/my-trips?query=${encodeURIComponent(tagQuery)}` as any), {
@@ -67,43 +71,45 @@
                 credentials: "include",
             });
 
-            const photosResponse = await fetchWithCsrf(resolve(`/api/search/photos?query=${encodeURIComponent(tagQuery)}` as any), {
-                method: "GET",
-                credentials: "include",
-            });
-            
             if (tripsResponse.ok) {
                 searchTrips = await tripsResponse.json();
             } else {
                 tripsError = "Failed to fetch search results.";
             }
-            
+
             if (photosResponse.ok) {
-                const metadata: {
-                    photoId: number;
-                    fileName: string;
-                    mimeType: string;
+                const groups: {
+                    tripId: number;
+                    tripTitle: string;
+                    photos: { photoId: number; fileName: string; mimeType: string }[];
                 }[] = await photosResponse.json();
 
-                searchPhotos = await Promise.all(
-                    metadata.map(async (meta) => {
-                        const res = await fetchWithCsrf(
-                            resolve(`/api/image/${meta.photoId}` as any),
-                            {
-                                method: "GET",
-                                credentials: "include"
-                            }
+                searchPhotoTrips = await Promise.all(
+                    groups.map(async (group) => {
+                        const photos = await Promise.all(
+                            group.photos.map(async (meta) => {
+                                const res = await fetchWithCsrf(
+                                    resolve(`/api/image/${meta.photoId}` as any),
+                                    {
+                                        method: "GET",
+                                        credentials: "include"
+                                    }
+                                );
+                                const blob = await res.blob();
+                                return new File([blob], meta.fileName, { type: meta.mimeType });
+                            }),
                         );
-                        const blob = await res.blob();
-                        return new File([blob], meta.fileName, { type: meta.mimeType });
+                        return {
+                            tripId: group.tripId,
+                            tripTitle: group.tripTitle,
+                            photos,
+                            photoIds: group.photos.map((meta) => meta.photoId),
+                        };
                     }),
                 );
-                photoIds = metadata.map((meta) => meta.photoId);
             } else {
                 photosError = "Failed to fetch search results.";
             }
-            
-            
         } catch (err) {
             tripsError = "Failed to fetch search results: " + (err as Error).message;
         } finally {
@@ -126,7 +132,7 @@
         </div>
     </div>
     {#if inSearch}
-        <SearchView trips={searchTrips} photos={searchPhotos} photoIds={photoIds}/>
+        <SearchView trips={searchTrips} photoTrips={searchPhotoTrips}/>
     {:else}
         {#if trips.length > 0}
             <div class="trip-object-wrapper">

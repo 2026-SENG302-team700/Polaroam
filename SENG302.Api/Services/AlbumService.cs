@@ -14,6 +14,7 @@ public interface IAlbumService
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
     public Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds);
 }
 
 public class AlbumService: IAlbumService
@@ -277,4 +278,14 @@ public class AlbumService: IAlbumService
         return newAlbum;
     }
     
+    /// <summary>
+    /// gets albums from list of trips
+    /// </summary>
+    /// <param name="tripIds">ids of trips for album</param>
+    /// <returns>the album of the respective trips</returns>
+    public async Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.Albums.Where(a => tripIds.Contains(a.TripId)).ToListAsync();
+    }
 }

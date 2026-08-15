@@ -1,24 +1,36 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
 public interface IImageService
 {
     public Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
-    public Task<List<int>> GetImagesFromQueryAsync(string query);
-    public Task<int> GetTripIdFromTags(int userId, int photoId);
+    public Task<List<TripPhotoGroupResponse>> GetPhotosFromQueryAsync(int userId, string query);
 }
 
 public class ImageService : IImageService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    
-    public ImageService(IDbContextFactory<DatabaseContext> dbContextFactory)
+    private readonly IFileService _fileService;
+    private readonly IAlbumService _albumService;
+    private readonly ITripService _tripService;
+    private readonly IPostService _postService;
+
+    public ImageService(
+        IDbContextFactory<DatabaseContext> dbContextFactory,
+        IFileService fileService,
+        IAlbumService albumService,
+        ITripService tripService,
+        IPostService postService)
     {
         _dbContextFactory = dbContextFactory;
+        _fileService = fileService;
+        _albumService = albumService;
+        _tripService = tripService;
+        _postService = postService;
     }
     
     /// <summary>
@@ -84,38 +96,84 @@ public class ImageService : IImageService
         return tags;
     }
 
-    public async Task<List<int>> GetImagesFromQueryAsync(string query)
+    /// <summary>
+    /// gets photos owned by user where a tag matches (or partially matches)
+    /// </summary>
+    /// <param name="userId">user's photos</param>
+    /// <param name="query">search term</param>
+    /// <returns>a list of trips with their photos sorted by date</returns>
+    public async Task<List<TripPhotoGroupResponse>> GetPhotosFromQueryAsync(int userId, string query)
     {
-        var context = await _dbContextFactory.CreateDbContextAsync();
+        // gets trips owned by user id
+        var trips = (await _tripService.GetTripsByUserIdAsync(userId)).ToDictionary(t => t.Id);
+        var userTripIds = trips.Keys.ToList();
 
-        var photoIds = await context.CustomFiles.Where(img => img.Tags.Contains(query)).Select(img => img.Id).ToListAsync();
+        // gets trip albums
+        var albums = await _albumService.GetAlbumsByTripIdsAsync(userTripIds);
 
-        return photoIds;
-    }
-
-    public async Task<int> GetTripIdFromTags(int userId, int photoId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        // Trip ids owned by this user
-        var userTripIds = context.Trips
-            .Where(t => t.UserId == userId)
-            .Select(t => t.Id);
-        
-        // Start the query with albums that this user owns
-        // Query creation assisted by claude code
-        var album = await context.Albums
-            .Where(a => userTripIds.Contains(a.TripId) && a.PhotoIds.Contains(photoId)).FirstOrDefaultAsync();
-
-        if (album == null)
+        // gets the photo ids owned by user
+        var ownedPhotoIds = albums
+            .SelectMany(a => a.PhotoIds)
+            .Distinct()
+            .ToList();
+        if (ownedPhotoIds.Count == 0)
         {
-            throw new KeyNotFoundException("Album not found");
+            return [];
         }
 
-        return album.TripId;
+        // gets the files with matching tags
+        var files = await _fileService.GetFilesByIdsAsync(ownedPhotoIds);
+        var matchedFiles = files
+            .Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .ToDictionary(f => f.Id);
+        if (matchedFiles.Count == 0)
+        {
+            return [];
+        }
 
+        // gets the posts belonging to the user's trips
+        var posts = await _postService.GetAllPostsAsync(userId);
 
+        // gets dates for each photo
+        var photoDates = new Dictionary<int, DateOnly?>();
+        foreach (var post in posts)
+        {
+            foreach (var photoId in post.PhotoIds)
+            {
+                photoDates[photoId] = post.Date;
+            }
+        }
 
+        // helper function that builds a trip photo grouping based on its album
+        TripPhotoGroupResponse? BuildTripPhotoGroup(Album album)
+        {
+            var trip = trips[album.TripId];
+            
+            var photos = album.PhotoIds
+                .Where(matchedFiles.ContainsKey)
+                .Select(photoId => new PhotoMetadataResponse
+                {
+                    PhotoId = photoId,
+                    TripId = album.TripId,
+                    FileName = matchedFiles[photoId].OriginalFileName,
+                    MimeType = matchedFiles[photoId].MimeType,
+                    Date = photoDates.GetValueOrDefault(photoId)
+                })
+                .OrderBy(p => p.Date)
+                .ToList();
 
+            return photos.Count == 0 ? null : new TripPhotoGroupResponse
+            {
+                TripId = album.TripId,
+                TripTitle = trip.Title,
+                Photos = photos
+            };
+        }
+
+        return albums
+            .Select(BuildTripPhotoGroup)
+            .OfType<TripPhotoGroupResponse>()
+            .OrderBy(g => g.TripTitle)
+            .ToList();
     }
 }
