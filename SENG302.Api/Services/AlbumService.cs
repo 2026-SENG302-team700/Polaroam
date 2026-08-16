@@ -3,6 +3,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services.ImageTagging;
 using SENG302.Api.Helpers.Validators;
 
@@ -10,12 +11,12 @@ namespace SENG302.Api.Services;
 
 public interface IAlbumService
 {
-    public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId);
+    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId);
     public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
-    public Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
 }
 
 public class AlbumService : IAlbumService
@@ -193,7 +194,7 @@ public class AlbumService : IAlbumService
     /// <param name="tripId"></param>
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId)
+    public async Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -210,19 +211,24 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<CustomFile> files = [];
+        List<PhotoMetadataResponse> files = [];
 
         foreach (var photoId in album.PhotoIds)
         {
             try
             {
                 var file = await _fileService.GetFileByIdAsync(photoId);
-                files.Add(file);
+                files.Add(new PhotoMetadataResponse
+                {
+                    PhotoId = file.Id,
+                    FileName = file.OriginalFileName,
+                    MimeType = file.MimeType
+                });
             } catch (Exception ex)
             {
                 Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
             }
-            
+
         }
 
         return files;
@@ -237,7 +243,7 @@ public class AlbumService : IAlbumService
     /// <param name="photoId"></param>
     /// <returns>a customfile object</returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
+    public async Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -256,7 +262,12 @@ public class AlbumService : IAlbumService
 
         var file = await _fileService.GetFileByIdAsync(photoId);
 
-        return file;
+        return new PhotoMetadataResponse
+        {
+            PhotoId = file.Id,
+            FileName = file.OriginalFileName,
+            MimeType = file.MimeType
+        };
     }
 
 

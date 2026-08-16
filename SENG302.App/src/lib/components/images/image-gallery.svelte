@@ -20,7 +20,7 @@
         errors?: string[];
     } = $props();
 
-    let photoIds = $derived(imageMetadata?.map(m => m.id) ?? []);
+    let photoIds = $derived(imageMetadata?.map(m => m.photoId) ?? []);
     
     let letDelete = true;
     let confirmDeleteModal = $state(false);
@@ -51,7 +51,7 @@
                 const item = imageMetadata[pendingDeleteIndex];
                 const response = await fetchWithCsrf(
                     resolve(
-                        `/api/album/${tripId}/images/${item.id}` as any,
+                        `/api/album/${tripId}/images/${item.photoId}` as any,
                     ),
                     {
                         method: "DELETE",
@@ -82,14 +82,14 @@
             class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
     >
 
-        {#each imageMetadata ?? [] as image, index (image.id)}
+        {#each imageMetadata ?? [] as image, index (image.photoId)}
             <div class="col">
                 <div class="position-relative">
                     <LazyClickableImage
-                            src={resolve(`/api/album/${tripId}/images/${image.fileKey}`)}
+                            src={resolve(`/api/album/${tripId}/images/${image.photoId}`)}
                             {index}
-                            images={imageMetadata.map(m => resolve(`/api/album/${tripId}/images/${m.fileKey}`))}
-                            photoId={image.id}
+                            images={imageMetadata.map(m => resolve(`/api/album/${tripId}/images/${m.photoId}`))}
+                            photoId={image.photoId}
                             {photoIds}
                     />
                     {#if letDelete}

@@ -46,15 +46,15 @@ public class AlbumController : ControllerBase
     /// Gets an image from an album.
     /// </summary>
     /// <param name="tripId"></param>
-    /// <param name="fileKey"></param>
+    /// <param name="photoId"></param>
     /// <returns>
     /// Ok - image found
     /// Unauthorized - user not logged in or does not have access to the trip
     /// NotFound - image/album not found
     /// BadRequest - unhandled error
     /// </returns>
-    [HttpGet("images/{fileKey}")]
-    public async Task<ActionResult> GetAlbumImage(int tripId, string fileKey)
+    [HttpGet("images/{photoId:int}")]
+    public async Task<ActionResult> GetAlbumImage(int tripId, int photoId)
     {
         try
         {
@@ -66,9 +66,14 @@ public class AlbumController : ControllerBase
                 return Unauthorized();
 
             // Get the image
-            var image = await _fileService.GetFileContentAsync(fileKey);
-            var contentType = GetContentType(fileKey);
+            var file = await _fileService.GetFileByIdAsync(photoId);
+            var image = await _fileService.GetFileContentAsync(file.FileKey);
+            var contentType = GetContentType(file.FileKey);
             return File(image, contentType);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound("Image not found");
         }
         catch (FileNotFoundException)
         {
@@ -76,7 +81,7 @@ public class AlbumController : ControllerBase
         }
         catch (Exception)
         {
-            return BadRequest("Failed to get image: " + fileKey);
+            return BadRequest("Failed to get image: " + photoId);
         }
     }
     
