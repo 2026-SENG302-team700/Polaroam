@@ -7,18 +7,24 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
 
+    // Allow use of file paths (Via the api) or actual File objects.
+    type ImageSource = File | string;
+
+    // Allow use of file paths (Via the api) or actual File objects.
+    type ImageSource = File | string;
+
     let {
         image,
         enlarged = $bindable(false),
-        index,
+        index = $bindable(0),
         images,
         photoId,
         photoIds,
     }: {
-        image: File;
+        image: ImageSource;
         enlarged: boolean;
         index: number;
-        images: File[] | null;
+        images: ImageSource[] | null;
         photoId: number;
         photoIds: number[];
     } = $props();
@@ -34,19 +40,37 @@
         fetchImageTags(photoId);
     });
 
+    // Only File sources need an object URL; string sources are used as-is.
+    let objectUrl = $state<string | null>(null);
+
+    // Create an object URL for File sources.
+    $effect(() => {
+        if (image instanceof File) {
+            const url = URL.createObjectURL(image);
+            objectUrl = url;
+            return () => URL.revokeObjectURL(url);
+        }
+        objectUrl = null;
+    });
+
+    // Sets scr to url for File sources
+    let displaySrc = $derived(image instanceof File ? objectUrl : image);
+
     function moveToLeftImage() {
-        index -= 1;
-        let newImage = images?.[index];
+        if (images === null || index === 0) return;
+        const newImage = images[index - 1];
         if (newImage !== undefined) {
+            index -= 1;
             image = newImage;
         }
         fetchImageTags(photoIds[index]);
     }
 
     function moveToRightImage() {
-        index += 1;
-        let newImage = images?.[index];
+        if (images === null || index === images.length - 1) return;
+        const newImage = images[index + 1];
         if (newImage !== undefined) {
+            index += 1;
             image = newImage;
         }
         fetchImageTags(photoIds[index]);
