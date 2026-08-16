@@ -5,11 +5,15 @@
         src,
         index,
         images = null,
+        photoId,
+        photoIds,
         rootMargin = "200px"
     }: {
         src: string;
         index: number;
         images: File[] | null;
+        photoId: number;
+        photoIds: number[];
         rootMargin?: string;
     } = $props();
 
@@ -67,7 +71,7 @@
 
 <div bind:this={containerEl} class="lazy-image-wrapper">
     {#if file}
-        <ClickableImage image={file} {index} images={images ?? []} />
+        <ClickableImage image={file} {index} images={images ?? []} {photoId} {photoIds}/>
     {:else if failed}
         <div class="img-thumbnail lazy-placeholder lazy-error" onclick={loadFile} role="button" tabindex="0">
             Failed to load — click to retry

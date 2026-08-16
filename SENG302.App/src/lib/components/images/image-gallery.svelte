@@ -19,6 +19,8 @@
         tripId: number;
         errors?: string[];
     } = $props();
+
+    let photoIds = $derived(imageMetadata?.map(m => m.id) ?? []);
     
     let letDelete = true;
     let confirmDeleteModal = $state(false);
@@ -56,16 +58,17 @@
                         credentials: "include",
                     },
                 );
+                if (response.status == 200 || response.status == 204) {
+                    imageMetadata = imageMetadata.filter((_, i) => i !== pendingDeleteIndex);
+                }
+                
                 if (response.status == 405) {
                     linkedPostId = await response.json();
                     goToPostModal = true;
                 }
-                
-                if (response.ok) {
-                    const [removed] = imageMetadata.splice(pendingDeleteIndex, 1);
-                }
             } catch {
                 deleteError = "Failed to delete image";
+                console.log(deleteError)
             }
             
             pendingDeleteIndex = null;
@@ -79,13 +82,15 @@
             class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
     >
 
-        {#each imageMetadata ?? [] as image, index}
+        {#each imageMetadata ?? [] as image, index (image.id)}
             <div class="col">
                 <div class="position-relative">
                     <LazyClickableImage
                             src={resolve(`/api/album/${tripId}/images/${image.fileKey}`)}
                             {index}
                             images={imageMetadata.map(m => resolve(`/api/album/${tripId}/images/${m.fileKey}`))}
+                            photoId={image.id}
+                            {photoIds}
                     />
                     {#if letDelete}
                         <div class="position-absolute top-0 end-0 m-1">

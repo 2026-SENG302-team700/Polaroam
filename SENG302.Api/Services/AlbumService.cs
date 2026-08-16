@@ -214,8 +214,15 @@ public class AlbumService : IAlbumService
 
         foreach (var photoId in album.PhotoIds)
         {
-            var file = await _fileService.GetFileByIdAsync(photoId);
-            files.Add(file);
+            try
+            {
+                var file = await _fileService.GetFileByIdAsync(photoId);
+                files.Add(file);
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
+            }
+            
         }
 
         return files;

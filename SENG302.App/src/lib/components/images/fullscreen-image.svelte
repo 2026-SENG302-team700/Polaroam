@@ -62,6 +62,7 @@
             index -= 1;
             image = newImage;
         }
+        fetchImageTags(photoIds[index])
     }
 
     function moveToRightImage() {
@@ -71,6 +72,7 @@
             index += 1;
             image = newImage;
         }
+        fetchImageTags(photoIds[index])
     }
 
     async function fetchImageTags(id: number) {
