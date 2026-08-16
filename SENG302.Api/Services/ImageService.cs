@@ -141,9 +141,10 @@ public class ImageService : IImageService
                     TripId = album.TripId,
                     FileName = matchedFiles[photoId].OriginalFileName,
                     MimeType = matchedFiles[photoId].MimeType,
-                    Date = DateOnly.FromDateTime(matchedFiles[photoId].DateCreated.UtcDateTime)
+                    Tags = matchedFiles[photoId].Tags,
+                    DateCreated = matchedFiles[photoId].DateCreated
                 })
-                .OrderBy(p => p.Date)
+                .OrderBy(p => p.DateCreated)
                 .ToList();
 
             return photos.Count == 0 ? null : new TripPhotoGroupResponse

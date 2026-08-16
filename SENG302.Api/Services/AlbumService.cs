@@ -238,7 +238,9 @@ public class AlbumService : IAlbumService
         {
             PhotoId = file.Id,
             FileName = file.OriginalFileName,
-            MimeType = file.MimeType
+            MimeType = file.MimeType,
+            Tags = file.Tags,
+            DateCreated = file.DateCreated
         }).ToList();
     }
 

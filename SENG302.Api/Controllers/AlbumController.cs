@@ -110,7 +110,9 @@ public class AlbumController : ControllerBase
                 PhotoId = image.PhotoId,
                 FileName = image.FileName,
                 MimeType = image.MimeType,
-                TripId = tripId
+                TripId = tripId,
+                Tags = image.Tags,
+                DateCreated = image.DateCreated
             }));
         }
         catch (KeyNotFoundException e) // Trip or Album not found
