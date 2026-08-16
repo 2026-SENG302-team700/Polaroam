@@ -20,6 +20,7 @@
         newUploadsCount = $bindable(0),
         fileErrors = $bindable<string[]>([]),
         loading = $bindable(false),
+        uploadFunc,
         aiTaggingForUpload = $bindable(true),
         showAiTaggingOption = $bindable(false),
     }: {
@@ -28,6 +29,7 @@
         newUploadsCount?: number;
         fileErrors?: string[];
         loading: boolean;
+        uploadFunc?: () => void;
         aiTaggingForUpload?: boolean;
         showAiTaggingOption?: boolean;
     } = $props();
@@ -121,6 +123,9 @@
                 newUploadsCount += 1;
                 filesList?.push(file);
             }
+        }
+        if (uploadFunc != null) {
+            uploadFunc();
         }
 
         fileErrors = newFileErrors;

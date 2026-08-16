@@ -3,13 +3,11 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
-    import { formatDate } from "$lib/datepicker/formatDate.js";
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
-    import ImageDisplay from "$lib/components/images/image-display.svelte";
     import PostDisplayCard from "$lib/components/trip-components/post-display-card.svelte";
 
     let loading = $state(false);
@@ -35,6 +33,7 @@
     });
     
     let photos: File[] = $state([]);
+    let photoIds: number[] = $state([]);
 
     onMount(() => {
         fetchPost();
@@ -120,6 +119,7 @@
                     return new File([blob], meta.fileName, { type: meta.mimeType });
                 }),
             );
+            photoIds = metadata.map((meta) => meta.photoId);
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -204,7 +204,7 @@
         <DeleteButton deleteAction={showConfirmationModal} />
         <ErrorDisplay errors={[error]} />
         
-        <PostDisplayCard post={postObject} userName={displayName} {photos}/>
+        <PostDisplayCard post={postObject} userName={displayName} {photos} {photoIds}/>
     </div>
 </div>
 
