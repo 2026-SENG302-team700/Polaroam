@@ -107,8 +107,8 @@ public class AlbumController : ControllerBase
             var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId);
             return Ok(images.Select(image => new PhotoMetadataResponse
             {
-                PhotoId = image.Id,
-                FileName = image.OriginalFileName,
+                PhotoId = image.PhotoId,
+                FileName = image.FileName,
                 MimeType = image.MimeType,
                 TripId = tripId
             }));

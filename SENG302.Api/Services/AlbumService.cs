@@ -11,12 +11,13 @@ namespace SENG302.Api.Services;
 
 public interface IAlbumService
 {
-    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId);
+    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null);
     public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
     public Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds);
 }
 
 public class AlbumService : IAlbumService
@@ -213,19 +214,14 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<PhotoMetadataResponse> files = [];
+        List<CustomFile> matchedFiles = [];
 
         foreach (var photoId in album.PhotoIds)
         {
             try
             {
                 var file = await _fileService.GetFileByIdAsync(photoId);
-                files.Add(new PhotoMetadataResponse
-                {
-                    PhotoId = file.Id,
-                    FileName = file.OriginalFileName,
-                    MimeType = file.MimeType
-                });
+                matchedFiles.Add(file);
             } catch (Exception ex)
             {
                 Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
@@ -233,13 +229,18 @@ public class AlbumService : IAlbumService
 
         }
 
-        if (!string.IsNullOrEmpty(tag) && files.Count > 0)
+        if (!string.IsNullOrEmpty(tag) && matchedFiles.Count > 0)
         {
-            files = files.Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
-            files.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
+            matchedFiles = matchedFiles.Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
+            matchedFiles.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
         }
 
-        return files;
+        return matchedFiles.Select(file => new PhotoMetadataResponse
+        {
+            PhotoId = file.Id,
+            FileName = file.OriginalFileName,
+            MimeType = file.MimeType
+        }).ToList();
     }
 
 
