@@ -18,8 +18,6 @@
         
         onMount(getImageMetadata);
     </script>
-
-    <div class="d-flex justify-content-center">
-        <ImageGallery {imageMetadata} {tripId}/>
-    </div>
+    
+    <ImageGallery {imageMetadata} {tripId}/>
     

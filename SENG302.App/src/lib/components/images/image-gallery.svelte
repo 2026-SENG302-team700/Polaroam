@@ -4,27 +4,30 @@
     import ClickableImage from "./clickable-image.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import ExpandableErrorDisplay from "$lib/components/forms/expandable-error-display.svelte";
+    import LazyClickableImage from "$lib/components/images/lazy-clickable-image.svelte";
     import { resolve } from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf.js";
+    import {page} from "$app/state";
+    import { goto } from "$app/navigation";
 
     let {
         imageMetadata = $bindable([]),
         tripId,
-        letDelete = false,
-        ondelete,
-        errors = [],
-        children,
+        errors = []
     }: {
         imageMetadata?: [] | null;
         tripId: number;
-        letDelete?: boolean;
-        ondelete?: (image: File, index: number) => void;
         errors?: string[];
-        children?: Snippet;
     } = $props();
-
-    let confirmationModalShown = $state(false);
+    
+    let letDelete = true;
+    let confirmDeleteModal = $state(false);
+    let goToPostModal = $state(false);
     let pendingDeleteIndex: number | null = $state(null);
     let dataUrl = $state('');
+    
+    let deleteError = $state("");
+    let linkedPostId = $state(0);
 
     /**
      * Stores the index of the image to be deleted so it is not out of scope
@@ -33,65 +36,96 @@
      */
     function RequestDelete(index: number) {
         pendingDeleteIndex = index;
-        confirmationModalShown = true;
+        confirmDeleteModal = true;
     }
 
     /**
      * Performs the deletion of the image and closes the modal
      */
-    function ConfirmDelete() {
+    async function ConfirmDelete() {
+        deleteError = "";
         if (pendingDeleteIndex !== null && imageMetadata) {
-            const [removed] = imageMetadata.splice(pendingDeleteIndex, 1);
-            ondelete?.(removed, pendingDeleteIndex);
+            try {
+                const item = imageMetadata[pendingDeleteIndex];
+                const response = await fetchWithCsrf(
+                    resolve(
+                        `/api/album/${tripId}/images/${item.id}` as any,
+                    ),
+                    {
+                        method: "DELETE",
+                        credentials: "include",
+                    },
+                );
+                if (response.status == 405) {
+                    linkedPostId = await response.json();
+                    goToPostModal = true;
+                }
+                
+                if (response.ok) {
+                    const [removed] = imageMetadata.splice(pendingDeleteIndex, 1);
+                }
+            } catch {
+                deleteError = "Failed to delete image";
+            }
+            
             pendingDeleteIndex = null;
         }
-        confirmationModalShown = false;
+        confirmDeleteModal = false;
     }
 </script>
 
-<div
-        class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
->
-    
-    {#each imageMetadata ?? [] as image, index}
-        <div class="col">
-            <div class="position-relative">
-                <div class="clickable-image-wrapper">
-                    <img src={resolve(`/api/album/${tripId}/images/${image.fileKey}`)} loading="lazy" decoding="async" alt="Gallery item" />
+<div class="d-flex justify-content-center">
+    <div
+            class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
+    >
+
+        {#each imageMetadata ?? [] as image, index}
+            <div class="col">
+                <div class="position-relative">
+                    <LazyClickableImage
+                            src={resolve(`/api/album/${tripId}/images/${image.fileKey}`)}
+                            {index}
+                            images={imageMetadata.map(m => resolve(`/api/album/${tripId}/images/${m.fileKey}`))}
+                    />
+                    {#if letDelete}
+                        <div class="position-absolute top-0 end-0 m-1">
+                            <DeleteButton
+                                    deleteAction={() => RequestDelete(index)}
+                                    class="btn-sm"
+                            />
+                        </div>
+                    {/if}
                 </div>
-                {#if letDelete}
-                    <div class="position-absolute top-0 end-0 m-1">
-                        <DeleteButton
-                                deleteAction={() => RequestDelete(index)}
-                                class="btn-sm"
-                        />
-                    </div>
-                {/if}
             </div>
-        </div>
-    {/each}
-    {#if imageMetadata && imageMetadata.length > 0}
-        <div class="col">
-            <div class="picker-tile">
-                {@render children?.()}
-            </div>
-        </div>
-    {/if}
+        {/each}
+    </div>
 </div>
 
+
+
 {#if !imageMetadata || imageMetadata.length === 0}
-    <p>No image selected</p>
-    {@render children?.()}
+    <div class="position-relative d-flex flex-column align-items-center justify-content-center text-center">
+        <p class="fs-3">No images found</p>
+    </div>
 {/if}
 <ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
-        bind:show={confirmationModalShown}
+        bind:show={confirmDeleteModal}
         message="Are you sure you want to delete this image?"
         option1Text="Delete"
         option2Text="Do not delete"
         onOption1={() => ConfirmDelete()}
-        onOption2={() => (confirmationModalShown = false)}
+        onOption2={() => (confirmDeleteModal = false)}
+/>
+
+<ConfirmationModal
+    bind:show={goToPostModal}
+    message="Selected image belongs to a post, delete the image from the post to remove the image."
+    option1Text="Go to post"
+    option2Text="Cancel"
+    onOption1={() => {goto(resolve(`/home/trips/${tripId}/posts/${linkedPostId}`))}}
+    onOption2={() => (goToPostModal = false)}
 />
 
 <style>
