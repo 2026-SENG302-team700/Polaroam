@@ -1,5 +1,6 @@
 <script lang="ts">
     import {resolve} from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf.js";
 
     let {
         query = $bindable(""),
@@ -71,7 +72,7 @@
         if (event.key !== "Enter") return;
         event.preventDefault();
         isOpen = false;
-        performSearch = true;
+        performSearch()
     }
 
     /**
@@ -102,7 +103,7 @@
                 type="button"
                 title="search your trips using the provided query."
                 class="btn btn-outline-secondary"
-                onclick={() => (performSearch = true)}
+                onclick={() => {performSearch()}}
         >
             {#if loading}
                 <div

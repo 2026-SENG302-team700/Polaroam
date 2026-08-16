@@ -37,7 +37,7 @@
      */
     async function getImageMetadata() {
         try{
-            const response = await fetch(resolve(`/api/album/${tripId}/tags?query=${tagQuery}`),
+            const response = await fetch(resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
                 {
                     method: 'GET',
                     credentials: 'include'
@@ -48,9 +48,11 @@
             imageMetadata = await response.json();
         } catch (err) {
             tagDataError = "An unexpected error occurred: ";
+        } finally {
+            loading = false;
         }
     }
-
+    
     let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     /**

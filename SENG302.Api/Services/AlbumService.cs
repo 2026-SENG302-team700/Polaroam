@@ -221,7 +221,7 @@ public class AlbumService : IAlbumService
 
         if (!string.IsNullOrEmpty(tag) && files.Count > 0)
         {
-            files = files.Where(f => f.Tags != null && f.Tags.Contains(tag)).ToList();
+            files = files.Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
         }
 
         return files;

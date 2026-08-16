@@ -50,8 +50,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             PhotoIds = [1, 2]
         });
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(1, 2);
-        context.CustomFiles.Add(new CustomFile { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
-        context.CustomFiles.Add(new CustomFile { Id = 2, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
+        context.CustomFiles.Add(new CustomFile { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["beach", "sun"]});
+        context.CustomFiles.Add(new CustomFile { Id = 2, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["stars", "night"]});
         await context.SaveChangesAsync();
     }
 
@@ -59,8 +59,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(3, 4);
-        context.CustomFiles.Add(new CustomFile { Id = 3, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
-        context.CustomFiles.Add(new CustomFile { Id = 4, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
+        context.CustomFiles.Add(new CustomFile { Id = 3, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["Test"] });
+        context.CustomFiles.Add(new CustomFile { Id = 4, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["Game"]});
         await context.SaveChangesAsync();
     }
 
@@ -279,6 +279,61 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         var response = await HttpClient.DeleteAsync($"/api/album/1/images/3");
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_ValidRequest_ReturnMetadata()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=beach");
+        response.EnsureSuccessStatusCode();
+        var metadata = await response.Content.ReadFromJsonAsync<List<CustomFile>>();
+        metadata!.Count.ShouldBe(1);
+        metadata[0].Id.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_NoMatch_ReturnEmptyList()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=NotFound");
+        response.EnsureSuccessStatusCode();
+        var metadata = await response.Content.ReadFromJsonAsync<List<CustomFile>>();
+        metadata!.Count.ShouldBe(0);
+    }
+    
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_InvalidTripId_ReturnBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/404/tag?tag=beach");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+    
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_stringTripId_ReturnBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/404/tag?tag=beach");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_NotOwnerOfTrip_ReturnUnauthorized()
+    {
+        await SetupUserAndTrip(2, "SomeoneElse@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=beach");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
 }
