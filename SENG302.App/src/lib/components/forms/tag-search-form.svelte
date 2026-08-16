@@ -104,16 +104,12 @@
                 type="button"
                 title="search your trips using the provided query."
                 class="btn btn-outline-secondary"
-                onclick={() => {performSearch()}}
+                onclick={() => {
+                    query = "";
+                    performSearch();
+                }}
         >
-            {#if loading}
-                <div
-                        class="spinner-border spinner-border-sm text-primary"
-                        role="status"
-                />
-            {:else}
-                <i class="bi bi-search"></i>
-            {/if}
+            Clear
         </button>
     </div>
 
