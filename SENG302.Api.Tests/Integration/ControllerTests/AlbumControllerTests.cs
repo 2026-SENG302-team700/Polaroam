@@ -48,7 +48,10 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         });
         context.Trips.Add(new Trip
         {
-            Id = 1, Title = "My trip", UserId = userId, StartDate = DateToDateTimeOffset(2025, 11, 21),
+            Id = 1, 
+            Title = "My trip", 
+            UserId = userId, 
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
             EndDate = DateToDateTimeOffset(2025, 12, 21)
         });
         context.Albums.Add(new Album { TripId = 1, PhotoIds = new() });
@@ -91,8 +94,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             FileKey = "key2", 
             MimeType = "image/webp", 
             OriginalFileName = "file2.webp", 
-            OwnerId = 1, 
-            Tags = ["stars", "night"]
+            OwnerId = 1
         };
         context.CustomFiles.Add(file1);
         context.CustomFiles.Add(file2);
@@ -112,8 +114,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             MimeType = "image/webp", 
             OriginalFileName = "file3.webp", 
             OwnerId = 1,
-            Tags = ["Test"], 
-            DateCreated = DateToDateTimeOffset(2025, 1, 1)
+            Tags = ["testOne"], 
+            DateCreated = DateTimeOffset.UtcNow.AddDays(-1)
         };
         var file4 = new CustomFile
         {
@@ -123,7 +125,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             OriginalFileName = "file4.webp", 
             OwnerId = 1,
             Tags = ["TestTwo"], 
-            DateCreated = DateToDateTimeOffset(2025, 6, 1)
+            DateCreated = DateTimeOffset.UtcNow.AddDays(1)
         };
         context.CustomFiles.Add(file3);
         context.CustomFiles.Add(file4);
@@ -140,7 +142,6 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1/images/3");
-        _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
     }
 
@@ -249,7 +250,6 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         ]);
 
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
-        _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var album = context.Albums.FirstOrDefault(album => album.TripId == 1)!;
@@ -423,7 +423,6 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         response.EnsureSuccessStatusCode();
         var metadata = await response.Content.ReadFromJsonAsync<List<PhotoMetadataResponse>>();
         metadata!.Count.ShouldBe(2);
-        metadata[0].PhotoId.ShouldBe(4);
-        metadata[1].PhotoId.ShouldBe(3);
+        metadata[0].DateCreated.ShouldBeGreaterThan(metadata[1].DateCreated);
     }
 }

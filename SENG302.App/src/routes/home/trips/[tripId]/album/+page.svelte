@@ -104,11 +104,7 @@
     <div class="card-header">
         <NavigationButton path={resolve(`/home/trips/${params.tripId}`)} text="Back" />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-        <div class="header-content-wrapper"> 
-            <TagSearchForm bind:query={tagQuery}
-                           performSearch={getImageMetadata} 
-                           getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
-            />
+        <div class="header-content-wrapper">
             <div class="header-content-item">
                 <ImagePicker
                     bind:filesList={filesToUpload}
@@ -121,6 +117,10 @@
         </div>
     </div>
     <div class="card-body p-4" style="min-height: 100vh;">
+        <TagSearchForm bind:query={tagQuery}
+                       performSearch={getImageMetadata}
+                       getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+        />
         <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
     </div>
 </div>

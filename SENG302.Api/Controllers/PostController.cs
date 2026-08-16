@@ -188,7 +188,9 @@ public class PostController : ControllerBase
             {
                 PhotoId = photoId,
                 FileName = file.OriginalFileName ?? $"photo-{photoId}",
-                MimeType = file.MimeType
+                MimeType = file.MimeType,
+                Tags = file.Tags,
+                DateCreated = file.DateCreated
             });
         }
 

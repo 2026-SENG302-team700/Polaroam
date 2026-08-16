@@ -106,13 +106,12 @@ public class AlbumService : IAlbumService
         {
             if (post.PhotoIds.Contains(photoId))
             {
-                return post.PostId; //returns the postid if the image is part of a post
+                return post.PostId; //returns the post-Id if the image is part of a post
             }
         }
         if (album.PhotoIds.Remove(photoId))
         {
-            CustomFile file;
-            file = await _fileService.GetFileByIdAsync(photoId);
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             await _fileService.DeleteFileAsync(file.FileKey);
             await context.SaveChangesAsync();
         }
@@ -191,7 +190,7 @@ public class AlbumService : IAlbumService
     /// Gets all custom files (metadata files) from an album. 
     /// Does this by retrieving an album and then calling the 
     /// file service to retrieve the custom file for all photo-Id.
-    /// Returns metadata, and not the actual images.
+    /// Returns metadata and not the actual images.
     /// </summary>
     /// <param name="tripId"></param>
     /// <param name="tag">Optional tag to filter by if provided</param>
@@ -245,12 +244,12 @@ public class AlbumService : IAlbumService
 
 
     /// <summary>
-    /// Gets a single customfile object from a trip, given a photoid and tripid.
-    /// Returns metadata, and not the actual image.
+    /// Gets a single CustomFile object from a trip, given a Photo-Id and Trip-Id.
+    /// Returns metadata and not the actual image.
     /// </summary>
     /// <param name="tripId"></param>
     /// <param name="photoId"></param>
-    /// <returns>a customfile object</returns>
+    /// <returns>a CustomFile object</returns>
     /// <exception cref="KeyNotFoundException"></exception>
     public async Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
     {
@@ -275,7 +274,9 @@ public class AlbumService : IAlbumService
         {
             PhotoId = file.Id,
             FileName = file.OriginalFileName,
-            MimeType = file.MimeType
+            MimeType = file.MimeType,
+            Tags = file.Tags,
+            DateCreated = file.DateCreated
         };
     }
 

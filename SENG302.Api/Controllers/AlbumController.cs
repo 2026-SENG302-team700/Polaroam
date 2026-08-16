@@ -29,7 +29,7 @@ public class AlbumController : ControllerBase
     }
     
     /// <summary>
-    /// Helper function to get the content type of a file.
+    /// Helper function to get the content type of the file.
     /// </summary>
     /// <param name="fileKey"></param>
     /// <returns>The contentType string</returns>
@@ -131,7 +131,7 @@ public class AlbumController : ControllerBase
     /// <param name="tag">The tag to filter by</param>
     /// <returns>List of images</returns>
     [HttpGet("tag")]
-    public async Task<ActionResult> GetAlbumImageMetadataWithTag(int tripId, [FromQuery] string tag)
+    public async Task<ActionResult> GetAlbumImageMetadataWithTag(int tripId, [FromQuery] string? tag)
     {
         try
         {
@@ -142,6 +142,7 @@ public class AlbumController : ControllerBase
                 !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
+            tag = tag ?? "";
             var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId, tag);
             return Ok(images);
         }

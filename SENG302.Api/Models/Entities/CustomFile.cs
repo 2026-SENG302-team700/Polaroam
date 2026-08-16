@@ -19,7 +19,7 @@ public class CustomFile
 
     public long FileSize { get; set; }
 
-    public List<string>? Tags { get; set; }
+    public List<string> Tags { get; set; } = new();
 
     public bool InTagQueue { get; set; } = false;
     
