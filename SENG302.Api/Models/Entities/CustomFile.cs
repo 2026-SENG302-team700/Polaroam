@@ -22,4 +22,6 @@ public class CustomFile
     public List<string>? Tags { get; set; }
 
     public bool InTagQueue { get; set; } = false;
+    
+    public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
 }

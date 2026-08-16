@@ -62,6 +62,7 @@
         selectedTag = "";
         error = "";
         fetchSuggestions();
+        performSearch();
     }
 
     /**
@@ -128,7 +129,7 @@
         </ul>
     {:else if isOpen}
         <ul class="dropdown-list no-results">
-            <li>No tags found</li>
+            <li>No images found matching your search</li>
         </ul>
     {/if}
 
