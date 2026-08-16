@@ -101,12 +101,19 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
+                
+                ConfigureAdditionalServices(services);
             });
         });
 
         HttpClient = _webAppFactory.CreateClient();
     }
-
+    
+    // Used to add mocks to new services
+    protected virtual void ConfigureAdditionalServices(IServiceCollection services)
+    {
+        // no mocked services by default
+    }
     public virtual async Task InitializeAsync()
     {
         // At the start of a test, make sure the database is created fresh

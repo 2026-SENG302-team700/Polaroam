@@ -5,6 +5,9 @@
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
     import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
+    import ImageGallery from '$lib/components/images/image-gallery.svelte';
+    import { goto } from "$app/navigation";
+    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
     let tripName = "my amazing helsinki trip";
     let filesToUpload: File[] | null | undefined = $state([]);
@@ -90,18 +93,18 @@
             errors.generic = "Failed to upload images: " + (err as Error).message;
         } finally {
             loading = false;
+            getImageMetadata();
         }
     }
+
+    onMount(getImageMetadata);
 </script>
 
 <div class="card mb-2 post-wrapper">
     <div class="card-header">
+        <NavigationButton path={resolve(`/home/trips/${params.tripId}`)} text="Back" />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-        <div class="header-content-wrapper"> 
-            <TagSearchForm bind:query={tagQuery}
-                           performSearch={getImageMetadata} 
-                           getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
-            />
+        <div class="header-content-wrapper">
             <div class="header-content-item">
                 <ImagePicker
                     bind:filesList={filesToUpload}
@@ -113,14 +116,14 @@
             </div>
         </div>
     </div>
-    <div class="card-body">
-
+    <div class="card-body p-4" style="min-height: 100vh;">
+        <TagSearchForm bind:query={tagQuery}
+                       performSearch={getImageMetadata}
+                       getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+        />
+        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
     </div>
-    <div class="card-footer text-muted images">
-
-  </div>
 </div>
-
 <style>
 .card-header {
     display: flex;
@@ -139,8 +142,14 @@
 }
 
 .trip-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
     max-width: 40%;
     min-width: 20%;
+    text-align: center;
 }
 
 .post-wrapper {

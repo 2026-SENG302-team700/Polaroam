@@ -7,17 +7,21 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
 
+    // Allow use of file paths (Via the api) or actual File objects.
+    type ImageSource = File | string;
+    
     let {
        image,
        enlarged = $bindable(false),
-       index,
+        index = $bindable(0),
        images,
        photoId,
        photoIds,
-    }: { image: File,
+    }: { 
+        image: ImageSource,
         enlarged: boolean,
         index: number,
-        images: File[] | null,
+        images: ImageSource[] | null,
         photoId: number,
         photoIds: number[],
        } = $props();
@@ -33,24 +37,42 @@
        fetchImageTags(photoId)
    });
 
-    function moveToLeftImage()
-    {
-       index -= 1
-       let newImage = images?.[index];
-       if (newImage !== undefined) {
-          image = newImage
-       }
-       fetchImageTags(photoIds[index])
+    // Only File sources need an object URL; string sources are used as-is.
+    let objectUrl = $state<string | null>(null);
+
+    // Create an object URL for File sources.
+    $effect(() => {
+        if (image instanceof File) {
+            const url = URL.createObjectURL(image);
+            objectUrl = url;
+            return () => URL.revokeObjectURL(url);
+        }
+        objectUrl = null;
+    });
+
+    // Sets scr to url for File sources
+    let displaySrc = $derived(image instanceof File ? objectUrl : image);
+
+
+
+    function moveToLeftImage() {
+        if (images === null || index === 0) return;
+        const newImage = images[index - 1];
+        if (newImage !== undefined) {
+            index -= 1;
+            image = newImage;
+        }
+        fetchImageTags(photoIds[index])
     }
 
-    function moveToRightImage()
-    {
-       index += 1
-       let newImage = images?.[index];
-       if (newImage !== undefined) {
-          image = newImage
-       }
-       fetchImageTags(photoIds[index])
+    function moveToRightImage() {
+        if (images === null || index === images.length - 1) return;
+        const newImage = images[index + 1];
+        if (newImage !== undefined) {
+            index += 1;
+            image = newImage;
+        }
+        fetchImageTags(photoIds[index])
     }
 
     async function fetchImageTags(id: number) {
@@ -104,14 +126,16 @@
 <div class="fullscreen-image-wrapper">
    <div class="image-container">
       <div class="close-button-wrapper">
-         <img src={URL.createObjectURL(image)} alt="Image" class="image" />
-         <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
-         {#if images !== null && images?.length > 1 && index !== images?.length-1}
-            <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>
-         {/if}
-         {#if images !== null && images?.length > 1 && index !== 0}
-            <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
-         {/if}
+          {#if displaySrc}
+              <img src={displaySrc} alt="Image" class="image" />
+          {/if}
+          <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
+          {#if images !== null && images.length > 1 && index !== images.length - 1}
+              <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>
+          {/if}
+          {#if images !== null && images.length > 1 && index !== 0}
+              <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
+          {/if}
          <div class="tags-wrapper">
             {#if tags.length > 0}
                {#each tags as tag}
