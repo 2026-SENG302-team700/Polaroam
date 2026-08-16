@@ -272,9 +272,8 @@ public class TripService : ITripService
         var trips = await context.Trips
             .Where(trip => trip.UserId == userId &&
                 (trip.Title.ToLower().Contains(query) || trip.Description.ToLower().Contains(query)))
-            .OrderBy(trip => trip.StartDate)
             .ToListAsync();
 
-        return trips;
+        return trips.OrderBy(trip => trip.StartDate).ToList();
     }
 }
