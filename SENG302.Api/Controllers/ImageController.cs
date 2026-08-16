@@ -150,6 +150,16 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
         }
     }
 
+    /// <summary>
+    /// This endpoint is called when you want to retry tagging, if tagging failed previously due to the queue being
+    /// too full.
+    /// </summary>
+    /// <param name="photoId">The id of the file/image</param>
+    /// <returns>
+    /// 200 - If nothing goes wrong
+    /// Bad Request - If an exception is thrown
+    /// Unauthorized - If the user is not logged in or does not own the file/image
+    /// </returns>
     [Authorize]
     [HttpPatch("{photoId:int}/tags")]
     public async Task<IActionResult> RetryPhotoTagging(int photoId)
@@ -163,7 +173,7 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
         
         // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
         CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && file.TagError != null && file.TagError.Contains("Queue"))
+        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && user.AiTaggingEnabled && file.TagError != null && file.TagError.Contains("Queue"))
         {
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
             var stream = new MemoryStream(bytes);
