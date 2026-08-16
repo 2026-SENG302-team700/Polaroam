@@ -23,8 +23,13 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     private async Task SetupUserAndTrip(int userId, string email)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        context.Users.Add(new User { Id = userId, Email = email, DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = userId, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Users.Add(new User
+            { Id = userId, Email = email, DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Trips.Add(new Trip
+        {
+            Id = 1, Title = "My trip", UserId = userId, StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
+        });
         context.Albums.Add(new Album { TripId = 1, PhotoIds = new() });
         await context.SaveChangesAsync();
     }
@@ -50,8 +55,10 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             PhotoIds = [1, 2]
         });
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(1, 2);
-        context.CustomFiles.Add(new CustomFile { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
-        context.CustomFiles.Add(new CustomFile { Id = 2, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
+        context.CustomFiles.Add(new CustomFile
+            { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["beach", "sun"] });
+        context.CustomFiles.Add(new CustomFile
+            { Id = 2, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["stars", "night"] });
         await context.SaveChangesAsync();
     }
 
@@ -59,8 +66,16 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(3, 4);
-        context.CustomFiles.Add(new CustomFile { Id = 3, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
-        context.CustomFiles.Add(new CustomFile { Id = 4, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
+        context.CustomFiles.Add(new CustomFile
+        {
+            Id = 3, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["Test"],
+            DateCreated = DateTimeOffset.Now
+        });
+        context.CustomFiles.Add(new CustomFile
+        {
+            Id = 4, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["TestTwo"],
+            DateCreated = DateTimeOffset.Now.AddHours(1)
+        });
         await context.SaveChangesAsync();
     }
 
@@ -220,7 +235,10 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     public async Task AddImagesToAlbum_NoTrip_ReturnBadRequest()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Users.Add(new User
+        {
+            Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ"
+        });
         await context.SaveChangesAsync();
 
         var pandaBytes = GetBytes("panda.webp");
@@ -281,4 +299,70 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_ValidRequest_ReturnMetadata()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=beach");
+        response.EnsureSuccessStatusCode();
+        var metadata = await response.Content.ReadFromJsonAsync<List<CustomFile>>();
+        metadata!.Count.ShouldBe(1);
+        metadata[0].Id.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_NoMatch_ReturnEmptyList()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=NotFound");
+        response.EnsureSuccessStatusCode();
+        var metadata = await response.Content.ReadFromJsonAsync<List<CustomFile>>();
+        metadata!.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_InvalidTripId_ReturnBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/404/tag?tag=beach");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_stringTripId_ReturnBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/404/tag?tag=beach");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_NotOwnerOfTrip_ReturnUnauthorized()
+    {
+        await SetupUserAndTrip(2, "SomeoneElse@example.com");
+        await AddAlbumImages();
+        await AddPostImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=beach");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetAlbumImageMetadataWithTag_DifferentDates_ReturnNewestFirst()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await AddAlbumImages();
+        var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=test");
+        response.EnsureSuccessStatusCode();
+        var metadata = await response.Content.ReadFromJsonAsync<List<CustomFile>>();
+        metadata!.Count.ShouldBe(2);
+        metadata[0].DateCreated.ShouldBeGreaterThan(metadata[1].DateCreated);
+    }
 }

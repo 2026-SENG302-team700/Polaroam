@@ -7,11 +7,13 @@
         placeholder = "search your images",
         selectedTag = $bindable(""),
         performSearch
+        getSuggestionsUrl,
     }: {
         query?: string;
         placeholder?: string;
         selectedTag?: string;
         performSearch?: () => void;
+        getSuggestionsUrl: string;
     } = $props();
 
     let isOpen = $state(false);
@@ -59,7 +61,7 @@
             items = await fetchTagSuggestions(trimmed);
             isOpen = true;
         } catch (err) {
-            error = "Failed to fetch tag suggestions: " + (err as Error).message;
+            error = "Failed to fetch tag suggestions" + err.message;
             items = [];
         } finally {
             loading = false;
@@ -70,6 +72,7 @@
         selectedTag = "";
         error = "";
         fetchSuggestions();
+        performSearch();
     }
 
     /**
@@ -138,7 +141,7 @@
         </ul>
     {:else if isOpen}
         <ul class="dropdown-list no-results">
-            <li>No tags found</li>
+            <li>No tags found matching your search</li>
         </ul>
     {/if}
 

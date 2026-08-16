@@ -4,12 +4,18 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
+    import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
 
     let tripName = "my amazing helsinki trip";
-    let files: File[] | null | undefined = $state([]);
+    let filesToUpload: File[] | null | undefined = $state([]);
     let loading = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
+    let imageMetadata = $state([]);
+    let tripId = params.tripId;
+    let tagQuery = $state("");
+    
+    let tagDataError = $state("");
 
     type AlbumImageUploadErrors = {
         generic: string;
@@ -26,6 +32,27 @@
         };
     }
 
+    /**
+     * Gets the image metadata of all images in the album matching the tagQuery
+     */
+    async function getImageMetadata() {
+        try{
+            const response = await fetch(resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
+                {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+            if (!response.ok) {
+                tagDataError = await response.text();
+            }
+            imageMetadata = await response.json();
+        } catch (err) {
+            tagDataError = "An unexpected error occurred: ";
+        } finally {
+            loading = false;
+        }
+    }
+    
     let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     /**
@@ -35,9 +62,9 @@
         try {
             loading = true;
             const form = new FormData();
-            if (files != null) {
-                for (let i = 0; i < files.length; i++) {
-                    form.append("files", files[i]);
+            if (filesToUpload != null) {
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    form.append("files", filesToUpload[i]);
                 }
             }
 
@@ -71,9 +98,13 @@
     <div class="card-header">
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         <div class="header-content-wrapper"> 
+            <TagSearchForm bind:query={tagQuery}
+                           performSearch={getImageMetadata} 
+                           getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+            />
             <div class="header-content-item">
                 <ImagePicker
-                    bind:filesList={files}
+                    bind:filesList={filesToUpload}
                     errors={errors.photos}
                     bind:fileErrors
                     {loading}
