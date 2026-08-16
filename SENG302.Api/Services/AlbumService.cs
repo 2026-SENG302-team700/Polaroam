@@ -173,7 +173,7 @@ public class AlbumService : IAlbumService
             var file = await _fileService.SaveFileAsync(photo, trip.UserId);
             album.PhotoIds.Add(file.Id);
 
-            if (user.AcceptedAiPrivacyPolicy)
+            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
             {
                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }

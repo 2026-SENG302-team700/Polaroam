@@ -28,7 +28,7 @@
    let showRetryTagging = $state(false);
    let aiTaggingPreference: string | null = $state(null)
 
-   let tagStatus = $state("No tags available");
+   let tagStatus = $state("");
    let tagColour = $state("secondary");
    
    onMount(() => {
@@ -106,20 +106,17 @@
             if (!response.ok) {
                if (response.status === 500) {
                   const data = await response.json()
-                  error = "Failed to fetch tags: " + data?.detail
+                  tagStatus = "Failed to fetch tags: " + data?.detail
                   
-                  if (error === "Failed to fetch tags: Queue was full") {
+                  if (tagStatus === "Failed to fetch tags: Queue was full") {
                      showRetryTagging = true
                   }
-                  
                   return
                } else {
-                  error = (await response.text()) || "Failed to fetch tags.";
+                  tagStatus = (await response.text()) || "Failed to fetch tags.";
                   return
                }
             }
-
-           
            
             const message = await response.text();
             
@@ -129,10 +126,18 @@
                tagColour = "info";
                return;
             }
+            
+           if (message.length === 0) {
+              tagStatus = "No tags available"
+              return
+           }
            
             tags = JSON.parse(message);
+           
+           
+            
         } catch (err) {
-            error = "Failed to fetch tags: " + (err as Error).message;
+            tagStatus = "Failed to fetch tags: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -153,7 +158,7 @@
                const data = await response.json()
                error = "Failed to fetch tags: " + data.errors;
             }
-            error = "Tags are being generated"
+            tagStatus = "Tags are being generated"
          } catch (err) {
             error = "Failed to retry tagging: " + (err as Error).message;
          } finally {

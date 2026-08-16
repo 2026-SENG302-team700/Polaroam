@@ -263,8 +263,6 @@ public class ImageTaggingService : IImageTaggingService
             context.CustomFiles.Update(image);
             await context.SaveChangesAsync();
             
-            Console.WriteLine("Tags set for image: " + imageId);
-            
         }
         catch (JsonException exception)
         {
@@ -323,7 +321,6 @@ public class ImageTaggingService : IImageTaggingService
         {
             return;
         }
-        
         image.InTagQueue = false;
         context.CustomFiles.Update(image);
         await context.SaveChangesAsync();
@@ -378,18 +375,16 @@ public class ImageTaggingService : IImageTaggingService
             
             if (!queued)
             {
-                if (imageFile != null)
-                {
-                    imageFile.TagError = "Queue was full";
-                    imageFile.CanRetryTagging = true;
-                }
+                
+                imageFile.TagError = "Queue was full";
+                imageFile.CanRetryTagging = true;
+                
             }
 
-            if (imageFile != null)
-            {
-                context.CustomFiles.Update(imageFile);
-                await context.SaveChangesAsync();
-            }
+           
+            context.CustomFiles.Update(imageFile);
+            await context.SaveChangesAsync();
+            
             
             
         }

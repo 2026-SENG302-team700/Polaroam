@@ -225,9 +225,6 @@ public class FileService : IFileService
     public async Task<string?> GetTagErrors(int id)
     {
         var file = await GetFileByIdAsync(id);
-        Console.WriteLine($"\n\nFile Tags: {file.Tags}\n\n");
-        Console.WriteLine($"\n\nFile Errors: {file.TagError}\n\n");
-        Console.WriteLine($"\n\nCan retry tagging: {file.CanRetryTagging}\n\n");
         return file.TagError;
     }
 }

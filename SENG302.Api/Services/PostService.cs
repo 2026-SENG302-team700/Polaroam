@@ -134,7 +134,7 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            if (user.AcceptedAiPrivacyPolicy)
+            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
@@ -302,7 +302,7 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            if (user.AcceptedAiPrivacyPolicy)
+            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, customFile.Id);
             }
