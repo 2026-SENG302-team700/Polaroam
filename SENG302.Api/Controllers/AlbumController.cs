@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 
 namespace SENG302.Api.Controllers;
@@ -51,7 +52,13 @@ public class AlbumController : ControllerBase
 
             // Get the image
             var image = await _fileService.GetFileByIdAsync(imageId);
-            return Ok(image);
+            return Ok(new PhotoMetadataResponse
+            {
+                PhotoId = image.Id,
+                FileName = image.OriginalFileName,
+                MimeType = image.MimeType,
+                TripId = tripId
+            });
         }
         catch (KeyNotFoundException)
         {
@@ -82,7 +89,13 @@ public class AlbumController : ControllerBase
                 return Unauthorized();
 
             var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId);
-            return Ok(images);
+            return Ok(images.Select(image => new PhotoMetadataResponse
+            {
+                PhotoId = image.Id,
+                FileName = image.OriginalFileName,
+                MimeType = image.MimeType,
+                TripId = tripId
+            }));
         }
         catch (KeyNotFoundException e) // Trip or Album not found
         {
