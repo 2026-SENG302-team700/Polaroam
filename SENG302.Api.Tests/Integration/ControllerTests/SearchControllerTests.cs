@@ -38,8 +38,8 @@ public class SearchControllerTests : BaseIntegrationTestFixture
             Title = title, 
             UserId = userId, 
             Description = description,
-            StartDate = new DateOnly(2025, 11, 21), 
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = new DateTimeOffset(2025, 11, 21, 0, 0, 0, TimeSpan.Zero),
+            EndDate = new DateTimeOffset(2025, 12, 21, 0, 0, 0, TimeSpan.Zero)
         });
         
         context.Albums.Add(new Album

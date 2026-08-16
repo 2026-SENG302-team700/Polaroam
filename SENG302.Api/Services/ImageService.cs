@@ -17,20 +17,17 @@ public class ImageService : IImageService
     private readonly IFileService _fileService;
     private readonly IAlbumService _albumService;
     private readonly ITripService _tripService;
-    private readonly IPostService _postService;
 
     public ImageService(
         IDbContextFactory<DatabaseContext> dbContextFactory,
         IFileService fileService,
         IAlbumService albumService,
-        ITripService tripService,
-        IPostService postService)
+        ITripService tripService)
     {
         _dbContextFactory = dbContextFactory;
         _fileService = fileService;
         _albumService = albumService;
         _tripService = tripService;
-        _postService = postService;
     }
     
     /// <summary>
@@ -131,24 +128,11 @@ public class ImageService : IImageService
             return [];
         }
 
-        // gets the posts belonging to the user's trips
-        var posts = await _postService.GetAllPostsAsync(userId);
-
-        // gets dates for each photo
-        var photoDates = new Dictionary<int, DateOnly?>();
-        foreach (var post in posts)
-        {
-            foreach (var photoId in post.PhotoIds)
-            {
-                photoDates[photoId] = post.Date;
-            }
-        }
-
         // helper function that builds a trip photo grouping based on its album
         TripPhotoGroupResponse? BuildTripPhotoGroup(Album album)
         {
             var trip = trips[album.TripId];
-            
+
             var photos = album.PhotoIds
                 .Where(matchedFiles.ContainsKey)
                 .Select(photoId => new PhotoMetadataResponse
@@ -157,7 +141,7 @@ public class ImageService : IImageService
                     TripId = album.TripId,
                     FileName = matchedFiles[photoId].OriginalFileName,
                     MimeType = matchedFiles[photoId].MimeType,
-                    Date = photoDates.GetValueOrDefault(photoId)
+                    Date = DateOnly.FromDateTime(matchedFiles[photoId].DateCreated.UtcDateTime)
                 })
                 .OrderBy(p => p.Date)
                 .ToList();

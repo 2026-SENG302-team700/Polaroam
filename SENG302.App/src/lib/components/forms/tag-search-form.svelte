@@ -6,14 +6,14 @@
         query = $bindable(""),
         placeholder = "search your images",
         selectedTag = $bindable(""),
-        performSearch
-        getSuggestionsUrl,
+        performSearch,
+        getSuggestionsUrl
     }: {
         query?: string;
         placeholder?: string;
         selectedTag?: string;
         performSearch?: () => void;
-        getSuggestionsUrl: string;
+        getSuggestionsUrl?: string;
     } = $props();
 
     let isOpen = $state(false);
@@ -26,8 +26,10 @@
      * @param query - the partial tag text to search for
      */
     async function fetchTagSuggestions(query: string) {
+        const url = (getSuggestionsUrl != null) ? getSuggestionsUrl : `/api/image/tags?query=${encodeURIComponent(query)}`
+        
         const response = await fetchWithCsrf(
-            resolve(`/api/image/tags?query=${encodeURIComponent(query)}` as any),
+            resolve(url as any),
             {
                 method: "GET",
                 credentials: "include",

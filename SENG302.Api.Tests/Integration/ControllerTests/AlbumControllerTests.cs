@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using Shouldly;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
@@ -124,7 +125,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1");
         response.EnsureSuccessStatusCode();
-        var images = await response.Content.ReadFromJsonAsync<CustomFile[]>();
+        var images = await response.Content.ReadFromJsonAsync<PhotoMetadataResponse[]>();
         images!.Length.ShouldBe(2);
     }
 
@@ -135,7 +136,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/1");
         response.EnsureSuccessStatusCode();
-        var images = await response.Content.ReadFromJsonAsync<CustomFile[]>();
+        var images = await response.Content.ReadFromJsonAsync<PhotoMetadataResponse[]>();
         images!.Length.ShouldBe(2);
     }
 
@@ -147,7 +148,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1");
         response.EnsureSuccessStatusCode();
-        var images = await response.Content.ReadFromJsonAsync<CustomFile[]>();
+        var images = await response.Content.ReadFromJsonAsync<PhotoMetadataResponse[]>();
         images!.Length.ShouldBe(4);
     }
 
