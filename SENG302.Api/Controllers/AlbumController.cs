@@ -70,7 +70,7 @@ public class AlbumController : ControllerBase
             var contentType = GetContentType(fileKey);
             return File(image, contentType);
         }
-        catch (KeyNotFoundException)
+        catch (FileNotFoundException)
         {
             return NotFound("Image not found");
         }
@@ -150,7 +150,7 @@ public class AlbumController : ControllerBase
         }
         catch (Exception e) // Other exceptions
         {
-            return BadRequest("Failed to upload images.");
+            return BadRequest("Failed to upload images." + e.Message);
         }
     }
     

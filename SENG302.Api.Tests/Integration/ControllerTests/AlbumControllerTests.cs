@@ -1,8 +1,14 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Services;
 using Shouldly;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
@@ -11,12 +17,20 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class AlbumControllerTest : BaseIntegrationTestFixture
 {
-    private ITestOutputHelper _output;
+    private readonly ITestOutputHelper _output;
+    private IFileService FileServiceMock => ServiceProvider.GetRequiredService<IFileService>();
+    
 
     public AlbumControllerTest(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) : base(
         webApplicationFactory)
     {
         _output = output;
+    }
+    
+    protected override void ConfigureAdditionalServices(IServiceCollection services)
+    {
+        services.RemoveAll<IFileService>();
+        services.AddSingleton(Substitute.For<IFileService>());
     }
 
     // Helper Functions
@@ -68,15 +82,18 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task GetAlbumImage_ValidImage_ReturnSuccess()
     {
+        FileServiceMock.GetFileContentAsync(Arg.Any<string>()).Returns([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1/images/3");
+        _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
     }
 
     [Fact]
     public async Task GetAlbumImage_PostImage_ReturnSuccess()
     {
+        FileServiceMock.GetFileContentAsync(Arg.Any<string>()).Returns([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         await SetupUserAndTrip(1, "test@example.com");
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/1/images/1");
@@ -95,6 +112,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task GetAlbumImage_NoImage_ReturnNotFound()
     {
+        FileServiceMock.GetFileContentAsync(Arg.Any<string>()).Throws<FileNotFoundException>();
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1/images/5");
@@ -165,6 +183,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task AddImagesToAlbum_ValidImages_ReturnSuccess()
     {
+        FileServiceMock.SaveFileAsync(Arg.Any<FormFile>(), Arg.Any<int>()).Returns(new CustomFile { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
         await SetupUserAndTrip(1, "test@example.com");
 
         var pandaBytes = GetBytes("panda.webp");
@@ -176,6 +195,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         ]);
 
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
+        _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var album = context.Albums.FirstOrDefault(album => album.TripId == 1)!;
