@@ -1,5 +1,11 @@
 <script lang="ts">
-    let { tag = "" } = $props();
+    let { 
+        tag = "",
+        tagColour = "secondary"
+    }: {
+        tag: string;
+        tagColour?: string;
+    } = $props();
 </script>
 
-<span class="badge rounded-pill text-bg-secondary">{tag}</span>
+<span class="badge rounded-pill text-bg-{tagColour}">{tag}</span>

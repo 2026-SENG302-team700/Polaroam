@@ -13,6 +13,7 @@
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
+    import AlbumButton from '$lib/components/buttons/album-button.svelte';
 
     let loading = $state(false);
     let error = $state("");
@@ -148,29 +149,43 @@
     }
 </script>
 
+
+
 <div class="container trip-page-content">
-    <NavigationButton path="/home" text="Back" />
-    <AddButton path="/home/trips/{tripObject.id}/posts/create-post" />
-    <EditButton path={`/home/trips/${params.tripId}/edit`} />
-    <DeleteButton deleteAction={showConfirmationModal} />
-    <ErrorDisplay errors={[error]} />
-    <div class="trip-page-header">
-        <div class="trip-head-grid">
-            <h1>{tripObject.title}</h1>
-            <p class="date-object">
-                {formatDate(tripObject.startDate)} - {formatDate(
-                    tripObject.endDate,
-                )}
-            </p>
+    <div class="button-wrapper">
+        <NavigationButton path="/home" text="Back" />
+        <div class="modify-button-wrapper">
+            <AlbumButton tripid = {params.tripId}/>
+            <EditButton path={`/home/trips/${params.tripId}/edit`} />
+            <DeleteButton deleteAction={showConfirmationModal} />
         </div>
-        {#if tripObject.description.length > 0}
-            <span>{tripObject.description}</span>
-        {:else}
-            <p>No description</p>
-        {/if}
     </div>
-    <Map locations={postLocations} />
-    <PostSection {posts} />
+    <div class="card mb-2 post-wrapper">
+        <div class="card-header">
+            <h1 class="card-subtitle mb-2 h1 user-name">{tripObject.title}</h1>
+            {#if tripObject.description.length > 0}
+                <span>{tripObject.description}</span>
+            {:else}
+                <p>No description</p>
+            {/if}
+            <ErrorDisplay errors={[error]} />
+            <div class="header-content-wrapper"> 
+                <div class="header-content-item">
+                    <div class="bi-calendar-event"></div>
+                    <h6 class="card-subtitle mb-2 text-muted">{formatDate(tripObject.startDate)} - {formatDate(
+                        tripObject.endDate,
+                    )}</h6>
+                </div>
+
+            </div>
+        </div>
+        <div class="card-body">
+        <Map locations={postLocations} />
+        </div>
+        <div class="card-footer text-muted images">
+            <PostSection {posts} tripId={tripObject.id}/>
+        </div>
+    </div>    
 </div>
 
 <ConfirmationModal
@@ -183,6 +198,12 @@
 />
 
 <style>
+
+    .button-wrapper {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
     .trip-head-grid {
         align-items: end;
         display: flex;

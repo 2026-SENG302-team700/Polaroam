@@ -28,8 +28,12 @@
    let showRetryTagging = $state(false);
    let aiTaggingPreference: string | null = $state(null)
 
+   let tagStatus = $state("No tags available");
+   let tagColour = $state("secondary");
+   
    onMount(() => {
-      getUserPreferences()
+       fetchImageTags(photoId)
+       getUserPreferences()
    });
 
     function moveToLeftImage()
@@ -115,14 +119,18 @@
                }
             }
 
-           if (response.status === 204) {
-              error = "Tags not available for image";
-           } else if (response.status == 202) {
-              error = "Tags are being generated."
-           } else {
-              tags = await response.json();
-           }
-
+           
+           
+            const message = await response.text();
+            
+            
+            if (message === "Tags are being generated.") {
+               tagStatus = "Tags are being generated. Come back later";
+               tagColour = "info";
+               return;
+            }
+           
+            tags = JSON.parse(message);
         } catch (err) {
             error = "Failed to fetch tags: " + (err as Error).message;
         } finally {
@@ -186,7 +194,7 @@
                   <TagPill {tag}/>
                {/each}
                {:else}
-               <TagPill tag={error}/>
+               <TagPill {tagColour} tag={tagStatus}/>
                {/if}
             </div>
             <div class="tags-wrapper">
@@ -239,7 +247,7 @@
     flex-wrap: wrap;
     gap: 0.375rem;
     justify-content: center;
-    margin-top: 2%;
+    margin-top: 6px;
  }
 
 </style>

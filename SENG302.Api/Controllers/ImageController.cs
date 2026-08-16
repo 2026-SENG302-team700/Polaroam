@@ -49,24 +49,26 @@ public class ImageController : ControllerBase
         try
         {
             var tags = await _fileService.GetTagsAsync(photoId);
-            if (tags == null)
-            {
 
-                var error = await _fileService.GetTagErrors(photoId);
-                
-                if (error != null)
-                {
-                    return Problem(detail: error,
-                        statusCode: 500);
-                }
-                
-                var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
-                Console.WriteLine($"\n\nIs image in queue: {imageInQueue}\n\n");
-                return imageInQueue
-                    ? StatusCode(StatusCodes.Status202Accepted)
-                    : StatusCode(StatusCodes.Status204NoContent);
+            if (tags != null)
+            {
+                return Ok(tags);
             }
-            return Ok(tags);
+            
+            var error = await _fileService.GetTagErrors(photoId);
+            
+            if (error != null)
+            {
+                return Problem(detail: error,
+                    statusCode: 500);
+            }
+            
+            
+            var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
+
+            return imageInQueue
+                ? Ok("Tags are being generated.")
+                : NoContent();
         }
         catch (KeyNotFoundException e)
         {

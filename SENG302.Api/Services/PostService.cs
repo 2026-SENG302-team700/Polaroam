@@ -146,7 +146,7 @@ public class PostService : IPostService
         
         album.PhotoIds.AddRange(photoIds);
         context.Albums.Update(album);
-
+        
         await context.SaveChangesAsync();
 
         // Add location
@@ -310,19 +310,21 @@ public class PostService : IPostService
 
         // get the album and add new photo Ids
         Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
-
+       
         album.PhotoIds.AddRange(customFileIds);
         context.Albums.Update(album);
-
+        
         await context.SaveChangesAsync();
-
+        
 
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds.Count > 0 ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.PhotoIds = post.PhotoIds.Count > 0 
+            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
+            : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.Name : post.LocationName;
 
         // Save Changes
@@ -407,6 +409,7 @@ public class PostService : IPostService
             await DeletePostByIdAsync(posts[i].PostId);
         }
 
+
     }
 
 
@@ -425,7 +428,7 @@ public class PostService : IPostService
         {
             throw new KeyNotFoundException(
                 "Post of this Id does not exist."
-            );
+            ); 
         }
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
         {
@@ -443,7 +446,7 @@ public class PostService : IPostService
         {
             album.PhotoIds.Remove(photoId);
         }
-
+        
         await context.SaveChangesAsync();
     }
     
