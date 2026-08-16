@@ -1,16 +1,18 @@
 <script lang="ts">
+    import {resolve} from "$app/paths";
+
     let {
         query = $bindable(""),
-        performSearch = $bindable(false),
+        performSearch,
         placeholder = "search your images",
         selectedTag = $bindable(""),
-        getSuggestions,
+        getSuggestionsUrl,
     }: {
         query?: string;
-        performSearch?: boolean;
+        performSearch?: () => void;
         placeholder?: string;
         selectedTag?: string;
-        getSuggestions: (query: string) => Promise<string[]>;
+        getSuggestionsUrl: string;
     } = $props();
 
     let isOpen = $state(false);
@@ -34,10 +36,21 @@
         try {
             loading = true;
             error = "";
-            items = await getSuggestions(trimmed);
+            console.log(getSuggestionsUrl);
+            const response = await fetchWithCsrf(
+                resolve(getSuggestionsUrl as `/${string}`),      
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                error = "Failed to fetch tag suggestions";
+            }
+            items = await response.json();
             isOpen = true;
         } catch (err) {
-            error = "Failed to fetch tag suggestions: " + (err as Error).message;
+            error = "Failed to fetch tag suggestions" + err.message;
             items = [];
         } finally {
             loading = false;

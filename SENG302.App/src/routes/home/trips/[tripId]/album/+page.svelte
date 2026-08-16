@@ -4,6 +4,7 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
+    import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
 
     let tripName = "my amazing helsinki trip";
     let filesToUpload: File[] | null | undefined = $state([]);
@@ -95,6 +96,10 @@
     <div class="card-header">
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         <div class="header-content-wrapper"> 
+            <TagSearchForm bind:query={tagQuery}
+                           performSearch={getImageMetadata} 
+                           getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+            />
             <div class="header-content-item">
                 <ImagePicker
                     bind:filesList={filesToUpload}
