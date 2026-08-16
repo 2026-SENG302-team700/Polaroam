@@ -21,4 +21,5 @@ public class CustomFile
 
     public List<string>? Tags { get; set; }
 
+    public bool InTagQueue { get; set; } = false;
 }
