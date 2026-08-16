@@ -7,13 +7,15 @@
         placeholder = "search your images",
         selectedTag = $bindable(""),
         performSearch,
-        getSuggestionsUrl
+        getSuggestionsUrl,
+        onClear
     }: {
         query?: string;
         placeholder?: string;
         selectedTag?: string;
         performSearch?: () => void;
         getSuggestionsUrl?: string;
+        onClear?: () => void;
     } = $props();
 
     let isOpen = $state(false);
@@ -120,7 +122,14 @@
                 class="btn btn-outline-secondary"
                 onclick={() => {
                     query = "";
-                    performSearch();
+                    selectedTag = "";
+                    error = "";
+                    isOpen = false;
+                    if (onClear) {
+                        onClear();
+                    } else {
+                        performSearch();
+                    }
                 }}
         >
             Clear

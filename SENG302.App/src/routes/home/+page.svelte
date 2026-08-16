@@ -54,6 +54,11 @@
     }
     
     async function performSearch() {
+        if (!tagQuery.trim()) {
+            clearSearch();
+            return;
+        }
+
         searchTrips = [];
         searchPhotoTrips = [];
 
@@ -120,6 +125,16 @@
             loading = false;
         }
     }
+
+    /**
+     * Clears the search and returns to my-trips page.
+     */
+    function clearSearch() {
+        tagQuery = "";
+        searchTrips = [];
+        searchPhotoTrips = [];
+        inSearch = false;
+    }
 </script>
 
 <div class="container">
@@ -132,7 +147,7 @@
     <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
         <AddButton path="/home/trips/create-trip" />
         <div>
-            <TagSearchForm bind:query={tagQuery} {performSearch} />
+            <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} />
         </div>
     </div>
     {#if inSearch}

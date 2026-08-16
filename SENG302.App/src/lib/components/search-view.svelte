@@ -42,7 +42,7 @@
                     </div>
                 {/each}
         {:else}
-            <span>No photo tags matched your query.</span>
+            <span>No images found matching your search.</span>
         {/if}
     </div>
 
