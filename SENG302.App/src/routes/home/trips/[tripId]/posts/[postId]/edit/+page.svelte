@@ -22,6 +22,8 @@
     let date = $state(new Date());
     let photoIds = $state([]);
     let photoIdFileMap = new WeakMap();
+    let aiTaggingEnabled = $state(false);
+    let aiTaggingForUpload = $state(false);
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0);
@@ -196,6 +198,21 @@
     }
 
     /**
+     * Fetches the display name of the user based on the post
+     */
+    async function loadAiTaggingPreference() {
+        const response = await fetchWithCsrf(resolve("/api/user" as any), {
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        aiTaggingEnabled = user.aiTagging;
+        aiTaggingForUpload = user.aiTagging;
+    }
+
+    /**
      * Updates the trip with the new values from the form.
      * Sends a PUT request to the backend with the updated trip details.
      */
@@ -346,6 +363,7 @@
             errors={errors.photos}
             bind:newUploadsCount
             bind:fileErrors
+            showAiTaggingOption={aiTaggingEnabled}
             {loading}
         />
     </ImageDisplay>

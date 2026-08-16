@@ -20,12 +20,16 @@
         newUploadsCount = $bindable(0),
         fileErrors = $bindable<string[]>([]),
         loading = $bindable(false),
+        aiTaggingForUpload = $bindable(true),
+        showAiTaggingOption = $bindable(false),
     }: {
         filesList: File[] | null | undefined;
         errors: string[];
         newUploadsCount?: number;
         fileErrors?: string[];
         loading: boolean;
+        aiTaggingForUpload?: boolean;
+        showAiTaggingOption?: boolean;
     } = $props();
 
     let displayedErrors = $derived([...errors, ...fileErrors]);
@@ -147,6 +151,37 @@
         multiple
         onchange={appendImages}
     />
+
+    {#if showAiTaggingOption}
+        <div class="ai-tagging-reminder">
+            <div>
+                <strong>AI image tagging is enabled</strong>
+                <p>
+                    Images from this upload will be processed by AI to generate
+                    tags.
+                </p>
+            </div>
+
+            <label class="form-check">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    bind:checked={aiTaggingForUpload}
+                    disabled={loading}
+                />
+                <span class="form-check-label">
+                    Use AI tagging for this upload
+                </span>
+            </label>
+
+            {#if !aiTaggingForUpload}
+                <p class="temporary-notice">
+                    AI tagging is disabled for this upload only. Your account
+                    setting will not be changed.
+                </p>
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>

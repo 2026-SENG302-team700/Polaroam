@@ -15,6 +15,9 @@
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
 
+    let aiTaggingEnabled = $state(false);
+    let aiTaggingForUpload = $state(false);
+
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -65,6 +68,21 @@
     let fileErrors: string[] = $state([]);
     let noContentAllowed = $state(false);
     let showConfirmationModal = $state(false);
+
+    /**
+     * Fetches the display name of the user based on the post
+     */
+    async function loadAiTaggingPreference() {
+        const response = await fetchWithCsrf(resolve("/api/user" as any), {
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        aiTaggingEnabled = user.aiTagging;
+        aiTaggingForUpload = user.aiTagging;
+    }
 
     /**
      * Function for creating a post
@@ -195,6 +213,7 @@
             bind:filesList={files}
             errors={errors.photos}
             bind:fileErrors
+            showAiTaggingOption={aiTaggingEnabled}
             {loading}
         />
     </ImageDisplay>
