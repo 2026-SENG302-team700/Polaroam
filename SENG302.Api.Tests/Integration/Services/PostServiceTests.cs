@@ -65,6 +65,15 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    private async Task EnableAiTagging(int userId)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        var user = await context.Users.FirstAsync(u => u.Id == userId);
+        user.AcceptedAiPrivacyPolicy = true;
+        user.AiTaggingEnabled = true;
+        await context.SaveChangesAsync();
+    }
+
     private void SetupGeoMock()
     {
         GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
@@ -1141,6 +1150,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task CreateNewPostAsync_WithImage_QueuesImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
         SetupGeoMock();
 
         var request = new NewPostRequest
@@ -1246,6 +1256,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task UploadPhotosToPostAsync_WithNewImage_QueuesImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
         SetupGeoMock();
 
         var request = new NewPostRequest

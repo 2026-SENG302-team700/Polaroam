@@ -8,9 +8,12 @@
         photoId,
         photoIds,
         
-    }: { image: File, index: number, images: File[] | null, 
-                photoId: number, photoIds:number[];
-            } = $props();
+    }: { 
+        image: File, 
+        index: number, 
+        images: File[] | null, 
+        photoId: number, photoIds:number[];
+    } = $props();
     let enlarged = $state(false);
 
     function clicked() {
