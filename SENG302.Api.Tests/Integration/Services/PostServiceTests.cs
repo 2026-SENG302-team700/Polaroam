@@ -849,6 +849,96 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task CreateNewPostAsync_AiTaggingDisabledForUpload_DoesNotQueueImage()
+    {
+        await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "Test post",
+            Content = "Description",
+            OsmId = 1,
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
+        };
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        await ServiceUnderTest.CreateNewPostAsync(
+            request,
+            1,
+            [image],
+            aiTaggingForUpload: false
+        );
+
+        await ImageTaggingQueueMock.DidNotReceive()
+            .QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>());
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_ExistingUntaggedImage_QueuesImageForTagging()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var createRequest = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "og post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
+        };
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+        // save image without taggging it
+        var post = await ServiceUnderTest.CreateNewPostAsync(
+            createRequest,
+            1,
+            [image],
+            aiTaggingForUpload: false
+        );
+
+        ImageTaggingQueueMock.ClearReceivedCalls();
+
+        await EnableAiTagging(1);
+
+        var updateRequest = new UpdatePostRequest
+        {
+            Id = post.PostId,
+            TripId = post.TripId,
+            Title = post.Title,
+            Content = post.Content,
+            OsmId = post.OsmId,
+            Date = post.Date
+        };
+
+        await ServiceUnderTest.UpdatePostAsync(
+            updateRequest,
+            1,
+            [],
+            aiTaggingForUpload: true
+        );
+
+        await ImageTaggingQueueMock.Received(1)
+            .QueueImageTaggingAsync(
+                Arg.Is<ImageTaggingJob>(
+                    job => job.ImageId == post.PhotoIds[0]
+                )
+            );
+    }
+
+    [Fact]
     public async Task DeletePhotoFromPost_ExistingPostWithImage_DeletesImageFromAlbum()
     {
         await SetupUserAndTrip(1, 1);
