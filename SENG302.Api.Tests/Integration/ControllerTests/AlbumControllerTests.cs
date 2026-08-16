@@ -1,9 +1,16 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Models.Responses;
+using SENG302.Api.Services;
 using Shouldly;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
@@ -12,12 +19,20 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class AlbumControllerTest : BaseIntegrationTestFixture
 {
-    private ITestOutputHelper _output;
+    private readonly ITestOutputHelper _output;
+    private IFileService FileServiceMock => ServiceProvider.GetRequiredService<IFileService>();
+    
 
     public AlbumControllerTest(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) : base(
         webApplicationFactory)
     {
         _output = output;
+    }
+    
+    protected override void ConfigureAdditionalServices(IServiceCollection services)
+    {
+        services.RemoveAll<IFileService>();
+        services.AddSingleton(Substitute.For<IFileService>());
     }
 
     // Helper Functions
@@ -56,43 +71,44 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             PhotoIds = [1, 2]
         });
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(1, 2);
-        context.CustomFiles.Add(new CustomFile
-            { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["beach", "sun"] });
-        context.CustomFiles.Add(new CustomFile
-            { Id = 2, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["stars", "night"] });
+        var file1 = new CustomFile { Id = 1, FileKey = "key1", MimeType = "image/webp", OriginalFileName = "file1.webp", OwnerId = 1 };
+        var file2 = new CustomFile { Id = 2, FileKey = "key2", MimeType = "image/webp", OriginalFileName = "file2.webp", OwnerId = 1 };
+        context.CustomFiles.Add(file1);
+        context.CustomFiles.Add(file2);
         await context.SaveChangesAsync();
+        FileServiceMock.GetFileByIdAsync(1).Returns(file1);
+        FileServiceMock.GetFileByIdAsync(2).Returns(file2);
     }
 
     private async Task AddAlbumImages()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(3, 4);
-        context.CustomFiles.Add(new CustomFile
-        {
-            Id = 3, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["Test"],
-            DateCreated = DateTimeOffset.Now
-        });
-        context.CustomFiles.Add(new CustomFile
-        {
-            Id = 4, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = ["TestTwo"],
-            DateCreated = DateTimeOffset.Now.AddHours(1)
-        });
+        var file3 = new CustomFile { Id = 3, FileKey = "key3", MimeType = "image/webp", OriginalFileName = "file3.webp", OwnerId = 1 };
+        var file4 = new CustomFile { Id = 4, FileKey = "key4", MimeType = "image/webp", OriginalFileName = "file4.webp", OwnerId = 1 };
+        context.CustomFiles.Add(file3);
+        context.CustomFiles.Add(file4);
         await context.SaveChangesAsync();
+        FileServiceMock.GetFileByIdAsync(3).Returns(file3);
+        FileServiceMock.GetFileByIdAsync(4).Returns(file4);
     }
 
     // GetAlbumImage Tests
     [Fact]
     public async Task GetAlbumImage_ValidImage_ReturnSuccess()
     {
+        FileServiceMock.GetFileContentAsync(Arg.Any<string>()).Returns([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
         var response = await HttpClient.GetAsync($"/api/album/1/images/3");
+        _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
     }
 
     [Fact]
     public async Task GetAlbumImage_PostImage_ReturnSuccess()
     {
+        FileServiceMock.GetFileContentAsync(Arg.Any<string>()).Returns([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         await SetupUserAndTrip(1, "test@example.com");
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/1/images/1");
@@ -113,6 +129,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     {
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
+        FileServiceMock.GetFileByIdAsync(Arg.Any<int>()).Throws<KeyNotFoundException>();
         var response = await HttpClient.GetAsync($"/api/album/1/images/5");
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -181,6 +198,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task AddImagesToAlbum_ValidImages_ReturnSuccess()
     {
+        FileServiceMock.SaveFileAsync(Arg.Any<FormFile>(), Arg.Any<int>()).Returns(new CustomFile { Id = 1, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, });
         await SetupUserAndTrip(1, "test@example.com");
 
         var pandaBytes = GetBytes("panda.webp");
@@ -192,6 +210,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         ]);
 
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
+        _output.WriteLine(await response.Content.ReadAsStringAsync());
         response.EnsureSuccessStatusCode();
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var album = context.Albums.FirstOrDefault(album => album.TripId == 1)!;
@@ -260,9 +279,10 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await SetupUserAndTrip(1, "test@example.com");
         await AddAlbumImages();
         var response = await HttpClient.DeleteAsync($"/api/album/1/images/3");
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest); // Fails when actually deleting because doesn't exist'
-        var content = await response.Content.ReadAsStringAsync();
-        content.ShouldBe("Failed to delete image");
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Albums.First(album => album.TripId == 1).PhotoIds.ShouldNotContain(3);
     }
 
     [Fact]
