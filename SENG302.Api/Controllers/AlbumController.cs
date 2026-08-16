@@ -95,6 +95,38 @@ public class AlbumController : ControllerBase
     }
     
     /// <summary>
+    /// Gets all images from an album that match the tag param. This includes images added
+    /// directly to the album and images added to a post in the trip.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="tag">The tag to filter by</param>
+    /// <returns>List of images</returns>
+    [HttpGet("tag")]
+    public async Task<ActionResult> GetAlbumImageMetadataWithTag(int tripId, [FromQuery] string tag)
+    {
+        try
+        {
+            // Get user and return unauthorized if not logged in or access to the trip
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+
+            var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId, tag);
+            return Ok(images);
+        }
+        catch (KeyNotFoundException e) // Trip or Album not found
+        {
+            return NotFound(e.Message);
+        }
+        catch
+        {
+            return BadRequest();
+        }
+    }
+    
+    /// <summary>
     /// Adds images to an album.
     /// </summary>
     /// <param name="tripId">The trips id</param>

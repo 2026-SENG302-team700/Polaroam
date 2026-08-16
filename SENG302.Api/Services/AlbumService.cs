@@ -10,7 +10,7 @@ namespace SENG302.Api.Services;
 
 public interface IAlbumService
 {
-    public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId);
+    public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null);
     public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
@@ -189,9 +189,10 @@ public class AlbumService : IAlbumService
     /// Returns metadata, and not the actual images.
     /// </summary>
     /// <param name="tripId"></param>
+    /// <param name="tag">Optional tag to filter by if provided</param>
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId)
+    public async Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -214,6 +215,11 @@ public class AlbumService : IAlbumService
         {
             var file = await _fileService.GetFileByIdAsync(photoId);
             files.Add(file);
+        }
+
+        if (!string.IsNullOrEmpty(tag) && files.Count > 0)
+        {
+            files = files.Where(f => f.Tags != null && f.Tags.Contains(tag)).ToList();
         }
 
         return files;
