@@ -65,9 +65,26 @@ $font-weight-bold: 700;
     }
 }
 
+.badge {
+    z-index: 3;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: $shadow-small;
+}
+
 .text {
     font-weight: 700;
     letter-spacing: 0.01em;
+}
+
+.text-bg-secondary {
+    background-color: #fff !important;
+    color: $ink !important;
+}
+
+.text-bg-danger {
+    background-color: $danger-colour !important;
+    color: $paper !important;
 }
 
 .nav-link {

@@ -165,6 +165,8 @@ public class AlbumService : IAlbumService
             {
                 FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
 
+                await _fileService.SetTagQueueStatus(file.Id);
+
                 await _imageTaggingQueue.QueueImageTaggingAsync(
                     new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
                 );

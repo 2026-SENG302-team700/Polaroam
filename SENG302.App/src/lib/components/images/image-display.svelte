@@ -7,12 +7,14 @@
 
     let {
         images = $bindable([]),
+        photoIds = [],
         letDelete = false,
         ondelete,
         errors = [],
         children,
     }: {
         images?: File[] | null;
+        photoIds?: number[];
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
@@ -58,7 +60,7 @@
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>
-                <ClickableImage {image} {index} {images} />
+                <ClickableImage {image} {index} {images} photoId={photoIds[index]} {photoIds} />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">
                         <DeleteButton

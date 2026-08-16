@@ -76,7 +76,6 @@
                     return new File([blob], meta.fileName, { type: meta.mimeType });
                 }),
             )
-            console.log(photos);
             image = photos[0];
             updateImageUrl();
       
