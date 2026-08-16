@@ -7,7 +7,7 @@ namespace SENG302.Api.Models.Responses;
 public class Location
 {
     public required long OsmId { get; set; }
-    public required string OsmType { get; set; }
+    public string OsmType { get; set; } = "node";
     public required string Lat { get; set; }
     public required string Lon { get; set; }
     public required string Name { get; set; }

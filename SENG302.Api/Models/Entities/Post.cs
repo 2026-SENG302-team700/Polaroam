@@ -14,11 +14,31 @@ public class Post
     public int PostId { get; init; }
     public required int TripId { get; set; }
     public required string Title { get; set; }
-    public string Content { get; set; }
-    public DateOnly? Date { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public DateTimeOffset? Date
+    {
+        get
+        {
+            return field?.ToUniversalTime();
+        }
+        set
+        {
+            field = value?.ToUniversalTime();
+        }
+    }
     public required long OsmId { get; set; }
-    public required string OsmType { get; set; }
+    public string OsmType { get; set; } = "node";
     public required string LocationName { get; set; }
     public List<int> PhotoIds { get; set; } = new();
-    public DateTimeOffset creationTime { get; set; }
+    public DateTimeOffset CreationTime
+    {
+        get
+        {
+            return field.ToUniversalTime();
+        }
+        set
+        {
+            field = value.ToUniversalTime();
+        }
+    }
 }

@@ -3,25 +3,28 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services.ImageTagging;
+using SENG302.Api.Helpers.Validators;
 
 namespace SENG302.Api.Services;
+
 public interface IAlbumService
 {
-    public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId);
-    public Task<Album>  UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
+    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId);
+    public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
-    public Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
 }
 
-public class AlbumService: IAlbumService
+public class AlbumService : IAlbumService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
-    public AlbumService(IFileService fileService, 
+    public AlbumService(IFileService fileService,
                         IDbContextFactory<DatabaseContext> dbContextFactory,
                         IImageTaggingQueue imageTaggingQueue)
     {
@@ -29,7 +32,7 @@ public class AlbumService: IAlbumService
         _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
     }
-    
+
     /// <summary>
     /// Validates that the images given to it are less than 10MB in size, and that they are of a specified type.
     /// For each image that violates these requirements, an error string is added to a list, which is returned 
@@ -37,16 +40,16 @@ public class AlbumService: IAlbumService
     /// </summary>
     /// <param name="photos"></param>
     /// <returns>List of error strings</returns>
-    private static List<String> ValidateAlbumImages(List<IFormFile> photos)
+    private static List<string> ValidateAlbumImages(List<IFormFile> photos)
     {
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidationTools.IsValidFilesize(photo))
+            if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
             }
-            else if (!ImageValidationTools.IsValidMimeType(photo))
+            else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -110,7 +113,9 @@ public class AlbumService: IAlbumService
             CustomFile file;
             file = await _fileService.GetFileByIdAsync(photoId);
             await _fileService.DeleteFileAsync(file.FileKey);
-        } else
+            await context.SaveChangesAsync();
+        }
+        else
         {
             throw new KeyNotFoundException("Photo with that Id does not exist in this album.");
         }
@@ -140,7 +145,7 @@ public class AlbumService: IAlbumService
         }
 
         List<string> photoErrors = ValidateAlbumImages(photos);
-        
+
         if (photoErrors.Count > 0)
         {
             errors["photos"] = photoErrors;
@@ -162,6 +167,8 @@ public class AlbumService: IAlbumService
             {
                 FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
 
+                await _fileService.SetTagQueueStatus(file.Id);
+
                 await _imageTaggingQueue.QueueImageTaggingAsync(
                     new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
                 );
@@ -171,7 +178,7 @@ public class AlbumService: IAlbumService
                 // Tagging can't cause the image upload to fail
                 Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
             }
-        }  
+        }
 
         await context.SaveChangesAsync();
 
@@ -188,7 +195,7 @@ public class AlbumService: IAlbumService
     /// <param name="tripId"></param>
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId)
+    public async Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -197,7 +204,7 @@ public class AlbumService: IAlbumService
         {
             throw new KeyNotFoundException("Trip with that Id does not exist.");
         }
-        
+
         var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
 
         if (album == null)
@@ -205,12 +212,24 @@ public class AlbumService: IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<CustomFile> files = [];
+        List<PhotoMetadataResponse> files = [];
 
         foreach (var photoId in album.PhotoIds)
         {
-            var file = await _fileService.GetFileByIdAsync(photoId);
-            files.Add(file);
+            try
+            {
+                var file = await _fileService.GetFileByIdAsync(photoId);
+                files.Add(new PhotoMetadataResponse
+                {
+                    PhotoId = file.Id,
+                    FileName = file.OriginalFileName,
+                    MimeType = file.MimeType
+                });
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
+            }
+
         }
 
         return files;
@@ -225,7 +244,7 @@ public class AlbumService: IAlbumService
     /// <param name="photoId"></param>
     /// <returns>a customfile object</returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
+    public async Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -234,7 +253,7 @@ public class AlbumService: IAlbumService
         {
             throw new KeyNotFoundException("Trip with that Id does not exist.");
         }
-        
+
         var album = await context.Set<Album>().Where(album => album.TripId == tripId).FirstOrDefaultAsync();
 
         if (album == null)
@@ -243,11 +262,16 @@ public class AlbumService: IAlbumService
         }
 
         var file = await _fileService.GetFileByIdAsync(photoId);
-  
-        return file;
+
+        return new PhotoMetadataResponse
+        {
+            PhotoId = file.Id,
+            FileName = file.OriginalFileName,
+            MimeType = file.MimeType
+        };
     }
 
-     
+
     /// <summary>
     /// Create a new album for a given trip, and returns the album.
     /// Fails if a trip does not exist with that id and throws a KeyNotFoundException.
@@ -258,23 +282,23 @@ public class AlbumService: IAlbumService
     public async Task<Album> CreateNewAlbumAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var trip = await context.Set<Trip>().Where(trip => trip.Id == tripId).FirstOrDefaultAsync();
         if (trip == null)
         {
             throw new KeyNotFoundException("Trip with that Id does not exist.");
         }
-        
+
         var newAlbum = new Album()
         {
             TripId = tripId,
             PhotoIds = []
         };
         context.Set<Album>().Add(newAlbum);
-        
+
         await context.SaveChangesAsync();
 
         return newAlbum;
     }
-    
+
 }

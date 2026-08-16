@@ -8,6 +8,7 @@ using SENG302.Api.Models.Jobs;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -53,8 +54,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Test List",
             UserId = userId,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Albums.Add(new Album
         {
@@ -64,16 +65,24 @@ public class PostServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    private async Task EnableAiTagging(int userId)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        var user = await context.Users.FirstAsync(u => u.Id == userId);
+        user.AcceptedAiPrivacyPolicy = true;
+        user.AiTaggingEnabled = true;
+        await context.SaveChangesAsync();
+    }
+
     private void SetupGeoMock()
     {
-        GeoServiceMock.GetLocationAsync(Arg.Any<long>(), Arg.Any<string>()).Returns(new GeoLocationSearchResult
+        GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            osm_type = "node",
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
@@ -99,10 +108,9 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "User 1 post",
             Content = "desc",
             OsmId = 292806332,
-            OsmType = "node",
             LocationName = "Christchurch",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow),
-            creationTime = DateTimeOffset.UtcNow
+            Date = DateTimeOffset.UtcNow,
+            CreationTime = DateTimeOffset.UtcNow
         });
         context.Posts.Add(new Post
         {
@@ -110,10 +118,9 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "User 2 post",
             Content = "desc",
             OsmId = 292806332,
-            OsmType = "node",
             LocationName = "Christchurch",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow),
-            creationTime = DateTimeOffset.UtcNow
+            Date = DateTimeOffset.UtcNow,
+            CreationTime = DateTimeOffset.UtcNow
         });
         await context.SaveChangesAsync();
 
@@ -135,8 +142,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "New post",
             Content = "Some description",
             OsmId = 292806332,
-            OsmType = "node",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
+            Date = DateTimeOffset.UtcNow.AddDays(-2),
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
@@ -158,10 +164,9 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Fetch me",
             Content = "desc",
             OsmId = 292806332,
-            OsmType = "node",
             LocationName = "Christchurch",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow),
-            creationTime = DateTimeOffset.UtcNow
+            Date = DateTimeOffset.UtcNow,
+            CreationTime = DateTimeOffset.UtcNow
         };
         context.Posts.Add(post);
         await context.SaveChangesAsync();
@@ -189,9 +194,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "Valid title",
             Content = "Valid content",
-            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
-            OsmId = 0,
-            OsmType = "node"
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
+            OsmId = 0
         };
 
         var exception =
@@ -220,8 +224,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = new string('a', titleLength),
             Content = "SOme content",
             OsmId = 1,
-            OsmType = "node",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2)),
+            Date = DateTimeOffset.UtcNow.AddDays(-2),
         };
 
         var exception =
@@ -256,9 +259,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -271,7 +273,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = postId,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -320,9 +321,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
-                OsmType = "node",
                 LocationName = "Christchurch",
                 PhotoIds = []
             });
@@ -336,9 +336,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "updated title",
             Content = "updated content",
-            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
-            OsmId = 0,
-            OsmType = "node"
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
+            OsmId = 0
         };
 
         var exception =
@@ -360,6 +359,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post.LocationName.ShouldBe("Christchurch");
     }
 
+
     [Fact]
     public async Task DeleteTrip_ExistingPost_DeletesSinglePosts()
     {
@@ -375,9 +375,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -390,7 +389,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = postId,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -431,9 +429,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -442,21 +439,23 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
             postId1 = post1.PostId;
 
+
             var post2 = new Post
             {
                 TripId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
             context.Posts.Add(post2);
 
+
             await context.SaveChangesAsync();
+
 
             postId2 = post2.PostId;
 
@@ -464,18 +463,17 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = postId2,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
                 DisplayName = "Christchurch, New Zealand"
             });
 
+
             context.Locations.Add(new Location
             {
                 PostId = postId1,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -500,6 +498,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         locationExists.ShouldBeFalse();
     }
 
+
     [Fact]
     public async Task DeleteTrip_ExistingPosts_DeletesOnlyTripPosts()
     {
@@ -516,9 +515,10 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Test List",
                 UserId = 1,
                 Description = "Test",
-                StartDate = new DateOnly(2017, 10, 08),
-                EndDate = new DateOnly(2017, 10, 21)
+                StartDate = DateToDateTimeOffset(2017, 10, 08),
+                EndDate = DateToDateTimeOffset(2017, 10, 21)
             });
+
 
             var post1 = new Post
             {
@@ -526,9 +526,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -537,29 +536,31 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
             postId1 = post1.PostId;
 
+
             var post2 = new Post
             {
                 TripId = 2,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
             context.Posts.Add(post2);
 
+
             await context.SaveChangesAsync();
 
+
             postId2 = post2.PostId;
+
 
             context.Locations.Add(new Location
             {
                 PostId = postId1,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -570,7 +571,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = postId2,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -594,6 +594,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         post1Exists.ShouldBeFalse();
         location1Exists.ShouldBeFalse();
 
+
         var post2Exists = await assertContext.Posts
             .AnyAsync(post => post.TripId == 2);
 
@@ -604,10 +605,12 @@ public class PostServiceTests : BaseIntegrationTestFixture
         location2Exists.ShouldBeTrue();
     }
 
+
     [Fact]
     public async Task DeleteTrip_NoPosts_RunsSuccessfully()
     {
         await SetupUserAndTrip(1, 1);
+
 
 
         await Should.NotThrowAsync(ServiceUnderTest.DeleteAllPostOfTrip(1));
@@ -629,9 +632,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
-                OsmType = "node",
                 LocationName = "Christchurch",
                 PhotoIds = []
             });
@@ -645,9 +647,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = new string('a', titleLength),
             Content = "updated content",
-            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
-            OsmId = 0,
-            OsmType = "node"
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
+            OsmId = 0
         };
 
         var exception =
@@ -682,9 +683,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
-                OsmType = "node",
                 LocationName = "Christchurch",
                 PhotoIds = []
             });
@@ -699,8 +699,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "updated title",
             Content = "updated content",
             Date = null,
-            OsmId = 123,
-            OsmType = "node"
+            OsmId = 123
         };
 
         var exception =
@@ -709,7 +708,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             );
 
         exception.Errors["date"][0]
-            .ShouldContain("Invalid date, date must be formatted");
+            .ShouldContain("Date is invalid");
 
         await using var assertContext = DbContextFactory.CreateDbContext();
 
@@ -747,9 +746,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = [fileEntity.Id]
             };
 
@@ -765,7 +763,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = postId,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -813,9 +810,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "del post",
                 Content = "dfsdofdskjofdsjnlksdfjlnsdfjnlfsdjlsdljkndsfljkndfsljdfsjldfsljk",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = [fileEntity.Id]
             };
 
@@ -828,7 +824,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = postId,
                 OsmId = 123,
-                OsmType = "node",
                 Lat = "-43.532",
                 Lon = "172.636",
                 Name = "Christchurch",
@@ -879,7 +874,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Content = "dfsdofdskjofdsjnlksdfjlnsdfjnlfsdjlsdljkndsfljkndfsljdfsjldfsljk",
                 OsmId = 1,
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = [fileEntity.Id]
             };
 
@@ -920,7 +915,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     [Fact]
     public async Task DeletePhotoFromPost_NonExistentPost_KeyNotFoundException()
     {
-        await SetupUserAndTrip(1, 1);     
+        await SetupUserAndTrip(1, 1);
 
         await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
@@ -954,9 +949,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "where photo",
                 Content = "sdfodsiofdsfidsmfdsmsdfoimfiodsmfdiosmfsiomdsfiofmdsi",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -992,9 +986,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "no photos",
                 Content = "asijdasiodasiomdsaiomdsaiomdasoijdasijadsoiadsjoidas",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = []
             };
 
@@ -1040,9 +1033,8 @@ public class PostServiceTests : BaseIntegrationTestFixture
                 Title = "lil calm post",
                 Content = "adiasodmoidmsamdiosamdoajdoimaodis",
                 OsmId = 1,
-                OsmType = "node",
                 LocationName = "Christchurch",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                Date = DateTimeOffset.UtcNow.AddDays(-1),
                 PhotoIds = [fileIdToDelete, fileIdToKeep]
             };
 
@@ -1073,18 +1065,18 @@ public class PostServiceTests : BaseIntegrationTestFixture
     {
         await SetupUserAndTrip(1, 1);
         SetupGeoMock();
-        
+
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         var request = new NewPostRequest
         {
             TripId = 1,
             Title = "test post",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
-        
+
         var image = GetMockFile(
             "test.png",
             pngBytes,
@@ -1098,17 +1090,17 @@ public class PostServiceTests : BaseIntegrationTestFixture
         );
 
         var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
-        
+
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(post.PhotoIds[0]);
     }
-    
+
     [Fact]
     public async Task UpdatePostAsync_WithNewImages_ImagesAddedToAlbum()
     {
         await SetupUserAndTrip(1, 1);
         SetupGeoMock();
-        
+
         await using var context = DbContextFactory.CreateDbContext();
 
         var request = new NewPostRequest
@@ -1117,11 +1109,11 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "original post",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
-        
+
         await context.SaveChangesAsync();
 
         var updateRequest = new UpdatePostRequest
@@ -1144,19 +1136,21 @@ public class PostServiceTests : BaseIntegrationTestFixture
         );
 
         var updatedPost = await ServiceUnderTest.UpdatePostAsync(updateRequest, 1, [image]);
-        
+
         await context.SaveChangesAsync();
 
         var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
-        
+
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(updatedPost.PhotoIds[0]);
     }
+
 
     [Fact]
     public async Task CreateNewPostAsync_WithImage_QueuesImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
         SetupGeoMock();
 
         var request = new NewPostRequest
@@ -1165,8 +1159,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "test post",
             Content = "description",
             OsmId = 1,
-            OsmType = "node",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var image = GetMockFile(
@@ -1188,7 +1181,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Arg.Any<ImageTaggingJob>()
         );
     }
-    
+
 
 
     [Fact]
@@ -1203,8 +1196,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "test post with no images",
             Content = "description",
             OsmId = 1,
-            OsmType = "node",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
@@ -1226,8 +1218,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "original post",
             Content = "description",
             OsmId = 1,
-            OsmType = "node",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var image = GetMockFile(
@@ -1251,7 +1242,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "Updated title",
             Content = "Updated content",
             OsmId = post.OsmId,
-            OsmType = post.OsmType,
             Date = post.Date
         };
 
@@ -1266,6 +1256,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     public async Task UploadPhotosToPostAsync_WithNewImage_QueuesImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
         SetupGeoMock();
 
         var request = new NewPostRequest
@@ -1274,8 +1265,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "original post",
             Content = "description",
             OsmId = 1,
-            OsmType = "node",
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
 
         var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, []);
@@ -1287,7 +1277,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Title = "updated title",
             Content = "updated content",
             OsmId = post.OsmId,
-            OsmType = post.OsmType,
             Date = post.Date
         };
 
@@ -1310,6 +1299,6 @@ public class PostServiceTests : BaseIntegrationTestFixture
             Arg.Any<ImageTaggingJob>()
         );
     }
-    
-    
+
+
 }

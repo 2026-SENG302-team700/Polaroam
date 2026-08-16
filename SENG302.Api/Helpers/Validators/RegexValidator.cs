@@ -1,13 +1,12 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace SENG302.Api.Services;
+namespace SENG302.Api.Helpers.Validators;
 
 public class RegexConfig
 {
     public required UserPatterns User { get; set; }
     public required TripPatterns Trip { get; set; }
-    public required TaskItemPatterns TaskItem { get; set; }
 }
 
 public class UserPatterns
@@ -34,12 +33,6 @@ public class TripTitlePattern
     public required string Flags { get; set; }
 }
 
-public class TaskItemPatterns
-{
-
-}
-
-
 /// <summary>
 /// Provides a list of regex patterns read from a shared json file
 /// </summary>
@@ -61,7 +54,7 @@ public static class ValidationPatterns
     public static RegexOptions setDisplayOptions(string flags)
     {
         var displayOptions = RegexOptions.Compiled;
-        if (flags.Contains("u") == true)
+        if (flags.Contains('u'))
             displayOptions |= RegexOptions.CultureInvariant;
         return displayOptions;
     }
@@ -80,13 +73,8 @@ public static class ValidationPatterns
                 PropertyNameCaseInsensitive = true
             }) ?? throw new Exception("Failed to deserialize regex config.");
 
-
-
             // Set User Patterns
             UserEmail = new Regex(config.User.Email, RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
-
-
-
 
             UserDisplayName = new Regex(config.User.DisplayName.Pattern, setDisplayOptions(config.User.DisplayName.Flags), TimeSpan.FromMilliseconds(200));
             UserPassword = new Regex(config.User.Password, RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));

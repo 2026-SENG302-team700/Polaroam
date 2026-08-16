@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -46,20 +47,19 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         Title = "Test Trip",
         Description = "Test",
-        StartDate = new DateOnly(2025, 11, 21),
-        EndDate = new DateOnly(2025, 12, 21)
+        StartDate = DateToDateTimeOffset(2025, 11, 21),
+        EndDate = DateToDateTimeOffset(2025, 12, 21)
     };
 
     private void SetupGeoMock()
     {
-        GeoServiceMock.GetLocationAsync(1, "node").Returns(new GeoLocationSearchResult
+        GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            osm_type = "node",
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
@@ -82,8 +82,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "T",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -114,8 +114,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -133,8 +133,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Trip!",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 10, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 10, 21)
         };
         var response = await HttpClient.PostAsJsonAsync("/api/trip", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -159,7 +159,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Invalid date, date must be formatted ");
+        message.ShouldContain("Date is invalid");
     }
 
 
@@ -201,8 +201,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent("node"), "osmType");
-        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -288,8 +287,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         Assert.NotNull(createdTrip);
 
-        var newStartDate = new DateOnly(2026, 8, 1);
-        var newEndDate = new DateOnly(2026, 8, 10);
+        var newStartDate = DateToDateTimeOffset(2026, 8, 1);
+        var newEndDate = DateToDateTimeOffset(2026, 8, 10);
 
         var request = new UpdateTripRequest
         {
@@ -384,8 +383,8 @@ public class TripControllerTests : BaseIntegrationTestFixture
         {
             Title = "Second Trip",
             Description = "Test",
-            StartDate = new DateOnly(2025, 11, 21),
-            EndDate = new DateOnly(2025, 12, 21)
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         });
         var trip2 = await trip2Response.Content.ReadFromJsonAsync<Trip>();
         Assert.NotNull(trip2);
@@ -393,17 +392,17 @@ public class TripControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         context.Locations.AddRange(
             new Location
-            { OsmId = 1, OsmType = "node", Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 1 },
+            { OsmId = 1, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 1 },
             new Location
-            { OsmId = 2, OsmType = "node", Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 2 },
+            { OsmId = 2, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 2 },
             new Location
-            { OsmId = 3, OsmType = "node", Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 3 }
+            { OsmId = 3, Name = "Location A", DisplayName = "Location A", Lat = "1", Lon = "1", PostId = 3 }
         );
 
         context.Posts.AddRange(
-            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, OsmType = "node", Content = "Content" },
-            new Post { PostId = 2, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, OsmType = "node", Content = "Content" },
-            new Post { PostId = 3, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, OsmType = "node", Content = "Content" }
+            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content" },
+            new Post { PostId = 2, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
+            new Post { PostId = 3, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
         );
         try
         {

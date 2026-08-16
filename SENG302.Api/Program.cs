@@ -259,13 +259,14 @@ public class Program
 
     protected static void RegisterServices(IServiceCollection services)
     {
-        // Register a TimeProvider so we don't need to rely on DateTime.Now, and can mock the time in automated tests
+        // Register a TimeProvider so we don't need to rely on DateTimeOffset.UtcNow, and can mock the time in automated tests
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IAlbumService, AlbumService>();
+        services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {

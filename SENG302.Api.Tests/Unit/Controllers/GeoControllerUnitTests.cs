@@ -26,12 +26,11 @@ public class GeoControllerUnitTests
         List<GeoLocationSearchResult>
           {
               new() {
-                  osm_id = 123,
-                  osm_type = "node",
-                  lat = "-43.5321",
-                  lon = "172.6362",
-                  name = "Christchurch",
-                  display_name = "Christchurch, New Zealand"
+                  OsmId = 123,
+                  Latitude = "-43.5321",
+                  Longitude = "172.6362",
+                  Name = "Christchurch",
+                  DisplayName = "Christchurch, New Zealand"
               }
           };
 
@@ -74,38 +73,37 @@ public class GeoControllerUnitTests
         var expectedLocation = new
         GeoLocationSearchResult
         {
-            osm_id = 123,
-            osm_type = "node",
-            lat = "-43.5321",
-            lon = "172.6362",
-            name = "Christchurch",
-            display_name = "Christchurch, New Zealand"
+            OsmId = 123,
+            Latitude = "-43.5321",
+            Longitude = "172.6362",
+            Name = "Christchurch",
+            DisplayName = "Christchurch, New Zealand"
         };
 
         _mockGeoService
-            .GetLocationAsync(123, "node")
+            .GetLocationAsync(123)
             .Returns(expectedLocation);
 
-        var result = await _controller.GetLocationAsync(123, "node");
+        var result = await _controller.GetLocationAsync(123);
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(expectedLocation);
 
-        await _mockGeoService.Received(1).GetLocationAsync(123, "node");
+        await _mockGeoService.Received(1).GetLocationAsync(123);
     }
 
     [Fact]
     public async Task GetLocationAsync_LocationDoesNotExist_ReturnsOkWithNull()
     {
         _mockGeoService
-            .GetLocationAsync(999, "node")
+            .GetLocationAsync(999)
             .Returns((GeoLocationSearchResult?)null);
 
-        var result = await _controller.GetLocationAsync(999, "node");
+        var result = await _controller.GetLocationAsync(999);
 
         var okResult = result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBeNull();
 
-        await _mockGeoService.Received(1).GetLocationAsync(999, "node");
+        await _mockGeoService.Received(1).GetLocationAsync(999);
     }
 }

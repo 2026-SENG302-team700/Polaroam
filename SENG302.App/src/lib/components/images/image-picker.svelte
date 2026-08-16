@@ -20,12 +20,14 @@
         newUploadsCount = $bindable(0),
         fileErrors = $bindable<string[]>([]),
         loading = $bindable(false),
+        uploadFunc,
     }: {
         filesList: File[] | null | undefined;
         errors: string[];
         newUploadsCount?: number;
         fileErrors?: string[];
         loading: boolean;
+        uploadFunc?: () => void;
     } = $props();
 
     let displayedErrors = $derived([...errors, ...fileErrors]);
@@ -117,6 +119,9 @@
                 newUploadsCount += 1;
                 filesList?.push(file);
             }
+        }
+        if (uploadFunc != null) {
+            uploadFunc();
         }
 
         fileErrors = newFileErrors;

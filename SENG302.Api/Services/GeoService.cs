@@ -14,7 +14,7 @@ public interface IGeoService
         string? acceptLanguageHeader,
         CancellationToken cancellationToken
     );
-    Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string osmType);
+    Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string osmType = "node");
 }
 
 public class GeoService : IGeoService
@@ -75,7 +75,7 @@ public class GeoService : IGeoService
     /// <param name="osmId">The osm id of a location</param>
     /// <returns>Location information</returns>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string osmType)
+    public async Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string osmType = "node")
     {
         var prefix = osmType.ToLowerInvariant() switch
         {

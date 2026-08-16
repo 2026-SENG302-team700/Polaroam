@@ -82,7 +82,7 @@
             form.append("OsmId", location.osmId);
             form.append("OsmType", location.osmType);
             form.append("Content", content);
-            form.append("Date", serialiseLocalDate(date) ?? "");
+            form.append("Date", date?.toISOString() ?? "");
             form.append("NoContentAllowed", noContentAllowed);
             if (files != null) {
                 for (let i = 0; i < files.length; i++) {
@@ -119,6 +119,7 @@
                     errors.content.includes(
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
+                    errors.title.length === 0 && 
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
                     !errors.date &&
@@ -138,22 +139,6 @@
             loading = false;
             noContentAllowed = false;
         }
-    }
-
-    /**
-     * Converts a local date to a date only string without UTC timezone shifting
-     * @param date
-     */
-    function serialiseLocalDate(date: Date | null): string | null {
-        if (!date || Number.isNaN(date.getTime())) {
-            return null;
-        }
-
-        const year = date.getFullYear().toString().padStart(4, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const day = date.getDate().toString().padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
     }
 </script>
 

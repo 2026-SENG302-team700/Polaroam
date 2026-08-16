@@ -6,6 +6,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -47,8 +48,8 @@ public class U7005DeletePost
             UserId = user.Id,
             Title = "Trip with post",
             Description = "Test trip",
-            StartDate = new DateOnly(2026, 1, 1),
-            EndDate = new DateOnly(2026, 1, 10)
+            StartDate = DateToDateTimeOffset(2026, 1, 1),
+            EndDate = DateToDateTimeOffset(2026, 1, 10),
         };
 
         var post = new Post
@@ -60,8 +61,8 @@ public class U7005DeletePost
             OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
-            creationTime = DateTimeOffset.Now
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
+            CreationTime = DateTimeOffset.UtcNow
         };
 
         context.Users.Add(user);
@@ -109,8 +110,8 @@ public class U7005DeletePost
             UserId = user.Id,
             Title = "Trip with post",
             Description = "Test trip",
-            StartDate = new DateOnly(2026, 1, 1),
-            EndDate = new DateOnly(2026, 1, 10)
+            StartDate = DateToDateTimeOffset(2026, 1, 1),
+            EndDate = DateToDateTimeOffset(2026, 1, 10)
         };
 
         var post = new Post
@@ -122,8 +123,8 @@ public class U7005DeletePost
             OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
-            Date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1),
-            creationTime = DateTimeOffset.Now
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
+            CreationTime = DateTimeOffset.UtcNow
         };
 
         context.Users.Add(user);

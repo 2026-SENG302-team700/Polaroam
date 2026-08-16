@@ -6,6 +6,7 @@ using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using SENG302.Api.Helpers.Validators;
 
 
 namespace SENG302.Api.Services;
@@ -31,6 +32,7 @@ public class PostService : IPostService
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IUserService _userService;
     private readonly IAlbumService _albumService;
 
     public PostService(
@@ -39,7 +41,9 @@ public class PostService : IPostService
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
-        IImageTaggingQueue imageTaggingQueue)
+        IImageTaggingQueue imageTaggingQueue,
+        IUserService userService
+        )
     {
         _albumService = albumService;
         _dbContextFactory = dbContextFactory;
@@ -47,6 +51,7 @@ public class PostService : IPostService
         _fileService = fileService;
         _geoService = geoService;
         _imageTaggingQueue = imageTaggingQueue;
+        _userService = userService;
     }
 
     /// <summary>
@@ -87,6 +92,7 @@ public class PostService : IPostService
         postRequest.Content = postRequest.Content.Trim();
         photos ??= [];
 
+
         // Validation
         var errors = PostValidator.ValidatePostFields(postRequest);
 
@@ -94,11 +100,11 @@ public class PostService : IPostService
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidationTools.IsValidFilesize(photo))
+            if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image to large, maximum file size is 10MB");
             }
-            else if (!ImageValidationTools.IsValidMimeType(photo))
+            else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -123,7 +129,10 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            await GenerateImageTags(photo, file.Id);
+            if (await _userService.UserAiTaggingCheckAsync(userId))
+            {
+                await GenerateImageTags(photo, file.Id);
+            }
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
@@ -149,12 +158,12 @@ public class PostService : IPostService
             TripId = postRequest.TripId,
             Title = postRequest.Title,
             Content = postRequest.Content,
-            creationTime = _timeProvider.GetUtcNow(),
+            CreationTime = _timeProvider.GetUtcNow(),
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
             OsmType = postRequest.OsmType,
-            LocationName = location.name,
+            LocationName = location.Name,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -164,10 +173,10 @@ public class PostService : IPostService
             OsmId = postRequest.OsmId,
             OsmType = postRequest.OsmType,
             PostId = newPost.PostId,
-            Lat = location.lat,
-            Lon = location.lon,
-            Name = location.name,
-            DisplayName = location.display_name,
+            Lat = location.Latitude,
+            Lon = location.Longitude,
+            Name = location.Name,
+            DisplayName = location.DisplayName,
         });
 
         await context.SaveChangesAsync();
@@ -229,11 +238,11 @@ public class PostService : IPostService
         var photoErrors = new List<string>();
         foreach (var photo in photos)
         {
-            if (!ImageValidationTools.IsValidFilesize(photo))
+            if (!ImageValidator.IsValidFilesize(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Image too large, maximum file size is 10MB");
             }
-            else if (!ImageValidationTools.IsValidMimeType(photo))
+            else if (!ImageValidator.IsValidMimeType(photo))
             {
                 photoErrors.Add($"{photo.FileName}: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
             }
@@ -261,7 +270,7 @@ public class PostService : IPostService
         // Location Validation
         GeoLocationSearchResult? location = null;
 
-        if (postUpdates.OsmId != post.OsmId || !string.Equals(postUpdates.OsmType, post.OsmType, StringComparison.OrdinalIgnoreCase))
+        if (postUpdates.OsmId != post.OsmId || postUpdates.OsmType != post.OsmType)
         {
             location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType);
             if (location == null)
@@ -281,9 +290,12 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(photo, customFile.Id);
+            if (await _userService.UserAiTaggingCheckAsync(userId))
+            {
+                await GenerateImageTags(photo, customFile.Id);
+            }
         }
-        
+
         // get the album and add new photo Ids
         Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
        
@@ -298,8 +310,11 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds.Count > 0 ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
-        post.LocationName = location != null ? location.name : post.LocationName;
+        post.OsmType = postUpdates.OsmType;
+        post.PhotoIds = post.PhotoIds.Count > 0 
+            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
+            : post.PhotoIds = customFileIds;
+        post.LocationName = location != null ? location.Name : post.LocationName;
 
         // Save Changes
         context.Posts.Update(post);
@@ -417,7 +432,7 @@ public class PostService : IPostService
         post.PhotoIds.Remove(photoId);
         if (album != null)
         {
-            album.PhotoIds.Remove(photoId);    
+            album.PhotoIds.Remove(photoId);
         }
         
         await context.SaveChangesAsync();
@@ -436,6 +451,8 @@ public class PostService : IPostService
         {
             FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
 
+            await _fileService.SetTagQueueStatus(imageId);
+            
             await _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
             );
@@ -447,4 +464,3 @@ public class PostService : IPostService
         }
     }
 }
-

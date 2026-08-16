@@ -33,7 +33,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     // As our tests run, time passes, which can make it difficult to check exactly when something happened.
     // For this reason, we fake (similar to mocking) our time provider, effectively freezing time while we run our tests.
-    // Note: This will only work if we remember to use a TimeProvider instead of DateTime.Now or DateTimeOffset.Now in our code.
+    // Note: This will only work if we remember to use a TimeProvider instead of DateTimeOffset.UtcNow in our code.
     protected DateTimeOffset TestNow;
     protected readonly FakeTimeProvider FakeTimeProvider;
     protected string FakeTestDirectory; // Fake Test Directory for Unit Tests regarding FileService
@@ -43,7 +43,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     protected BaseIntegrationTestFixture(WebApplicationFactory<Program> webAppFactory)
     {
-        TestNow = DateTimeOffset.Now;
+        TestNow = DateTimeOffset.UtcNow;
         FakeTimeProvider = new FakeTimeProvider(TestNow);
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
@@ -101,12 +101,19 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
+                
+                ConfigureAdditionalServices(services);
             });
         });
 
         HttpClient = _webAppFactory.CreateClient();
     }
-
+    
+    // Used to add mocks to new services
+    protected virtual void ConfigureAdditionalServices(IServiceCollection services)
+    {
+        // no mocked services by default
+    }
     public virtual async Task InitializeAsync()
     {
         // At the start of a test, make sure the database is created fresh

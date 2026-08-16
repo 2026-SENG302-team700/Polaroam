@@ -7,26 +7,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace SENG302.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAlbumObject : Migration
+    public partial class AddAlbumTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<List<int>>(
-                name: "PhotoIds",
-                table: "Posts",
-                type: "integer[]",
-                nullable: false,
-                oldClrType: typeof(List<int>),
-                oldType: "integer[]",
-                oldNullable: true);
-
-            migrationBuilder.AddColumn<List<string>>(
-                name: "Tags",
-                table: "CustomFiles",
-                type: "text[]",
-                nullable: true);
-
             migrationBuilder.CreateTable(
                 name: "Albums",
                 columns: table => new
@@ -46,18 +31,6 @@ namespace SENG302.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Albums");
-
-            migrationBuilder.DropColumn(
-                name: "Tags",
-                table: "CustomFiles");
-
-            migrationBuilder.AlterColumn<List<int>>(
-                name: "PhotoIds",
-                table: "Posts",
-                type: "integer[]",
-                nullable: true,
-                oldClrType: typeof(List<int>),
-                oldType: "integer[]");
         }
     }
 }

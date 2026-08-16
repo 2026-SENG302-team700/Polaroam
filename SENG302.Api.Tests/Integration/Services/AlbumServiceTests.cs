@@ -8,10 +8,12 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 
+using static SENG302.Api.Helpers.DateHelper;
+
 namespace SENG302.Api.Tests.Integration.Services;
 
-public class AlbumServiceTests :BaseIntegrationTestFixture
-{ 
+public class AlbumServiceTests : BaseIntegrationTestFixture
+{
     private IPostService _postService => ServiceProvider.GetRequiredService<IPostService>();
     private IAlbumService ServiceUnderTest => ServiceProvider.GetRequiredService<IAlbumService>();
     public AlbumServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
@@ -25,16 +27,16 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             ContentType = mimeType
         };
     }
-    
+
     private void SetupGeoMock()
     {
         GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
@@ -66,7 +68,7 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
             await ServiceUnderTest.GetAlbumByIdAsync(2);
-           
+
         });
         ex.Message.ShouldContain("Album with that Id does not exist.");
     }
@@ -90,8 +92,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Albums.Add(new Album
         {
@@ -99,7 +101,7 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             PhotoIds = []
         });
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -133,8 +135,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Albums.Add(new Album
         {
@@ -142,14 +144,14 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             PhotoIds = []
         });
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var mockFileContent1 = File.ReadAllBytes("resources/render.png");
 
         var mockFile1 = GetMockFile(
@@ -183,11 +185,11 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -198,8 +200,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
 
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
-           
+            await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
+
         });
         ex.Message.ShouldContain("Album with that Id does not exist.");
     }
@@ -221,9 +223,9 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             TripId = 1,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -234,8 +236,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
 
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
-           
+            await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
+
         });
         ex.Message.ShouldContain("Trip does not exist");
     }
@@ -259,8 +261,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Albums.Add(new Album
         {
@@ -269,17 +271,17 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var file = GetMockFile("test", new byte[10000001] , "image/png");
+        var file = GetMockFile("test", new byte[10000001], "image/png");
 
         List<IFormFile> photos = [file];
 
         MultipleValidationListException ex = await Should.ThrowAsync<MultipleValidationListException>(async () =>
         {
-            await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
+            await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
         });
         ex.Errors["photos"].ShouldContain("test: Image to large, maximum file size is 10MB");
     }
-    
+
     [Fact]
     public async Task UploadImageAlbumImages_InvalidMimeType_ThrowsMultipleValidationListException()
     {
@@ -299,8 +301,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Albums.Add(new Album
         {
@@ -309,17 +311,17 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
-        var file = GetMockFile("test", new byte[100000] ,"application/octet-stream");
+        var file = GetMockFile("test", new byte[100000], "application/octet-stream");
 
         List<IFormFile> photos = [file];
 
         MultipleValidationListException ex = await Should.ThrowAsync<MultipleValidationListException>(async () =>
         {
-            await ServiceUnderTest.UploadImagesToAlbumAsync(photos,1);
+            await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
         });
         ex.Errors["photos"].ShouldContain("test: Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
     }
-    
+
     [Fact]
     public async Task DeleteImagesFromAlbum_ValidPhotoIdValidTripId_DeletesImage()
     {
@@ -339,10 +341,10 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -350,20 +352,20 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             mockFileContent,
             "image/webp");
         List<IFormFile> photos = [mockFile];
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
 
         await Should.NotThrowAsync(async () =>
         {
-            await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+            await ServiceUnderTest.DeleteImageFromAlbumAsync(1, 1);
         });
     }
 
@@ -387,15 +389,15 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         await context.SaveChangesAsync();
 
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+            await ServiceUnderTest.DeleteImageFromAlbumAsync(1, 1);
         });
         ex.Message.ShouldContain("Album with that Id does not exist.");
     }
@@ -419,8 +421,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
 
         context.Albums.Add(new Album
@@ -428,17 +430,17 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             TripId = 1,
             PhotoIds = [1, 2]
         });
-        
+
         await context.SaveChangesAsync();
 
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+            await ServiceUnderTest.DeleteImageFromAlbumAsync(1, 1);
         });
-        
+
         ex.Message.ShouldContain("File 1 not found");
     }
-    
+
     [Fact]
     public async Task DeleteImagesFromAlbum_PhotoDoesNotExistOnAlbum_KeyNotFoundExceptionThrown()
     {
@@ -458,8 +460,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Trips.Add(new Trip
         {
@@ -467,8 +469,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List 2",
             UserId = 1,
             Description = "Test2",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
 
         context.Albums.Add(new Album
@@ -481,9 +483,9 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             TripId = 2,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -491,16 +493,16 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             mockFileContent,
             "image/webp");
         List<IFormFile> photos = [mockFile];
-        
+
 
         await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 2);
-        
+
 
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+            await ServiceUnderTest.DeleteImageFromAlbumAsync(1, 1);
         });
-        
+
         ex.Message.ShouldContain("Photo with that Id does not exist in this album.");
     }
 
@@ -522,8 +524,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Albums.Add(new Album
         {
@@ -531,18 +533,18 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             PhotoIds = [],
         });
         await context.SaveChangesAsync();
-        
+
         SetupGeoMock();
-        
+
         var request = new NewPostRequest
         {
             TripId = 1,
             Title = "test post",
             Content = "description",
             OsmId = 1,
-            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-2))
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
         };
-        
+
         byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
         var image = GetMockFile(
             "test.png",
@@ -555,9 +557,9 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             1,
             [image]
         );
-        
-        
-        var postId = await ServiceUnderTest.DeleteImageFromAlbumAsync(1,1);
+
+
+        var postId = await ServiceUnderTest.DeleteImageFromAlbumAsync(1, 1);
         postId.ShouldNotBeNull();
         postId.ShouldBe(post.PostId);
     }
@@ -581,10 +583,10 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -592,17 +594,17 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             mockFileContent,
             "image/webp");
         List<IFormFile> photos = [mockFile];
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
-        
+
         await Should.NotThrowAsync(async () =>
         {
             await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(1);
@@ -628,10 +630,10 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -639,23 +641,23 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             mockFileContent,
             "image/webp");
         List<IFormFile> photos = [mockFile];
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
-        
+
         await Should.NotThrowAsync(async () =>
         {
-            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(1,1);
+            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(1, 1);
         });
     }
-    
+
     [Fact]
     public async Task GetImagesFromAlbum_NoAlbum_ThrowsKeyNotFoundException()
     {
@@ -675,20 +677,20 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
             await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(1);
         });
-        
+
         ex.Message.ShouldContain("Album with that Id does not exist.");
     }
-    
+
     [Fact]
     public async Task GetSingleImageFromAlbum_NoAlbum_ThrowsKeyNotFoundException()
     {
@@ -708,17 +710,17 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(1,1);
+            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(1, 1);
         });
-        
+
         ex.Message.ShouldContain("Album with that Id does not exist.");
     }
 
@@ -741,18 +743,18 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -760,15 +762,15 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             mockFileContent,
             "image/webp");
         List<IFormFile> photos = [mockFile];
-        
-        
+
+
         await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
-        
+
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
             await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(2);
         });
-        
+
         ex.Message.ShouldContain("Trip with that Id does not exist.");
     }
 
@@ -791,18 +793,18 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = []
         });
-        
+
         await context.SaveChangesAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
 
         var mockFile = GetMockFile(
@@ -810,15 +812,15 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             mockFileContent,
             "image/webp");
         List<IFormFile> photos = [mockFile];
-        
-        
+
+
         await ServiceUnderTest.UploadImagesToAlbumAsync(photos, 1);
-        
+
         KeyNotFoundException ex = await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
-            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(2,1);
+            await ServiceUnderTest.GetSingleImageMetadataFromAlbumAsync(2, 1);
         });
-        
+
         ex.Message.ShouldContain("Trip with that Id does not exist.");
     }
 
@@ -841,8 +843,8 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
             Title = "Test List",
             UserId = 1,
             Description = "Test",
-            StartDate = new DateOnly(2017, 10, 08),
-            EndDate = new DateOnly(2017, 10, 21)
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         await context.SaveChangesAsync();
 
@@ -855,7 +857,7 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
 
         album.ShouldNotBeNull();
     }
-    
+
     [Fact]
     public async Task CreateNewAlbum_InvalidTripId_KeyNotFoundExceptionThrown()
     {
@@ -881,6 +883,6 @@ public class AlbumServiceTests :BaseIntegrationTestFixture
 
         album.ShouldBeNull();
     }
-    
-    
+
+
 }

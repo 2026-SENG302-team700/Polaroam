@@ -5,14 +5,13 @@ using NSubstitute;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using Shouldly;
-
+using static SENG302.Api.Helpers.DateHelper;
 namespace SENG302.Api.Tests.E2E;
 
 public class DeletePostE2ETest : E2ETestFixture
 {
     private const string PostTitle = "E2E post deletion test";
     private const long OsmId = 123;
-    private const string OsmType = "node";
 
     public DeletePostE2ETest(
         WebApplicationFactory<Program> factory)
@@ -26,15 +25,14 @@ public class DeletePostE2ETest : E2ETestFixture
     /// </summary>
     private async Task<(int TripId, int PostId)> CreatePostAsync()
     {
-        GeoServiceMock.GetLocationAsync(OsmId, OsmType).Returns(
+        GeoServiceMock.GetLocationAsync(OsmId).Returns(
               new GeoLocationSearchResult
               {
-                  osm_id = OsmId,
-                  osm_type = OsmType,
-                  lat = "-43.532",
-                  lon = "172.636",
-                  name = "Christchurch",
-                  display_name = "Christchurch, New Zealand"
+                  OsmId = OsmId,
+                  Latitude = "-43.532",
+                  Longitude = "172.636",
+                  Name = "Christchurch",
+                  DisplayName = "Christchurch, New Zealand"
               }
           );
 
@@ -55,8 +53,8 @@ public class DeletePostE2ETest : E2ETestFixture
             UserId = user.Id,
             Title = "E2E delete trip",
             Description = "Trip used for deletion tests",
-            StartDate = new DateOnly(2026, 1, 1),
-            EndDate = new DateOnly(2026, 1, 10)
+            StartDate = DateToDateTimeOffset(2026, 1, 1),
+            EndDate = DateToDateTimeOffset(2026, 1, 10),
         };
 
         context.Users.Add(user);
@@ -68,12 +66,11 @@ public class DeletePostE2ETest : E2ETestFixture
             TripId = trip.Id,
             Title = PostTitle,
             Content = "Content that should be gone",
-            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+            Date = DateTimeOffset.UtcNow.AddDays(-1),
             OsmId = OsmId,
-            OsmType = OsmType,
             LocationName = "Christchurch",
             PhotoIds = [],
-            creationTime = DateTimeOffset.Now
+            CreationTime = DateTimeOffset.UtcNow
         };
 
         context.Posts.Add(post);
@@ -83,7 +80,6 @@ public class DeletePostE2ETest : E2ETestFixture
         {
             PostId = post.PostId,
             OsmId = OsmId,
-            OsmType = OsmType,
             Lat = "-43.532",
             Lon = "172.636",
             Name = "Christchurch",

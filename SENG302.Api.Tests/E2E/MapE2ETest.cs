@@ -36,8 +36,8 @@ public class TripMapE2ETest : E2ETestFixture
             UserId = user.Id,
             Title = "E2E map trip",
             Description = "Trip used for map E2E testing",
-            StartDate = new DateOnly(2026, 1, 1),
-            EndDate = new DateOnly(2026, 1, 10)
+            StartDate = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            EndDate = new DateTimeOffset(2026, 1, 10, 0, 0, 0, TimeSpan.Zero)
         };
 
         context.Users.Add(user);
@@ -50,12 +50,12 @@ public class TripMapE2ETest : E2ETestFixture
             TripId = trip.Id,
             Title = "Christchurch post",
             Content = "A post located in Christchurch.",
-            Date = new DateOnly(2026, 1, 5),
+            Date = new DateTimeOffset(2026, 1, 5, 0, 0, 0, TimeSpan.Zero),
             OsmId = 123,
             OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
-            creationTime = DateTimeOffset.UtcNow
+            CreationTime = DateTimeOffset.UtcNow
         };
 
         context.Posts.Add(post);

@@ -38,7 +38,7 @@ public class GeoController : ControllerBase
     /// <param name="osmType">Type of the OSM element</param>
     /// <returns></returns>
     [HttpGet("location")]
-    public async Task<IActionResult> GetLocationAsync([FromQuery] long osmId, [FromQuery] string osmType)
+    public async Task<IActionResult> GetLocationAsync([FromQuery] long osmId, [FromQuery] string osmType = "node")
     {
         var result = await _geoService.GetLocationAsync(osmId, osmType);
         return Ok(result);
