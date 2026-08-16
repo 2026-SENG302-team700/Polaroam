@@ -90,7 +90,7 @@ public class AlbumController : ControllerBase
         }
         catch
         {
-            return BadRequest();
+            return BadRequest("An unexpected error occurred.");
         }
     }
     
@@ -122,7 +122,7 @@ public class AlbumController : ControllerBase
         }
         catch
         {
-            return BadRequest();
+            return BadRequest("An unexpected error occurred.");
         }
     }
     
