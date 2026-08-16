@@ -708,68 +708,6 @@ public class PostControllerTests : BaseIntegrationTestFixture
         photos.ShouldContain("Post not found");
     }
 
-    [Fact]
-    public async Task GetPostPhoto_ValidPostId_ReturnsPhoto()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Albums.Add(new Album
-            {
-                TripId = 1,
-                PhotoIds = [],
-            });
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my home" });
-        await context.SaveChangesAsync();
-
-        var file = await File.ReadAllBytesAsync("resources/panda.webp");
-        using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
-        await HttpClient.PutAsync("/api/post/1", uploadForm);
-
-        var response = await HttpClient.GetAsync("/api/post/1/images/1");
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var responseBytes = await response.Content.ReadAsByteArrayAsync();
-
-        var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
-
-        responseBytes.SequenceEqual(fileBytes).ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task GetPostPhoto_PhotoIdIsNull_ReturnsNotFound()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "my basement" });
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/post/1/images/1");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        var photos = await response.Content.ReadAsStringAsync();
-        photos.ShouldContain("Photo not found on this post.");
-    }
-
-    [Fact]
-    public async Task GetPostPhoto_PhotoIdIsNotPresent_ReturnsNotFound()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "a mysterious place" });
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/post/1/images/5");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        var photos = await response.Content.ReadAsStringAsync();
-        photos.ShouldContain("Photo not found on this post.");
-    }
-
     private MultipartFormDataContent BuildUpdatePostForm(
         long osmId = 1,
         IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)

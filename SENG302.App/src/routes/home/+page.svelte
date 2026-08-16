@@ -110,6 +110,10 @@
             } else {
                 photosError = "Failed to fetch search results.";
             }
+
+            const photoTripIds = new Set(searchPhotoTrips.map((pt) => pt.tripId));
+            searchTrips = searchTrips.filter((trip) => !photoTripIds.has(trip.id));
+
         } catch (err) {
             tripsError = "Failed to fetch search results: " + (err as Error).message;
         } finally {

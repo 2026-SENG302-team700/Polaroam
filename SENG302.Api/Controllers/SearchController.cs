@@ -33,7 +33,7 @@ public class SearchController : ControllerBase
 
         try
         {
-            var trips = await _tripService.GetTripsFromQuery(query);
+            var trips = await _tripService.GetTripsFromQuery(int.Parse(userIdString), query);
 
             if (trips.Count > 0)
             {
@@ -62,9 +62,14 @@ public class SearchController : ControllerBase
         {
             var tripPhotos = await _imageService.GetPhotosFromQueryAsync(int.Parse(userIdString), query);
 
-            return Ok(tripPhotos);
+            if (tripPhotos.Count > 0)
+            {
+                return Ok(tripPhotos);
+            }
+
+            return NotFound();
         }
-        catch (Exception e)
+        catch
         {
             return BadRequest();
         }

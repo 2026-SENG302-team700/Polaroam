@@ -142,16 +142,22 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     /// <summary>
     /// Streams a single photo back with correct types
     /// </summary>
-    /// <param name="postId">post Id</param>
     /// <param name="photoId">id of photo</param>
     /// <returns>an image file</returns>
     [Authorize]
     [HttpGet("{photoId:int}")]
     public async Task<IActionResult> GetPostPhoto(int photoId)
     {
-        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+        try
+        {
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
 
-        return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
+            return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
     }
 }

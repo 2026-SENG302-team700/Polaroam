@@ -15,7 +15,7 @@ public interface ITripService
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
     Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
     Task<List<Location>> GetTripLocations(int tripId);
-    Task<List<Trip>> GetTripsFromQuery(string query);
+    Task<List<Trip>> GetTripsFromQuery(int userId, string query);
 }
 
 public class TripService : ITripService
@@ -257,28 +257,22 @@ public class TripService : ITripService
     }
 
     /// <summary>
-    /// Gets a list of trips based on the query provided, looks through a trips title and description.
+    /// Gets a list of trips owned by the user based on the query provided, looks through a trips title and description.
     /// </summary>
+    /// <param name="userId">id of the user who owns the trips</param>
     /// <param name="query">query to be queried</param>
     /// <returns>List of trips that have matched the query</returns>
-    public async Task<List<Trip>> GetTripsFromQuery(string query)
+    public async Task<List<Trip>> GetTripsFromQuery(int userId, string query)
     {
         query = query.Trim().ToLower();
         
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var tripsQueriedTitles = await context.Trips
-            .Where(trip => trip.Title
-                .ToLower()
-                .Contains(query))
-            .ToListAsync();
-        var tripsQueriedDescriptions = await context.Trips
-            .Where(trip => trip.Description
-                .ToLower()
-                .Contains(query))
+        var trips = await context.Trips
+            .Where(trip => trip.UserId == userId &&
+                (trip.Title.ToLower().Contains(query) || trip.Description.ToLower().Contains(query)))
             .ToListAsync();
 
-        var trips = tripsQueriedTitles.Concat(tripsQueriedDescriptions).ToList();
         return trips;
     }
 }

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
@@ -48,6 +49,39 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             });
         }
         await context.SaveChangesAsync();
+    }
+
+    private async Task SetupPost(int tripId, int postId)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Posts.Add(new Post
+        {
+            PostId = postId, TripId = tripId, Title = "My post", Content = "", PhotoIds = [], OsmId = 1,
+            LocationName = "my home"
+        });
+        await context.SaveChangesAsync();
+    }
+
+    private async Task<int> SetupPostPhotos(int postId, byte[] fileBytes, string mimeType)
+    {
+        var form = new MultipartFormDataContent
+        {
+            { new StringContent(postId.ToString()), "Id" },
+            { new StringContent("1"), "TripId" },
+            { new StringContent("Valid title"), "Title" },
+            { new StringContent("Valid content"), "Content" },
+            { new StringContent("1"), "osmId" },
+            { new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date" }
+        };
+        var fileContent = new ByteArrayContent(fileBytes);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+        form.Add(fileContent, "files", "test");
+
+        var response = await HttpClient.PutAsync($"/api/post/{postId}", form);
+        response.EnsureSuccessStatusCode();
+
+        var updatedPost = await response.Content.ReadFromJsonAsync<Post>();
+        return updatedPost!.PhotoIds.Single();
     }
 
     // GetSuggestedTags Tests
@@ -334,5 +368,31 @@ public class ImageControllerTest : BaseIntegrationTestFixture
 
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
         tags!.Length.ShouldBeLessThanOrEqualTo(10); // adjust to match MaxSuggestedTags
+    }
+
+    [Fact]
+    public async Task GetPostPhoto_ValidPhotoId_ReturnsPhoto()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+        await SetupPost(1, 1);
+
+        var fileBytes = await File.ReadAllBytesAsync("resources/panda.webp");
+        var photoId = await SetupPostPhotos(1, fileBytes, "image/webp");
+
+        var response = await HttpClient.GetAsync($"/api/image/{photoId}");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var responseBytes = await response.Content.ReadAsByteArrayAsync();
+        responseBytes.SequenceEqual(fileBytes).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetPostPhoto_PhotoIdDoesNotExist_ReturnsNotFound()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        var response = await HttpClient.GetAsync("/api/image/999");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }
