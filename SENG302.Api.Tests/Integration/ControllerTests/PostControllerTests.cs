@@ -8,6 +8,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using Shouldly;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -19,11 +20,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         GeoServiceMock.GetLocationAsync(1).Returns(new GeoLocationSearchResult
         {
-            osm_id = 1,
-            lat = "1",
-            lon = "1",
-            display_name = "Auckland",
-            name = "Auckland, New Zealand"
+            OsmId = 1,
+            Latitude = "1",
+            Longitude = "1",
+            DisplayName = "Auckland",
+            Name = "Auckland, New Zealand"
         });
     }
 
@@ -36,8 +37,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         SetupGeoMock();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
-        context.Albums.Add(new Album{TripId = 1, PhotoIds = []});
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Albums.Add(new Album { TripId = 1, PhotoIds = [] });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
     }
@@ -71,7 +72,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -87,13 +88,13 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
 
         // Add a trip to each user
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = [],
         });
-        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Albums.Add(new Album
         {
             TripId = 2,
@@ -117,7 +118,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test User", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My Trip", UserId = 1, Description = "", StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My Trip", UserId = 1, Description = "", StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Albums.Add(new Album
         {
             TripId = 1,
@@ -141,13 +142,13 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
 
         // Add a trip to each user
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Albums.Add(new Album
         {
             TripId = 1,
             PhotoIds = [],
         });
-        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 2, Title = "Other trip", UserId = 2, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Albums.Add(new Album
         {
             TripId = 2,
@@ -194,10 +195,10 @@ public class PostControllerTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "name",
             Content = "test",
-            creationTime = DateTimeOffset.UtcNow,
+            CreationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
             LocationName = "Christchurch",
-            Date = DateOnly.FromDateTime(DateTime.Today.AddDays(1))
+            Date = DateTimeOffset.UtcNow.AddDays(1)
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -231,7 +232,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             TripId = 1,
             Title = "name",
             Content = "test",
-            creationTime = DateTimeOffset.UtcNow,
+            CreationTime = DateTimeOffset.UtcNow,
             OsmId = 1,
             LocationName = "Christchurch",
             Date = null
@@ -268,9 +269,10 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         var message = await HttpClient.PostAsync("/api/post", content);
+
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -303,7 +305,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("name"), "Title");
         content.Add(new StringContent("test"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(DateTime.Today.ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
         content.Add(new StringContent("true"), "NoContentAllowed");
 
         var message = await HttpClient.PostAsync("/api/post", content);
@@ -335,8 +337,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 Title = "Test trip",
                 Description = "Test description",
                 UserId = 1,
-                StartDate = new DateOnly(2026, 7, 1),
-                EndDate = new DateOnly(2026, 7, 10)
+                StartDate = DateToDateTimeOffset(2026, 7, 1),
+                EndDate = DateToDateTimeOffset(2026, 7, 10)
             });
 
             await context.SaveChangesAsync();
@@ -347,7 +349,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("ab"), "Title");
         content.Add(new StringContent("Some content"), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(new DateOnly(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("s") + "Z"), "Date");
 
         var response = await HttpClient.PostAsync("/api/post", content);
 
@@ -379,20 +381,20 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 Country = "NZ"
             });
             context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
+            {
+                TripId = 1,
+                PhotoIds = [],
+            });
             context.Trips.Add(new Trip
             {
                 Id = 1,
                 Title = "Test trip",
                 Description = "Test description",
                 UserId = 1,
-                StartDate = new DateOnly(2026, 7, 1),
-                EndDate = new DateOnly(2026, 7, 10)
+                StartDate = DateToDateTimeOffset(2026, 7, 1),
+                EndDate = DateToDateTimeOffset(2026, 7, 10)
             });
-            
+
             await context.SaveChangesAsync();
         }
 
@@ -401,7 +403,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("title"), "Title");
         content.Add(new StringContent(new string('a', 8197)), "Content");
         content.Add(new StringContent("1"), "osmId");
-        content.Add(new StringContent(new DateOnly(2026, 7, 5).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateToDateTimeOffset(2026, 7, 5).ToString("s") + "Z"), "Date");
 
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -438,12 +440,12 @@ public class PostControllerTests : BaseIntegrationTestFixture
         IEnumerable<(byte[] Bytes, string FileName, string ContentType)>? photos = null)
     {
         var content = new MultipartFormDataContent();
-        
+
         content.Add(new StringContent("1"), "TripId");
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -613,7 +615,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -630,7 +632,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -647,7 +649,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -668,7 +670,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PhotoIds = [],
         });
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
@@ -693,7 +695,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateOnly(2025, 11, 21), EndDate = new DateOnly(2025, 12, 21) });
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine" });
         await context.SaveChangesAsync();
 
@@ -718,7 +720,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         content.Add(new StringContent("Valid title"), "Title");
         content.Add(new StringContent("Valid content"), "Content");
         content.Add(new StringContent(osmId.ToString()), "osmId");
-        content.Add(new StringContent(DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")), "Date");
+        content.Add(new StringContent(DateTimeOffset.UtcNow.ToString("s") + "Z"), "Date");
 
         foreach (var (bytes, fileName, contentType) in photos ?? [])
         {
@@ -750,7 +752,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             photos:
             [
                 (pandaBytes, "panda.webp", "image/webp"),
-              (pngBytes, "square.png", "image/png")
+                (pngBytes, "square.png", "image/png")
             ]);
 
         var response = await HttpClient.PutAsync(
@@ -794,8 +796,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "Test trip",
                 Description = "",
-                StartDate = new DateOnly(2026, 1, 1),
-                EndDate = new DateOnly(2026, 1, 10)
+                StartDate = DateToDateTimeOffset(2026, 1, 1),
+                EndDate = DateToDateTimeOffset(2026, 1, 10)
             });
 
             var post = new Post
@@ -806,7 +808,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 OsmId = 1,
                 LocationName = "Christchurch",
                 PhotoIds = [],
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
+                Date = DateTimeOffset.UtcNow.AddDays(-1)
             };
 
             context.Posts.Add(post);
@@ -851,8 +853,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 2,
                 Title = "Other user trip",
                 Description = "",
-                StartDate = new DateOnly(2026, 1, 1),
-                EndDate = new DateOnly(2026, 1, 10)
+                StartDate = DateToDateTimeOffset(2026, 1, 1),
+                EndDate = DateToDateTimeOffset(2026, 1, 10)
             });
 
             var post = new Post
@@ -863,7 +865,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 OsmId = 1,
                 LocationName = "Christchurch",
                 PhotoIds = [],
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-1))
+                Date = DateTimeOffset.UtcNow.AddDays(-1)
             };
 
             context.Posts.Add(post);
@@ -915,8 +917,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateOnly(2026, 1, 1),
-                EndDate = new DateOnly(2026, 1, 10)
+                StartDate = DateToDateTimeOffset(2026, 1, 1),
+                EndDate = DateToDateTimeOffset(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -925,7 +927,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -987,8 +989,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateOnly(2026, 1, 1),
-                EndDate = new DateOnly(2026, 1, 10)
+                StartDate = DateToDateTimeOffset(2026, 1, 1),
+                EndDate = DateToDateTimeOffset(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -997,7 +999,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -1045,8 +1047,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateOnly(2026, 1, 1),
-                EndDate = new DateOnly(2026, 1, 10)
+                StartDate = DateToDateTimeOffset(2026, 1, 1),
+                EndDate = DateToDateTimeOffset(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -1055,7 +1057,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []
@@ -1094,8 +1096,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 UserId = 1,
                 Title = "test trip",
                 Description = "test description",
-                StartDate = new DateOnly(2026, 1, 1),
-                EndDate = new DateOnly(2026, 1, 10)
+                StartDate = DateToDateTimeOffset(2026, 1, 1),
+                EndDate = DateToDateTimeOffset(2026, 1, 10)
             });
 
             context.Posts.Add(new Post
@@ -1104,7 +1106,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
                 TripId = 1,
                 Title = "og title",
                 Content = "og content",
-                Date = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
+                Date = DateTimeOffset.UtcNow.AddDays(-2),
                 OsmId = 123,
                 LocationName = "Christchurch",
                 PhotoIds = []

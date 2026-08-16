@@ -9,7 +9,7 @@
 	},
 	"typescript": true,
 	"style": "vega",
-	"iconLibrary": "lucide",
+	"iconLibrary": "bootstrap-icons",
 	"menuColor": "default",
 	"menuAccent": "subtle"
 }
