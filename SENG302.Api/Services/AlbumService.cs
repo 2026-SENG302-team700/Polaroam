@@ -113,6 +113,7 @@ public class AlbumService : IAlbumService
             CustomFile file;
             file = await _fileService.GetFileByIdAsync(photoId);
             await _fileService.DeleteFileAsync(file.FileKey);
+            await context.SaveChangesAsync();
         }
         else
         {
