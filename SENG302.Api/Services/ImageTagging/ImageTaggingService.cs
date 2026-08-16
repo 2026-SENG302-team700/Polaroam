@@ -375,16 +375,18 @@ public class ImageTaggingService : IImageTaggingService
             
             if (!queued)
             {
-                
-                imageFile.TagError = "Queue was full";
-                imageFile.CanRetryTagging = true;
-                
+                if (imageFile != null)
+                {
+                    imageFile.TagError = "Queue was full";
+                    imageFile.CanRetryTagging = true;
+                }
             }
-
-           
-            context.CustomFiles.Update(imageFile);
-            await context.SaveChangesAsync();
             
+            if (imageFile != null)
+            {
+                context.CustomFiles.Update(imageFile);
+                await context.SaveChangesAsync();
+            }
             
             
         }

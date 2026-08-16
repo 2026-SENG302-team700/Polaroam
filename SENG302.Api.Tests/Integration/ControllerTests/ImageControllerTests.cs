@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
 using Shouldly;
@@ -15,6 +16,16 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         webApplicationFactory)
     {
         _output = output;
+    }
+    
+    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType
+        };
     }
 
     // Helper Functions
@@ -283,4 +294,21 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
     }
+
+    // [Fact]
+    // public async Task RetryPhotoTagging_ValidId_ReturnsOK()
+    // {
+    //     await SetupUserAndTrip(1, "test@example.com");
+    //     
+    //     await using var context = await DbContextFactory.CreateDbContextAsync();
+    //
+    //     var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+    //     
+    //     var mockFile = GetMockFile(
+    //         "mocka",
+    //         mockFileContent,
+    //         "image/webp");
+    //     
+    //     
+    // }
 }

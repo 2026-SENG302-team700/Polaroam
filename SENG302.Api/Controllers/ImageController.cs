@@ -165,7 +165,6 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
         CustomFile file = await _fileService.GetFileByIdAsync(photoId);
         if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && file.TagError != null && file.TagError.Contains("Queue"))
         {
-            Console.WriteLine("Does it reach here?");
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
             var stream = new MemoryStream(bytes);
             IFormFile formFile = new FormFile(

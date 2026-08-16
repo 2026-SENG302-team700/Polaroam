@@ -5,7 +5,6 @@ using Shouldly;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
-using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using SENG302.Api.Models.Jobs;
 
@@ -77,6 +76,28 @@ public class ImageTaggingServiceTests : BaseIntegrationTestFixture
         updatedFile.CanRetryTagging.ShouldBeTrue();
         updatedFile.TagError.ShouldNotBeNull();
         updatedFile.TagError.ShouldBe("Queue was full");
+    }
+
+    [Fact]
+    public async Task QueueImageTaggingJob_InvalidImageId_Something()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        CustomFile file = await _fileService.SaveFileAsync(mockFile, 0);
+
+        Exception exception = await Should.ThrowAsync<Exception>(async () =>
+        {
+            await ServiceUnderTest.QueueImageTaggingJobs(mockFile, 67);
+        });
+
+        exception.Message.ShouldContain($"Failed to generate tags for image 67");
 
     }
 }
