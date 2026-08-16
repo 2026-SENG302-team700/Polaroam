@@ -224,7 +224,7 @@ public class AlbumService : IAlbumService
                     PhotoId = file.Id,
                     FileName = file.OriginalFileName,
                     MimeType = file.MimeType,
-                    Tags = file.Tags,
+                    Tags = file.Tags ?? [],
                     DateCreated = file.DateCreated
                 });
             } catch (Exception ex)
