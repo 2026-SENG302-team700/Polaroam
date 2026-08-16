@@ -14,6 +14,8 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import { onMount } from "svelte";
+    import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -84,6 +86,10 @@
         aiTaggingForUpload = user.aiTagging;
     }
 
+    onMount(async () => {
+        await loadAiTaggingPreference();
+    });
+
     /**
      * Function for creating a post
      */
@@ -105,6 +111,8 @@
                     form.append("files", files[i]);
                 }
             }
+            // add the ai tagging option to the form data
+            form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
 
             const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
@@ -135,7 +143,7 @@
                     errors.content.includes(
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
-                    errors.title.length === 0 && 
+                    errors.title.length === 0 &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
                     !errors.date &&
@@ -198,12 +206,15 @@
             bind:filesList={files}
             errors={errors.photos}
             bind:fileErrors
-            showAiTaggingOption={aiTaggingEnabled}
             {loading}
         />
     </ImageDisplay>
 
-    <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
+    <AiTaggingOption
+        bind:enabled={aiTaggingEnabled}
+        bind:aiTaggingForUpload
+        {loading}
+    />
 
     <div class="post-form-actions">
         <ConfirmCancelButton

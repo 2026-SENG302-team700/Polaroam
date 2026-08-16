@@ -64,16 +64,16 @@ public class PostController : ControllerBase
     [Authorize]
     [HttpPost]
     [RequestSizeLimit(200000000)]
-    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files)
+    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
     {
-        
+
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
         if (user == null) return Unauthorized();
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, userId, files);
+            var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload);
             return Ok(response);
         }
         catch (MultipleValidationListException e)
@@ -123,7 +123,8 @@ public class PostController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Post>> UpdatePost(
         [FromForm] UpdatePostRequest postUpdates,
-        [FromForm] List<IFormFile>? files)
+        [FromForm] List<IFormFile>? files,
+        [FromForm] bool aiTaggingForUpload = true)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
@@ -135,7 +136,7 @@ public class PostController : ControllerBase
 
         try
         {
-            var post = await _postService.UpdatePostAsync(postUpdates, userId, files);
+            var post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
             return Ok(post);
         }
         catch (MultipleValidationListException e)
@@ -180,7 +181,7 @@ public class PostController : ControllerBase
         }
 
         List<PhotoMetadataResponse> photos = [];
-        foreach(int photoId in post.PhotoIds ?? [])
+        foreach (int photoId in post.PhotoIds ?? [])
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             photos.Add(new PhotoMetadataResponse

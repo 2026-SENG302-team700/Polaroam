@@ -15,9 +15,9 @@ public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId);
-    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos);
+    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
     Task<Post?> GetPostAsync(int id);
-    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos);
+    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
     Task<bool> UserOwnsPost(int userId, int tripId);
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
@@ -71,6 +71,61 @@ public class PostService : IPostService
     }
 
     /// <summary>
+    /// Determines if an image is suitable for AI tagging.
+    /// </summary>
+    /// <param name="image"></param>
+    /// <returns></returns>
+    private static bool IsAiTaggable(IFormFile image)
+    {
+        return image.ContentType is
+            "image/jpg" or
+            "image/jpeg" or
+            "image/png" or
+            "image/gif";
+    }
+
+    /// <summary>
+    /// Generates tags for an existing image in the database. This is used when a user has AI tagging on
+    /// but the image was uploaded before the feature was implemented.
+    /// </summary>
+    /// <param name="imageId"></param>
+    /// <returns></returns>
+    private async Task GenerateExistingImageTags(int imageId)
+    {
+        var file = await _fileService.GetFileByIdAsync(imageId);
+
+        // Do not queue images that already have tags or are already being processed.
+        if (file.Tags is { Count: > 0 } || file.InTagQueue)
+        {
+            return;
+        }
+
+        if (file.MimeType is not (
+            "image/jpeg" or
+            "image/png" or
+            "image/gif"))
+        {
+            return;
+        }
+
+        var content = await _fileService.GetFileContentAsync(file.FileKey);
+        var stream = new MemoryStream(content);
+
+        var formFile = new FormFile(
+            stream,
+            0,
+            stream.Length,
+            "image",
+            file.OriginalFileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = file.MimeType
+        };
+
+        await GenerateImageTags(formFile, file.Id);
+    }
+
+    /// <summary>
     /// Adds a new post to the trip given owned by the given user. All parameters
     /// must be present (except description), otherwise it fails. 
     /// The name of the post must be between 3 and 128 characters, and the description
@@ -84,7 +139,8 @@ public class PostService : IPostService
     public async Task<Post> CreateNewPostAsync(
         NewPostRequest postRequest,
         int userId,
-        List<IFormFile>? photos = null
+        List<IFormFile>? photos = null,
+        bool aiTaggingForUpload = true
         )
     {
         // Clean Request
@@ -129,17 +185,17 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            if (await _userService.UserAiTaggingCheckAsync(userId))
+            if (await _userService.UserAiTaggingCheckAsync(userId) && aiTaggingForUpload && IsAiTaggable(photo))
             {
                 await GenerateImageTags(photo, file.Id);
             }
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
-       
+
         album.PhotoIds.AddRange(photoIds);
         context.Albums.Update(album);
-        
+
         await context.SaveChangesAsync();
 
         // Add location
@@ -221,7 +277,8 @@ public class PostService : IPostService
     public async Task<Post?> UpdatePostAsync(
         UpdatePostRequest postUpdates,
         int userId,
-        List<IFormFile>? photos = null
+        List<IFormFile>? photos = null,
+        bool aiTaggingForUpload = true
         )
     {
         // Clean Request
@@ -280,6 +337,10 @@ public class PostService : IPostService
             }
         }
 
+        var shouldTagImages =
+            await _userService.UserAiTaggingCheckAsync(userId) &&
+            aiTaggingForUpload;
+
         // Add / Remove Photos 
         List<int> customFileIds = [];
 
@@ -288,28 +349,36 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            if (await _userService.UserAiTaggingCheckAsync(userId))
+            if (await _userService.UserAiTaggingCheckAsync(userId) && aiTaggingForUpload && IsAiTaggable(photo))
             {
                 await GenerateImageTags(photo, customFile.Id);
             }
         }
 
+        if (shouldTagImages)
+        {
+            foreach (var existingImageId in post.PhotoIds)
+            {
+                await GenerateExistingImageTags(existingImageId);
+            }
+        }
+
         // get the album and add new photo Ids
         Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
-       
+
         album.PhotoIds.AddRange(customFileIds);
         context.Albums.Update(album);
-        
+
         await context.SaveChangesAsync();
-        
+
 
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds.Count > 0 
-            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
+        post.PhotoIds = post.PhotoIds.Count > 0
+            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList()
             : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.Name : post.LocationName;
 
@@ -348,7 +417,7 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var post = await context.Posts.FirstOrDefaultAsync(p => p.PostId == postId);
-        
+
         if (post == null)
         {
             throw new ArgumentException(
@@ -413,7 +482,7 @@ public class PostService : IPostService
         {
             throw new KeyNotFoundException(
                 "Post of this Id does not exist."
-            ); 
+            );
         }
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
         {
@@ -431,7 +500,7 @@ public class PostService : IPostService
         {
             album.PhotoIds.Remove(photoId);
         }
-        
+
         await context.SaveChangesAsync();
     }
 
@@ -449,7 +518,7 @@ public class PostService : IPostService
             FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
 
             await _fileService.SetTagQueueStatus(imageId);
-            
+
             await _imageTaggingQueue.QueueImageTaggingAsync(
                 new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
             );

@@ -10,12 +10,14 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
+    import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
+    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
 
     let title = $state("");
     let content = $state("");
@@ -75,8 +77,11 @@
     let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
-        await fetchPost();
-        await fetchImages();
+        await Promise.all([
+            loadAiTaggingPreference(),
+            fetchPost(),
+            fetchImages(),
+        ]);
     });
 
     /**
@@ -206,6 +211,8 @@
             form.append("Content", content);
             form.append("Date", date?.toISOString() ?? "");
             form.append("NoContentAllowed", noContentAllowed);
+            // add the ai tagging option to the form data
+            form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
 
             const newUploadedFiles =
                 newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
@@ -325,7 +332,7 @@
 
     <ImageDisplay
         bind:images={files}
-        photoIds={photoIds}
+        {photoIds}
         errors={[...errors.photos, ...fileErrors]}
         letDelete={true}
         ondelete={removePhoto}
@@ -333,14 +340,16 @@
         <ImagePicker
             bind:filesList={files}
             errors={errors.photos}
-            bind:newUploadsCount
             bind:fileErrors
-            showAiTaggingOption={aiTaggingEnabled}
             {loading}
         />
     </ImageDisplay>
 
-    <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
+    <AiTaggingOption
+        bind:enabled={aiTaggingEnabled}
+        bind:aiTaggingForUpload
+        {loading}
+    />
 
     <div class="post-form-actions">
         <ConfirmCancelButton

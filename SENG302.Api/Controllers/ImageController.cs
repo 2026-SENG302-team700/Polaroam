@@ -21,8 +21,8 @@ public class ImageController : ControllerBase
 
 
     public ImageController(
-        IUserService userService, 
-        IFileService fileService, 
+        IUserService userService,
+        IFileService fileService,
         IImageTaggingQueue imageTaggingQueue,
         IImageService imageService
     )
@@ -51,59 +51,62 @@ public class ImageController : ControllerBase
 
         try
         {
+            var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
+
+            if (imageInQueue)
+            {
+                return Ok("Tags are being generated.");
+            }
+
             var tags = await _fileService.GetTagsAsync(photoId);
 
             if (tags != null)
             {
                 return Ok(tags);
             }
-            
-            var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
-            return imageInQueue
-                ? Ok("Tags are being generated.")
-                : NoContent();
+            return NoContent();
         }
         catch (KeyNotFoundException e)
         {
             return NotFound(e.Message);
         }
     }
-    
-    /// <summary>
-/// Returns a list of suggested tags for the user
-/// based on the query provided. Tags are selected from real
-/// tags belonging to the user.
-/// Max 5 tags are returned.
-/// </summary>
-/// <param name="query">The string to match with</param>
-/// <returns>
-/// 200 - List containing the suggested tags 
-/// Unauthorized - User is not authenticated
-/// BadRequest - Unknown error
-/// </returns>
-[HttpGet("tags")]
-public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
-{
-    try
-    {
-        // Get the user id so only their tags are returned
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
-        if (user == null)
-        {
-            return Unauthorized();
-        }
 
-        // Get the suggested tags
-        var tags = await _imageService.GetSuggestedTagsForUser(userId, query);
-        return Ok(tags);
-    }
-    catch (Exception e) // Unknown error
+    /// <summary>
+    /// Returns a list of suggested tags for the user
+    /// based on the query provided. Tags are selected from real
+    /// tags belonging to the user.
+    /// Max 5 tags are returned.
+    /// </summary>
+    /// <param name="query">The string to match with</param>
+    /// <returns>
+    /// 200 - List containing the suggested tags 
+    /// Unauthorized - User is not authenticated
+    /// BadRequest - Unknown error
+    /// </returns>
+    [HttpGet("tags")]
+    public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     {
-        return BadRequest("Failed to get suggested tags." + e.Message);
+        try
+        {
+            // Get the user id so only their tags are returned
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            // Get the suggested tags
+            var tags = await _imageService.GetSuggestedTagsForUser(userId, query);
+            return Ok(tags);
+        }
+        catch (Exception e) // Unknown error
+        {
+            return BadRequest("Failed to get suggested tags." + e.Message);
+        }
     }
-}
 
     /// <summary>
     /// Returns a list of suggested tags for the user

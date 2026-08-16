@@ -10,6 +10,8 @@
     let loading = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
+    let aiTaggingEnabled = $state(false);
+    let aiTaggingForUpload = $state(false);
 
     type AlbumImageUploadErrors = {
         generic: string;
@@ -28,6 +30,22 @@
 
     let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
+    async function loadAiTaggingPreference() {
+        const response = await fetchWithCsrf(resolve("/api/user" as any), {
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        aiTaggingEnabled = user.aiTagging;
+        aiTaggingForUpload = user.aiTagging;
+    }
+
+    onMount(async () => {
+        await loadAiTaggingPreference();
+    });
+
     /**
      * Function for creating a post
      */
@@ -40,12 +58,17 @@
                     form.append("files", files[i]);
                 }
             }
+            // add the ai tagging option to the form data
+            form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
 
-            const response = await fetchWithCsrf(resolve(`/api/album/${params.tripId}/images` as any), {
-                method: "POST",
-                body: form,
-                credentials: "include",
-            });
+            const response = await fetchWithCsrf(
+                resolve(`/api/album/${params.tripId}/images` as any),
+                {
+                    method: "POST",
+                    body: form,
+                    credentials: "include",
+                },
+            );
 
             if (response.status != 201) {
                 let data = await response.json();
@@ -60,7 +83,8 @@
             }
         } catch (err) {
             console.error("Failed to upload images:", err);
-            errors.generic = "Failed to upload images: " + (err as Error).message;
+            errors.generic =
+                "Failed to upload images: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -70,60 +94,57 @@
 <div class="card mb-2 post-wrapper">
     <div class="card-header">
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-        <div class="header-content-wrapper"> 
+        <div class="header-content-wrapper">
             <div class="header-content-item">
                 <ImagePicker
                     bind:filesList={files}
                     errors={errors.photos}
                     bind:fileErrors
+                    bind:aiTaggingForUpload
                     {loading}
                     uploadFunc={uploadPhotos}
+                    showAiTaggingOption={aiTaggingEnabled}
                 />
             </div>
         </div>
     </div>
-    <div class="card-body">
-
-    </div>
-    <div class="card-footer text-muted images">
-
-  </div>
+    <div class="card-body"></div>
+    <div class="card-footer text-muted images"></div>
 </div>
 
 <style>
-.card-header {
-    display: flex;
-    position: relative;
-    align-items: center;
-}
-.header-content-item {
-    display: flex;
-    gap: 4px;
-    align-items:baseline;
-    justify-content: end;
-}
+    .card-header {
+        display: flex;
+        position: relative;
+        align-items: center;
+    }
+    .header-content-item {
+        display: flex;
+        gap: 4px;
+        align-items: baseline;
+        justify-content: end;
+    }
 
-.header-content-wrapper {
-    width: 100%;
-}
+    .header-content-wrapper {
+        width: 100%;
+    }
 
-.trip-name {
-    max-width: 40%;
-    min-width: 20%;
-}
+    .trip-name {
+        max-width: 40%;
+        min-width: 20%;
+    }
 
-.post-wrapper {
-    margin-top: 10px;
-}
+    .post-wrapper {
+        margin-top: 10px;
+    }
 
-.card-body {
-    max-height: 500px;
-    overflow: scroll;
-}
+    .card-body {
+        max-height: 500px;
+        overflow: scroll;
+    }
 
-.images {
-    max-height: 800px;
-    overflow: scroll;
-}
-
+    .images {
+        max-height: 800px;
+        overflow: scroll;
+    }
 </style>

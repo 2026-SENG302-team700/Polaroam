@@ -1,68 +1,72 @@
 <script lang="ts">
     import CloseButton from "../buttons/close-button.svelte";
-    import RightArrowButton from "../buttons/right-arrow-button.svelte"
-    import LeftArrowButton from "../buttons/left-arrow-button.svelte"
+    import RightArrowButton from "../buttons/right-arrow-button.svelte";
+    import LeftArrowButton from "../buttons/left-arrow-button.svelte";
     import TagPill from "../content/tag-pill.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
 
     let {
-       image,
-       enlarged = $bindable(false),
-       index,
-       images,
-       photoId,
-       photoIds,
-    }: { image: File,
-        enlarged: boolean,
-        index: number,
-        images: File[] | null,
-        photoId: number,
-        photoIds: number[],
-       } = $props();
+        image,
+        enlarged = $bindable(false),
+        index,
+        images,
+        photoId,
+        photoIds,
+    }: {
+        image: File;
+        enlarged: boolean;
+        index: number;
+        images: File[] | null;
+        photoId: number;
+        photoIds: number[];
+    } = $props();
 
-   let tags: string[] = $state([]);
-   let error = $state("");
-   let loading = $state(false);
+    let tags: string[] = $state([]);
+    let error = $state("");
+    let loading = $state(false);
 
-   let tagStatus = $state("No tags available");
-   let tagColour = $state("secondary");
-   
-   onMount(() => {
-       fetchImageTags(photoId)
-   });
+    let tagStatus = $state("No tags available");
+    let tagColour = $state("secondary");
 
-    function moveToLeftImage()
-    {
-       index -= 1
-       let newImage = images?.[index];
-       if (newImage !== undefined) {
-          image = newImage
-       }
-       fetchImageTags(photoIds[index])
+    onMount(() => {
+        fetchImageTags(photoId);
+    });
+
+    function moveToLeftImage() {
+        index -= 1;
+        let newImage = images?.[index];
+        if (newImage !== undefined) {
+            image = newImage;
+        }
+        fetchImageTags(photoIds[index]);
     }
 
-    function moveToRightImage()
-    {
-       index += 1
-       let newImage = images?.[index];
-       if (newImage !== undefined) {
-          image = newImage
-       }
-       fetchImageTags(photoIds[index])
+    function moveToRightImage() {
+        index += 1;
+        let newImage = images?.[index];
+        if (newImage !== undefined) {
+            image = newImage;
+        }
+        fetchImageTags(photoIds[index]);
     }
 
     async function fetchImageTags(id: number) {
         try {
             loading = true;
             tags = [];
+            error = "";
+            tagStatus = "No tags available";
+            tagColour = "secondary";
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/tags` as any), {
+                resolve(`/api/image/${id}/tags` as any),
+                {
                     method: "GET",
                     credentials: "include",
                 },
             );
+            console.log(response);
             if (!response.ok) {
                 if (response.status !== 404) {
                     error = (await response.text()) || "Failed to fetch tags.";
@@ -70,96 +74,119 @@
                 return;
             }
 
-           
-           
-            const message = await response.text();
-            
-            
-            if (message === "Tags are being generated.") {
-               tagStatus = "Tags are being generated. Come back later";
-               tagColour = "info";
-               return;
+            const responseText = await response.text();
+
+            const result: string[] | string =
+                responseText === "Tags are being generated."
+                    ? responseText
+                    : JSON.parse(responseText);
+
+            if (typeof result === "string") {
+                if (result === "Tags are being generated.") {
+                    tagStatus = "Tags are being generated. Come back later";
+                    tagColour = "info";
+                }
+
+                return;
             }
-           
-            tags = JSON.parse(message);
+
+            tags = result;
         } catch (err) {
             error = "Failed to fetch tags: " + (err as Error).message;
         } finally {
             loading = false;
         }
-      }
+    }
 </script>
 
-<svelte:window onkeydown={(e) => {
-         if (e.key === "ArrowLeft" && index!==0) {
-            moveToLeftImage()
-         } else if (e.key === "ArrowRight" && images !== null && index!==images.length-1) {
-            moveToRightImage()
-         } else if (e.key === "Escape") {
-            enlarged = false
-         }
-      }
-   }
+<svelte:window
+    onkeydown={(e) => {
+        if (e.key === "ArrowLeft" && index !== 0) {
+            moveToLeftImage();
+        } else if (
+            e.key === "ArrowRight" &&
+            images !== null &&
+            index !== images.length - 1
+        ) {
+            moveToRightImage();
+        } else if (e.key === "Escape") {
+            enlarged = false;
+        }
+    }}
 />
 <div class="fullscreen-image-wrapper">
-   <div class="image-container">
-      <div class="close-button-wrapper">
-         <img src={URL.createObjectURL(image)} alt="Image" class="image" />
-         <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
-         {#if images !== null && images?.length > 1 && index !== images?.length-1}
-            <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>
-         {/if}
-         {#if images !== null && images?.length > 1 && index !== 0}
-            <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
-         {/if}
-         <div class="tags-wrapper">
-            {#if tags.length > 0}
-               {#each tags as tag}
-                  <TagPill {tag}/>
-               {/each}
-            {:else}
-               <TagPill {tagColour} tag={tagStatus}/>
+    <div class="image-container">
+        <div class="close-button-wrapper">
+            <img src={URL.createObjectURL(image)} alt="Image" class="image" />
+            <CloseButton
+                bind:close={enlarged}
+                class="position-absolute btn-sm"
+            />
+            {#if images !== null && images?.length > 1 && index !== images?.length - 1}
+                <RightArrowButton
+                    class="position-absolute"
+                    bind:image
+                    bind:index
+                    bind:images
+                    {moveToRightImage}
+                />
             {/if}
-         </div>
-      </div>
-   </div>
+            {#if images !== null && images?.length > 1 && index !== 0}
+                <LeftArrowButton
+                    class="position-absolute"
+                    bind:image
+                    bind:index
+                    bind:images
+                    {moveToLeftImage}
+                />
+            {/if}
+            <div class="tags-wrapper">
+                {#if tags.length > 0}
+                    {#each tags as tag}
+                        <TagPill {tag} />
+                    {/each}
+                {:else}
+                    <TagPill {tagColour} tag={tagStatus} />
+                {/if}
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
- .fullscreen-image-wrapper {
-    z-index: 100;
-    background-color: rgba(0, 0, 0, 0.7);
-    position:fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;  
- }
- .image-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
- }
- .image {
-   border-radius: 5px;
-    position: relative;
-    min-width: 20vw;
-    max-height: 70vh;
-    max-width: 70vw;
- }
- .close-button-wrapper {
-   position:relative;
- }
- .tags-wrapper {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    justify-content: center;
-    margin-top: 6px;
- }
-
+    .fullscreen-image-wrapper {
+        z-index: 100;
+        background-color: rgba(0, 0, 0, 0.7);
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+    }
+    .image-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .image {
+        border-radius: 5px;
+        position: relative;
+        min-width: 20vw;
+        max-height: 70vh;
+        max-width: 70vw;
+    }
+    .close-button-wrapper {
+        position: relative;
+    }
+    .tags-wrapper {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        justify-content: center;
+        margin-top: 6px;
+    }
 </style>

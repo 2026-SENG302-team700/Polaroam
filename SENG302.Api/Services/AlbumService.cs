@@ -11,7 +11,7 @@ namespace SENG302.Api.Services;
 public interface IAlbumService
 {
     public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId);
-    public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
+    public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId, bool aiTaggingForUpload = false);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
@@ -23,13 +23,16 @@ public class AlbumService : IAlbumService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
     private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IUserService _userService;
     public AlbumService(IFileService fileService,
                         IDbContextFactory<DatabaseContext> dbContextFactory,
-                        IImageTaggingQueue imageTaggingQueue)
+                        IImageTaggingQueue imageTaggingQueue,
+                        IUserService userService)
     {
         _fileService = fileService;
         _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
+        _userService = userService;
     }
 
     /// <summary>
@@ -120,6 +123,19 @@ public class AlbumService : IAlbumService
         return null;
     }
 
+    /// <summary>
+    /// Determines if an image is suitable for AI tagging.
+    /// </summary>
+    /// <param name="image"></param>
+    /// <returns></returns>
+    private static bool IsAiTaggable(IFormFile image)
+    {
+        return image.ContentType is
+            "image/jpg" or
+            "image/jpeg" or
+            "image/png" or
+            "image/gif";
+    }
 
     /// <summary>
     /// Take a list of IFormFiles and tripId. Validate each file and then upload  it
@@ -131,7 +147,7 @@ public class AlbumService : IAlbumService
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
     /// <exception cref="MultipleValidationListException"></exception>
-    public async Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId)
+    public async Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId, bool aiTaggingForUpload = true)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == tripId);
@@ -163,13 +179,16 @@ public class AlbumService : IAlbumService
 
             try
             {
-                FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
+                if (await _userService.UserAiTaggingCheckAsync(trip.UserId) && aiTaggingForUpload && IsAiTaggable(photo))
+                {
+                    FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
 
-                await _fileService.SetTagQueueStatus(file.Id);
+                    await _fileService.SetTagQueueStatus(file.Id);
 
-                await _imageTaggingQueue.QueueImageTaggingAsync(
-                    new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
-                );
+                    await _imageTaggingQueue.QueueImageTaggingAsync(
+                        new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
+                    );
+                }
             }
             catch (Exception ex)
             {
