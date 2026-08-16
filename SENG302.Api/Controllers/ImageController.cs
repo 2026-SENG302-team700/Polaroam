@@ -17,21 +17,18 @@ public class ImageController : ControllerBase
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
     private readonly IImageTaggingService _imageTaggingService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IImageService _imageService;
 
 
     public ImageController(
         IUserService userService, 
         IFileService fileService, 
-        IImageTaggingQueue imageTaggingQueue,
         IImageService imageService,
         IImageTaggingService imageTaggingService
     )
     {
         _userService = userService;
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
         _imageService = imageService;
         _imageTaggingService = imageTaggingService;
     }
