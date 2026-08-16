@@ -10,9 +10,6 @@
     // Allow use of file paths (Via the api) or actual File objects.
     type ImageSource = File | string;
 
-    // Allow use of file paths (Via the api) or actual File objects.
-    type ImageSource = File | string;
-
     let {
         image,
         enlarged = $bindable(false),

@@ -41,7 +41,7 @@ public class AlbumController : ControllerBase
         }
         return contentType;
     }
-    
+
     /// <summary>
     /// Gets an image from an album.
     /// </summary>
@@ -132,6 +132,23 @@ public class AlbumController : ControllerBase
     {
         try
         {
+            var userId = int.Parse(
+              User.FindFirstValue(ClaimTypes.NameIdentifier)!
+          );
+
+            User? user = await _userService.GetUserByIdAsync(userId);
+
+            if (user == null ||
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+            {
+                return Unauthorized();
+            }
+
+            if (files == null || files.Count == 0)
+            {
+                return BadRequest("No files were uploaded.");
+            }
+
             // Upload images to the album
             await _albumService.UploadImagesToAlbumAsync(files, tripId, aiTaggingForUpload);
             return Created();
