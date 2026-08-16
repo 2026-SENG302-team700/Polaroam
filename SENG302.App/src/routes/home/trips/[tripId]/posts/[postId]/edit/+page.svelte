@@ -152,8 +152,6 @@
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
                 return;
             }
-            console.log(`PhotoIds: ${data.photoIds}`);
-
             title = data.title;
             content = data.content;
             date = new Date(data.date);
@@ -310,6 +308,7 @@
 
     <ImageDisplay
         bind:images={files}
+        photoIds={photoIds}
         errors={[...errors.photos, ...fileErrors]}
         letDelete={true}
         ondelete={removePhoto}
