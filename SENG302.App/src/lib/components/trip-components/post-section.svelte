@@ -6,7 +6,15 @@
     let { 
         posts, 
         tripId, 
-        selectedPost = null
+        selectedPost = null,
+        onPostHover,
+        onPostLeave,
+    }: {
+        posts: any[];
+        tripId: number;
+        selectedPost: boolean;
+        onPostHover: (postId: number) => void;
+        onPostLeave: () => void;
     } = $props();
 
     let displayedPosts = $derived(
@@ -20,12 +28,17 @@
     <div class="post-section-flex">
         <SectionTitle title="Posts" />
         <div class="button-container">
-            <AddButton path="/home/trips/{tripId}/posts/create-post" />
+            <AddButton path={`/home/trips/${tripId}/posts/create-post`} />
         </div>
     </div>
         
     {#each displayedPosts as post (post.postId)}
-        <PostCard {post} isSelected={post.postId === selectedPost} />
+        <PostCard 
+                {post} 
+                isSelected={post.postId === selectedPost}
+                onHover={() => onPostHover(post.postId)}
+                onLeave={onPostLeave}
+        />
     {/each}
 </div>
 <style>
@@ -39,4 +52,3 @@
 
 
 </style>
-

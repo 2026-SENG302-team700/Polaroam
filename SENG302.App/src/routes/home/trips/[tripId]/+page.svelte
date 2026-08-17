@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { MapLibre, Marker, Popup } from 'svelte-maplibre';
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -20,6 +19,7 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
+    let hoveredPostId: number | null = $state(null);
 
     let tripObject = $state({
         id: 0,
@@ -29,7 +29,7 @@
         endDate: "9999-12-31",
         userId: 0,
     });
-    
+
     let postLocations = $state([]);
     let posts = $state([]);
     let selectedPost = $state(null);
@@ -39,8 +39,6 @@
         fetchPosts();
         fetchLocations();
     });
-
-    
 
     /**
      * Fetches the trip from the backend corresponding
@@ -181,12 +179,18 @@
             </div>
         </div>
         <div class="card-body">
-        <Map locations={postLocations} bind:selectedPost />
+        <Map locations={postLocations} {posts} {hoveredPostId} bind:selectedPost />
         </div>
         <div class="card-footer text-muted images">
-            <PostSection {posts} tripId={tripObject.id} {selectedPost}/>
+            <PostSection
+                {posts}
+                tripId={tripObject.id}
+                onPostHover={(postId: number) => (hoveredPostId = postId)}
+                onPostLeave={() => (hoveredPostId = null)}
+                {selectedPost}
+            />
         </div>
-    </div>    
+    </div>
 </div>
 
 <ConfirmationModal
@@ -251,5 +255,4 @@
         color: #dc2626;
         font-size: 0.9rem;
     }
-
 </style>
