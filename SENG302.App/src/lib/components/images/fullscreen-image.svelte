@@ -44,7 +44,7 @@
    function resetMessages() {
       error = "";
       tagStatus = "";
-      tagColour = "";
+      tagColour = "secondary";
    }
 
     // Only File sources need an object URL; string sources are used as-is.
