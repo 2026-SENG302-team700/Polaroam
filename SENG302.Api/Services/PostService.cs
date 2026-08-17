@@ -155,7 +155,7 @@ public class PostService : IPostService
         await context.SaveChangesAsync();
 
         // Add location
-        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId, postRequest.OsmType);
         if (location == null)
         {
             throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -174,6 +174,7 @@ public class PostService : IPostService
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
+            OsmType = postRequest.OsmType,
             LocationName = location.Name,
         };
         context.Set<Post>().Add(newPost);
@@ -182,6 +183,7 @@ public class PostService : IPostService
         context.Set<Location>().Add(new Location
         {
             OsmId = postRequest.OsmId,
+            OsmType = postRequest.OsmType,
             PostId = newPost.PostId,
             Lat = location.Latitude,
             Lon = location.Longitude,
@@ -280,9 +282,9 @@ public class PostService : IPostService
         // Location Validation
         GeoLocationSearchResult? location = null;
 
-        if (postUpdates.OsmId != post.OsmId)
+        if (postUpdates.OsmId != post.OsmId || postUpdates.OsmType != post.OsmType)
         {
-            location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -331,6 +333,7 @@ public class PostService : IPostService
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
+        post.OsmType = postUpdates.OsmType;
         post.PhotoIds = post.PhotoIds.Count > 0 
             ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
             : post.PhotoIds = customFileIds;
@@ -460,4 +463,3 @@ public class PostService : IPostService
     }
     
 }
-

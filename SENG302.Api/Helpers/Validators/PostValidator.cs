@@ -43,7 +43,7 @@ public static class PostValidator
 
         errors["date"] = ValidatePostDate(postRequest.Date);
 
-        errors["location"] = ValidatePostLocation(postRequest.OsmId);
+        errors["location"] = ValidatePostLocation(postRequest.OsmId, postRequest.OsmType);
 
         errors["content"] = ValidatePostContent(postRequest.Content, postRequest.NoContentAllowed);
 
@@ -55,9 +55,9 @@ public static class PostValidator
     /// </summary>
     /// <param name="osmId"></param>
     /// <returns></returns>
-    public static List<string> ValidatePostLocation(long osmId)
+    public static List<string> ValidatePostLocation(long osmId, string osmType)
     {
-        if (osmId <= 0)
+        if (osmId <= 0 || string.IsNullOrWhiteSpace(osmType) || !new[] { "node", "way", "relation" }.Contains(osmType.ToLower()))
         {
             return ["This isn't a valid location"];
         }

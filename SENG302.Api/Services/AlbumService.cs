@@ -12,7 +12,7 @@ namespace SENG302.Api.Services;
 
 public interface IAlbumService
 {
-    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId);
+    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null);
     public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
@@ -109,13 +109,12 @@ public class AlbumService : IAlbumService
         {
             if (post.PhotoIds.Contains(photoId))
             {
-                return post.PostId; //returns the postid if the image is part of a post
+                return post.PostId; //returns the post-Id if the image is part of a post
             }
         }
         if (album.PhotoIds.Remove(photoId))
         {
-            CustomFile file;
-            file = await _fileService.GetFileByIdAsync(photoId);
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             await _fileService.DeleteFileAsync(file.FileKey);
             await context.SaveChangesAsync();
         }
@@ -196,12 +195,13 @@ public class AlbumService : IAlbumService
     /// Gets all custom files (metadata files) from an album. 
     /// Does this by retrieving an album and then calling the 
     /// file service to retrieve the custom file for all photo-Id.
-    /// Returns metadata, and not the actual images.
+    /// Returns metadata and not the actual images.
     /// </summary>
     /// <param name="tripId"></param>
+    /// <param name="tag">Optional tag to filter by if provided</param>
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId)
+    public async Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -229,7 +229,9 @@ public class AlbumService : IAlbumService
                 {
                     PhotoId = file.Id,
                     FileName = file.OriginalFileName,
-                    MimeType = file.MimeType
+                    MimeType = file.MimeType,
+                    Tags = file.Tags ?? [],
+                    DateCreated = file.DateCreated
                 });
             } catch (Exception ex)
             {
@@ -238,17 +240,23 @@ public class AlbumService : IAlbumService
 
         }
 
+        if (!string.IsNullOrEmpty(tag) && files.Count > 0)
+        {
+            files = files.Where(f => f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
+            files.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
+        }
+
         return files;
     }
 
 
     /// <summary>
-    /// Gets a single customfile object from a trip, given a photoid and tripid.
-    /// Returns metadata, and not the actual image.
+    /// Gets a single CustomFile object from a trip, given a Photo-Id and Trip-Id.
+    /// Returns metadata and not the actual image.
     /// </summary>
     /// <param name="tripId"></param>
     /// <param name="photoId"></param>
-    /// <returns>a customfile object</returns>
+    /// <returns>a CustomFile object</returns>
     /// <exception cref="KeyNotFoundException"></exception>
     public async Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
     {
@@ -273,7 +281,9 @@ public class AlbumService : IAlbumService
         {
             PhotoId = file.Id,
             FileName = file.OriginalFileName,
-            MimeType = file.MimeType
+            MimeType = file.MimeType,
+            Tags = file.Tags,
+            DateCreated = file.DateCreated
         };
     }
 

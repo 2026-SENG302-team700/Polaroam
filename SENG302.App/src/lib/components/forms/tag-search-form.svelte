@@ -1,16 +1,19 @@
 <script lang="ts">
+    import {resolve} from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf.js";
+
     let {
         query = $bindable(""),
-        performSearch = $bindable(false),
+        performSearch,
         placeholder = "search your images",
         selectedTag = $bindable(""),
-        getSuggestions,
+        getSuggestionsUrl,
     }: {
         query?: string;
-        performSearch?: boolean;
+        performSearch?: () => void;
         placeholder?: string;
         selectedTag?: string;
-        getSuggestions: (query: string) => Promise<string[]>;
+        getSuggestionsUrl: string;
     } = $props();
 
     let isOpen = $state(false);
@@ -34,10 +37,21 @@
         try {
             loading = true;
             error = "";
-            items = await getSuggestions(trimmed);
+            console.log(getSuggestionsUrl);
+            const response = await fetchWithCsrf(
+                resolve(getSuggestionsUrl as `/${string}`),      
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                error = "Failed to fetch tag suggestions";
+            }
+            items = await response.json();
             isOpen = true;
         } catch (err) {
-            error = "Failed to fetch tag suggestions: " + (err as Error).message;
+            error = "Failed to fetch tag suggestions" + err.message;
             items = [];
         } finally {
             loading = false;
@@ -48,6 +62,7 @@
         selectedTag = "";
         error = "";
         fetchSuggestions();
+        performSearch();
     }
 
     /**
@@ -58,7 +73,7 @@
         if (event.key !== "Enter") return;
         event.preventDefault();
         isOpen = false;
-        performSearch = true;
+        performSearch()
     }
 
     /**
@@ -89,16 +104,12 @@
                 type="button"
                 title="search your trips using the provided query."
                 class="btn btn-outline-secondary"
-                onclick={() => (performSearch = true)}
+                onclick={() => {
+                    query = "";
+                    performSearch();
+                }}
         >
-            {#if loading}
-                <div
-                        class="spinner-border spinner-border-sm text-primary"
-                        role="status"
-                />
-            {:else}
-                <i class="bi bi-search"></i>
-            {/if}
+            Clear
         </button>
     </div>
 
@@ -114,7 +125,7 @@
         </ul>
     {:else if isOpen}
         <ul class="dropdown-list no-results">
-            <li>No tags found</li>
+            <li>No images found matching your search</li>
         </ul>
     {/if}
 

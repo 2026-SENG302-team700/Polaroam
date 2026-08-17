@@ -24,6 +24,8 @@ public class CustomFile
     public String? TagError { get; set; }
 
     public bool InTagQueue { get; set; } = false;
+    
+    public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
 
     public bool CanRetryTagging { get; set; } = true;
 }

@@ -58,6 +58,7 @@ public class U7005DeletePost
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
             Date = DateTimeOffset.UtcNow.AddDays(-1),
@@ -74,6 +75,7 @@ public class U7005DeletePost
         {
             PostId = post.PostId,
             OsmId = post.OsmId,
+            OsmType = post.OsmType,
             Lat = "-43.532",
             Lon = "172.636",
             Name = "Christchurch",
@@ -118,6 +120,7 @@ public class U7005DeletePost
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
+            OsmType = "node",
             LocationName = "Christchurch",
             PhotoIds = [],
             Date = DateTimeOffset.UtcNow.AddDays(-1),
@@ -134,6 +137,7 @@ public class U7005DeletePost
         {
             PostId = post.PostId,
             OsmId = post.OsmId,
+            OsmType = post.OsmType,
             Lat = "-43.532",
             Lon = "172.636",
             Name = "Christchurch",
