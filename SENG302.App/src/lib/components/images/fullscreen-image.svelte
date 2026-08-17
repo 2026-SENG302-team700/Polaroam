@@ -136,14 +136,14 @@
             if (!response.ok) {
                if (response.status === 500) {
                   const data = await response.json()
-                  error = "Failed to fetch tags: " + data?.detail
+                  error = "No tags available"
                   
-                  if (error === "Failed to fetch tags: Queue was full") {
+                  if (data?.detail === "Failed to fetch tags: Queue was full") {
                      showRetryTagging = true
                   }
                   return
                } else {
-                  error = (await response.text()) || "Failed to fetch tags.";
+                  error = "No tags available";
                   return
                }
             }
