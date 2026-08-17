@@ -8,7 +8,7 @@
     let map = $state();
     let mapLoaded = $state(false);
     const mapStyle = "https://tiles.openfreemap.org/styles/liberty";
-
+    
     /**
      * Get the posts for a given location
      * @param postId - the id of the post to get
@@ -114,6 +114,8 @@
                 id="trip-map"
                 onload={() => {
                     mapLoaded = true;
+                    map.removeLayer('natural_earth');
+                    map.removeSource('ne2_shaded');
                     recenterMap();
                 }}
             >
