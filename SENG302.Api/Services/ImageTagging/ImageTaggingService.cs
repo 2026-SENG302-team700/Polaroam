@@ -1,10 +1,6 @@
-using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
-using SENG302.Api.Helpers;
-using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Jobs;
 
 namespace SENG302.Api.Services.ImageTagging;
 
@@ -15,7 +11,6 @@ public interface IImageTaggingService
         int imageId, 
         CancellationToken cancellationToken = default
     );
-    Task QueueImageTaggingJobs(IFormFile image, int imageId);
 }
 
 public class ImageTaggingService : IImageTaggingService
@@ -23,22 +18,16 @@ public class ImageTaggingService : IImageTaggingService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
-    private readonly IFileService _fileService;
 
     public ImageTaggingService(
         HttpClient httpClient,
         IConfiguration configuration,
-        IDbContextFactory<DatabaseContext> dbContextFactory,
-        IImageTaggingQueue imageTaggingQueue,
-        IFileService fileService
+        IDbContextFactory<DatabaseContext> dbContextFactory
     )
     {
         _httpClient = httpClient;
         _configuration = configuration;
         _dbContextFactory = dbContextFactory;
-        _imageTaggingQueue = imageTaggingQueue;
-        _fileService = fileService;
     }
 
     /// <summary>
@@ -54,38 +43,10 @@ public class ImageTaggingService : IImageTaggingService
     public async Task GenerateTagsAsync(
         IFormFile image, int imageId, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            ValidateImage(image);
-        }
-        catch (ArgumentException e)
-        {
-            await SetTagErrors(imageId, "Tag cannot be generated");
-            return;
-        }
-        
-        
+        ValidateImage(image);
         var request = await GenerateRequest(image, cancellationToken);
-
-        try
-        {
-            var content = await ProcessRequest(request, cancellationToken, imageId);
-            await ParseValidateAndSetTags(content, imageId);
-        }
-        catch (HttpRequestException exception)
-        {
-            String errorMessage = exception.Message;
-            await SetTagErrors(imageId, errorMessage);
-
-        }
-        catch (OperationCanceledException exception)
-        {
-            if (exception.InnerException is TimeoutException)
-            {
-                await SetTagErrors(imageId, "LLM request has timed out. Tags cannot be generated");
-            }
-            await SetTagErrors(imageId, exception.Message);
-        }
+        var content = await ProcessRequest(request, cancellationToken, imageId);
+        await ParseValidateAndSetTags(content, imageId);
     }
     
     /// <summary>
@@ -175,14 +136,12 @@ public class ImageTaggingService : IImageTaggingService
             request,
             cancellationToken
         );
-        
+
         if (!response.IsSuccessStatusCode)
         {
-            
-            await SetTagStatusOff(imageId);
-            
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            
+
+            await SetTagStatusOff(imageId);
             throw new HttpRequestException($"LLM request failed with status {(int)response.StatusCode}: {responseContent}");
         }
 
@@ -191,8 +150,7 @@ public class ImageTaggingService : IImageTaggingService
 
         var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
 
-        String? content = responseContentElement.GetString();
-        
+        var content = responseContentElement.GetString();
         return content;
     }
     
@@ -240,29 +198,21 @@ public class ImageTaggingService : IImageTaggingService
                     PropertyNameCaseInsensitive = true
                 }
             );
+            if (tagResponse == null) return;
             
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             var image = context.CustomFiles.FirstOrDefault(f => f.Id == imageId);
-            
             if (image == null)
             {
                 return;
             }
             
-            if (tagResponse == null)
-            {
-                image.TagError = "Tagging Failure: No tags were found by the AI";
-                image.CanRetryTagging = false;
-                context.CustomFiles.Update(image);
-                await context.SaveChangesAsync();
-                return;
-            }
-            
             image.InTagQueue = false;
             image.Tags = tagResponse.Tags;
-            image.CanRetryTagging = false;
             context.CustomFiles.Update(image);
             await context.SaveChangesAsync();
+            
+            Console.WriteLine("Tags set for image: " + imageId);
             
         }
         catch (JsonException exception)
@@ -322,82 +272,10 @@ public class ImageTaggingService : IImageTaggingService
         {
             return;
         }
+        
         image.InTagQueue = false;
         context.CustomFiles.Update(image);
         await context.SaveChangesAsync();
-    }
-    
-    /// <summary>
-    /// Sets the tagging status to off.
-    /// </summary>
-    /// <param name="photoId"></param>
-    /// <param name="errorMessage"></param>
-    private async Task SetTagErrors(int photoId, string errorMessage)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var image = context.CustomFiles.FirstOrDefault(f => f.Id == photoId);
-
-        if (image == null)
-        {
-            return;
-        }
-        
-        image.TagError = errorMessage;
-        image.CanRetryTagging = false;
-        context.CustomFiles.Update(image);
-        await context.SaveChangesAsync();
-    }
-    
-    
-    /// <summary>
-    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
-    /// while still allowing the image upload to continue
-    /// </summary>
-    /// <param name="image"></param>
-    /// <param name="imageId"></param>
-    /// <returns></returns>
-    public async Task QueueImageTaggingJobs(IFormFile image, int imageId)
-    {
-        try
-        {
-            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
-            
-            await _fileService.SetTagQueueStatus(imageId);
-            
-            await using var context = await _dbContextFactory.CreateDbContextAsync();
-            var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
-            imageFile?.CanRetryTagging = false;
-            
-        
-            bool queued = _imageTaggingQueue.QueueImageTaggingAsync(
-                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
-            );
-            
-            if (!queued)
-            {
-                if (imageFile != null)
-                {
-                    imageFile.TagError = "Queue was full";
-                    imageFile.CanRetryTagging = true;
-                }
-            }
-            else
-            {
-                imageFile?.TagError = null;
-            }
-            
-            if (imageFile != null)
-            {
-                context.CustomFiles.Update(imageFile);
-                await context.SaveChangesAsync();
-            }
-            
-            
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Failed to generate tags for image {imageId}: {ex.Message}");
-        }
     }
 
     private record TagResponse(List<string> Tags);
