@@ -1,19 +1,21 @@
 <script lang="ts">
-    import {resolve} from "$app/paths";
-    import { fetchWithCsrf } from "$lib/csrf.js";
+    import { resolve } from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf";
 
     let {
         query = $bindable(""),
-        performSearch,
         placeholder = "search your images",
         selectedTag = $bindable(""),
+        performSearch,
         getSuggestionsUrl,
+        onClear
     }: {
         query?: string;
-        performSearch?: () => void;
         placeholder?: string;
         selectedTag?: string;
-        getSuggestionsUrl: string;
+        performSearch?: () => void;
+        getSuggestionsUrl?: string;
+        onClear?: () => void;
     } = $props();
 
     let isOpen = $state(false);
@@ -21,6 +23,29 @@
     let loading = $state(false);
     let error = $state("");
 
+    /**
+     * Fetches tag suggestions matching the given query for the current user's trips
+     * @param query - the partial tag text to search for
+     */
+    async function fetchTagSuggestions(query: string) {
+        const url = (getSuggestionsUrl != null) ? getSuggestionsUrl : `/api/image/tags?query=${encodeURIComponent(query)}`
+        
+        const response = await fetchWithCsrf(
+            resolve(url as any),
+            {
+                method: "GET",
+                credentials: "include",
+            },
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch tag suggestions.");
+        }
+
+        const data = await response.json();
+        return data;
+    }
+    
     /**
      * Fetches tag suggestions from the caller-provided function
      */
@@ -37,18 +62,7 @@
         try {
             loading = true;
             error = "";
-            console.log(getSuggestionsUrl);
-            const response = await fetchWithCsrf(
-                resolve(getSuggestionsUrl as `/${string}`),      
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            if (!response.ok) {
-                error = "Failed to fetch tag suggestions";
-            }
-            items = await response.json();
+            items = await fetchTagSuggestions(trimmed);
             isOpen = true;
         } catch (err) {
             error = "Failed to fetch tag suggestions" + err.message;
@@ -70,10 +84,12 @@
      * @param event - the keyboard event
      */
     function handleKeydown(event: KeyboardEvent) {
-        if (event.key !== "Enter") return;
+        if (event.key !== "Enter") {
+            return;
+        }
         event.preventDefault();
         isOpen = false;
-        performSearch()
+        performSearch();
     }
 
     /**
@@ -106,7 +122,14 @@
                 class="btn btn-outline-secondary"
                 onclick={() => {
                     query = "";
-                    performSearch();
+                    selectedTag = "";
+                    error = "";
+                    isOpen = false;
+                    if (onClear) {
+                        onClear();
+                    } else {
+                        performSearch();
+                    }
                 }}
         >
             Clear
@@ -125,7 +148,7 @@
         </ul>
     {:else if isOpen}
         <ul class="dropdown-list no-results">
-            <li>No images found matching your search</li>
+            <li>No tags found matching your search</li>
         </ul>
     {/if}
 

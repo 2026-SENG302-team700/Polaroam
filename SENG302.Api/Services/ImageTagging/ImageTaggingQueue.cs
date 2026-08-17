@@ -5,7 +5,7 @@ namespace SENG302.Api.Services.ImageTagging;
 
 public interface IImageTaggingQueue
 {
-    bool QueueImageTaggingAsync(ImageTaggingJob job);
+    ValueTask QueueImageTaggingAsync(ImageTaggingJob job);
     IAsyncEnumerable<ImageTaggingJob> ReadAllAsync(CancellationToken cancellationToken);
 }
 
@@ -14,9 +14,9 @@ public interface IImageTaggingQueue
 /// </summary>
 public class ImageTaggingQueue : IImageTaggingQueue
 {
-    private readonly Channel<ImageTaggingJob> _queue = Channel.CreateBounded<ImageTaggingJob>(new BoundedChannelOptions(3)
+    private readonly Channel<ImageTaggingJob> _queue = Channel.CreateBounded<ImageTaggingJob>(new BoundedChannelOptions(100)
     {
-        FullMode = BoundedChannelFullMode.Wait,
+        FullMode = BoundedChannelFullMode.DropWrite,
         SingleReader = true
     });
     
@@ -25,13 +25,9 @@ public class ImageTaggingQueue : IImageTaggingQueue
     /// </summary>
     /// <param name="job"></param>
     /// <returns></returns>
-    public bool QueueImageTaggingAsync(ImageTaggingJob job)
-    {
-        if (!_queue.Writer.TryWrite(job))
-        {
-            return false;
-        }
-        return true;
+    public ValueTask QueueImageTaggingAsync(ImageTaggingJob job)
+    {   
+        return _queue.Writer.WriteAsync(job);
     }
     
     /// <summary>

@@ -1,20 +1,33 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
 public interface IImageService
 {
     public Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
+    public Task<List<TripPhotoGroupResponse>> GetPhotosFromQueryAsync(int userId, string query);
 }
 
 public class ImageService : IImageService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    
-    public ImageService(IDbContextFactory<DatabaseContext> dbContextFactory)
+    private readonly IFileService _fileService;
+    private readonly IAlbumService _albumService;
+    private readonly ITripService _tripService;
+
+    public ImageService(
+        IDbContextFactory<DatabaseContext> dbContextFactory,
+        IFileService fileService,
+        IAlbumService albumService,
+        ITripService tripService)
     {
         _dbContextFactory = dbContextFactory;
+        _fileService = fileService;
+        _albumService = albumService;
+        _tripService = tripService;
     }
     
     /// <summary>
@@ -78,5 +91,74 @@ public class ImageService : IImageService
             .ToList();
 
         return tags;
+    }
+
+    /// <summary>
+    /// gets photos owned by user where a tag matches (or partially matches)
+    /// </summary>
+    /// <param name="userId">user's photos</param>
+    /// <param name="query">search term</param>
+    /// <returns>a list of trips with their photos sorted by date</returns>
+    public async Task<List<TripPhotoGroupResponse>> GetPhotosFromQueryAsync(int userId, string query)
+    {
+        // gets trips owned by user id
+        var trips = (await _tripService.GetTripsByUserIdAsync(userId)).ToDictionary(t => t.Id);
+        var userTripIds = trips.Keys.ToList();
+
+        // gets trip albums
+        var albums = await _albumService.GetAlbumsByTripIdsAsync(userTripIds);
+
+        // gets the photo ids owned by user
+        var ownedPhotoIds = albums
+            .SelectMany(a => a.PhotoIds)
+            .Distinct()
+            .ToList();
+        if (ownedPhotoIds.Count == 0)
+        {
+            return [];
+        }
+
+        // gets the files with matching tags
+        var files = await _fileService.GetFilesByIdsAsync(ownedPhotoIds);
+        var matchedFiles = files
+            .Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(query, StringComparison.OrdinalIgnoreCase)))
+            .ToDictionary(f => f.Id);
+        if (matchedFiles.Count == 0)
+        {
+            return [];
+        }
+
+        // helper function that builds a trip photo grouping based on its album
+        TripPhotoGroupResponse? BuildTripPhotoGroup(Album album)
+        {
+            var trip = trips[album.TripId];
+
+            var photos = album.PhotoIds
+                .Where(matchedFiles.ContainsKey)
+                .Select(photoId => new PhotoMetadataResponse
+                {
+                    PhotoId = photoId,
+                    TripId = album.TripId,
+                    FileName = matchedFiles[photoId].OriginalFileName,
+                    MimeType = matchedFiles[photoId].MimeType,
+                    Tags = matchedFiles[photoId].Tags,
+                    DateCreated = matchedFiles[photoId].DateCreated
+                })
+                .OrderBy(p => p.DateCreated)
+                .ToList();
+
+            return photos.Count == 0 ? null : new TripPhotoGroupResponse
+            {
+                TripId = album.TripId,
+                TripTitle = trip.Title,
+                Photos = photos
+            };
+        }
+
+        return albums
+            .Select(BuildTripPhotoGroup)
+            .OfType<TripPhotoGroupResponse>()
+            .OrderBy(g => g.TripTitle)
+            .ToList();
     }
 }

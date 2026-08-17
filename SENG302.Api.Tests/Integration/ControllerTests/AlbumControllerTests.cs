@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Jobs;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
@@ -39,10 +38,21 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     private async Task SetupUserAndTrip(int userId, string email)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        context.Users.Add(new User { Id = userId, Email = email, DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Users.Add(new User
+        {
+            Id = userId, 
+            Email = email, 
+            DisplayName = "Test user", 
+            PasswordKey = "password", 
+            Country = "NZ"
+        });
         context.Trips.Add(new Trip
         {
-            Id = 1, Title = "My trip", UserId = userId, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21)
+            Id = 1, 
+            Title = "My trip", 
+            UserId = userId, 
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
         });
         context.Albums.Add(new Album { TripId = 1, PhotoIds = new() });
         await context.SaveChangesAsync();
@@ -71,11 +81,20 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(1, 2);
         var file1 = new CustomFile
         {
-            Id = 1, FileKey = "key1", MimeType = "image/webp", OriginalFileName = "file1.webp", OwnerId = 1, Tags = ["beach"]
+            Id = 1,
+            FileKey = "key1", 
+            MimeType = "image/webp", 
+            OriginalFileName = "file1.webp", 
+            OwnerId = 1, 
+            Tags = ["beach", "sun"]
         };
         var file2 = new CustomFile
         {
-            Id = 2, FileKey = "key2", MimeType = "image/webp", OriginalFileName = "file2.webp", OwnerId = 1
+            Id = 2, 
+            FileKey = "key2", 
+            MimeType = "image/webp", 
+            OriginalFileName = "file2.webp", 
+            OwnerId = 1
         };
         context.CustomFiles.Add(file1);
         context.CustomFiles.Add(file2);
@@ -90,13 +109,23 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(3, 4);
         var file3 = new CustomFile
         {
-            Id = 3, FileKey = "key3", MimeType = "image/webp", OriginalFileName = "file3.webp", OwnerId = 1, 
-            Tags = ["testOne"], DateCreated = DateTimeOffset.UtcNow.AddDays(-1)
+            Id = 3, 
+            FileKey = "key3", 
+            MimeType = "image/webp", 
+            OriginalFileName = "file3.webp", 
+            OwnerId = 1,
+            Tags = ["testOne"], 
+            DateCreated = DateTimeOffset.UtcNow.AddDays(-1)
         };
         var file4 = new CustomFile
         {
-            Id = 4, FileKey = "key4", MimeType = "image/webp", OriginalFileName = "file4.webp", OwnerId = 1, 
-            Tags = ["TestTwo"], DateCreated = DateTimeOffset.UtcNow.AddDays(1)
+            Id = 4, 
+            FileKey = "key4", 
+            MimeType = "image/webp", 
+            OriginalFileName = "file4.webp", 
+            OwnerId = 1,
+            Tags = ["TestTwo"], 
+            DateCreated = DateTimeOffset.UtcNow.AddDays(1)
         };
         context.CustomFiles.Add(file3);
         context.CustomFiles.Add(file4);
@@ -219,11 +248,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             (pandaBytes, "panda.webp", "image/webp"),
             (kayakBytes, "kayak.webp", "image/webp")
         ]);
-        
-        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(true);
-        
+
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
-        var contentt = await response.Content.ReadAsStringAsync();
         response.EnsureSuccessStatusCode();
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var album = context.Albums.FirstOrDefault(album => album.TripId == 1)!;
@@ -268,7 +294,10 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
     public async Task AddImagesToAlbum_NoTrip_ReturnBadRequest()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Users.Add(new User
+        {
+            Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ"
+        });
         await context.SaveChangesAsync();
 
         var pandaBytes = GetBytes("panda.webp");

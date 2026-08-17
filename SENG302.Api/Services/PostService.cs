@@ -1,7 +1,7 @@
-using System.Data.SqlTypes;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
@@ -32,9 +32,9 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
-    private readonly IAlbumService _albumService;
+    private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IUserService _userService;
-    private readonly IImageTaggingService _imageTaggingService;
+    private readonly IAlbumService _albumService;
 
     public PostService(
         IAlbumService albumService,
@@ -42,16 +42,17 @@ public class PostService : IPostService
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
-        IUserService userService,
-        IImageTaggingService imageTaggingService)
+        IImageTaggingQueue imageTaggingQueue,
+        IUserService userService
+        )
     {
         _albumService = albumService;
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
+        _imageTaggingQueue = imageTaggingQueue;
         _userService = userService;
-        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -120,15 +121,8 @@ public class PostService : IPostService
             throw new MultipleValidationListException(errors);
         }
 
-        User? user = await _userService.GetUserByIdAsync(userId);
-
-        if (user == null)
-        {
-            throw new SqlNullValueException("User does not exist");
-        }
-
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         // Add Photos
         var photoIds = new List<int>();
         foreach (var photo in photos)
@@ -136,23 +130,14 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
+            if (await _userService.UserAiTaggingCheckAsync(userId))
             {
-                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
+                await GenerateImageTags(photo, file.Id);
             }
-            else
-            {
-                file.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
-                context.CustomFiles.Update(file);
-                await context.SaveChangesAsync();
-            }
-
-            
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
-        
-        
+       
         album.PhotoIds.AddRange(photoIds);
         context.Albums.Update(album);
         
@@ -297,13 +282,6 @@ public class PostService : IPostService
                 });
             }
         }
-        
-        User? user = await _userService.GetUserByIdAsync(userId);
-
-        if (user == null)
-        {
-            throw new SqlNullValueException("User does not exist");
-        }
 
         // Add / Remove Photos 
         List<int> customFileIds = [];
@@ -313,18 +291,10 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
+            if (await _userService.UserAiTaggingCheckAsync(userId))
             {
-                await _imageTaggingService.QueueImageTaggingJobs(photo, customFile.Id);
+                await GenerateImageTags(photo, customFile.Id);
             }
-            else
-            {
-                customFile.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
-                context.CustomFiles.Update(customFile);
-                await context.SaveChangesAsync();
-            }
-            
-            
         }
 
         // get the album and add new photo Ids
@@ -429,7 +399,6 @@ public class PostService : IPostService
             await DeletePostByIdAsync(posts[i].PostId);
         }
 
-
     }
 
 
@@ -469,5 +438,30 @@ public class PostService : IPostService
         
         await context.SaveChangesAsync();
     }
-    
+
+    /// <summary>
+    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
+    /// while still allowing the image upload to continue
+    /// </summary>
+    /// <param name="image"></param>
+    /// <param name="imageId"></param>
+    /// <returns></returns>
+    private async Task GenerateImageTags(IFormFile image, int imageId)
+    {
+        try
+        {
+            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
+
+            await _fileService.SetTagQueueStatus(imageId);
+            
+            await _imageTaggingQueue.QueueImageTaggingAsync(
+                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
+            );
+        }
+        catch (Exception ex)
+        {
+            // Tagging cant cause the image uplaod to fail
+            Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
+        }
+    }
 }

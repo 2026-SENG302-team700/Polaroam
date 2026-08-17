@@ -16,7 +16,7 @@ public interface IFileService
     Task<List<string>?> GetTagsAsync(int id);
     Task SetTagQueueStatus(int id);
     Task<bool> GetTagQueueStatus(int id);
-    public Task<string?> GetTagErrors(int id);
+    Task<List<CustomFile>> GetFilesByIdsAsync(List<int> ids);
 }
 
 public class FileService : IFileService
@@ -221,10 +221,15 @@ public class FileService : IFileService
         var file = await GetFileByIdAsync(id);
         return file.InTagQueue;
     }
-
-    public async Task<string?> GetTagErrors(int id)
+    
+    /// <summary>
+    /// gets custom file entities for provided ids.
+    /// </summary>
+    /// <param name="ids">file id's</param>
+    /// <returns>The file entites.</returns>
+    public async Task<List<CustomFile>> GetFilesByIdsAsync(List<int> ids)
     {
-        var file = await GetFileByIdAsync(id);
-        return file.TagError;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.CustomFiles.Where(f => ids.Contains(f.Id)).ToListAsync();
     }
 }

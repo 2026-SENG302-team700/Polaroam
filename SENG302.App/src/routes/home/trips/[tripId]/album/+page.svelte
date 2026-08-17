@@ -102,7 +102,7 @@
 
 <div class="card mb-2 post-wrapper">
     <div class="card-header">
-        <NavigationButton path={resolve(`/home/trips/${params.tripId}`)} text="Back" />
+        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         <div class="header-content-wrapper">
             <div class="header-content-item">
