@@ -488,7 +488,6 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         content.ShouldBe("Image cannot be tagged");
     }
     
-    
     [Fact]
     public async Task RetryPhotoTagging_CanRetryTaggingIsFalse_ReturnsBadRequest()
     {

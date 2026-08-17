@@ -161,7 +161,6 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Trip does not exist");
         }
         
-        
         User? user = await _userService.GetUserByIdAsync(trip.UserId);
 
         if (user == null)
@@ -180,14 +179,19 @@ public class AlbumService : IAlbumService
             }
             else
             {
-                file.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
-                context.CustomFiles.Update(file);
-                await context.SaveChangesAsync();
+                var dbFile = await context.CustomFiles.FindAsync(file.Id);
+                if (dbFile != null)
+                {
+                    dbFile.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
+                    context.CustomFiles.Update(dbFile);
+                    await context.SaveChangesAsync();
+                }
             }
         }  
-        
-
+        context.Albums.Update(album);
         await context.SaveChangesAsync();
+        
+        
 
         return album;
     }

@@ -143,7 +143,7 @@
                      return
                   }
 
-                  if (data?.detail === "Tags not available. AI tagging was disabled whe image was uploaded") {
+                  if (data?.detail === "Tags not available. AI tagging was disabled when image was uploaded") {
                      error = data?.detail;
                      return
                   }
