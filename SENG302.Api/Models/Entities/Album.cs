@@ -9,5 +9,5 @@ public class Album
 {
     [Key]
     public required int TripId { get; set; }
-    public List<int> PhotoIds { get; set; } = [];
+    public List<int> PhotoIds { get; set; } = new();
 }

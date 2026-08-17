@@ -8,17 +8,21 @@
     import { resolve } from "$app/paths";
     import { queuetooltip } from '../../ToolTips/QueueFullToolTip';
 
+    // Allow use of file paths (Via the api) or actual File objects.
+    type ImageSource = File | string;
+    
     let {
        image,
        enlarged = $bindable(false),
-       index,
+        index = $bindable(0),
        images,
        photoId,
        photoIds,
-    }: { image: File,
+    }: { 
+        image: ImageSource,
         enlarged: boolean,
         index: number,
-        images: File[] | null,
+        images: ImageSource[] | null,
         photoId: number,
         photoIds: number[],
        } = $props();
@@ -42,6 +46,23 @@
       tagStatus = "";
       tagColour = "";
    }
+
+    // Only File sources need an object URL; string sources are used as-is.
+    let objectUrl = $state<string | null>(null);
+
+    // Create an object URL for File sources.
+    $effect(() => {
+        if (image instanceof File) {
+            const url = URL.createObjectURL(image);
+            objectUrl = url;
+            return () => URL.revokeObjectURL(url);
+        }
+        objectUrl = null;
+    });
+
+    // Sets scr to url for File sources
+    let displaySrc = $derived(image instanceof File ? objectUrl : image);
+
 
     function moveToLeftImage()
     {
@@ -195,7 +216,9 @@
 <div class="fullscreen-image-wrapper">
    <div class="image-container">
       <div class="close-button-wrapper">
-         <img src={URL.createObjectURL(image)} alt="Image" class="image" />
+          {#if displaySrc}
+              <img src={displaySrc} alt="Image" class="image" />
+          {/if}
          <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
          {#if images !== null && images?.length > 1 && index !== images?.length-1}
             <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>

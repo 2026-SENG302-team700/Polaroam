@@ -4,12 +4,17 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
+    import ImageGallery from '$lib/components/images/image-gallery.svelte';
+    import { goto } from "$app/navigation";
+    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
     let tripName = "my amazing helsinki trip";
     let files: File[] | null | undefined = $state([]);
     let loading = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
+    let tripId = params.tripId;
+    let imageMetadata = $state([]);
 
     type AlbumImageUploadErrors = {
         generic: string;
@@ -28,6 +33,18 @@
 
     let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
+    /**
+     * Gets the Metadata for all images in the album
+     */
+    async function getImageMetadata() {
+        const response = await fetch(resolve(`/api/album/${tripId}`),
+            {
+                method: 'GET',
+                credentials: 'include'
+            });
+        imageMetadata = await response.json();
+    }
+    
     /**
      * Function for creating a post
      */
@@ -63,12 +80,16 @@
             errors.generic = "Failed to upload images: " + (err as Error).message;
         } finally {
             loading = false;
+            getImageMetadata();
         }
     }
+
+    onMount(getImageMetadata);
 </script>
 
 <div class="card mb-2 post-wrapper">
     <div class="card-header">
+        <NavigationButton path={resolve(`/home/trips/${params.tripId}`)} text="Back" />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         <div class="header-content-wrapper"> 
             <div class="header-content-item">
@@ -82,14 +103,10 @@
             </div>
         </div>
     </div>
-    <div class="card-body">
-
+    <div class="card-body p-4" style="min-height: 100vh;">
+        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
     </div>
-    <div class="card-footer text-muted images">
-
-  </div>
 </div>
-
 <style>
 .card-header {
     display: flex;
@@ -108,8 +125,14 @@
 }
 
 .trip-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
     max-width: 40%;
     min-width: 20%;
+    text-align: center;
 }
 
 .post-wrapper {
