@@ -1,10 +1,21 @@
 <script lang="ts">
     import { MapLibre, Marker, Popup } from 'svelte-maplibre';
     
-    let { locations } = $props();
+    let { 
+        locations, 
+        selectedPost = $bindable(null) 
+    } = $props();
 
     let map = $state();
     const mapStyle = 'https://tiles.openfreemap.org/styles/liberty';
+
+    /**
+     * gets the post from a pin + centres map on pin
+     */
+    function pinClick(location) {
+        selectedPost = location.postId;
+        map?.flyTo({ center: [parseFloat(location.lon), parseFloat(location.lat)], zoom: 12, duration: 1000 });
+    }
 
     /**
      * Recenter the map to fit all the locations
@@ -53,8 +64,11 @@
     <div class="position-relative rounded overflow-hidden" style="height: 480px;">
         <MapLibre style={mapStyle} bind:map class="map">
             {#each locations as location (location.osmId)}
-                <Marker lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}>
-                    <i class="bi bi-geo-fill text-danger fs-2"></i>
+                <Marker
+                        lngLat={[parseFloat(location.lon), parseFloat(location.lat)]}
+                        onclick={() => pinClick(location)}
+                >
+                    <i class="bi bi-geo-fill text-danger fs-2" />
                     <Popup offset={[0, -10]}>
                         <div class="small" style="max-width: 220px;">
                             <strong>{location.displayName}</strong>

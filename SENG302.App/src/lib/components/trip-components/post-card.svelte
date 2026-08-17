@@ -5,8 +5,9 @@
 
     import ImageCarousel from "../images/image-carousel.svelte";
 
-    let { 
-        post
+    let {
+        post,
+        isSelected = false
     } = $props();
 
     function goToPost() {
@@ -14,7 +15,7 @@
     }
 </script>
 
-<div class="card mb-3">
+<div class="card mb-3" class:highlighted={isSelected}>
     <div class="card-body" tabindex="0"
     role="button"
     onclick={goToPost}
@@ -33,3 +34,10 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .highlighted {
+        border-color: #117a8b;
+        background-color: #b9d5df;
+    }
+</style>

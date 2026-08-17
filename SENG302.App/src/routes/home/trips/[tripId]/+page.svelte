@@ -32,6 +32,7 @@
     
     let postLocations = $state([]);
     let posts = $state([]);
+    let selectedPost = $state(null);
 
     onMount(() => {
         fetchTrip();
@@ -180,10 +181,10 @@
             </div>
         </div>
         <div class="card-body">
-        <Map locations={postLocations} />
+        <Map locations={postLocations} bind:selectedPost />
         </div>
         <div class="card-footer text-muted images">
-            <PostSection {posts} tripId={tripObject.id}/>
+            <PostSection {posts} tripId={tripObject.id} {selectedPost}/>
         </div>
     </div>    
 </div>
