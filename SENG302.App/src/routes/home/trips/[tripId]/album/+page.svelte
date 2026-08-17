@@ -1,10 +1,12 @@
 <script lang="ts">
+    import AddButton from "$lib/components/buttons/add-button.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
     import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
-    import ImageGallery from "$lib/components/images/image-gallery.svelte";
+    import ImageGallery from '$lib/components/images/image-gallery.svelte';
+    import { goto } from "$app/navigation";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
     let tripName = "my amazing helsinki trip";
@@ -15,7 +17,7 @@
     let imageMetadata = $state([]);
     let tripId = params.tripId;
     let tagQuery = $state("");
-
+    
     let tagDataError = $state("");
 
     type AlbumImageUploadErrors = {
@@ -37,14 +39,12 @@
      * Gets the image metadata of all images in the album matching the tagQuery
      */
     async function getImageMetadata() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/album/${tripId}/tag?tag=${tagQuery}` as any),
+        try{
+            const response = await fetch(resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
                 {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
+                    method: 'GET',
+                    credentials: 'include'
+                });
             if (!response.ok) {
                 tagDataError = await response.text();
             }
@@ -55,7 +55,7 @@
             loading = false;
         }
     }
-
+    
     let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     /**
@@ -71,14 +71,11 @@
                 }
             }
 
-            const response = await fetchWithCsrf(
-                resolve(`/api/album/${params.tripId}/images` as any),
-                {
-                    method: "POST",
-                    body: form,
-                    credentials: "include",
-                },
-            );
+            const response = await fetchWithCsrf(resolve(`/api/album/${params.tripId}/images` as any), {
+                method: "POST",
+                body: form,
+                credentials: "include",
+            });
 
             if (response.status != 201) {
                 let data = await response.json();
@@ -93,8 +90,7 @@
             }
         } catch (err) {
             console.error("Failed to upload images:", err);
-            errors.generic =
-                "Failed to upload images: " + (err as Error).message;
+            errors.generic = "Failed to upload images: " + (err as Error).message;
         } finally {
             loading = false;
             getImageMetadata();
@@ -121,63 +117,60 @@
         </div>
     </div>
     <div class="card-body p-4" style="min-height: 100vh;">
-        <TagSearchForm
-            bind:query={tagQuery}
-            performSearch={getImageMetadata}
-            getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+        <TagSearchForm bind:query={tagQuery}
+                       performSearch={getImageMetadata}
+                       getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
         />
-
+        
         {#if imageMetadata.length > 0 && tagQuery !== ""}
-            <p class="text-center">
-                {imageMetadata.length} images found matching "{tagQuery}"
-            </p>
+            <p class="text-center">{imageMetadata.length} images found matching "{tagQuery}"</p>
         {:else if imageMetadata.length > 0 && tagQuery === ""}
             <p class="text-center">{imageMetadata.length} images found</p>
-        {/if}
-
-        <ImageGallery bind:imageMetadata {tripId} />
+        {/if}    
+            
+        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
     </div>
 </div>
-
 <style>
-    .card-header {
-        display: flex;
-        position: relative;
-        align-items: center;
-    }
-    .header-content-item {
-        display: flex;
-        gap: 4px;
-        align-items: baseline;
-        justify-content: end;
-    }
+.card-header {
+    display: flex;
+    position: relative;
+    align-items: center;
+}
+.header-content-item {
+    display: flex;
+    gap: 4px;
+    align-items:baseline;
+    justify-content: end;
+}
 
-    .header-content-wrapper {
-        width: 100%;
-    }
+.header-content-wrapper {
+    width: 100%;
+}
 
-    .trip-name {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        margin: 0;
-        max-width: 40%;
-        min-width: 20%;
-        text-align: center;
-    }
+.trip-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    max-width: 40%;
+    min-width: 20%;
+    text-align: center;
+}
 
-    .post-wrapper {
-        margin-top: 10px;
-    }
+.post-wrapper {
+    margin-top: 10px;
+}
 
-    .card-body {
-        max-height: 500px;
-        overflow: scroll;
-    }
+.card-body {
+    max-height: 500px;
+    overflow: scroll;
+}
 
-    .images {
-        max-height: 800px;
-        overflow: scroll;
-    }
+.images {
+    max-height: 800px;
+    overflow: scroll;
+}
+
 </style>

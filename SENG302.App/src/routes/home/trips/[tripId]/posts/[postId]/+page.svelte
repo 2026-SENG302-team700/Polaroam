@@ -16,7 +16,6 @@
 
     let { params } = $props();
     let postId = params.postId;
-    let tripId = params.tripId;
 
     let displayName = $state("");
 
@@ -33,9 +32,6 @@
         creationTime: "9999-12-31",
     });
 
-    let imageMetadata = $state([]);
-    let tagDataError = $state("");
-
     let photos: File[] = $state([]);
     let photoIds: number[] = $state([]);
 
@@ -43,6 +39,30 @@
         fetchPost();
         fetchDisplayName();
     });
+
+    // /**
+    //  * Fetches the location name from the backend for an osmId
+    //  */
+    // async function fetchLocationName() {
+
+    //     try {
+    //         loading = true;
+    //         const response = await fetchWithCsrf(
+    //             resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
+    //             {
+    //                 method: "GET",
+    //                 credentials: "include",
+    //             },
+    //         );
+    //         let location = await response.json();
+    //         locationName = location.name;
+    //     } catch (err) {
+    //         error = "Failed to fetch location name: " + (err as Error).message;
+    //     } finally {
+    //         loading = false;
+    //     }
+    // }
+
     /**
      * Fetch the display name of the user based on the post
      */
@@ -63,25 +83,50 @@
             loading = false;
         }
     }
-
     /**
-     * Gets the image metadata of all images in the album matching the tagQuery
+     * Fetch Images
      */
-    async function getImageMetadata() {
+    async function fetchImages() {
         try {
+            loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/album/${params.tripId}/tag?tag=${""}` as any),
+                resolve(`/api/post/${postId}/images` as any),
                 {
                     method: "GET",
                     credentials: "include",
                 },
             );
             if (!response.ok) {
-                tagDataError = await response.text();
+                error = (await response.text()) || "Failed to fetch images.";
+                return;
             }
-            imageMetadata = await response.json();
+
+            const metadata: {
+                photoId: number;
+                fileName: string;
+                mimeType: string;
+            }[] = await response.json();
+
+            photos = await Promise.all(
+                metadata.map(async (meta) => {
+                    const res = await fetchWithCsrf(
+                        resolve(
+                            `/api/post/${postId}/images/${meta.photoId}` as any,
+                        ),
+                        {
+                            method: "GET",
+                            credentials: "include",
+                        },
+                    );
+                    const blob = await res.blob();
+                    return new File([blob], meta.fileName, {
+                        type: meta.mimeType,
+                    });
+                }),
+            );
+            photoIds = metadata.map((meta) => meta.photoId);
         } catch (err) {
-            tagDataError = "An unexpected error occurred: ";
+            error = "Failed to fetch images: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -108,7 +153,7 @@
                 return;
             }
             postObject = data;
-            await getImageMetadata();
+            await fetchImages();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
         } finally {
@@ -164,12 +209,7 @@
         />
         <DeleteButton deleteAction={showConfirmationModal} />
         <ErrorDisplay errors={[error]} />
-        <PostDisplayCard
-            post={postObject}
-            userName={displayName}
-            {imageMetadata}
-            {tripId}
-        />
+        <PostDisplayCard post={postObject} userName={displayName} {photos} {photoIds}/>
     </div>
 </div>
 
@@ -181,3 +221,20 @@
     onOption1={deletePost}
     onOption2={hideConfirmationModal}
 />
+
+<style>
+    .post-head-grid {
+        display: flex;
+        flex-direction: column;
+    }
+    .date-object {
+        margin-left: 10px;
+        bottom: 0;
+    }
+
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 600px));
+        gap: 0.75rem;
+    }
+</style>
