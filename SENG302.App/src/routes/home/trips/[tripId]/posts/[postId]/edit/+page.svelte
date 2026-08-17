@@ -32,6 +32,7 @@
     let files: File[] | null | undefined = $state([]);
     let location = $state({
         osmId: 0,
+        osmType: "",
         lat: 0,
         lon: 0,
         name: "",
@@ -156,6 +157,7 @@
             content = data.content;
             date = new Date(data.date);
             location.osmId = data.osmId;
+            location.osmType = data.osmType;
             photoIds = data.photoIds;
             searchQuery = data.locationName;
         } catch (err) {
@@ -186,6 +188,7 @@
             form.append("TripId", tripId);
             form.append("Title", title);
             form.append("OsmId", location.osmId);
+            form.append("OsmType", location.osmType);
             form.append("Content", content);
             form.append("Date", date?.toISOString() ?? "");
             form.append("NoContentAllowed", noContentAllowed);

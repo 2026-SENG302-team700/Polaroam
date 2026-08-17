@@ -380,7 +380,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/1/tag?tag=NotFound");
         response.EnsureSuccessStatusCode();
-        var metadata = await response.Content.ReadFromJsonAsync<List<CustomFile>>();
+        var metadata = await response.Content.ReadFromJsonAsync<List<PhotoMetadataResponse>>();
         metadata!.Count.ShouldBe(0);
     }
 

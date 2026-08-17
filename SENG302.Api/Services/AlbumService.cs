@@ -220,7 +220,14 @@ public class AlbumService : IAlbumService
             try
             {
                 var file = await _fileService.GetFileByIdAsync(photoId);
-                matchedFiles.Add(file);
+                files.Add(new PhotoMetadataResponse
+                {
+                    PhotoId = file.Id,
+                    FileName = file.OriginalFileName,
+                    MimeType = file.MimeType,
+                    Tags = file.Tags ?? [],
+                    DateCreated = file.DateCreated
+                });
             } catch (Exception ex)
             {
                 Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
