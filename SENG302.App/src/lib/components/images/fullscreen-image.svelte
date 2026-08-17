@@ -136,11 +136,13 @@
             if (!response.ok) {
                if (response.status === 500) {
                   const data = await response.json()
-                  error = "No tags available"
                   
                   if (data?.detail === "Failed to fetch tags: Queue was full") {
                      showRetryTagging = true
+                     return
                   }
+
+                  error = "AI failed to generate tags"
                   return
                } else {
                   error = "No tags available";
