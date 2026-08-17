@@ -213,21 +213,14 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<PhotoMetadataResponse> matchedFiles = [];
+        List<CustomFile> matchedFiles = [];
 
         foreach (var photoId in album.PhotoIds)
         {
             try
             {
                 var file = await _fileService.GetFileByIdAsync(photoId);
-                matchedFiles.Add(new PhotoMetadataResponse
-                {
-                    PhotoId = file.Id,
-                    FileName = file.OriginalFileName,
-                    MimeType = file.MimeType,
-                    Tags = file.Tags ?? [],
-                    DateCreated = file.DateCreated
-                });
+                matchedFiles.Add(file);
             } catch (Exception ex)
             {
                 Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
@@ -243,8 +236,8 @@ public class AlbumService : IAlbumService
 
         return matchedFiles.Select(file => new PhotoMetadataResponse
         {
-            PhotoId = file.PhotoId,
-            FileName = file.FileName,
+            PhotoId = file.Id,
+            FileName = file.OriginalFileName,
             MimeType = file.MimeType,
             Tags = file.Tags,
             DateCreated = file.DateCreated

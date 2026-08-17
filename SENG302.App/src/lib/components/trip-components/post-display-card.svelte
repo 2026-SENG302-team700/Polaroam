@@ -1,20 +1,11 @@
 <script>
-
     import { formatDate } from "$lib/datepicker/formatDate";
-    import ImageDisplay from "../images/image-display.svelte";
+    import ImageGallery from "../images/image-gallery.svelte";
 
-    let { 
-        post, 
-        userName, 
-        photos, 
-        photoIds = [] 
-    } = $props();
-
-    
+    let { post, userName, imageMetadata = [], tripId } = $props();
 </script>
 
 <div class="card mb-2 post-wrapper">
-
     <div class="card-header">
         <h6 class="card-subtitle mb-2 text-muted user-name">{userName}</h6>
         <div class="header-content-wrapper">
@@ -37,10 +28,10 @@
         <p class="card-text">{post.content}</p>
     </div>
     <div class="card-footer text-muted images">
-        {#if photos.length > 0}
-                <ImageDisplay images={photos} {photoIds} />
+        {#if imageMetadata.length > 0}
+            <ImageGallery {imageMetadata} {tripId} />
         {/if}
-  </div>
+    </div>
 </div>
 
 <style>
