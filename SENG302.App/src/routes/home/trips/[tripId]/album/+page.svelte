@@ -121,6 +121,13 @@
                        performSearch={getImageMetadata}
                        getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
         />
+        
+        {#if imageMetadata.length > 0 && tagQuery !== ""}
+            <p class="text-center">{imageMetadata.length} images found matching "{tagQuery}"</p>
+        {:else if imageMetadata.length > 0 && tagQuery === ""}
+            <p class="text-center">{imageMetadata.length} images found</p>
+        {/if}    
+            
         <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
     </div>
 </div>
