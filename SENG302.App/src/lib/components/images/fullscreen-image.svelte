@@ -36,15 +36,19 @@
        fetchImageTags(photoId)
        getUserPreferences()
    });
+   
+   function resetMessages() {
+      error = "";
+      tagStatus = "";
+      tagColour = "";
+   }
 
     function moveToLeftImage()
     {
        index -= 1
        let newImage = images?.[index];
        if (newImage !== undefined) {
-          error = "";
-          tagStatus = "";
-          tagColour = "";
+          resetMessages()
           image = newImage
        }
        showRetryTagging = false
@@ -56,9 +60,7 @@
        index += 1
        let newImage = images?.[index];
        if (newImage !== undefined) {
-          error = "";
-          tagStatus = "";
-          tagColour = "";
+          resetMessages()
           image = newImage
        }
        showRetryTagging = false
