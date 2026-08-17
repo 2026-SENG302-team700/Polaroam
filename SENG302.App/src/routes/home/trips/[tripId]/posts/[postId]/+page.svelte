@@ -16,9 +16,8 @@
 
     let { params } = $props();
     let postId = params.postId;
-    
+
     let displayName = $state("");
-    let locationName = $state("");
 
     let postObject = $state({
         postId: 0,
@@ -29,9 +28,10 @@
         date: "9999-12-31",
         photoIds: [],
         osmId: 0,
+        locationName: "No Location",
         creationTime: "9999-12-31",
     });
-    
+
     let photos: File[] = $state([]);
     let photoIds: number[] = $state([]);
 
@@ -40,28 +40,28 @@
         fetchDisplayName();
     });
 
-    /**
-     * Fetches the location name from the backend for an osmId
-     */
-    async function fetchLocationName() {
-        
-        try {
-            loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            let location = await response.json();
-            locationName = location.name;
-        } catch (err) {
-            error = "Failed to fetch location name: " + (err as Error).message;
-        } finally {
-            loading = false;
-        }
-    }
+    // /**
+    //  * Fetches the location name from the backend for an osmId
+    //  */
+    // async function fetchLocationName() {
+
+    //     try {
+    //         loading = true;
+    //         const response = await fetchWithCsrf(
+    //             resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
+    //             {
+    //                 method: "GET",
+    //                 credentials: "include",
+    //             },
+    //         );
+    //         let location = await response.json();
+    //         locationName = location.name;
+    //     } catch (err) {
+    //         error = "Failed to fetch location name: " + (err as Error).message;
+    //     } finally {
+    //         loading = false;
+    //     }
+    // }
 
     /**
      * Fetch the display name of the user based on the post
@@ -90,7 +90,8 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/images` as any), {
+                resolve(`/api/post/${postId}/images` as any),
+                {
                     method: "GET",
                     credentials: "include",
                 },
@@ -109,14 +110,18 @@
             photos = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/post/${postId}/images/${meta.photoId}` as any),
+                        resolve(
+                            `/api/post/${postId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
-                            credentials: "include"
-                        }
+                            credentials: "include",
+                        },
                     );
                     const blob = await res.blob();
-                    return new File([blob], meta.fileName, { type: meta.mimeType });
+                    return new File([blob], meta.fileName, {
+                        type: meta.mimeType,
+                    });
                 }),
             );
             photoIds = metadata.map((meta) => meta.photoId);
@@ -149,7 +154,6 @@
             }
             postObject = data;
             await fetchImages();
-            await fetchLocationName();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
         } finally {
@@ -195,7 +199,9 @@
     }
 </script>
 
-<div class="container trip-page-content d-flex justify-content-center align-items-center">
+<div
+    class="container trip-page-content d-flex justify-content-center align-items-center"
+>
     <div class="w-100" style="max-width: 900px;">
         <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
         <EditButton
@@ -203,7 +209,6 @@
         />
         <DeleteButton deleteAction={showConfirmationModal} />
         <ErrorDisplay errors={[error]} />
-        
         <PostDisplayCard post={postObject} userName={displayName} {photos} {photoIds}/>
     </div>
 </div>
@@ -232,5 +237,4 @@
         grid-template-columns: repeat(auto-fill, minmax(200px, 600px));
         gap: 0.75rem;
     }
-
 </style>

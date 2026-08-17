@@ -87,6 +87,7 @@ public static class CreateExampleUsersHelper
                         Date = DateTimeOffset.MaxValue,
                         CreationTime = DateTimeOffset.UtcNow,
                         OsmId = 1,
+                        OsmType = "node",
                         LocationName = "Location_" + j
                     };
                     dbContext.Add(post);
