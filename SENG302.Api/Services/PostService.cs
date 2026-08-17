@@ -127,6 +127,8 @@ public class PostService : IPostService
             throw new SqlNullValueException("User does not exist");
         }
 
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         // Add Photos
         var photoIds = new List<int>();
         foreach (var photo in photos)
@@ -138,11 +140,14 @@ public class PostService : IPostService
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
+
+            file.TagError = "Tags not available. AI tagging was disabled for image";
+            context.CustomFiles.Update(file);
+            await context.SaveChangesAsync();
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
-       
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         
         album.PhotoIds.AddRange(photoIds);
         context.Albums.Update(album);
@@ -306,6 +311,10 @@ public class PostService : IPostService
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, customFile.Id);
             }
+            
+            customFile.TagError = "Tags not available. AI tagging was disabled for image";
+            context.CustomFiles.Update(customFile);
+            await context.SaveChangesAsync();
         }
 
         // get the album and add new photo Ids

@@ -179,6 +179,10 @@ public class AlbumService : IAlbumService
             {
                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
+            
+            file.TagError = "Tags not available. AI tagging was disabled for image";
+            context.CustomFiles.Update(file);
+            await context.SaveChangesAsync();
         }  
         
 
