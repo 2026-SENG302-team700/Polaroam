@@ -21,7 +21,11 @@ public class CustomFile
 
     public List<string>? Tags { get; set; }
 
+    public String? TagError { get; set; }
+
     public bool InTagQueue { get; set; } = false;
     
     public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
+
+    public bool CanRetryTagging { get; set; } = true;
 }

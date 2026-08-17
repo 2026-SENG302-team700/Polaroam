@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Jobs;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
@@ -218,8 +219,11 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             (pandaBytes, "panda.webp", "image/webp"),
             (kayakBytes, "kayak.webp", "image/webp")
         ]);
-
+        
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(true);
+        
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
+        var contentt = await response.Content.ReadAsStringAsync();
         response.EnsureSuccessStatusCode();
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var album = context.Albums.FirstOrDefault(album => album.TripId == 1)!;

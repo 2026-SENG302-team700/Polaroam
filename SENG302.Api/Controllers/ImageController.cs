@@ -16,21 +16,21 @@ public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
+    private readonly IImageTaggingService _imageTaggingService;
     private readonly IImageService _imageService;
 
 
     public ImageController(
         IUserService userService, 
         IFileService fileService, 
-        IImageTaggingQueue imageTaggingQueue,
-        IImageService imageService
+        IImageService imageService,
+        IImageTaggingService imageTaggingService
     )
     {
         _userService = userService;
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
         _imageService = imageService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -57,6 +57,15 @@ public class ImageController : ControllerBase
             {
                 return Ok(tags);
             }
+            
+            var error = await _fileService.GetTagErrors(photoId);
+            
+            if (error != null)
+            {
+                return Problem(detail: error,
+                    statusCode: 500);
+            }
+            
             
             var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
@@ -139,5 +148,58 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
         {
             return BadRequest("Failed to get suggested tags.");
         }
+    }
+
+    /// <summary>
+    /// This endpoint is called when you want to retry tagging, if tagging failed previously due to the queue being
+    /// too full.
+    /// </summary>
+    /// <param name="photoId">The id of the file/image</param>
+    /// <returns>
+    /// 200 - If nothing goes wrong
+    /// Bad Request - If an exception is thrown
+    /// Unauthorized - If the user is not logged in or does not own the file/image
+    /// </returns>
+    [Authorize]
+    [HttpPatch("{photoId:int}/tags")]
+    public async Task<IActionResult> RetryPhotoTagging(int photoId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        User? user = await _userService.GetUserByIdAsync(userId);
+        if (user == null || !await _fileService.CheckFileOwnership(photoId, userId))
+        {
+            return Unauthorized();
+        }
+        
+        // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
+        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+        if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && user.AiTaggingEnabled && file.TagError != null && file.TagError.Contains("Queue"))
+        {
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+            var stream = new MemoryStream(bytes);
+            IFormFile formFile = new FormFile(
+                baseStream: stream,
+                baseStreamOffset: 0,
+                length: stream.Length,
+                name: file.OriginalFileName,
+                fileName: file.OriginalFileName
+            ){
+                Headers = new HeaderDictionary(),
+                ContentType = file.MimeType
+            };
+
+            try
+            {
+                await _imageTaggingService.QueueImageTaggingJobs(formFile, photoId);
+                
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        return BadRequest("Image cannot be tagged");
     }
 }

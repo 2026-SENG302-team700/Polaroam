@@ -16,6 +16,7 @@ public interface IFileService
     Task<List<string>?> GetTagsAsync(int id);
     Task SetTagQueueStatus(int id);
     Task<bool> GetTagQueueStatus(int id);
+    public Task<string?> GetTagErrors(int id);
 }
 
 public class FileService : IFileService
@@ -219,5 +220,11 @@ public class FileService : IFileService
     {
         var file = await GetFileByIdAsync(id);
         return file.InTagQueue;
+    }
+
+    public async Task<string?> GetTagErrors(int id)
+    {
+        var file = await GetFileByIdAsync(id);
+        return file.TagError;
     }
 }
