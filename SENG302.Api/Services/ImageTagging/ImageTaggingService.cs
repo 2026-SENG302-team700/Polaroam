@@ -255,6 +255,7 @@ public class ImageTaggingService : IImageTaggingService
                 image.CanRetryTagging = false;
                 context.CustomFiles.Update(image);
                 await context.SaveChangesAsync();
+                return;
             }
             
             image.InTagQueue = false;
