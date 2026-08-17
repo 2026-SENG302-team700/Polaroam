@@ -140,10 +140,14 @@ public class PostService : IPostService
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
+            else
+            {
+                file.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
+                context.CustomFiles.Update(file);
+                await context.SaveChangesAsync();
+            }
 
-            file.TagError = "Tags not available. AI tagging was disabled for image";
-            context.CustomFiles.Update(file);
-            await context.SaveChangesAsync();
+            
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
@@ -313,10 +317,14 @@ public class PostService : IPostService
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, customFile.Id);
             }
+            else
+            {
+                customFile.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
+                context.CustomFiles.Update(customFile);
+                await context.SaveChangesAsync();
+            }
             
-            customFile.TagError = "Tags not available. AI tagging was disabled for image";
-            context.CustomFiles.Update(customFile);
-            await context.SaveChangesAsync();
+            
         }
 
         // get the album and add new photo Ids

@@ -366,7 +366,6 @@ public class ImageTaggingService : IImageTaggingService
             
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             var imageFile = await context.CustomFiles.FirstOrDefaultAsync(photo => photo.Id == imageId);
-            imageFile?.TagError = null;
             imageFile?.CanRetryTagging = false;
             
         
@@ -381,6 +380,10 @@ public class ImageTaggingService : IImageTaggingService
                     imageFile.TagError = "Queue was full";
                     imageFile.CanRetryTagging = true;
                 }
+            }
+            else
+            {
+                imageFile?.TagError = null;
             }
             
             if (imageFile != null)

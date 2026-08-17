@@ -137,13 +137,13 @@
                if (response.status === 500) {
                   const data = await response.json()
                   
-                  if (data?.detail === "Failed to fetch tags: Queue was full") {
+                  if (data?.detail === "Queue was full") {
                      error = data?.detail;
                      showRetryTagging = true
                      return
                   }
 
-                  if (data?.detail === "Tags not available. AI tagging was disabled for image") {
+                  if (data?.detail === "Tags not available. AI tagging was disabled whe image was uploaded") {
                      error = data?.detail;
                      return
                   }
