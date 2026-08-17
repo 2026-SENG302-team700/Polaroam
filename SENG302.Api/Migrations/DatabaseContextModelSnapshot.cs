@@ -55,6 +55,9 @@ namespace SENG302.Api.Migrations
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("InTagQueue")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("MimeType")
                         .IsRequired()
                         .HasColumnType("text");
