@@ -6,6 +6,7 @@
     let { locations, posts, hoveredPostId = null } = $props();
 
     let map = $state();
+    let mapLoaded = $state(false);
     const mapStyle = "https://tiles.openfreemap.org/styles/liberty";
 
     /**
@@ -40,7 +41,6 @@
             return;
         }
 
-        // Get min/max coordinates to fit all locations/
         let minLng = coords[0][0],
             maxLng = coords[0][0];
         let minLat = coords[0][1],
@@ -51,9 +51,6 @@
             minLat = Math.min(minLat, lat);
             maxLat = Math.max(maxLat, lat);
         }
-
-        // Fit the map to the locations with max zoom to prevent it being to close when locations are
-        // very close together and time to recenter of 1 second
         map.fitBounds(
             [
                 [minLng, minLat],
@@ -64,7 +61,14 @@
     }
 
     $effect(() => {
-        recenterMap();
+        if (!mapLoaded || !map) return;
+
+        locations
+            .map((location) => `${location.lon},${location.lat}`)
+            .join("|");
+
+        const timeout = setTimeout(recenterMap, 0);
+        return () => clearTimeout(timeout);
     });
 
     $effect(() => {
@@ -93,86 +97,127 @@
 </script>
 
 <div class="container" data-testid="trip-map">
-    <div
-        class="position-relative rounded overflow-hidden"
-        style="height: 480px;"
-    >
-        <MapLibre style={mapStyle} bind:map class="map" id="trip-map">
-            {#each locations as location, index (location.postId)}
-                {@const post = getPosts(location.postId)}
-                <Marker
-                    lngLat={[
-                        parseFloat(location.lon),
-                        parseFloat(location.lat),
-                    ]}
-                    anchor="bottom"
-                >
-                    <button
-                        data-testid={`post-marker-${location.postId}`}
-                        class="post-marker"
-                        class:if-highlighted={hoveredPostId === location.postId}
-                        type="button"
-                        aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
-                    >
-                        <i class="bi bi-geo-fill"></i>
-                        <span>{index + 1}</span>
-                    </button>
-
-                    <Popup offset={[0, -20]}>
-                        <div class="post-popup">
-                            {#if post}
-                                <h3>{post.title}</h3>
-
-                                {#if post.date}
-                                    <p class="post-date">
-                                        <i class="bi bi-calendar3"></i>
-                                        {formatDate(post.date)}
-                                    </p>
-                                {/if}
-
-                                <p class="post-location">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                    {location.name}
-                                </p>
-
-                                <p class="post-content">
-                                    {postExcerpt(post.content)}
-                                </p>
-
-                                <a
-                                    class="post-link"
-                                    href={resolve(
-                                        `/home/trips/${post.tripId}/posts/${post.postId}` as any,
-                                    )}
-                                >
-                                    View post
-                                    <i class="bi bi-arrow-right"></i>
-                                </a>
-                            {:else}
-                                <strong>{location.displayName}</strong>
-                            {/if}
-                        </div>
-                    </Popup>
-                </Marker>
-            {/each}
-        </MapLibre>
-
-        <button
-            class="btn btn-secondary position-absolute top-0 end-0 m-2"
-            style="width: 34px; height: 34px; padding: 0;"
-            onclick={recenterMap}
-            type="button"
-            aria-label="Recenter map"
+    {#if posts.length === 0}
+        <div class="empty-map" data-testid="empty-trip-map">
+            <i class="bi bi-map" aria-hidden="true"></i>
+            <p>No posts yet. Create a post to view the map</p>
+        </div>
+    {:else}
+        <div
+            class="position-relative rounded overflow-hidden"
+            style="height: 480px;"
         >
-            ⤢
-        </button>
-    </div>
+            <MapLibre
+                style={mapStyle}
+                bind:map
+                class="map"
+                id="trip-map"
+                onload={() => {
+                    mapLoaded = true;
+                    recenterMap();
+                }}
+            >
+                {#each locations as location, index (location.postId)}
+                    {@const post = getPosts(location.postId)}
+                    <Marker
+                        lngLat={[
+                            parseFloat(location.lon),
+                            parseFloat(location.lat),
+                        ]}
+                        anchor="bottom"
+                    >
+                        <button
+                            data-testid={`post-marker-${location.postId}`}
+                            class="post-marker"
+                            class:if-highlighted={hoveredPostId ===
+                                location.postId}
+                            type="button"
+                            aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
+                        >
+                            <i class="bi bi-geo-fill"></i>
+                            <span>{index + 1}</span>
+                        </button>
+
+                        <Popup offset={[0, -20]}>
+                            <div class="post-popup">
+                                {#if post}
+                                    <h3>{post.title}</h3>
+
+                                    {#if post.date}
+                                        <p class="post-date">
+                                            <i class="bi bi-calendar3"></i>
+                                            {formatDate(post.date)}
+                                        </p>
+                                    {/if}
+
+                                    <p class="post-location">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        {location.name}
+                                    </p>
+
+                                    <p class="post-content">
+                                        {postExcerpt(post.content)}
+                                    </p>
+
+                                    <a
+                                        class="post-link"
+                                        href={resolve(
+                                            `/home/trips/${post.tripId}/posts/${post.postId}` as any,
+                                        )}
+                                    >
+                                        View post
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                {:else}
+                                    <strong>{location.displayName}</strong>
+                                {/if}
+                            </div>
+                        </Popup>
+                    </Marker>
+                {/each}
+            </MapLibre>
+
+            <button
+                class="btn btn-secondary position-absolute top-0 end-0 m-2"
+                style="width: 34px; height: 34px; padding: 0;"
+                onclick={recenterMap}
+                type="button"
+                aria-label="Recenter map"
+            >
+                ⤢
+            </button>
+        </div>
+    {/if}
 </div>
 
 <style>
     :global(.map) {
         width: 100%;
         height: 100%;
+    }
+
+    .empty-map {
+        display: flex;
+        height: 480px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        border: 2px dashed #686868;
+        border-radius: 0.375rem;
+        background: #fff8e8;
+        color: #686868;
+        text-align: center;
+    }
+
+    .empty-map i {
+        font-size: 4rem;
+    }
+
+    .empty-map p {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
     }
 
     .post-marker {
