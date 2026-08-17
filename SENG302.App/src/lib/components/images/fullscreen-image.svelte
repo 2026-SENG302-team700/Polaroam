@@ -54,7 +54,6 @@
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
 
 
-
     function moveToLeftImage() {
         if (images === null || index === 0) return;
         const newImage = images[index - 1];
@@ -73,6 +72,32 @@
             image = newImage;
         }
         fetchImageTags(photoIds[index])
+    }
+
+    /**
+     * Deletes an image tag
+     * @param id the id of the image
+     * @param tag the tag to delete
+     */
+    async function deleteImageTag(id: number, tag: string) {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/image/${id}/tags/${tag}` as any), {
+                    method: "DELETE",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                if (response.status !== 404) {
+                    return (await response.text()) || "Failed to remove tag.";
+                }
+                return "Tag not found";
+            }
+        } catch (err) {
+            return "Failed to remove tag: " + (err as Error).message;
+        }
+        
+        return undefined;
     }
 
     async function fetchImageTags(id: number) {
@@ -139,10 +164,10 @@
          <div class="tags-wrapper">
             {#if tags.length > 0}
                {#each tags as tag}
-                  <TagPill {tag}/>
+                  <TagPill {tag} isRealTag={true} deleteFunc={() => {return deleteImageTag(index, tag)}}/>
                {/each}
             {:else}
-               <TagPill {tagColour} tag={tagStatus}/>
+               <TagPill {tagColour} tag={tagStatus} isRealTag={false}/>
             {/if}
          </div>
       </div>
