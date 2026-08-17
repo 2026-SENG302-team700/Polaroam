@@ -6,6 +6,7 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import { queuetooltip } from '../../ToolTips/QueueFullToolTip';
 
     let {
        image,
@@ -41,6 +42,9 @@
        index -= 1
        let newImage = images?.[index];
        if (newImage !== undefined) {
+          error = "";
+          tagStatus = "";
+          tagColour = "";
           image = newImage
        }
        showRetryTagging = false
@@ -52,6 +56,9 @@
        index += 1
        let newImage = images?.[index];
        if (newImage !== undefined) {
+          error = "";
+          tagStatus = "";
+          tagColour = "";
           image = newImage
        }
        showRetryTagging = false
@@ -106,14 +113,14 @@
             if (!response.ok) {
                if (response.status === 500) {
                   const data = await response.json()
-                  tagStatus = "Failed to fetch tags: " + data?.detail
+                  error = "Failed to fetch tags: " + data?.detail
                   
-                  if (tagStatus === "Failed to fetch tags: Queue was full") {
+                  if (error === "Failed to fetch tags: Queue was full") {
                      showRetryTagging = true
                   }
                   return
                } else {
-                  tagStatus = (await response.text()) || "Failed to fetch tags.";
+                  error = (await response.text()) || "Failed to fetch tags.";
                   return
                }
             }
@@ -128,7 +135,7 @@
             }
             
            if (message.length === 0) {
-              tagStatus = "No tags available"
+              error = "No tags available"
               return
            }
            
@@ -145,6 +152,7 @@
       
       async function retryImageTagging(id: number) {
          loading = true;
+         error = ""
          try {
             tags = [];
             const response = await fetchWithCsrf(
@@ -158,7 +166,8 @@
                const data = await response.json()
                error = "Failed to fetch tags: " + data.errors;
             }
-            tagStatus = "Tags are being generated"
+            tagStatus = "Tags are being generated. Come back later"
+            tagColour = "info";
          } catch (err) {
             error = "Failed to retry tagging: " + (err as Error).message;
          } finally {
@@ -193,6 +202,11 @@
             <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
          {/if}
          {#if aiTaggingPreference === "true"}
+            {#if error.length > 0}
+               <div class="error-wrapper">
+                  <span class="bi bi-exclamation-triangle-fill text-warning fs-2" use:queuetooltip={error}></span>
+               </div>
+            {/if}
             <div class="tags-wrapper">
                {#if tags.length > 0}
                {#each tags as tag}
@@ -253,6 +267,12 @@
     gap: 0.375rem;
     justify-content: center;
     margin-top: 6px;
+ }
+ .error-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
  }
 
 </style>
