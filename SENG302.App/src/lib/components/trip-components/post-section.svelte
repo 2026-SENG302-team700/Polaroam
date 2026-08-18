@@ -3,17 +3,25 @@
     import PostCard from "$lib/components/trip-components/post-card.svelte";
     import AddButton from "../buttons/add-button.svelte";
 
-    let {
-        posts,
-        tripId,
+    let { 
+        posts, 
+        tripId, 
+        selectedPost = null,
         onPostHover,
         onPostLeave,
     }: {
         posts: any[];
         tripId: number;
+        selectedPost: boolean;
         onPostHover: (postId: number) => void;
         onPostLeave: () => void;
     } = $props();
+
+    let displayedPosts = $derived(
+        selectedPost
+            ? [...posts].sort((a, b) => (a.postId === selectedPost ? -1 : b.postId === selectedPost ? 1 : 0))
+            : posts
+    );
 </script>
 
 <div class="post-section wrapper">
@@ -24,11 +32,12 @@
         </div>
     </div>
         
-    {#each posts as post (post.postId)}
-        <PostCard
-            {post}
-            onHover={() => onPostHover(post.postId)}
-            onLeave={onPostLeave}
+    {#each displayedPosts as post (post.postId)}
+        <PostCard 
+                {post} 
+                isSelected={post.postId === selectedPost}
+                onHover={() => onPostHover(post.postId)}
+                onLeave={onPostLeave}
         />
     {/each}
 </div>

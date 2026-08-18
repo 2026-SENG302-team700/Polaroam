@@ -3,7 +3,12 @@
     import { resolve } from "$app/paths";
     import { formatDate } from "$lib/datepicker/formatDate";
 
-    let { locations, posts, hoveredPostId = null } = $props();
+    let { 
+        locations, 
+        posts, 
+        hoveredPostId = null,
+        selectedPost = $bindable(null)
+    } = $props();
 
     let map = $state();
     let mapLoaded = $state(false);
@@ -20,6 +25,14 @@
     function postExcerpt(content: string) {
         if (!content) return "No description";
         return content.length > 100 ? `${content.slice(0, 100)}…` : content;
+    }
+
+    /**
+     * gets the post from a pin + centres map on pin
+     */
+    function pinClick(location) {
+        selectedPost = location.postId;
+        map?.flyTo({ center: [parseFloat(location.lon), parseFloat(location.lat)], duration: 1000 });
     }
 
     /**
@@ -132,13 +145,18 @@
                             class:if-highlighted={hoveredPostId ===
                                 location.postId}
                             type="button"
+                            tabindex="-1"
                             aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
                         >
                             <i class="bi bi-geo-fill"></i>
                             <span>{index + 1}</span>
                         </button>
 
-                        <Popup offset={[0, -20]}>
+                        <Popup
+                            offset={[0, -20]}
+                            open={selectedPost === location.postId}
+                            onopen={() => pinClick(location)}
+                        >
                             <div class="post-popup">
                                 {#if post}
                                     <h3>{post.title}</h3>

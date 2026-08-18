@@ -32,6 +32,7 @@
 
     let postLocations = $state([]);
     let posts = $state([]);
+    let selectedPost = $state(null);
 
     onMount(() => {
         fetchTrip();
@@ -178,7 +179,7 @@
             </div>
         </div>
         <div class="card-body">
-            <Map locations={postLocations} {posts} {hoveredPostId} />
+        <Map locations={postLocations} {posts} {hoveredPostId} bind:selectedPost />
         </div>
         <div class="card-footer text-muted images">
             <PostSection
@@ -186,6 +187,7 @@
                 tripId={tripObject.id}
                 onPostHover={(postId: number) => (hoveredPostId = postId)}
                 onPostLeave={() => (hoveredPostId = null)}
+                {selectedPost}
             />
         </div>
     </div>
