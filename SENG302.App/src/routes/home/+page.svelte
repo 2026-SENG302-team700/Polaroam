@@ -151,7 +151,7 @@
         </div>
     </div>
     {#if inSearch}
-        <SearchView trips={searchTrips} photoTrips={searchPhotoTrips}/>
+        <SearchView trips={searchTrips} photoTrips={searchPhotoTrips} query={tagQuery}/>
     {:else}
         {#if trips.length > 0}
             <div class="trip-object-wrapper">
