@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260817041933_CustomFileCreationTime")]
-    partial class CustomFileCreationTime
+    [Migration("20260818233101_MigrationFixPlease")]
+    partial class MigrationFixPlease
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,6 +51,9 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("CanRetryTagging")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("timestamp with time zone");
 
@@ -74,6 +77,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TagError")
+                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<string>>("Tags")
                         .HasColumnType("text[]");
@@ -107,6 +113,10 @@ namespace SENG302.Api.Migrations
 
                     b.Property<long>("OsmId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("OsmType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<int>>("PhotoIds")
                         .IsRequired()
@@ -241,6 +251,10 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OsmType")
                         .IsRequired()
                         .HasColumnType("text");
 
