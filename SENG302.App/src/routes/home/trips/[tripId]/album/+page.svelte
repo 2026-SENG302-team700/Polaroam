@@ -93,6 +93,7 @@
             errors.generic = "Failed to upload images: " + (err as Error).message;
         } finally {
             loading = false;
+            filesToUpload = [];
             getImageMetadata();
         }
     }
@@ -104,17 +105,7 @@
     <div class="card-header">
         <NavigationButton path={resolve(`/home/trips/${params.tripId}`)} text="Back" />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-        <div class="header-content-wrapper">
-            <div class="header-content-item">
-                <ImagePicker
-                    bind:filesList={filesToUpload}
-                    errors={errors.photos}
-                    bind:fileErrors
-                    {loading}
-                    uploadFunc={uploadPhotos}
-                />
-            </div>
-        </div>
+        
     </div>
     <div class="card-body p-4" style="min-height: 100vh;">
         <TagSearchForm bind:query={tagQuery}
@@ -128,7 +119,15 @@
             <p class="text-center">{imageMetadata.length} images found</p>
         {/if}    
             
-        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
+        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}>
+            <ImagePicker
+                bind:filesList={filesToUpload}
+                errors={errors.photos}
+                bind:fileErrors
+                {loading}
+                uploadFunc={uploadPhotos}
+            />
+        </ImageGallery>
     </div>
 </div>
 <style>

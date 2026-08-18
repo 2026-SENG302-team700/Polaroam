@@ -22,7 +22,7 @@
         loading = $bindable(false),
         uploadFunc,
     }: {
-        filesList: File[] | null | undefined;
+        filesList?: File[] | null | undefined;
         errors: string[];
         newUploadsCount?: number;
         fileErrors?: string[];
@@ -160,7 +160,7 @@
         align-items: center;
         justify-content: center;
         gap: 0.6rem;
-        width: 70%;
+        width: 100%;
         padding: 0.75rem 1rem;
         border: 2px dashed #686868;
         background: #fff8e8;

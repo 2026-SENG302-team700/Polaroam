@@ -1,23 +1,23 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
-    import ClickableImage from "./clickable-image.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import ExpandableErrorDisplay from "$lib/components/forms/expandable-error-display.svelte";
     import LazyClickableImage from "$lib/components/images/lazy-clickable-image.svelte";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf.js";
-    import {page} from "$app/state";
     import { goto } from "$app/navigation";
 
     let {
         imageMetadata = $bindable([]),
         tripId,
-        errors = []
+        errors = [],
+        children,
     }: {
         imageMetadata?: [] | null;
         tripId: number;
         errors?: string[];
+        children: Snippet;
     } = $props();
 
     let photoIds = $derived(imageMetadata?.map(m => m.photoId) ?? []);
@@ -81,7 +81,11 @@
     <div
             class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
     >
-
+        <div class="col">
+            <div class="picker-tile">
+                {@render children?.()}
+            </div>
+        </div>
         {#each imageMetadata ?? [] as image, index (image.photoId)}
             <div class="col">
                 <div class="position-relative">
