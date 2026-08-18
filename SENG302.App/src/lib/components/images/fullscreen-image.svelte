@@ -27,7 +27,7 @@
         photoId: number,
         photoIds: number[],
         tripId?: number,
-       } = $props();
+    } = $props();
 
    let tags: string[] = $state([]);
    let error = $state("");
@@ -38,7 +38,8 @@
    let tagColour = $state("secondary");
    
    onMount(() => {
-       fetchImageTags(photoId)
+       fetchImageTags(photoId);
+       getPostFromImageId(photoId);
    });
 
     // Only File sources need an object URL; string sources are used as-is.
@@ -57,10 +58,15 @@
     // Sets scr to url for File sources
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
 
-    function getPostFromImageId(id: number){
+    /**
+     * Gets post from image id on upload
+     * @param id
+     */
+    async function getPostFromImageId(id: number){
+        postId = null;
+        
         try {
             loading = true;
-            tags = [];
             const response = await fetchWithCsrf(
                 resolve(`/api/image/${id}/post` as any), {
                     method: "GET",
@@ -83,9 +89,6 @@
         }
     }
     
-
-
-
     function moveToLeftImage() {
         if (images === null || index === 0) return;
         const newImage = images[index - 1];
@@ -94,6 +97,7 @@
             image = newImage;
         }
         fetchImageTags(photoIds[index])
+        getPostFromImageId(photoIds[index]);
     }
 
     function moveToRightImage() {
@@ -104,6 +108,7 @@
             image = newImage;
         }
         fetchImageTags(photoIds[index])
+        getPostFromImageId(photoIds[index]);
     }
 
     async function fetchImageTags(id: number) {
@@ -122,11 +127,8 @@
                 }
                 return;
             }
-
-           
-           
-            const message = await response.text();
             
+            const message = await response.text();
             
             if (message === "Tags are being generated.") {
                tagStatus = "Tags are being generated. Come back later";
@@ -165,7 +167,7 @@
                 <button class="btn btn-secondary btn-sm" onclick={() => goto(resolve(`/home/trips/${tripId}/posts/${postId}`))}>Post</button>
             {/if}
             {#if tripId}
-                <button class="btn btn-secondary btn-sm" onclick={() => goto(resolve(`/home/trips/${tripId}}`))}>Trip</button>
+                <button class="btn btn-secondary btn-sm" onclick={() => goto(resolve(`/home/trips/${tripId}`))}>Trip</button>
             {/if}
             <CloseButton bind:close={enlarged} class="btn-sm" />
           </div>

@@ -5,16 +5,19 @@ namespace SENG302.Api.Services;
 
 public interface IImageService
 {
-    public Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
+    Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
+    Task<int?> GetPostFromPhotoId(int photoId, int userId);
 }
 
 public class ImageService : IImageService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
+    private readonly IFileService _fileService;
     
-    public ImageService(IDbContextFactory<DatabaseContext> dbContextFactory)
+    public ImageService(IDbContextFactory<DatabaseContext> dbContextFactory, IFileService fileService)
     {
         _dbContextFactory = dbContextFactory;
+        _fileService = fileService;
     }
     
     /// <summary>
@@ -78,5 +81,33 @@ public class ImageService : IImageService
             .ToList();
 
         return tags;
+    }
+
+    /// <summary>
+    /// Finds the post id from a provided photo id
+    /// </summary>
+    /// <param name="photoId">photo id</param>
+    /// <param name="userId">user id, used for verifying file ownership</param>
+    /// <returns>
+    /// postId: the post id where the image has been found
+    /// null: image not apart of any post (just part of a trip album)
+    /// </returns>
+    /// <exception cref="UnauthorizedAccessException">if user does not own the file.</exception>
+    public async Task<int?> GetPostFromPhotoId(int photoId, int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        Console.WriteLine("GetPostFromPhotoId: " + photoId);
+        
+        if (await _fileService.CheckFileOwnership(photoId, userId))
+        {
+            throw new UnauthorizedAccessException();
+        }
+        
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.PhotoIds.Contains(photoId));
+        
+        Console.WriteLine("POST: " + post.PostId);
+        
+        return post != null ? post.PostId : null;
     }
 }

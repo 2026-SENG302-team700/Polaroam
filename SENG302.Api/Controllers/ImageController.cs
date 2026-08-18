@@ -140,4 +140,44 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
             return BadRequest("Failed to get suggested tags.");
         }
     }
+
+    /// <summary>
+    /// Gets post from photo id
+    /// </summary>
+    /// <param name="photoId"></param>
+    /// <returns>
+    /// Unauthorized - no userid provided or user doesn't own image
+    /// Not Found - Photo has no corelating post
+    /// Ok - Returned with post Id.
+    /// </returns>
+    [HttpGet("{photoId:int}/post")]
+    public async Task<ActionResult> GetPostFromPhotoId(int photoId)
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var postId = await _imageService.GetPostFromPhotoId(photoId, userId);
+
+            if (postId != null)
+            {
+                return Ok(postId);
+            }
+
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 }

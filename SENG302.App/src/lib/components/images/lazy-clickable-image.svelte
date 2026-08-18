@@ -55,7 +55,7 @@
 
         const observer = new IntersectionObserver(
             (entries) => {
-                for (const eClickablentry of entries) {
+                for (const entry of entries) {
                     if (entry.isIntersecting) {
                         loadFile();
                         observer.disconnect();
@@ -73,7 +73,7 @@
 
 <div bind:this={containerEl} class="lazy-image-wrapper">
     {#if file}
-        <ClickableImage image={file} {index} images={images ?? []} {photoId} {photoIds} {tripId}/>
+        <ClickableImage image={file} {index} images={images ?? []} {photoId} {photoIds} {tripId} />
     {:else if failed}
         <div class="img-thumbnail lazy-placeholder lazy-error" onclick={loadFile} role="button" tabindex="0">
             Failed to load — click to retry
