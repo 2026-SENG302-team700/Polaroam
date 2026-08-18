@@ -14,7 +14,7 @@ public interface IImageTaggingQueue
 /// </summary>
 public class ImageTaggingQueue : IImageTaggingQueue
 {
-    private readonly Channel<ImageTaggingJob> _queue = Channel.CreateBounded<ImageTaggingJob>(new BoundedChannelOptions(3)
+    private readonly Channel<ImageTaggingJob> _queue = Channel.CreateBounded<ImageTaggingJob>(new BoundedChannelOptions(100)
     {
         FullMode = BoundedChannelFullMode.Wait,
         SingleReader = true
