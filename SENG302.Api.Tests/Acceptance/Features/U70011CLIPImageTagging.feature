@@ -15,3 +15,9 @@ Scenario: AC5.2 - Toggle AI image tagging off
     And AI image tagging is enabled
     When I toggle AI image tagging off
     Then AI image tagging is disabled
+    
+Scenario: AC10 Notify user when AI image tagging fails
+    Given an image has been uploaded to a post or album And the queue for tagging is full
+    When I view the image in enlarged view
+    Then I see an icon with tool-tip letting me know the image has been tagged with AI And I can click a button to retry tagging
+    
