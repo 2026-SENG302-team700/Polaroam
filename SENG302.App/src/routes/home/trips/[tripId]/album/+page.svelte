@@ -21,6 +21,7 @@
     let tagDataError = $state("");
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
+    let uploadModalShown = $state(false);
 
     type AlbumImageUploadErrors = {
         generic: string;
@@ -124,6 +125,28 @@
         }
     }
 
+    function preparePhotoUpload() {
+        if (!filesToUpload?.length) return;
+
+        if (aiTaggingEnabled) {
+            aiTaggingForUpload = true;
+            uploadModalShown = true;
+            return;
+        }
+
+        uploadPhotos();
+    }
+
+    function cancelPhotoUpload() {
+        uploadModalShown = false;
+        filesToUpload = [];
+    }
+
+    function confirmPhotoUpload() {
+        uploadModalShown = false;
+        uploadPhotos();
+    }
+
     onMount(getImageMetadata);
 </script>
 
@@ -157,20 +180,12 @@
         <div class:empty-album={imageMetadata.length === 0}>
             <ImageGallery bind:imageMetadata {tripId}>
                 <div class="header-content-item">
-                    <AiTaggingUploadOption
-                        enabled={aiTaggingEnabled}
-                        bind:aiTaggingForUpload
-                        {loading}
-                        compact
-                        floating
-                        showTemporaryNotice={false}
-                    />
                     <ImagePicker
                         bind:filesList={filesToUpload}
                         errors={errors.photos}
                         bind:fileErrors
                         {loading}
-                        uploadFunc={uploadPhotos}
+                        uploadFunc={preparePhotoUpload}
                         fill
                     />
                 </div>
@@ -178,6 +193,46 @@
         </div>
     </div>
 </div>
+
+{#if uploadModalShown}
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content upload-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Upload images</h2>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        AI image tagging is enabled. The selected images will
+                        be analysed and tagged after they are uploaded.
+                    </p>
+                    <AiTaggingUploadOption
+                        enabled={aiTaggingEnabled}
+                        bind:aiTaggingForUpload
+                        {loading}
+                    />
+                </div>
+                <div class="modal-footer d-flex gap-2">
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary flex-fill"
+                        onclick={cancelPhotoUpload}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-primary flex-fill"
+                        onclick={confirmPhotoUpload}
+                    >
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{/if}
 
 <style>
     .card-header {
@@ -192,6 +247,13 @@
         width: 100%;
         flex-direction: column;
         gap: 0;
+    }
+
+    .upload-modal {
+        border: 2px solid #686868;
+        border-radius: 0.55rem;
+        background: #fff8e8;
+        box-shadow: 6px 6px 0 #686868;
     }
 
     .empty-album {
