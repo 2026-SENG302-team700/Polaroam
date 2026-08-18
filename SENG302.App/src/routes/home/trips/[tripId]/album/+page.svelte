@@ -138,11 +138,13 @@
     <div class="card-body"></div>
     <div class="card-footer text-muted images"></div>
     <div class="card-body p-4" style="min-height: 100vh;">
-        <TagSearchForm
-            bind:query={tagQuery}
-            performSearch={getImageMetadata}
-            getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
-        />
+        <div class="album-search container px-0">
+            <TagSearchForm
+                bind:query={tagQuery}
+                performSearch={getImageMetadata}
+                getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+            />
+        </div>
 
         {#if imageMetadata.length > 0 && tagQuery !== ""}
             <p class="text-center">
@@ -152,26 +154,28 @@
             <p class="text-center">{imageMetadata.length} images found</p>
         {/if}
 
-        <ImageGallery bind:imageMetadata {tripId}>
-            <div class="header-content-item">
-                <AiTaggingUploadOption
-                    enabled={aiTaggingEnabled}
-                    bind:aiTaggingForUpload
-                    {loading}
-                    compact
-                    floating
-                    showTemporaryNotice={false}
-                />
-                <ImagePicker
-                    bind:filesList={filesToUpload}
-                    errors={errors.photos}
-                    bind:fileErrors
-                    {loading}
-                    uploadFunc={uploadPhotos}
-                    fill
-                />
-            </div>
-        </ImageGallery>
+        <div class:empty-album={imageMetadata.length === 0}>
+            <ImageGallery bind:imageMetadata {tripId}>
+                <div class="header-content-item">
+                    <AiTaggingUploadOption
+                        enabled={aiTaggingEnabled}
+                        bind:aiTaggingForUpload
+                        {loading}
+                        compact
+                        floating
+                        showTemporaryNotice={false}
+                    />
+                    <ImagePicker
+                        bind:filesList={filesToUpload}
+                        errors={errors.photos}
+                        bind:fileErrors
+                        {loading}
+                        uploadFunc={uploadPhotos}
+                        fill
+                    />
+                </div>
+            </ImageGallery>
+        </div>
     </div>
 </div>
 
@@ -188,6 +192,14 @@
         width: 100%;
         flex-direction: column;
         gap: 0;
+    }
+
+    .empty-album {
+        padding-top: 2.25rem;
+    }
+
+    .album-search {
+        margin-bottom: 1.25rem;
     }
 
     .header-content-wrapper {

@@ -24,13 +24,15 @@
         </div>
     </div>
         
-    {#each posts as post (post.postId)}
-        <PostCard
-            {post}
-            onHover={() => onPostHover(post.postId)}
-            onLeave={onPostLeave}
-        />
-    {/each}
+    <div class="post-grid">
+        {#each posts as post (post.postId)}
+            <PostCard
+                {post}
+                onHover={() => onPostHover(post.postId)}
+                onLeave={onPostLeave}
+            />
+        {/each}
+    </div>
 </div>
 <style>
     .post-section-flex {
@@ -41,5 +43,16 @@
         width: 100%;
     }
 
+    .post-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
+        align-items: stretch;
+    }
 
+    @media (max-width: 767px) {
+        .post-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>

@@ -169,7 +169,11 @@
         display: flex;
         align-items: center;
         gap: 2px;
-        margin-bottom: 20px;
+        margin-bottom: 0;
+    }
+
+    .search-group input {
+        background-color: #fffdf7;
     }
 
     .dropdown-list {

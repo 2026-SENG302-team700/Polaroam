@@ -19,7 +19,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public partial class U70011_AsBenjiIWantToHaveMyTravelImagesAutomaticallyTaggedByAIWhenIUploadThemToIdentifyKeyObjectsAndLocationsInTheImageSoThatICanOrganiseAndFindMyMemoriesWithoutHavingToManuallyTagEveryImage_Feature : object, global::Xunit.IClassFixture<U70011_AsBenjiIWantToHaveMyTravelImagesAutomaticallyTaggedByAIWhenIUploadThemToIdentifyKeyObjectsAndLocationsInTheImageSoThatICanOrganiseAndFindMyMemoriesWithoutHavingToManuallyTagEveryImage_Feature.FixtureData>, global::Xunit.IAsyncLifetime
     {
-
+        
         private global::Reqnroll.ITestRunner testRunner;
         
         private static string[] featureTags = ((string[])(null));
@@ -363,7 +363,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
             }
             await this.ScenarioCleanupAsync();
         }
-
+        
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
         [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : object, global::Xunit.IAsyncLifetime
