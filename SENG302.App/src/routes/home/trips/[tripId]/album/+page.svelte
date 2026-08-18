@@ -5,9 +5,10 @@
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
     import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
-    import ImageGallery from '$lib/components/images/image-gallery.svelte';
+    import ImageGallery from "$lib/components/images/image-gallery.svelte";
     import { goto } from "$app/navigation";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
+    import AiTaggingUploadOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
     let tripName = "my amazing helsinki trip";
     let filesToUpload: File[] | null | undefined = $state([]);
@@ -40,12 +41,14 @@
      * Gets the image metadata of all images in the album matching the tagQuery
      */
     async function getImageMetadata() {
-        try{
-            const response = await fetch(resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
+        try {
+            const response = await fetch(
+                resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
                 {
-                    method: 'GET',
-                    credentials: 'include'
-                });
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
             if (!response.ok) {
                 tagDataError = await response.text();
             }
@@ -56,9 +59,8 @@
             loading = false;
         }
     }
-    
-    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
+    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     async function loadAiTaggingPreference() {
         const response = await fetchWithCsrf(resolve("/api/user" as any), {
@@ -137,10 +139,13 @@
                     bind:filesList={filesToUpload}
                     errors={errors.photos}
                     bind:fileErrors
-                    bind:aiTaggingForUpload
                     {loading}
                     uploadFunc={uploadPhotos}
-                    showAiTaggingOption={aiTaggingEnabled}
+                />
+                <AiTaggingUploadOption
+                    enabled={aiTaggingEnabled}
+                    bind:aiTaggingForUpload
+                    {loading}
                 />
             </div>
         </div>
@@ -148,18 +153,21 @@
     <div class="card-body"></div>
     <div class="card-footer text-muted images"></div>
     <div class="card-body p-4" style="min-height: 100vh;">
-        <TagSearchForm bind:query={tagQuery}
-                       performSearch={getImageMetadata}
-                       getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+        <TagSearchForm
+            bind:query={tagQuery}
+            performSearch={getImageMetadata}
+            getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
         />
-        
+
         {#if imageMetadata.length > 0 && tagQuery !== ""}
-            <p class="text-center">{imageMetadata.length} images found matching "{tagQuery}"</p>
+            <p class="text-center">
+                {imageMetadata.length} images found matching "{tagQuery}"
+            </p>
         {:else if imageMetadata.length > 0 && tagQuery === ""}
             <p class="text-center">{imageMetadata.length} images found</p>
-        {/if}    
-            
-        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
+        {/if}
+
+        <ImageGallery bind:imageMetadata {tripId} />
     </div>
 </div>
 
@@ -171,9 +179,9 @@
     }
     .header-content-item {
         display: flex;
-        gap: 4px;
-        align-items: baseline;
-        justify-content: end;
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     .header-content-wrapper {
