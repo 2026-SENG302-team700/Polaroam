@@ -149,29 +149,32 @@
    }
 />
 <div class="fullscreen-image-wrapper">
-   <div class="image-container">
-      <div class="close-button-wrapper">
-          {#if displaySrc}
-              <img src={displaySrc} alt="Image" class="image" />
-          {/if}
-          <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
-          {#if images !== null && images.length > 1 && index !== images.length - 1}
-              <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>
-          {/if}
-          {#if images !== null && images.length > 1 && index !== 0}
-              <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
-          {/if}
-         <div class="tags-wrapper">
-            {#if tags.length > 0}
-               {#each tags as tag}
-                  <TagPill {tag} isRealTag={true} deleteFunc={() => {return deleteImageTag(photoIds[index], tag)}}/>
-               {/each}
-            {:else}
-               <TagPill {tagColour} tag={tagStatus} isRealTag={false}/>
-            {/if}
-         </div>
-      </div>
-   </div>
+    
+    <div class="wrap">
+        <div class="image-container">
+            <div class="close-button-wrapper">
+                {#if displaySrc}
+                    <img src={displaySrc} alt="Image" class="image" />
+                {/if}
+                <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
+                {#if images !== null && images.length > 1 && index !== 0}
+                    <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToLeftImage}/>
+                {/if}
+                {#if images !== null && images.length > 1 && index !== images.length - 1}
+                    <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>
+                {/if}
+            </div>
+            <div class="tags-wrapper">
+                {#if tags.length > 0}
+                    {#each tags as tag}
+                        <TagPill {tag} isRealTag={true} deleteFunc={() => {return deleteImageTag(photoIds[index], tag)}}/>
+                    {/each}
+                {:else}
+                    <TagPill {tagColour} tag={tagStatus} isRealTag={false}/>
+                {/if}
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -182,15 +185,25 @@
     top: 0;
     left: 0;
     height: 100vh;
-    width: 100vw;  
+    width: 100vw;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    justify-content: center;
+ }
+ .wrap {
+    display: inline-block;
+    position: relative;
+
  }
  .image-container {
     position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
+    align-self: center;
     justify-content: center;
     align-items: center;
+    display: grid;
+    grid-template-columns: auto;
+
  }
  .image {
    border-radius: 5px;
@@ -198,17 +211,29 @@
     min-width: 20vw;
     max-height: 70vh;
     max-width: 70vw;
+    grid-column: 1;
+    grid-row: 1;
  }
  .close-button-wrapper {
    position:relative;
+   justify-self: center;
+   justify-content: center;
+   align-items: center;
+    min-width: 20vw;
+    max-height: 70vh;
+    max-width: 70vw;
+   
  }
  .tags-wrapper {
+    justify-self: center;
     position: relative;
     display: flex;
     flex-wrap: wrap;
     gap: 0.375rem;
     justify-content: center;
     margin-top: 6px;
+    grid-column: 1;
+    grid-row: 2;
  }
 
 </style>
