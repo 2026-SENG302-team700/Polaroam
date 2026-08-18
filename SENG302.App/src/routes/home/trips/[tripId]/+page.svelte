@@ -20,6 +20,7 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
+    let hoveredPostId: number | null = $state(null);
 
     let tripObject = $state({
         id: 0,
@@ -177,10 +178,15 @@
             </div>
         </div>
         <div class="card-body">
-            <Map locations={postLocations} />
+            <Map locations={postLocations} {posts} {hoveredPostId} />
         </div>
         <div class="card-footer text-muted images">
-            <PostSection {posts} tripId={tripObject.id} />
+            <PostSection
+                {posts}
+                tripId={tripObject.id}
+                onPostHover={(postId: number) => (hoveredPostId = postId)}
+                onPostLeave={() => (hoveredPostId = null)}
+            />
         </div>
     </div>
 </div>

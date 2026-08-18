@@ -27,6 +27,7 @@ public class Post
         }
     }
     public required long OsmId { get; set; }
+    public string OsmType { get; set; } = "node";
     public required string LocationName { get; set; }
     public List<int> PhotoIds { get; set; } = new();
     public DateTimeOffset CreationTime

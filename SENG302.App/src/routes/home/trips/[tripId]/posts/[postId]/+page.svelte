@@ -18,7 +18,6 @@
     let postId = params.postId;
 
     let displayName = $state("");
-    let locationName = $state("");
 
     let postObject = $state({
         postId: 0,
@@ -29,6 +28,7 @@
         date: "9999-12-31",
         photoIds: [],
         osmId: 0,
+        locationName: "No Location",
         creationTime: "9999-12-31",
     });
 
@@ -40,27 +40,28 @@
         fetchDisplayName();
     });
 
-    /**
-     * Fetches the location name from the backend for an osmId
-     */
-    async function fetchLocationName() {
-        try {
-            loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            let location = await response.json();
-            locationName = location.name;
-        } catch (err) {
-            error = "Failed to fetch location name: " + (err as Error).message;
-        } finally {
-            loading = false;
-        }
-    }
+    // /**
+    //  * Fetches the location name from the backend for an osmId
+    //  */
+    // async function fetchLocationName() {
+
+    //     try {
+    //         loading = true;
+    //         const response = await fetchWithCsrf(
+    //             resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
+    //             {
+    //                 method: "GET",
+    //                 credentials: "include",
+    //             },
+    //         );
+    //         let location = await response.json();
+    //         locationName = location.name;
+    //     } catch (err) {
+    //         error = "Failed to fetch location name: " + (err as Error).message;
+    //     } finally {
+    //         loading = false;
+    //     }
+    // }
 
     /**
      * Fetch the display name of the user based on the post
@@ -109,9 +110,7 @@
             photos = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(
-                            `/api/post/${postId}/images/${meta.photoId}` as any,
-                        ),
+                        resolve(`/api/image/${meta.photoId}` as any),
                         {
                             method: "GET",
                             credentials: "include",
@@ -153,7 +152,6 @@
             }
             postObject = data;
             await fetchImages();
-            await fetchLocationName();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
         } finally {

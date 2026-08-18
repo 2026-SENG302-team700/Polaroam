@@ -4,17 +4,20 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { resolve } from "$app/paths";
-    import ImageGallery from "$lib/components/images/image-gallery.svelte";
+    import TagSearchForm from "$lib/components/forms/tag-search-form.svelte";
+    import ImageGallery from '$lib/components/images/image-gallery.svelte';
     import { goto } from "$app/navigation";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
     let tripName = "my amazing helsinki trip";
-    let files: File[] | null | undefined = $state([]);
+    let filesToUpload: File[] | null | undefined = $state([]);
     let loading = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
-    let tripId = params.tripId;
     let imageMetadata = $state([]);
+    let tripId = params.tripId;
+    let tagQuery = $state("");
+    let tagDataError = $state("");
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
 
@@ -33,18 +36,29 @@
         };
     }
 
-    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
-
     /**
-     * Gets the Metadata for all images in the album
+     * Gets the image metadata of all images in the album matching the tagQuery
      */
     async function getImageMetadata() {
-        const response = await fetch(resolve(`/api/album/${tripId}`), {
-            method: "GET",
-            credentials: "include",
-        });
-        imageMetadata = await response.json();
+        try{
+            const response = await fetch(resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
+                {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+            if (!response.ok) {
+                tagDataError = await response.text();
+            }
+            imageMetadata = await response.json();
+        } catch (err) {
+            tagDataError = "An unexpected error occurred: ";
+        } finally {
+            loading = false;
+        }
     }
+    
+    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
+
 
     async function loadAiTaggingPreference() {
         const response = await fetchWithCsrf(resolve("/api/user" as any), {
@@ -69,9 +83,9 @@
         try {
             loading = true;
             const form = new FormData();
-            if (files != null) {
-                for (let i = 0; i < files.length; i++) {
-                    form.append("files", files[i]);
+            if (filesToUpload != null) {
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    form.append("files", filesToUpload[i]);
                 }
             }
             // add the ai tagging option to the form data
@@ -120,7 +134,7 @@
         <div class="header-content-wrapper">
             <div class="header-content-item">
                 <ImagePicker
-                    bind:filesList={files}
+                    bind:filesList={filesToUpload}
                     errors={errors.photos}
                     bind:fileErrors
                     bind:aiTaggingForUpload
@@ -134,7 +148,18 @@
     <div class="card-body"></div>
     <div class="card-footer text-muted images"></div>
     <div class="card-body p-4" style="min-height: 100vh;">
-        <ImageGallery bind:imageMetadata {tripId} />
+        <TagSearchForm bind:query={tagQuery}
+                       performSearch={getImageMetadata}
+                       getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+        />
+        
+        {#if imageMetadata.length > 0 && tagQuery !== ""}
+            <p class="text-center">{imageMetadata.length} images found matching "{tagQuery}"</p>
+        {:else if imageMetadata.length > 0 && tagQuery === ""}
+            <p class="text-center">{imageMetadata.length} images found</p>
+        {/if}    
+            
+        <ImageGallery bind:imageMetadata={imageMetadata} {tripId}/>
     </div>
 </div>
 

@@ -48,6 +48,9 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("FileKey")
                         .IsRequired()
                         .HasColumnType("text");
@@ -101,6 +104,10 @@ namespace SENG302.Api.Migrations
 
                     b.Property<long>("OsmId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("OsmType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<int>>("PhotoIds")
                         .IsRequired()
@@ -235,6 +242,10 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OsmType")
                         .IsRequired()
                         .HasColumnType("text");
 
