@@ -87,7 +87,6 @@
                     credentials: "include",
                 },
             );
-            console.log(response);
             if (!response.ok) {
                 if (response.status !== 404) {
                     error = (await response.text()) || "Failed to fetch tags.";
