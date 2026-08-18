@@ -93,6 +93,9 @@
                 }
                 return "Tag not found";
             }
+            else {
+                tags = tags.filter(t => t != tag);
+            }
         } catch (err) {
             return "Failed to remove tag: " + (err as Error).message;
         }
@@ -117,10 +120,7 @@
                 return;
             }
 
-           
-           
             const message = await response.text();
-            
             
             if (message === "Tags are being generated.") {
                tagStatus = "Tags are being generated. Come back later";
@@ -164,7 +164,7 @@
          <div class="tags-wrapper">
             {#if tags.length > 0}
                {#each tags as tag}
-                  <TagPill {tag} isRealTag={true} deleteFunc={() => {return deleteImageTag(index, tag)}}/>
+                  <TagPill {tag} isRealTag={true} deleteFunc={() => {return deleteImageTag(photoIds[index], tag)}}/>
                {/each}
             {:else}
                <TagPill {tagColour} tag={tagStatus} isRealTag={false}/>

@@ -3,23 +3,23 @@
 
     let deletionModalShown = $state(false);
     let errorVisible = $state(false);
+    let deleting = $state(false);
+    let error = $state();
 
     let {
         tag = "",
         tagColour = "secondary",
         isRealTag = false,
-        deleteFunc,
-        error = null
+        deleteFunc
     }: {
         tag: string;
         tagColour?: string;
         isRealTag?: boolean;
         deleteFunc?: Function;
-        error: string | null;
     } = $props();
 </script>
 
-<span class="badge rounded-pill text-bg-{tagColour} tag" class:is-invalid={error}>
+<span class="badge rounded-pill text-bg-{tagColour} tag" class:is-invalid={error} class:is-deleting={deleting}>
     {#if errorVisible}
         <div class="tag-error">{error}</div>
     {/if}
@@ -28,7 +28,11 @@
     {#if isRealTag}
         {#if error == null}
             <button class="button-x" aria-label="Delete Tag" onclick={() => deletionModalShown=true}>
-                <i class="bi bi-x"> </i>
+                {#if deleting}
+                    <i class="bi bi-trash"> </i>
+                {:else}
+                    <i class="bi bi-x"> </i>
+                {/if}
             </button>
         {:else}
             <button class="button-x" class:is-invalid={error} aria-label="View Error" onclick={() => errorVisible=!errorVisible}>
@@ -47,8 +51,9 @@
         deletionModalShown = false;
         
         if (deleteFunc != undefined) {
+            deleting = true;
             error = await deleteFunc();
-            console.log(error);
+            deleting = false
         }
     }}
     onOption2={() => deletionModalShown = false}
@@ -82,6 +87,11 @@
 
     .tag.is-invalid {
         color: red !important;
+    }
+
+    .tag.is-deleting {
+        opacity: 0.2;
+        pointer-events: none;
     }
 
     .button-x.is-invalid {

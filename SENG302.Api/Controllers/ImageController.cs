@@ -71,6 +71,44 @@ public class ImageController : ControllerBase
     }
     
     /// <summary>
+    /// Remove a tag from an image
+    /// </summary>
+    /// <param name="photoId">Id of the photo we are removing the tag from</param>
+    /// <param name="tag">The tag that is being removed</param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpDelete("{photoId:int}/tags/{tag}")]
+    public async Task<IActionResult> RemovePhotoTag(int photoId, string tag)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        User? user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+        
+        try
+        {
+            if (!await _fileService.CheckFileOwnership(photoId, userId))
+            {
+                return Unauthorized();
+            }
+
+            await _fileService.RemoveTagAsync(photoId, tag);
+
+            return Ok();
+        }
+        catch (TagNotFoundException)
+        {
+            return NotFound("Tag not found");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound("Photo not found");
+        }
+    }
+
+    /// <summary>
 /// Returns a list of suggested tags for the user
 /// based on the query provided. Tags are selected from real
 /// tags belonging to the user.
