@@ -6,6 +6,7 @@
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import { goto } from "$app/navigation";
 
     // Allow use of file paths (Via the api) or actual File objects.
     type ImageSource = File | string;
@@ -17,6 +18,7 @@
        images,
        photoId,
        photoIds,
+       tripId,
     }: { 
         image: ImageSource,
         enlarged: boolean,
@@ -24,11 +26,13 @@
         images: ImageSource[] | null,
         photoId: number,
         photoIds: number[],
+        tripId?: number,
        } = $props();
 
    let tags: string[] = $state([]);
    let error = $state("");
    let loading = $state(false);
+   let postId = $state();
 
    let tagStatus = $state("No tags available");
    let tagColour = $state("secondary");
@@ -52,6 +56,33 @@
 
     // Sets scr to url for File sources
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
+
+    function getPostFromImageId(id: number){
+        try {
+            loading = true;
+            tags = [];
+            const response = await fetchWithCsrf(
+                resolve(`/api/image/${id}/post` as any), {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                if (response.status !== 404) {
+                    return;
+                }
+                error = (await response.text()) || "Failed to fetch posts.";
+            }
+           
+            const message = await response.text();
+            postId = JSON.parse(message);
+        } catch (err) {
+            error = "Failed to fetch post: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
+    
 
 
 
@@ -129,7 +160,15 @@
           {#if displaySrc}
               <img src={displaySrc} alt="Image" class="image" />
           {/if}
-          <CloseButton bind:close={enlarged} class="position-absolute btn-sm" />
+          <div class="action-buttons">
+            {#if postId && tripId}
+                <button class="btn btn-secondary btn-sm" onclick={() => goto(resolve(`/home/trips/${tripId}/posts/${postId}`))}>Post</button>
+            {/if}
+            {#if tripId}
+                <button class="btn btn-secondary btn-sm" onclick={() => goto(resolve(`/home/trips/${tripId}}`))}>Trip</button>
+            {/if}
+            <CloseButton bind:close={enlarged} class="btn-sm" />
+          </div>
           {#if images !== null && images.length > 1 && index !== images.length - 1}
               <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={images} {moveToRightImage}/>
           {/if}
@@ -150,6 +189,12 @@
 </div>
 
 <style>
+.action-buttons {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 5px;
+}
  .fullscreen-image-wrapper {
     z-index: 100;
     background-color: rgba(0, 0, 0, 0.7);

@@ -7,7 +7,8 @@
         images = null,
         photoId,
         photoIds,
-        rootMargin = "200px"
+        rootMargin = "200px",
+        tripId,
     }: {
         src: string;
         index: number;
@@ -15,6 +16,7 @@
         photoId: number;
         photoIds: number[];
         rootMargin?: string;
+        tripId?: number;
     } = $props();
 
     let containerEl: HTMLDivElement | undefined = $state();
@@ -53,7 +55,7 @@
 
         const observer = new IntersectionObserver(
             (entries) => {
-                for (const entry of entries) {
+                for (const eClickablentry of entries) {
                     if (entry.isIntersecting) {
                         loadFile();
                         observer.disconnect();
@@ -71,7 +73,7 @@
 
 <div bind:this={containerEl} class="lazy-image-wrapper">
     {#if file}
-        <ClickableImage image={file} {index} images={images ?? []} {photoId} {photoIds}/>
+        <ClickableImage image={file} {index} images={images ?? []} {photoId} {photoIds} {tripId}/>
     {:else if failed}
         <div class="img-thumbnail lazy-placeholder lazy-error" onclick={loadFile} role="button" tabindex="0">
             Failed to load — click to retry

@@ -92,6 +92,7 @@
                     <LazyClickableImage
                             src={resolve(`/api/album/${tripId}/images/${image.photoId}`)}
                             {index}
+                            {tripId}
                             images={imageMetadata.map(m => resolve(`/api/album/${tripId}/images/${m.photoId}`))}
                             photoId={image.photoId}
                             {photoIds}
