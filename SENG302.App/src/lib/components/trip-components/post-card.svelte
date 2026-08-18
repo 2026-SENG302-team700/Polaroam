@@ -5,7 +5,12 @@
 
     import ImageCarousel from "../images/image-carousel.svelte";
 
-    let { post, onHover = () => {}, onLeave = () => {} } = $props();
+    let {
+        post,
+        isSelected = false,
+        onHover = () => {},
+        onLeave = () => {},
+    } = $props();
 
     function goToPost() {
         goto(resolve(`/home/trips/${post.tripId}/posts/${post.postId}`));
@@ -14,6 +19,7 @@
 
 <article
     class="post-card"
+    class:highlighted={isSelected}
     data-testid={`post-card-${post.postId}`}
     tabindex="0"
     role="button"
@@ -48,7 +54,6 @@
             <ImageCarousel {post} />
         </div>
     {/if}
-
     <span class="view-post">View post <i class="bi bi-arrow-right"></i></span>
 </article>
 
@@ -151,6 +156,12 @@
         color: #3f3f3f;
         font-size: 0.85rem;
         font-weight: 800;
+    }
+
+    .post-card.highlighted {
+        border-color: #117a8b;
+        background-color: #b9d5df;
+        box-shadow: 5px 5px 0 #117a8b;
     }
 
     @media (max-width: 420px) {

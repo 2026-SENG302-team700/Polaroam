@@ -6,14 +6,28 @@
     let {
         posts,
         tripId,
+        selectedPost = null,
         onPostHover,
         onPostLeave,
     }: {
         posts: any[];
         tripId: number;
+        selectedPost: number | null;
         onPostHover: (postId: number) => void;
         onPostLeave: () => void;
     } = $props();
+
+    let displayedPosts = $derived(
+        selectedPost
+            ? [...posts].sort((a, b) =>
+                  a.postId === selectedPost
+                      ? -1
+                      : b.postId === selectedPost
+                        ? 1
+                        : 0,
+              )
+            : posts,
+    );
 </script>
 
 <div class="post-section wrapper">
@@ -25,9 +39,10 @@
     </div>
         
     <div class="post-grid">
-        {#each posts as post (post.postId)}
+        {#each displayedPosts as post (post.postId)}
             <PostCard
                 {post}
+                isSelected={post.postId === selectedPost}
                 onHover={() => onPostHover(post.postId)}
                 onLeave={onPostLeave}
             />
