@@ -178,4 +178,26 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
             return BadRequest("Failed to get suggested tags.");
         }
     }
+    
+    /// <summary>
+    /// Streams a single photo back with correct types
+    /// </summary>
+    /// <param name="photoId">id of photo</param>
+    /// <returns>an image file</returns>
+    [Authorize]
+    [HttpGet("{photoId:int}")]
+    public async Task<IActionResult> GetPostPhoto(int photoId)
+    {
+        try
+        {
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+            byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
+
+            return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+    }
 }
