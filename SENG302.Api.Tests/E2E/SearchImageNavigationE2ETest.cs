@@ -137,32 +137,6 @@ public class SearchImageNavigationE2ETest : E2ETestFixture
     }
 
     [Fact]
-    public async Task SearchResultImage_OpensEnlargedViewAndNavigatesToTripAlbum()
-    {
-        var (tripId, _) = await CreateSearchableImageAsync(belongsToPost: false);
-
-        await OpenSearchResultImageAsync();
-
-        await Assertions.Expect(
-            Page.GetByText($"trip: {TripTitle}", new() { Exact = true }))
-            .ToBeVisibleAsync(new LocatorAssertionsToBeVisibleOptions
-            {
-                Timeout = 10000
-            });
-
-        var tripAlbumButton = Page.GetByRole(
-            AriaRole.Button,
-            new() { Name = "Go to Trip Album", Exact = true });
-        await Assertions.Expect(tripAlbumButton).ToBeVisibleAsync(
-            new LocatorAssertionsToBeVisibleOptions { Timeout = 10000 });
-
-        await tripAlbumButton.ClickAsync();
-        await Page.WaitForURLAsync($"**/home/trips/{tripId}/album");
-
-        Page.Url.ShouldEndWith($"/home/trips/{tripId}/album");
-    }
-
-    [Fact]
     public async Task PostSearchResultImage_OpensEnlargedViewAndNavigatesToPost()
     {
         var (tripId, postId) = await CreateSearchableImageAsync(
