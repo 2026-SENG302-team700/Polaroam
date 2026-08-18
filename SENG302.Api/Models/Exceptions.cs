@@ -74,3 +74,11 @@ public class MultipleValidationListException : Exception
         Errors = errors;
     }
 }
+
+/// <summary>
+/// Exception to throw when an image tag cannot be found
+/// </summary>
+public class TagNotFoundException : Exception
+{
+    public TagNotFoundException(string? error) : base(error ?? "Tag not found") {}
+}

@@ -146,6 +146,26 @@
         }
     }
 
+    async function deleteImageTag(id: number, tag: string) {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/image/${id}/tags/${encodeURIComponent(tag)}` as any),
+                { method: "DELETE", credentials: "include" },
+            );
+
+            if (!response.ok) {
+                if (response.status === 404) return "Tag not found";
+                return (await response.text()) || "Failed to remove tag.";
+            }
+
+            tags = tags.filter((existingTag) => existingTag !== tag);
+        } catch (err) {
+            return "Failed to remove tag: " + (err as Error).message;
+        }
+
+        return undefined;
+    }
+
     function moveToLeftImage() {
         if (images === null || index === 0) return;
         const newImage = images[index - 1];
@@ -318,10 +338,17 @@
                 <div class="tags-wrapper">
                     {#if tags.length > 0}
                         {#each tags as tag}
-                            <TagPill {tag} />
+                            <TagPill
+                                {tag}
+                                isRealTag
+                                deleteFunc={() =>
+                                    currentPhotoId === undefined
+                                        ? "Photo not found"
+                                        : deleteImageTag(currentPhotoId, tag)}
+                            />
                         {/each}
                     {:else if tagStatus}
-                        <TagPill {tagColour} tag={tagStatus} />
+                        <TagPill {tagColour} tag={tagStatus} isRealTag={false} />
                     {/if}
                 </div>
                 {#if showRetryTagging && currentPhotoId !== undefined}

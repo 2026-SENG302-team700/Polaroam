@@ -709,4 +709,106 @@ public class ImageControllerTest : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    private async Task AddImageWithTags(List<string> tags, int userId = 1)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = userId,
+            Email = $"test{userId}@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "My trip",
+            UserId = userId,
+            StartDate = new DateTimeOffset(2026, 8, 8, 14, 30, 0, TimeSpan.FromHours(12)),
+            EndDate = new DateTimeOffset(2026, 8, 10, 14, 30, 0, TimeSpan.FromHours(12))
+        });
+        context.Posts.Add(new Post
+        {
+            TripId = 1,
+            Title = "My post",
+            Content = "",
+            OsmId = 292806332,
+            LocationName = "Christchurch"
+        });
+        context.CustomFiles.Add(new CustomFile
+        {
+            Id = 1,
+            OwnerId = userId,
+            FileKey = "abc",
+            OriginalFileName = "test.jpg",
+            MimeType = "image/jpeg",
+            Tags = tags
+        });
+        await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_HasTags_ReturnsOk()
+    {
+        await AddImageWithTags(["a", "b", "c"]);
+
+        var response = await HttpClient.DeleteAsync("/api/image/1/tags/a");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_TagNonexistent_NotFound()
+    {
+        await AddImageWithTags(["a", "b", "c"]);
+
+        var response = await HttpClient.DeleteAsync("/api/image/1/tags/d");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_FileNonexistent_NotFound()
+    {
+        await AddImageWithTags(["a", "b", "c"]);
+
+        var response = await HttpClient.DeleteAsync("/api/image/2/tags/a");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_NotRegisteredUser_Unauthorized()
+    {
+        await AddImageWithTags(["a", "b", "c"], 100);
+
+        var response = await HttpClient.DeleteAsync("/api/image/1/tags/a");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_NotOwner_Unauthorized()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "current@example.com",
+                DisplayName = "Current User",
+                PasswordKey = "password",
+                Country = "Test Country"
+            });
+            await context.SaveChangesAsync();
+        }
+
+        await AddImageWithTags(["a", "b", "c"], 100);
+
+        var response = await HttpClient.DeleteAsync("/api/image/1/tags/a");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
 }
