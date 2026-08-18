@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 
 namespace SENG302.Api.Controllers;
@@ -27,18 +29,33 @@ public class AlbumController : ControllerBase
     }
     
     /// <summary>
+    /// Helper function to get the content type of the file.
+    /// </summary>
+    /// <param name="fileKey"></param>
+    /// <returns>The contentType string</returns>
+    private static string GetContentType(string fileKey)
+    {
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(fileKey, out var contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+        return contentType;
+    }
+    
+    /// <summary>
     /// Gets an image from an album.
     /// </summary>
     /// <param name="tripId"></param>
-    /// <param name="imageId"></param>
+    /// <param name="photoId"></param>
     /// <returns>
     /// Ok - image found
     /// Unauthorized - user not logged in or does not have access to the trip
     /// NotFound - image/album not found
     /// BadRequest - unhandled error
     /// </returns>
-    [HttpGet("images/{imageId:int}")]
-    public async Task<ActionResult> GetAlbumImage(int tripId, int imageId)
+    [HttpGet("images/{photoId:int}")]
+    public async Task<ActionResult> GetAlbumImage(int tripId, int photoId)
     {
         try
         {
@@ -50,16 +67,22 @@ public class AlbumController : ControllerBase
                 return Unauthorized();
 
             // Get the image
-            var image = await _fileService.GetFileByIdAsync(imageId);
-            return Ok(image);
+            var file = await _fileService.GetFileByIdAsync(photoId);
+            var image = await _fileService.GetFileContentAsync(file.FileKey);
+            var contentType = GetContentType(file.FileKey);
+            return File(image, contentType);
         }
         catch (KeyNotFoundException)
         {
             return NotFound("Image not found");
         }
+        catch (FileNotFoundException)
+        {
+            return NotFound("Image not found");
+        }
         catch (Exception)
         {
-            return BadRequest("Failed to get image: " + imageId);
+            return BadRequest("Failed to get image: " + photoId);
         }
     }
     
@@ -82,6 +105,47 @@ public class AlbumController : ControllerBase
                 return Unauthorized();
 
             var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId);
+            return Ok(images.Select(image => new PhotoMetadataResponse
+            {
+                PhotoId = image.PhotoId,
+                FileName = image.FileName,
+                MimeType = image.MimeType,
+                TripId = tripId,
+                Tags = image.Tags,
+                DateCreated = image.DateCreated
+            }));
+        }
+        catch (KeyNotFoundException e) // Trip or Album not found
+        {
+            return NotFound(e.Message);
+        }
+        catch
+        {
+            return BadRequest("An unexpected error occurred.");
+        }
+    }
+    
+    /// <summary>
+    /// Gets all images from an album that match the tag param. This includes images added
+    /// directly to the album and images added to a post in the trip.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="tag">The tag to filter by</param>
+    /// <returns>List of images</returns>
+    [HttpGet("tag")]
+    public async Task<ActionResult> GetAlbumImageMetadataWithTag(int tripId, [FromQuery] string? tag)
+    {
+        try
+        {
+            // Get user and return unauthorized if not logged in or access to the trip
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+
+            tag = tag ?? "";
+            var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId, tag);
             return Ok(images);
         }
         catch (KeyNotFoundException e) // Trip or Album not found
@@ -90,7 +154,7 @@ public class AlbumController : ControllerBase
         }
         catch
         {
-            return BadRequest();
+            return BadRequest("An unexpected error occurred.");
         }
     }
     
@@ -133,7 +197,7 @@ public class AlbumController : ControllerBase
         }
         catch (Exception e) // Other exceptions
         {
-            return BadRequest("Failed to upload images.");
+            return BadRequest("Failed to upload images." + e.Message);
         }
     }
     

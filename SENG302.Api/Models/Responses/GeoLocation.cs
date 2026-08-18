@@ -12,6 +12,9 @@ public class GeoLocationSearchResult
     [JsonPropertyName("osm_id")]
     public required long OsmId { get; set; }
 
+    [JsonPropertyName("osm_type")]
+    public string OsmType { get; set; } = "node";
+
     [JsonPropertyName("lat")]
     public required string Latitude { get; set; }
 

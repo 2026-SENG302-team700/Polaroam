@@ -1,6 +1,8 @@
+using System.Data.SqlTypes;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
@@ -31,8 +33,9 @@ public class PostService : IPostService
     private readonly TimeProvider _timeProvider;
     private readonly IGeoService _geoService;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IAlbumService _albumService;
+    private readonly IUserService _userService;
+    private readonly IImageTaggingService _imageTaggingService;
 
     public PostService(
         IAlbumService albumService,
@@ -40,14 +43,16 @@ public class PostService : IPostService
         TimeProvider timeProvider,
         IFileService fileService,
         IGeoService geoService,
-        IImageTaggingQueue imageTaggingQueue)
+        IUserService userService,
+        IImageTaggingService imageTaggingService)
     {
         _albumService = albumService;
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _fileService = fileService;
         _geoService = geoService;
-        _imageTaggingQueue = imageTaggingQueue;
+        _userService = userService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -116,8 +121,15 @@ public class PostService : IPostService
             throw new MultipleValidationListException(errors);
         }
 
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User? user = await _userService.GetUserByIdAsync(userId);
 
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
+        }
+
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         // Add Photos
         var photoIds = new List<int>();
         foreach (var photo in photos)
@@ -125,18 +137,30 @@ public class PostService : IPostService
             var file = await _fileService.SaveFileAsync(photo, userId);
             photoIds.Add(file.Id);
 
-            await GenerateImageTags(photo, file.Id);
+            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
+            {
+                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
+            }
+            else
+            {
+                file.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
+                context.CustomFiles.Update(file);
+                await context.SaveChangesAsync();
+            }
+
+            
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
-
+        
+        
         album.PhotoIds.AddRange(photoIds);
         context.Albums.Update(album);
-
+        
         await context.SaveChangesAsync();
 
         // Add location
-        var location = await _geoService.GetLocationAsync(postRequest.OsmId);
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId, postRequest.OsmType);
         if (location == null)
         {
             throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -155,6 +179,7 @@ public class PostService : IPostService
             Date = postRequest.Date,
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
+            OsmType = postRequest.OsmType,
             LocationName = location.Name,
         };
         context.Set<Post>().Add(newPost);
@@ -163,6 +188,7 @@ public class PostService : IPostService
         context.Set<Location>().Add(new Location
         {
             OsmId = postRequest.OsmId,
+            OsmType = postRequest.OsmType,
             PostId = newPost.PostId,
             Lat = location.Latitude,
             Lon = location.Longitude,
@@ -261,9 +287,9 @@ public class PostService : IPostService
         // Location Validation
         GeoLocationSearchResult? location = null;
 
-        if (postUpdates.OsmId != post.OsmId)
+        if (postUpdates.OsmId != post.OsmId || postUpdates.OsmType != post.OsmType)
         {
-            location = await _geoService.GetLocationAsync(postUpdates.OsmId);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -271,6 +297,13 @@ public class PostService : IPostService
                     ["location"] = ["This isn't a valid location"]
                 });
             }
+        }
+        
+        User? user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
         }
 
         // Add / Remove Photos 
@@ -281,24 +314,38 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            await GenerateImageTags(photo, customFile.Id);
+            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
+            {
+                await _imageTaggingService.QueueImageTaggingJobs(photo, customFile.Id);
+            }
+            else
+            {
+                customFile.TagError = "Tags not available. AI tagging was disabled whe image was uploaded";
+                context.CustomFiles.Update(customFile);
+                await context.SaveChangesAsync();
+            }
+            
+            
         }
 
         // get the album and add new photo Ids
         Album album = await _albumService.GetAlbumByIdAsync(post.TripId);
-
+       
         album.PhotoIds.AddRange(customFileIds);
         context.Albums.Update(album);
-
+        
         await context.SaveChangesAsync();
-
+        
 
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.PhotoIds = post.PhotoIds.Count > 0 ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() : post.PhotoIds = customFileIds;
+        post.OsmType = postUpdates.OsmType;
+        post.PhotoIds = post.PhotoIds.Count > 0 
+            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
+            : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.Name : post.LocationName;
 
         // Save Changes
@@ -336,7 +383,7 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var post = await context.Posts.FirstOrDefaultAsync(p => p.PostId == postId);
-
+        
         if (post == null)
         {
             throw new ArgumentException(
@@ -367,7 +414,6 @@ public class PostService : IPostService
         context.Posts.Remove(post);
         await context.SaveChangesAsync();
     }
-
 
     /// <summary>
     /// Deletes all posts of a given trip. Used when a trip is deleted.
@@ -403,7 +449,7 @@ public class PostService : IPostService
         {
             throw new KeyNotFoundException(
                 "Post of this Id does not exist."
-            );
+            ); 
         }
         if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
         {
@@ -421,32 +467,8 @@ public class PostService : IPostService
         {
             album.PhotoIds.Remove(photoId);
         }
-
+        
         await context.SaveChangesAsync();
     }
-
-    /// <summary>
-    /// Private method used to make a clean call to the image tagging service and return the error if it fails,
-    /// while still allowing the image upload to continue
-    /// </summary>
-    /// <param name="image"></param>
-    /// <param name="imageId"></param>
-    /// <returns></returns>
-    private async Task GenerateImageTags(IFormFile image, int imageId)
-    {
-        try
-        {
-            FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(image);
-
-            await _imageTaggingQueue.QueueImageTaggingAsync(
-                new ImageTaggingJob(Image: safeFormFile, ImageId: imageId)
-            );
-        }
-        catch (Exception ex)
-        {
-            // Tagging cant cause the image uplaod to fail
-            Console.WriteLine($"Failed to generate tags for image {imageId}: {ex.Message}");
-        }
-    }
+    
 }
-

@@ -12,5 +12,6 @@ public interface IPostRequest
     [JsonIgnore]
     public bool DateSupplied { get; set; }
     public long OsmId { get; set; }
+    public string OsmType { get; set; }
     public bool NoContentAllowed { get; set; }
 }
