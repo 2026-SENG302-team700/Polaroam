@@ -1,10 +1,12 @@
 // Theme variables
-$ink: #686868;
-$paper: #fff8e8;
+$ink: #000000;
+$paper: #ffffff;
+$bg-color: #fff27c;
 $button-hover-colour: #cccccc;
-$primary-colour: #83beda;
-$danger-colour: #ef6a67;
-$success-colour: #88d498;
+$primary-colour: #54c9ff;
+$danger-colour: #e63c1e;
+$success-colour: #95df1d;
+$secondary-colour: #fff;
 $shadow-small: 3px 3px 0 $ink;
 $shadow-medium: 5px 5px 0 $ink;
 $transition-fast: 120ms ease;
@@ -50,7 +52,7 @@ $font-weight-bold: 700;
     &:active,
     &:focus:active {
         transform: translate(3px, 3px);
-        box-shadow: none;
+        box-shadow: 0px 0px 0 $ink, 1px 1px 0 $ink inset;
     }
 
     &:focus-visible {
@@ -59,10 +61,14 @@ $font-weight-bold: 700;
     }
 
     &:disabled {
-        box-shadow: none;
+        box-shadow: 0px 0px 0 $ink, 1px 1px 0 $ink inset;
         transform: none;
         opacity: 0.55;
     }
+}
+
+.bg-light {
+    background-color: #{$bg-color} !important;
 }
 
 .badge {
@@ -106,6 +112,18 @@ $font-weight-bold: 700;
     }
 }
 
+.btn-outline-primary {
+    --bs-btn-color: #{$primary-colour};
+    --bs-btn-bg: #{$paper};
+    --bs-btn-border-color: #{$ink};
+    --bs-btn-hover-color: #{$primary-colour};
+    --bs-btn-hover-bg: #{darken($paper, 5%)};
+    --bs-btn-hover-border-color: #{$primary-colour};
+    --bs-btn-active-color: #{$primary-colour};
+    --bs-btn-active-bg: #{darken($paper, 9%)};
+    --bs-btn-active-border-color: #{$ink};
+}
+
 .btn-primary {
     --bs-btn-color: #{$ink};
     --bs-btn-bg: #{$primary-colour};
@@ -119,16 +137,16 @@ $font-weight-bold: 700;
 }
 
 // Cancel/secondary buttons.
-.btn-secondary,
-.btn-outline-secondary {
+.btn-outline-secondary,
+.btn-secondary {
     --bs-btn-color: #{$ink};
-    --bs-btn-bg: #fff;
+    --bs-btn-bg: #{$secondary-colour};
     --bs-btn-border-color: #{$ink};
     --bs-btn-hover-color: #{$ink};
-    --bs-btn-hover-bg: #e9e2d3;
+    --bs-btn-hover-bg: #{darken($secondary-colour, 5%)};
     --bs-btn-hover-border-color: #{$ink};
     --bs-btn-active-color: #{$ink};
-    --bs-btn-active-bg: #ddd4c3;
+    --bs-btn-active-bg: #{darken($secondary-colour, 9%)};
     --bs-btn-active-border-color: #{$ink};
 }
 
@@ -140,6 +158,21 @@ $font-weight-bold: 700;
     --bs-btn-hover-color: #{$ink};
     --bs-btn-hover-bg: #{darken($danger-colour, 5%)};
     --bs-btn-hover-border-color: #{$ink};
+    --bs-btn-active-color: #{$ink};
+    --bs-btn-active-bg: #{darken($danger-colour, 9%)};
+    --bs-btn-active-border-color: #{$ink};
+}
+
+.btn-outline-danger {
+    --bs-btn-color: #{$danger-colour};
+    --bs-btn-bg: #{$paper};
+    --bs-btn-border-color: #{$ink};
+    --bs-btn-hover-color: #{$danger-colour};
+    --bs-btn-hover-bg: #{darken($paper, 5%)};
+    --bs-btn-hover-border-color: #{$danger-colour};
+    --bs-btn-active-color: #{$danger-colour};
+    --bs-btn-active-bg: #{darken($paper, 9%)};
+    --bs-btn-active-border-color: #{$ink};
 }
 
 // Cards.
@@ -172,8 +205,8 @@ $font-weight-bold: 700;
     }
 
     &:focus {
-        transform: translate(2px, 2px);
-        box-shadow: 1px 1px 0 $ink inset;
+        transform: translate(3px, 3px);
+        box-shadow: 0px 0px 0 $ink, 2px 2px 0 $ink inset;
     }
 
     &:disabled {
