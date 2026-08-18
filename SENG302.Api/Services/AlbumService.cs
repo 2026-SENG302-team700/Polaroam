@@ -3,6 +3,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Helpers;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services.ImageTagging;
 using SENG302.Api.Helpers.Validators;
 
@@ -10,12 +11,13 @@ namespace SENG302.Api.Services;
 
 public interface IAlbumService
 {
-    public Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId);
+    public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null);
     public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
-    public Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds);
 }
 
 public class AlbumService : IAlbumService
@@ -104,14 +106,14 @@ public class AlbumService : IAlbumService
         {
             if (post.PhotoIds.Contains(photoId))
             {
-                return post.PostId; //returns the postid if the image is part of a post
+                return post.PostId; //returns the post-Id if the image is part of a post
             }
         }
         if (album.PhotoIds.Remove(photoId))
         {
-            CustomFile file;
-            file = await _fileService.GetFileByIdAsync(photoId);
+            CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             await _fileService.DeleteFileAsync(file.FileKey);
+            await context.SaveChangesAsync();
         }
         else
         {
@@ -165,6 +167,8 @@ public class AlbumService : IAlbumService
             {
                 FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
 
+                await _fileService.SetTagQueueStatus(file.Id);
+
                 await _imageTaggingQueue.QueueImageTaggingAsync(
                     new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
                 );
@@ -186,12 +190,13 @@ public class AlbumService : IAlbumService
     /// Gets all custom files (metadata files) from an album. 
     /// Does this by retrieving an album and then calling the 
     /// file service to retrieve the custom file for all photo-Id.
-    /// Returns metadata, and not the actual images.
+    /// Returns metadata and not the actual images.
     /// </summary>
     /// <param name="tripId"></param>
+    /// <param name="tag">Optional tag to filter by if provided</param>
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<List<CustomFile>> GetImagesMetadataFromAlbumAsync(int tripId)
+    public async Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -208,27 +213,54 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<CustomFile> files = [];
+        List<PhotoMetadataResponse> matchedFiles = [];
 
         foreach (var photoId in album.PhotoIds)
         {
-            var file = await _fileService.GetFileByIdAsync(photoId);
-            files.Add(file);
+            try
+            {
+                var file = await _fileService.GetFileByIdAsync(photoId);
+                matchedFiles.Add(new PhotoMetadataResponse
+                {
+                    PhotoId = file.Id,
+                    FileName = file.OriginalFileName,
+                    MimeType = file.MimeType,
+                    Tags = file.Tags ?? [],
+                    DateCreated = file.DateCreated
+                });
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
+            }
+
         }
 
-        return files;
+        if (!string.IsNullOrEmpty(tag) && matchedFiles.Count > 0)
+        {
+            matchedFiles = matchedFiles.Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
+            matchedFiles.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
+        }
+
+        return matchedFiles.Select(file => new PhotoMetadataResponse
+        {
+            PhotoId = file.PhotoId,
+            FileName = file.FileName,
+            MimeType = file.MimeType,
+            Tags = file.Tags,
+            DateCreated = file.DateCreated
+        }).ToList();
     }
 
 
     /// <summary>
-    /// Gets a single customfile object from a trip, given a photoid and tripid.
-    /// Returns metadata, and not the actual image.
+    /// Gets a single CustomFile object from a trip, given a Photo-Id and Trip-Id.
+    /// Returns metadata and not the actual image.
     /// </summary>
     /// <param name="tripId"></param>
     /// <param name="photoId"></param>
-    /// <returns>a customfile object</returns>
+    /// <returns>a CustomFile object</returns>
     /// <exception cref="KeyNotFoundException"></exception>
-    public async Task<CustomFile> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
+    public async Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -247,7 +279,14 @@ public class AlbumService : IAlbumService
 
         var file = await _fileService.GetFileByIdAsync(photoId);
 
-        return file;
+        return new PhotoMetadataResponse
+        {
+            PhotoId = file.Id,
+            FileName = file.OriginalFileName,
+            MimeType = file.MimeType,
+            Tags = file.Tags,
+            DateCreated = file.DateCreated
+        };
     }
 
 
@@ -279,5 +318,15 @@ public class AlbumService : IAlbumService
 
         return newAlbum;
     }
-
+    
+    /// <summary>
+    /// gets albums from list of trips
+    /// </summary>
+    /// <param name="tripIds">ids of trips for album</param>
+    /// <returns>the album of the respective trips</returns>
+    public async Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.Albums.Where(a => tripIds.Contains(a.TripId)).ToListAsync();
+    }
 }

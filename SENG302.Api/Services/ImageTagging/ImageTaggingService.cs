@@ -45,7 +45,7 @@ public class ImageTaggingService : IImageTaggingService
     {
         ValidateImage(image);
         var request = await GenerateRequest(image, cancellationToken);
-        var content = await ProcessRequest(request, cancellationToken);
+        var content = await ProcessRequest(request, cancellationToken, imageId);
         await ParseValidateAndSetTags(content, imageId);
     }
     
@@ -121,15 +121,16 @@ public class ImageTaggingService : IImageTaggingService
         request.Content = JsonContent.Create(requestBody);
         return request;
     }
-    
+
     /// <summary>
     /// Private method that sends the request to the LLM API and returns the response.
     /// </summary>
     /// <param name="request">The request method obtained from the GenerateRequest Method</param>
     /// <param name="cancellationToken"></param>
+    /// <param name="imageId"></param>
     /// <returns>The json string returned from the request</returns>
     /// <exception cref="HttpRequestException">Thrown if received a non-success response code</exception>
-    private async Task<string?> ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+    private async Task<string?> ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken, int imageId)
     {
         using var response = await _httpClient.SendAsync(
             request,
@@ -140,6 +141,7 @@ public class ImageTaggingService : IImageTaggingService
         {
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
+            await SetTagStatusOff(imageId);
             throw new HttpRequestException($"LLM request failed with status {(int)response.StatusCode}: {responseContent}");
         }
 
@@ -163,6 +165,8 @@ public class ImageTaggingService : IImageTaggingService
     {
         if (string.IsNullOrWhiteSpace(content))
         {
+            await SetTagStatusOff(imageId);
+
             throw new InvalidOperationException(
                 "The LLM returned an empty response"
             );
@@ -173,7 +177,7 @@ public class ImageTaggingService : IImageTaggingService
         try
         {
             // clean the response content
-            var cleanedContent = content.Trim();
+            var cleanedContent = content.Trim().ToLower();
             if (cleanedContent.StartsWith("```"))
             {
                 var firstLineEnd = cleanedContent.IndexOf('\n');
@@ -198,7 +202,12 @@ public class ImageTaggingService : IImageTaggingService
             
             await using var context = await _dbContextFactory.CreateDbContextAsync();
             var image = context.CustomFiles.FirstOrDefault(f => f.Id == imageId);
-            if (image == null) return;
+            if (image == null)
+            {
+                return;
+            }
+            
+            image.InTagQueue = false;
             image.Tags = tagResponse.Tags;
             context.CustomFiles.Update(image);
             await context.SaveChangesAsync();
@@ -208,6 +217,7 @@ public class ImageTaggingService : IImageTaggingService
         }
         catch (JsonException exception)
         {
+            await SetTagStatusOff(imageId);
             throw new InvalidOperationException("The LLM did not return valid JSON", exception);
         }
 
@@ -218,6 +228,7 @@ public class ImageTaggingService : IImageTaggingService
 
         if (tags == null || tags.Count == 0)
         {
+            await SetTagStatusOff(imageId);
             throw new InvalidOperationException("The LLM did not return any tags");
         }
     }
@@ -246,6 +257,25 @@ public class ImageTaggingService : IImageTaggingService
         {
             throw new ArgumentException("The uploaded file is not a supported image.");
         }
+    }
+
+    /// <summary>
+    /// Sets the tagging status to off.
+    /// </summary>
+    /// <param name="photoId"></param>
+    private async Task SetTagStatusOff(int photoId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var image = context.CustomFiles.FirstOrDefault(f => f.Id == photoId);
+
+        if (image == null)
+        {
+            return;
+        }
+        
+        image.InTagQueue = false;
+        context.CustomFiles.Update(image);
+        await context.SaveChangesAsync();
     }
 
     private record TagResponse(List<string> Tags);

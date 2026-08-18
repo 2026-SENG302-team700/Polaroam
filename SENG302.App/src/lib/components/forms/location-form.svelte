@@ -4,6 +4,7 @@
 
     type LocationResult = {
         osmId: number;
+        osmType: string;
         lat: string;
         lon: string;
         name: string;
@@ -29,6 +30,7 @@
     function handleInput() {
         location = {
             osmId: 0,
+            osmType: "",
             lat: 0,
             lon: 0,
             name: "",
@@ -68,6 +70,7 @@
             items = data.map(
                 (item: any): LocationResult => ({
                     osmId: item.osm_id,
+                    osmType: item.osm_type,
                     lat: item.lat,
                     lon: item.lon,
                     name: item.name,
@@ -99,6 +102,7 @@
     function selectItem(item: LocationResult) {
         location = {
             osmId: item.osmId,
+            osmType: item.osmType,
             lat: item.lat,
             lon: item.lon,
             name: item.name,

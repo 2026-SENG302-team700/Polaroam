@@ -3,6 +3,8 @@ using SENG302.Api.Services;
 using Shouldly;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using SENG302.Api.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
@@ -130,5 +132,195 @@ public class FileServiceTests : BaseIntegrationTestFixture
         {
             await ServiceUnderTest.GetFileByIdAsync(fileEntity.Id);
         });
+    }
+
+    [Fact]
+    public async Task CheckFileOwnership_OwnerOwns_ReturnTrue()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        
+        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,0);
+        owns.ShouldBeTrue();
+    }
+
+
+    [Fact]
+    public async Task CheckFileOwnership_OwnerDoesntOwn_ReturnFalse()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        
+        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,1);
+        owns.ShouldBeFalse();
+    }
+    
+    [Fact]
+    public async Task GetTagsAsync_HasTags_ReturnsTags()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        List<string> insertTags = new List<string>(["ich bin gut", "germanic", "ich bin sprechen ze deutsch"]);
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+            Tags = insertTags
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+        
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldNotBeNull();
+        tags.ShouldBeEquivalentTo(file.Tags);
+    }
+    
+    [Fact]
+    public async Task GetTagsAsync_HasNoTags_ReturnsFalse()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+        
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldBeNull();
+    }
+    
+    [Fact]
+    public async Task GetTagsAsync_ImageDoesntExist_ThrowsKeyNotFoundException()
+    {
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetTagsAsync(1);
+        });
+    }
+
+    [Fact]
+    public async Task SetTagQueueStatus_validId_SetInTagQueueTrue()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.SetTagQueueStatus(1);
+        await using var newContext = await DbContextFactory.CreateDbContextAsync();
+        var newFile = await newContext.CustomFiles.FirstOrDefaultAsync(f => f.Id == file.Id);
+        newFile.ShouldNotBeNull();
+        newFile.InTagQueue.ShouldBeTrue();
+    }   
+
+    [Fact]
+    public async Task SetTagQueueStatus_invalidId_throwsKeyNotFound()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.SetTagQueueStatus(2);
+        });
+
+    }
+
+    [Fact]
+    public async Task GetTagQueueStatus_ValidIdNotInQueue_ReturnsFalse()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        var status = await ServiceUnderTest.GetTagQueueStatus(1);
+        status.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task GetTagQueueStatus_ValidIdInQueue_ReturnsTrue()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.SetTagQueueStatus(1);
+
+        var status = await ServiceUnderTest.GetTagQueueStatus(1);
+        status.ShouldBeTrue();
     }
 }

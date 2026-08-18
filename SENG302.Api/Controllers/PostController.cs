@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers.Validators;
@@ -187,38 +188,13 @@ public class PostController : ControllerBase
             {
                 PhotoId = photoId,
                 FileName = file.OriginalFileName ?? $"photo-{photoId}",
-                MimeType = file.MimeType
+                MimeType = file.MimeType,
+                Tags = file.Tags,
+                DateCreated = file.DateCreated
             });
         }
 
         return Ok(photos);
-    }
-
-    /// <summary>
-    /// Streams a single photo back with correct types
-    /// </summary>
-    /// <param name="postId">post Id</param>
-    /// <param name="photoId">id of photo</param>
-    /// <returns>an image file</returns>
-    [Authorize]
-    [HttpGet("{postId:int}/images/{photoId:int}")]
-    public async Task<IActionResult> GetPostPhoto(int postId, int photoId)
-    {
-        var post = await _postService.GetPostAsync(postId);
-        if (post == null)
-        {
-            return NotFound("Post not found");
-        }
-
-        if (post.PhotoIds is null || !post.PhotoIds.Contains(photoId))
-        {
-            return NotFound("Photo not found on this post.");
-        }
-
-        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-
-        return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Services.ImageTagging;
 
 namespace SENG302.Api.Services;
 
@@ -11,6 +12,11 @@ public interface IFileService
     Task DeleteFileAsync(string fileKey);
     Task<byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
+    Task<bool> CheckFileOwnership(int fileId, int userId);
+    Task<List<string>?> GetTagsAsync(int id);
+    Task SetTagQueueStatus(int id);
+    Task<bool> GetTagQueueStatus(int id);
+    Task<List<CustomFile>> GetFilesByIdsAsync(List<int> ids);
 }
 
 public class FileService : IFileService
@@ -18,10 +24,11 @@ public class FileService : IFileService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly string _basePath;
 
+
     public FileService(
         IDbContextFactory<DatabaseContext> dbContextFactory,
         IConfiguration config
-    )
+        )
     {
         _dbContextFactory = dbContextFactory;
         _basePath = config["FileStorage:BasePath"];
@@ -89,6 +96,18 @@ public class FileService : IFileService
 
         return customFile;
     }
+
+    /// <summary>
+    /// checks if the given user id matches the ownerid of the file whose id is passed as fileid.
+    /// </summary>
+    /// <param name="fileId"></param>
+    /// <param name="userId"></param>
+    /// <returns>true if owner is user id, false otherwise</returns>
+    public async Task<bool> CheckFileOwnership(int fileId, int userId)
+    {
+        var file = await GetFileByIdAsync(fileId);
+        return file.OwnerId == userId;
+    }
         
     /// <summary>
     /// Takes an incoming file and follows the following steps
@@ -153,5 +172,64 @@ public class FileService : IFileService
         
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         await context.CustomFiles.Where(f => f.FileKey == fileKey).ExecuteDeleteAsync();
+    }
+    
+    /// <summary>
+    /// Returns a files tags.
+    /// </summary>
+    /// <param name="id">the file id.</param>
+    /// <returns>
+    /// Null: File has no tags.
+    /// Array of strings that are the tags.
+    /// </returns>
+    public async Task<List<string>?> GetTagsAsync(int id)
+    {
+        var file = await GetFileByIdAsync(id);
+        return file.Tags;
+    }
+
+    /// <summary>
+    /// Sets the status of a file that it is in the queue to be tagged or the job is being performed.
+    /// </summary>
+    /// <param name="id">ID of the image to be set as being tagged</param>
+    /// <exception cref="KeyNotFoundException">File not found.</exception>
+    public async Task SetTagQueueStatus(int id)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var file = await context.CustomFiles.FirstOrDefaultAsync(f => f.Id == id);
+
+        if (file == null)
+        {
+            throw new KeyNotFoundException("File not found.");
+        }
+        
+        file.InTagQueue = true;
+        context.CustomFiles.Update(file);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Checks to see whether a file is within the tagging queue or job is being performed.
+    /// </summary>
+    /// <param name="id">ID of the image to be checked if being tagged</param>
+    /// <returns>
+    /// True: File is in the queue or being processed.
+    /// False: File is not in the queue and not being processed.
+    /// </returns>
+    public async Task<bool> GetTagQueueStatus(int id)
+    {
+        var file = await GetFileByIdAsync(id);
+        return file.InTagQueue;
+    }
+    
+    /// <summary>
+    /// gets custom file entities for provided ids.
+    /// </summary>
+    /// <param name="ids">file id's</param>
+    /// <returns>The file entites.</returns>
+    public async Task<List<CustomFile>> GetFilesByIdsAsync(List<int> ids)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.CustomFiles.Where(f => ids.Contains(f.Id)).ToListAsync();
     }
 }
