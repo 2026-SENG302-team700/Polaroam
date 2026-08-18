@@ -1,8 +1,13 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services;
 using Shouldly;
 using Xunit.Abstractions;
@@ -19,6 +24,16 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         _output = output;
     }
 
+    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType
+        };
+    }
+
     // Helper Functions
     private async Task SetupUserAndTrip(int userId, string email)
     {
@@ -28,7 +43,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         context.Albums.Add(new Album { TripId = 1, PhotoIds = new() });
         await context.SaveChangesAsync();
     }
-    
+
     [Fact]
     public async Task GetPhotoTags_ValidId_ReturnsOk()
     {
@@ -65,7 +80,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             tags.ShouldContain(tag);
         }
     }
-    
+
     private async Task SetupSecondTrip(int userId, int tripId)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
@@ -83,7 +98,12 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             album.PhotoIds.Add(id);
             context.CustomFiles.Add(new CustomFile
             {
-                Id = id, FileKey = "", MimeType = "", OriginalFileName = "", OwnerId = 1, Tags = tags
+                Id = id,
+                FileKey = "",
+                MimeType = "",
+                OriginalFileName = "",
+                OwnerId = 1,
+                Tags = tags
             });
         }
         await context.SaveChangesAsync();
@@ -94,7 +114,12 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Posts.Add(new Post
         {
-            PostId = postId, TripId = tripId, Title = "My post", Content = "", PhotoIds = [], OsmId = 1,
+            PostId = postId,
+            TripId = tripId,
+            Title = "My post",
+            Content = "",
+            PhotoIds = [],
+            OsmId = 1,
             LocationName = "my home"
         });
         await context.SaveChangesAsync();
@@ -230,7 +255,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
         tags.ShouldBe(["beachball", "beachfront"], ignoreOrder: true);
     }
-    
+
     [Fact]
     public async Task GetSuggestedTags_OtherUsersTags_AreNotReturned()
     {
@@ -253,7 +278,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         var tags = await response.Content.ReadFromJsonAsync<string[]>();
         tags.ShouldBe(["beach"]);
     }
-    
+
     [Fact]
     public async Task GetPhotoTags_ValidIdInQueue_ReturnsOk()
     {
@@ -269,7 +294,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTimeOffset(2026, 8, 8, 14, 30, 0, TimeSpan.FromHours(12)), EndDate = new DateTimeOffset(2026, 8, 10, 14, 30, 0, TimeSpan.FromHours(12)),});
+        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTimeOffset(2026, 8, 8, 14, 30, 0, TimeSpan.FromHours(12)), EndDate = new DateTimeOffset(2026, 8, 10, 14, 30, 0, TimeSpan.FromHours(12)), });
         context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         context.CustomFiles.Add(new CustomFile
         {
@@ -286,7 +311,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         var content = await response.Content.ReadAsStringAsync();
         content.ShouldBe("Tags are being generated.");
     }
-    
+
     [Fact]
     public async Task GetPhotoTags_ValidIdNoTags_ReturnsNoContent()
     {
@@ -318,6 +343,266 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
     }
+
+    [Fact]
+    public async Task RetryPhotoTagging_ValidIdAIEnabled_ReturnsOK()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AiTaggingEnabled = true;
+        user.AcceptedAiPrivacyPolicy = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 1);
+        customFile.TagError = "Queue was full";
+        context.CustomFiles.Update(customFile);
+        await context.SaveChangesAsync();
+
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(false);
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task RetryPhotoTagging_AIPolicyNotAccepted_ReturnsBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AiTaggingEnabled = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 1);
+        customFile.TagError = "Queue was full";
+        context.CustomFiles.Update(customFile);
+        await context.SaveChangesAsync();
+
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(false);
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        content.ShouldBe("Image cannot be tagged");
+    }
+
+    [Fact]
+    public async Task RetryPhotoTagging_AITaggingNotEnabled_ReturnsBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AcceptedAiPrivacyPolicy = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 1);
+        customFile.TagError = "Queue was full";
+        context.CustomFiles.Update(customFile);
+        await context.SaveChangesAsync();
+
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(false);
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        content.ShouldBe("Image cannot be tagged");
+    }
+
+    [Fact]
+    public async Task RetryPhotoTagging_TaggingErrorNotDueToQueue_ReturnsBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AiTaggingEnabled = true;
+        user.AcceptedAiPrivacyPolicy = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 1);
+        customFile.TagError = "AI failed to tag image";
+        context.CustomFiles.Update(customFile);
+        await context.SaveChangesAsync();
+
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(false);
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        content.ShouldBe("Image cannot be tagged");
+    }
+
+    [Fact]
+    public async Task RetryPhotoTagging_TagErrorNull_ReturnsBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AiTaggingEnabled = true;
+        user.AcceptedAiPrivacyPolicy = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 1);
+
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(false);
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        content.ShouldBe("Image cannot be tagged");
+    }
+
+    [Fact]
+    public async Task RetryPhotoTagging_CanRetryTaggingIsFalse_ReturnsBadRequest()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AiTaggingEnabled = true;
+        user.AcceptedAiPrivacyPolicy = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 1);
+        customFile.CanRetryTagging = false;
+        context.CustomFiles.Update(customFile);
+        await context.SaveChangesAsync();
+
+        ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(false);
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        content.ShouldBe("Image cannot be tagged");
+    }
+
+
+    [Fact]
+    public async Task RetryPhotoTagging_UserDoesNotOwnFile_ReturnsUnauthorized()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.Where(u => u.Id == 1).FirstOrDefaultAsync();
+        user.AiTaggingEnabled = true;
+        user.AcceptedAiPrivacyPolicy = true;
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+
+        await context.SaveChangesAsync();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        CustomFile customFile = await fileService.SaveFileAsync(mockFile, ownerId: 2);
+        customFile.CanRetryTagging = false;
+        context.CustomFiles.Update(customFile);
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.PatchAsync("/api/image/1/tags", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
 
     [Fact]
     public async Task GetPostPhoto_ValidPhotoId_ReturnsPhoto()
@@ -377,7 +662,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
     }
-    
+
     [Fact]
     public async Task RemoveTagAsync_HasTags_ReturnsOk()
     {
