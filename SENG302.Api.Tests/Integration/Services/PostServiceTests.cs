@@ -882,7 +882,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UpdatePostAsync_ExistingUntaggedImage_QueuesImageForTagging()
+    public async Task UpdatePostAsync_ExistingUntaggedImage_DoesNotQueueImageForTagging()
     {
         await SetupUserAndTrip(1, 1);
         SetupGeoMock();
@@ -930,7 +930,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             aiTaggingForUpload: true
         );
 
-        ImageTaggingQueueMock.Received(1)
+        ImageTaggingQueueMock.DidNotReceive()
             .QueueImageTaggingAsync(
                 Arg.Is<ImageTaggingJob>(
                     job => job.ImageId == post.PhotoIds[0]
