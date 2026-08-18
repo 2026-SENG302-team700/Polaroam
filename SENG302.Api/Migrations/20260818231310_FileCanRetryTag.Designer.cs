@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260818224649_CanRetryTagging")]
-    partial class CanRetryTagging
+    [Migration("20260818231310_FileCanRetryTag")]
+    partial class FileCanRetryTag
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,12 +51,21 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("CanRetryTagging")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("FileKey")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("InTagQueue")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("MimeType")
                         .IsRequired()
@@ -68,6 +77,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TagError")
+                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<string>>("Tags")
                         .HasColumnType("text[]");
@@ -101,6 +113,10 @@ namespace SENG302.Api.Migrations
 
                     b.Property<long>("OsmId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("OsmType")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<int>>("PhotoIds")
                         .IsRequired()
@@ -235,6 +251,10 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OsmType")
                         .IsRequired()
                         .HasColumnType("text");
 

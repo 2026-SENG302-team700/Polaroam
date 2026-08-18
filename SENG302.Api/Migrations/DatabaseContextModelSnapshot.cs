@@ -48,6 +48,9 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("CanRetryTagging")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("timestamp with time zone");
 
@@ -71,6 +74,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TagError")
+                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<string>>("Tags")
                         .HasColumnType("text[]");
