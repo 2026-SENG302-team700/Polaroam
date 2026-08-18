@@ -54,6 +54,10 @@ public class U70011ClipImageTagging
     {
         await SetupTripAndAlbum();
 
+        _fixture.ImageTaggingQueueMock
+            .QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>())
+            .Returns(true);
+
         _fixture.GeoServiceMock
             .GetLocationAsync(Arg.Any<long>())
             .Returns(new GeoLocationSearchResult

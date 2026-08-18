@@ -114,7 +114,7 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
             aiTaggingForUpload: false
         );
 
-        await ImageTaggingQueueMock.DidNotReceive()
+        ImageTaggingQueueMock.DidNotReceive()
             .QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>());
     }
 

@@ -877,7 +877,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             aiTaggingForUpload: false
         );
 
-        await ImageTaggingQueueMock.DidNotReceive()
+        ImageTaggingQueueMock.DidNotReceive()
             .QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>());
     }
 
@@ -930,7 +930,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             aiTaggingForUpload: true
         );
 
-        await ImageTaggingQueueMock.Received(1)
+        ImageTaggingQueueMock.Received(1)
             .QueueImageTaggingAsync(
                 Arg.Is<ImageTaggingJob>(
                     job => job.ImageId == post.PhotoIds[0]
