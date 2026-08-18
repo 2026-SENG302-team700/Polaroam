@@ -1,5 +1,7 @@
 <script lang="ts">
     import ClickableImage from "./clickable-image.svelte";
+    type ImageViewContext = "search" | "album" | "post" | "none";
+    type ImageSource = File | string;
 
     let {
         src,
@@ -7,14 +9,16 @@
         images = null,
         photoId,
         photoIds,
-        rootMargin = "200px"
+        rootMargin = "200px",
+        viewContext,
     }: {
         src: string;
         index: number;
-        images: File[] | null;
+        images: ImageSource[] | null;
         photoId: number;
         photoIds: number[];
         rootMargin?: string;
+        viewContext: ImageViewContext;
     } = $props();
 
     let containerEl: HTMLDivElement | undefined = $state();
@@ -37,7 +41,8 @@
         failed = false;
         try {
             const res = await fetch(src);
-            if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+            if (!res.ok)
+                throw new Error(`Failed to fetch image: ${res.status}`);
             const blob = await res.blob();
             file = new File([blob], filenameFromSrc(src), { type: blob.type });
         } catch (e) {
@@ -60,7 +65,7 @@
                     }
                 }
             },
-            { rootMargin }
+            { rootMargin },
         );
 
         observer.observe(containerEl);
@@ -71,9 +76,21 @@
 
 <div bind:this={containerEl} class="lazy-image-wrapper">
     {#if file}
-        <ClickableImage image={file} {index} images={images ?? []} {photoId} {photoIds}/>
+        <ClickableImage
+            image={file}
+            {index}
+            images={images ?? []}
+            {photoId}
+            {photoIds}
+            {viewContext}
+        />
     {:else if failed}
-        <div class="img-thumbnail lazy-placeholder lazy-error" onclick={loadFile} role="button" tabindex="0">
+        <div
+            class="img-thumbnail lazy-placeholder lazy-error"
+            onclick={loadFile}
+            role="button"
+            tabindex="0"
+        >
             Failed to load — click to retry
         </div>
     {:else}
@@ -102,7 +119,12 @@
         color: var(--bs-secondary-color, #6c757d);
     }
     @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.6; }
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.6;
+        }
     }
 </style>

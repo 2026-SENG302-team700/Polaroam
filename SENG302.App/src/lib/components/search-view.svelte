@@ -6,8 +6,13 @@
 
     let {
         trips,
-        photoTrips
+        photoTrips,
+        query = ""
     } = $props();
+
+    let imageCount = $derived(
+        photoTrips.reduce((sum, photoTrip) => sum + (photoTrip.photos?.length ?? 0), 0)
+    );
 
     /**
      * Navigates to the given trip's page
@@ -18,6 +23,11 @@
 </script>
 <div>
     <h1>Search Results</h1>
+    {#if query}
+        <p class="search-summary">
+            {imageCount} image{imageCount == 1 ? "" : "s"} found matching "{query}"
+        </p>
+    {/if}
     <div class="photo-trip-list">
         {#if photoTrips.length > 0}
                 {#each photoTrips as photoTrip}
@@ -37,7 +47,7 @@
                             <h3>{photoTrip.tripTitle}</h3>
                         </div>
                         <div class="photo-trip-body">
-                            <ImageDisplay images={photoTrip.photos} photoIds={photoTrip.photoIds}/>
+                            <ImageDisplay images={photoTrip.photos} photoIds={photoTrip.photoIds} viewContext="search"/>
                         </div>
                     </div>
                 {/each}

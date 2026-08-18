@@ -159,6 +159,7 @@
             });
 
             const data = await response.json().catch(() => null);
+            
 
             if (response.status === 404 || response.status === 401) {
                 password = "";
@@ -181,6 +182,8 @@
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
             addToast(`Welcome to Polaroam ${data?.message}!`);
+            
+            
             goto(resolve(`/home`));
         } catch (err) {
             password = "";

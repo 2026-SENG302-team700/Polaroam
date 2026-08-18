@@ -101,6 +101,7 @@
         query = tag;
         error = "";
         isOpen = false;
+        performSearch();
     }
 </script>
 

@@ -19,7 +19,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public partial class U70011_AsBenjiIWantToHaveMyTravelImagesAutomaticallyTaggedByAIWhenIUploadThemToIdentifyKeyObjectsAndLocationsInTheImageSoThatICanOrganiseAndFindMyMemoriesWithoutHavingToManuallyTagEveryImage_Feature : object, global::Xunit.IClassFixture<U70011_AsBenjiIWantToHaveMyTravelImagesAutomaticallyTaggedByAIWhenIUploadThemToIdentifyKeyObjectsAndLocationsInTheImageSoThatICanOrganiseAndFindMyMemoriesWithoutHavingToManuallyTagEveryImage_Feature.FixtureData>, global::Xunit.IAsyncLifetime
     {
-        
+
         private global::Reqnroll.ITestRunner testRunner;
         
         private static string[] featureTags = ((string[])(null));
@@ -107,7 +107,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U70011CLIPImageTagging.feature.ndjson", 7);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U70011CLIPImageTagging.feature.ndjson", 8);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -327,6 +327,43 @@ namespace SENG302.Api.Tests.Acceptance.Features
             await this.ScenarioCleanupAsync();
         }
         
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC10 Notify user when AI image tagging fails")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U70011 - As Benji I want to have my travel images automatically tagged by AI when" +
+            " I upload them to identify key objects and locations in the image so that I can " +
+            "organise and find my memories without having to manually tag every image.")]
+        [global::Xunit.TraitAttribute("Description", "AC10 Notify user when AI image tagging fails")]
+        public async global::System.Threading.Tasks.Task AC10NotifyUserWhenAIImageTaggingFails()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "5";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC10 Notify user when AI image tagging fails", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 32
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 33
+        await testRunner.GivenAsync("an image has been uploaded to a post or album And the queue for tagging is full", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 34
+        await testRunner.WhenAsync("I view the image in enlarged view", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 35
+        await testRunner.ThenAsync("I see an icon with tool-tip letting me know the image has been tagged with AI And" +
+                        " I can click a button to retry tagging", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
         [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
         public class FixtureData : object, global::Xunit.IAsyncLifetime

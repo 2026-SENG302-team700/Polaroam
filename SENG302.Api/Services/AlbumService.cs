@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
@@ -24,17 +25,17 @@ public class AlbumService : IAlbumService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
     private readonly IUserService _userService;
+    private readonly IImageTaggingService _imageTaggingService;
     public AlbumService(IFileService fileService,
                         IDbContextFactory<DatabaseContext> dbContextFactory,
-                        IImageTaggingQueue imageTaggingQueue,
-                        IUserService userService)
+                        IUserService userService,
+                        IImageTaggingService imageTaggingService)
     {
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
         _userService = userService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -174,32 +175,38 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Trip does not exist");
         }
 
+        User? user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
+        }
+
         foreach (var photo in photos)
         {
             var file = await _fileService.SaveFileAsync(photo, trip.UserId);
             album.PhotoIds.Add(file.Id);
 
-            try
+            if (await _userService.UserAiTaggingCheckAsync(trip.UserId)
+                && aiTaggingForUpload
+                && IsAiTaggable(photo))
             {
-                if (await _userService.UserAiTaggingCheckAsync(trip.UserId) && aiTaggingForUpload && IsAiTaggable(photo))
+                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
+            }
+            else
+            {
+                var dbFile = await context.CustomFiles.FindAsync(file.Id);
+                if (dbFile != null)
                 {
-                    FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
-
-                    await _fileService.SetTagQueueStatus(file.Id);
-
-                    await _imageTaggingQueue.QueueImageTaggingAsync(
-                        new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
-                    );
+                    dbFile.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
+                    context.CustomFiles.Update(dbFile);
+                    await context.SaveChangesAsync();
                 }
             }
-            catch (Exception ex)
-            {
-                // Tagging can't cause the image upload to fail
-                Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
-            }
         }
-
+        context.Albums.Update(album);
         await context.SaveChangesAsync();
+
 
         return album;
     }

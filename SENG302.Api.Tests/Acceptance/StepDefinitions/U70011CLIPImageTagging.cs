@@ -6,7 +6,9 @@ using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using SENG302.Api.Models.Jobs;
 using SENG302.Api.Models.Responses;
 using static SENG302.Api.Helpers.DateHelper;
 
@@ -100,6 +102,92 @@ public class U70011ClipImageTagging
         _post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
         _post.ShouldNotBeNull();
         _post.PhotoIds.ShouldHaveSingleItem();
+    }
+
+    private async Task SetupUserTripAndPost()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            AcceptedAiPrivacyPolicy = true,
+            AiTaggingEnabled = true
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Original trip",
+            Description = "Original description",
+            StartDate = DateToDateTimeOffset(2026, 7, 1),
+            EndDate = DateToDateTimeOffset(2026, 7, 10),
+            UserId = 1
+        });
+        context.Posts.Add(new Post
+        {
+            PostId = 1,
+            TripId = 1,
+            Title = "My post",
+            Content = "",
+            PhotoIds = [],
+            OsmId = 1,
+            LocationName = "Christchurch"
+        });
+        context.Albums.Add(new Album { TripId = 1, PhotoIds = [] });
+        await context.SaveChangesAsync();
+    }
+
+    [Given("an image has been uploaded to a post or album And the queue for tagging is full")]
+    public async Task GivenAnImageHasBeenUploadedAndQueueIsFull()
+    {
+        await SetupUserTripAndPost();
+        _fixture.GeoServiceMock.GetLocationAsync(Arg.Any<long>()).Returns(
+            new GeoLocationSearchResult
+            {
+                OsmId = 1,
+                Latitude = "1",
+                Longitude = "1",
+                DisplayName = "Auckland",
+                Name = "Auckland, New Zealand"
+            });
+        _fixture.ImageTaggingQueueMock
+            .QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>())
+            .Returns(false);
+
+        var imageBytes = await File.ReadAllBytesAsync("resources/render.png");
+        using var form = new MultipartFormDataContent
+        {
+            { new StringContent("1"), "TripId" },
+            { new StringContent("My post"), "Title" },
+            { new StringContent("Post content"), "Content" },
+            { new StringContent("1"), "OsmId" },
+            { new StringContent(DateTimeOffset.UtcNow.AddDays(-1).ToString("O")), "Date" },
+            { new StringContent("true"), "aiTaggingForUpload" }
+        };
+        var imageContent = new ByteArrayContent(imageBytes);
+        imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(imageContent, "files", "render.png");
+
+        _lastResponse = await _fixture.HttpClient.PostAsync("api/post", form);
+    }
+
+    [When("I view the image in enlarged view")]
+    public async Task WhenIViewTheImageInEnlargedView()
+    {
+        _lastResponse = await _fixture.HttpClient.GetAsync("/api/image/1/tags");
+    }
+
+    [Then("I see an icon with tool-tip letting me know the image has been tagged with AI And I can click a button to retry tagging")]
+    public async Task ThenICanClickAButtonToRetryTagging()
+    {
+        _lastResponse.ShouldNotBeNull();
+        var content = await _lastResponse.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        content.ShouldNotBeNull();
+        content.Detail.ShouldBe("Queue was full");
     }
 
     [Given(@"I have just registered for Polaroam")]

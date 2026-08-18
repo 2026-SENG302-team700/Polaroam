@@ -3,15 +3,21 @@
         enabled,
         aiTaggingForUpload = $bindable(),
         loading = false,
+        compact = false,
+        floating = false,
+        showTemporaryNotice = true,
     }: {
         enabled: boolean;
         aiTaggingForUpload: boolean;
         loading?: boolean;
+        compact?: boolean;
+        floating?: boolean;
+        showTemporaryNotice?: boolean;
     } = $props();
 </script>
 
 {#if enabled}
-    <div class="ai-tagging-reminder">
+    <div class="ai-tagging-reminder" class:compact class:floating>
         <label class="form-check">
             <input
                 class="form-check-input"
@@ -25,7 +31,7 @@
             </span>
         </label>
 
-        {#if !aiTaggingForUpload}
+        {#if !aiTaggingForUpload && showTemporaryNotice}
             <p class="temporary-notice">
                 AI tagging is disabled for this upload only. Your account
                 setting will not be changed.
@@ -55,5 +61,24 @@
     .temporary-notice {
         margin: 0.5rem 0 0 1.5rem;
         font-size: 0.9rem;
+    }
+
+    .ai-tagging-reminder.compact {
+        margin-top: 0;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.8rem;
+    }
+
+    .ai-tagging-reminder.compact .temporary-notice {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+
+    .ai-tagging-reminder.floating {
+        position: absolute;
+        bottom: calc(100% + 0.35rem);
+        left: 0;
+        z-index: 1;
     }
 </style>

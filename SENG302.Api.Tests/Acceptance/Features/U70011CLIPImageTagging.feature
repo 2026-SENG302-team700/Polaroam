@@ -28,3 +28,8 @@ Feature: U70011 - As Benji I want to have my travel images automatically tagged 
         When I upload a supported image to a post with AI tagging disabled for this upload
         Then the image is not queued for AI tagging
         And my AI image-tagging account setting remains enabled
+
+    Scenario: AC10 Notify user when AI image tagging fails
+        Given an image has been uploaded to a post or album And the queue for tagging is full
+        When I view the image in enlarged view
+        Then I see an icon with tool-tip letting me know the image has been tagged with AI And I can click a button to retry tagging

@@ -15,8 +15,8 @@
     let loading = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
-    let imageMetadata = $state([]);
-    let tripId = params.tripId;
+    let imageMetadata = $state<{ photoId: number }[]>([]);
+    let tripId = Number(params.tripId);
     let tagQuery = $state("");
     let tagDataError = $state("");
     let aiTaggingEnabled = $state(false);
@@ -43,7 +43,7 @@
     async function getImageMetadata() {
         try {
             const response = await fetch(
-                resolve(`/api/album/${tripId}/tag?tag=${tagQuery}`),
+                resolve(`/api/album/${tripId}/tag?tag=${tagQuery}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -119,6 +119,7 @@
                 "Failed to upload images: " + (err as Error).message;
         } finally {
             loading = false;
+            filesToUpload = [];
             getImageMetadata();
         }
     }
@@ -133,22 +134,6 @@
             text="Back"
         />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-        <div class="header-content-wrapper">
-            <div class="header-content-item">
-                <ImagePicker
-                    bind:filesList={filesToUpload}
-                    errors={errors.photos}
-                    bind:fileErrors
-                    {loading}
-                    uploadFunc={uploadPhotos}
-                />
-                <AiTaggingUploadOption
-                    enabled={aiTaggingEnabled}
-                    bind:aiTaggingForUpload
-                    {loading}
-                />
-            </div>
-        </div>
     </div>
     <div class="card-body"></div>
     <div class="card-footer text-muted images"></div>
@@ -167,7 +152,26 @@
             <p class="text-center">{imageMetadata.length} images found</p>
         {/if}
 
-        <ImageGallery bind:imageMetadata {tripId} />
+        <ImageGallery bind:imageMetadata {tripId}>
+            <div class="header-content-item">
+                <AiTaggingUploadOption
+                    enabled={aiTaggingEnabled}
+                    bind:aiTaggingForUpload
+                    {loading}
+                    compact
+                    floating
+                    showTemporaryNotice={false}
+                />
+                <ImagePicker
+                    bind:filesList={filesToUpload}
+                    errors={errors.photos}
+                    bind:fileErrors
+                    {loading}
+                    uploadFunc={uploadPhotos}
+                    fill
+                />
+            </div>
+        </ImageGallery>
     </div>
 </div>
 
@@ -178,10 +182,12 @@
         align-items: center;
     }
     .header-content-item {
+        position: relative;
         display: flex;
+        height: 100%;
         width: 100%;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0;
     }
 
     .header-content-wrapper {
