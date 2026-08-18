@@ -310,6 +310,11 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Set the map visible preference
+    /// </summary>
+    /// <param name="mapVisibleObject">The value of the new preference</param>
+    /// <returns></returns>
     [HttpPut("preference/mapvisible")]
     public async Task<IActionResult> SetMapShownPreference([FromBody] MapVisibleObject mapVisibleObject)
     {
@@ -325,6 +330,10 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Get the map visible preference
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("preference/mapvisible")]
     public async Task<IActionResult> GetMapShownPreference()
     {
