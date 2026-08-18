@@ -3,7 +3,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services;
 using Shouldly;
 using Xunit.Abstractions;
 
