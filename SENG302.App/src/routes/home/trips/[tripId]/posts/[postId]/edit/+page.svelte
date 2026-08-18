@@ -115,13 +115,21 @@
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
                         resolve(
-                            `/api/post/${page.params.postId}/images/${meta.photoId}` as any,
+                            `/api/image/${meta.photoId}` as any,
                         ),
                         {
                             method: "GET",
                             credentials: "include",
                         },
                     );
+
+                    if (!res.ok) {
+                        throw new Error(
+                            (await res.text()) ||
+                                `Failed to fetch image ${meta.photoId}`,
+                        );
+                    }
+
                     const blob = await res.blob();
                     const file = new File([blob], meta.fileName, {
                         type: meta.mimeType,
@@ -342,6 +350,7 @@
     >
         <ImagePicker
             bind:filesList={files}
+            bind:newUploadsCount
             errors={errors.photos}
             bind:fileErrors
             {loading}

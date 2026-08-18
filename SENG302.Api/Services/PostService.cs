@@ -86,47 +86,6 @@ public class PostService : IPostService
     }
 
     /// <summary>
-    /// Generates tags for an existing image in the database. This is used when a user has AI tagging on
-    /// but the image was uploaded before the feature was implemented.
-    /// </summary>
-    /// <param name="imageId"></param>
-    /// <returns></returns>
-    private async Task GenerateExistingImageTags(int imageId)
-    {
-        var file = await _fileService.GetFileByIdAsync(imageId);
-
-        // Do not queue images that already have tags or are already being processed.
-        if (file.Tags is { Count: > 0 } || file.InTagQueue)
-        {
-            return;
-        }
-
-        if (file.MimeType is not (
-            "image/jpeg" or
-            "image/png" or
-            "image/gif"))
-        {
-            return;
-        }
-
-        var content = await _fileService.GetFileContentAsync(file.FileKey);
-        var stream = new MemoryStream(content);
-
-        var formFile = new FormFile(
-            stream,
-            0,
-            stream.Length,
-            "image",
-            file.OriginalFileName)
-        {
-            Headers = new HeaderDictionary(),
-            ContentType = file.MimeType
-        };
-
-        await GenerateImageTags(formFile, file.Id);
-    }
-
-    /// <summary>
     /// Adds a new post to the trip given owned by the given user. All parameters
     /// must be present (except description), otherwise it fails. 
     /// The name of the post must be between 3 and 128 characters, and the description
@@ -340,7 +299,7 @@ public class PostService : IPostService
             }
         }
 
-        var shouldTagImages =
+        var shouldTagNewImages =
             await _userService.UserAiTaggingCheckAsync(userId) &&
             aiTaggingForUpload;
 
@@ -352,17 +311,9 @@ public class PostService : IPostService
             var customFile = await _fileService.SaveFileAsync(photo, userId);
             customFileIds.Add(customFile.Id);
 
-            if (await _userService.UserAiTaggingCheckAsync(userId) && aiTaggingForUpload && IsAiTaggable(photo))
+            if (shouldTagNewImages && IsAiTaggable(photo))
             {
                 await GenerateImageTags(photo, customFile.Id);
-            }
-        }
-
-        if (shouldTagImages)
-        {
-            foreach (var existingImageId in post.PhotoIds)
-            {
-                await GenerateExistingImageTags(existingImageId);
             }
         }
 
@@ -381,8 +332,8 @@ public class PostService : IPostService
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
         post.OsmType = postUpdates.OsmType;
-        post.PhotoIds = post.PhotoIds.Count > 0 
-            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList() 
+        post.PhotoIds = post.PhotoIds.Count > 0
+            ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList()
             : post.PhotoIds = customFileIds;
         post.LocationName = location != null ? location.Name : post.LocationName;
 
