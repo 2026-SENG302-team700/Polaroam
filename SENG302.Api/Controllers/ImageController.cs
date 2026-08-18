@@ -260,6 +260,10 @@ public class ImageController : ControllerBase
         {
             return Unauthorized();
         }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
         catch (Exception e)
         {
             return BadRequest(e.Message);

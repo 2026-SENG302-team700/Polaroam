@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Jobs;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 using Xunit.Abstractions;
@@ -113,6 +114,95 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             LocationName = "my home"
         });
         await context.SaveChangesAsync();
+    }
+
+    private async Task SetupImageContext(bool belongsToPost, int fileOwnerId = 1)
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        const int photoId = 10;
+
+        context.CustomFiles.Add(new CustomFile
+        {
+            Id = photoId,
+            OwnerId = fileOwnerId,
+            FileKey = "image-context-test.webp",
+            OriginalFileName = "image-context-test.webp",
+            MimeType = "image/webp"
+        });
+
+        var album = await context.Albums.SingleAsync(a => a.TripId == 1);
+        album.PhotoIds.Add(photoId);
+
+        if (belongsToPost)
+        {
+            context.Posts.Add(new Post
+            {
+                PostId = 1,
+                TripId = 1,
+                Title = "My post",
+                Content = "Post content",
+                PhotoIds = [photoId],
+                OsmId = 1,
+                LocationName = "Christchurch"
+            });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    // GetImageContext Tests
+    [Fact]
+    public async Task GetImageContext_ImageBelongsToPost_ReturnsTripAndPostContext()
+    {
+        await SetupImageContext(belongsToPost: true);
+
+        var response = await HttpClient.GetAsync("/api/image/10/context");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var imageContext = await response.Content.ReadFromJsonAsync<ImageContextResponse>();
+        imageContext.ShouldNotBeNull();
+        imageContext.TripId.ShouldBe(1);
+        imageContext.TripTitle.ShouldBe("My trip");
+        imageContext.PostId.ShouldBe(1);
+        imageContext.PostTitle.ShouldBe("My post");
+    }
+
+    [Fact]
+    public async Task GetImageContext_ImageBelongsOnlyToAlbum_ReturnsTripContextWithoutPost()
+    {
+        await SetupImageContext(belongsToPost: false);
+
+        var response = await HttpClient.GetAsync("/api/image/10/context");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var imageContext = await response.Content.ReadFromJsonAsync<ImageContextResponse>();
+        imageContext.ShouldNotBeNull();
+        imageContext.TripId.ShouldBe(1);
+        imageContext.TripTitle.ShouldBe("My trip");
+        imageContext.PostId.ShouldBeNull();
+        imageContext.PostTitle.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task GetImageContext_ImageOwnedByAnotherUser_ReturnsUnauthorized()
+    {
+        await SetupImageContext(belongsToPost: false, fileOwnerId: 2);
+
+        var response = await HttpClient.GetAsync("/api/image/10/context");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetImageContext_ImageDoesNotExist_ReturnsNotFound()
+    {
+        await SetupUserAndTrip(1, "test@example.com");
+
+        var response = await HttpClient.GetAsync("/api/image/999/context");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     private async Task<int> SetupPostPhotos(int postId, byte[] fileBytes, string mimeType)
