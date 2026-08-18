@@ -12,7 +12,7 @@
 
     let map = $state();
     let mapLoaded = $state(false);
-    const mapStyle = "https://tiles.openfreemap.org/styles/bright";
+    const mapStyle = "https://tiles.openfreemap.org/styles/liberty";
 
     /**
      * Get the posts for a given location

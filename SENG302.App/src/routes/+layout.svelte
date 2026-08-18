@@ -6,10 +6,16 @@
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
     import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
+	import maplibregl from 'maplibre-gl';
 
 	interface Props { children?: import("svelte").Snippet }
 
 	let { children }: Props = $props();
+
+	maplibregl.workerUrl = new URL(
+			'maplibre-gl/dist/maplibre-gl-csp-worker.js',
+			import.meta.url
+	).toString();
 
 	// added to ensure we can make use of bootstrap js for things like dropdowns
 	onMount(async () => {
