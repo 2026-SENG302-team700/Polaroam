@@ -32,7 +32,7 @@
      */
     function pinClick(location) {
         selectedPost = location.postId;
-        map?.flyTo({ center: [parseFloat(location.lon), parseFloat(location.lat)], zoom: 12, duration: 1000 });
+        map?.flyTo({ center: [parseFloat(location.lon), parseFloat(location.lat)], duration: 1000 });
     }
 
     /**
@@ -138,8 +138,6 @@
                             parseFloat(location.lat),
                         ]}
                         anchor="bottom"
-                        onclick={() => pinClick(location)}
-
                     >
                         <button
                             data-testid={`post-marker-${location.postId}`}
@@ -147,13 +145,18 @@
                             class:if-highlighted={hoveredPostId ===
                                 location.postId}
                             type="button"
+                            tabindex="-1"
                             aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
                         >
                             <i class="bi bi-geo-fill"></i>
                             <span>{index + 1}</span>
                         </button>
 
-                        <Popup offset={[0, -20]}>
+                        <Popup
+                            offset={[0, -20]}
+                            open={selectedPost === location.postId}
+                            onopen={() => pinClick(location)}
+                        >
                             <div class="post-popup">
                                 {#if post}
                                     <h3>{post.title}</h3>
