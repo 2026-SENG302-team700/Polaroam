@@ -1,3 +1,4 @@
+using System.Data.SqlTypes;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
@@ -17,20 +18,24 @@ public interface IAlbumService
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
     public Task<PhotoMetadataResponse> GetSingleImageMetadataFromAlbumAsync(int tripId, int photoId);
+    public Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds);
 }
 
 public class AlbumService : IAlbumService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IFileService _fileService;
-    private readonly IImageTaggingQueue _imageTaggingQueue;
-    public AlbumService(IFileService fileService,
+    private readonly IUserService _userService;
+    private readonly IImageTaggingService _imageTaggingService;
+    public AlbumService(IFileService fileService, 
                         IDbContextFactory<DatabaseContext> dbContextFactory,
-                        IImageTaggingQueue imageTaggingQueue)
+                        IUserService userService,
+                        IImageTaggingService imageTaggingService)
     {
         _fileService = fileService;
-        _imageTaggingQueue = imageTaggingQueue;
         _dbContextFactory = dbContextFactory;
+        _userService = userService;
+        _imageTaggingService = imageTaggingService;
     }
 
     /// <summary>
@@ -156,30 +161,38 @@ public class AlbumService : IAlbumService
         {
             throw new KeyNotFoundException("Trip does not exist");
         }
+        
+        User? user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            throw new SqlNullValueException("User does not exist");
+        }
 
         foreach (var photo in photos)
         {
             var file = await _fileService.SaveFileAsync(photo, trip.UserId);
             album.PhotoIds.Add(file.Id);
 
-            try
+            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
             {
-                FormFile safeFormFile = await ImageTagGeneratorHelper.createFormFileForTagging(photo);
-
-                await _fileService.SetTagQueueStatus(file.Id);
-
-                await _imageTaggingQueue.QueueImageTaggingAsync(
-                    new ImageTaggingJob(Image: safeFormFile, ImageId: file.Id)
-                );
+               await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
-            catch (Exception ex)
+            else
             {
-                // Tagging can't cause the image upload to fail
-                Console.WriteLine($"Failed to generate tags for image {file.Id}: {ex.Message}");
+                var dbFile = await context.CustomFiles.FindAsync(file.Id);
+                if (dbFile != null)
+                {
+                    dbFile.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
+                    context.CustomFiles.Update(dbFile);
+                    await context.SaveChangesAsync();
+                }
             }
-        }
-
+        }  
+        context.Albums.Update(album);
         await context.SaveChangesAsync();
+        
+        
 
         return album;
     }
@@ -212,14 +225,14 @@ public class AlbumService : IAlbumService
             throw new KeyNotFoundException("Album with that Id does not exist.");
         }
 
-        List<PhotoMetadataResponse> files = [];
+        List<PhotoMetadataResponse> matchedFiles = [];
 
         foreach (var photoId in album.PhotoIds)
         {
             try
             {
                 var file = await _fileService.GetFileByIdAsync(photoId);
-                files.Add(new PhotoMetadataResponse
+                matchedFiles.Add(new PhotoMetadataResponse
                 {
                     PhotoId = file.Id,
                     FileName = file.OriginalFileName,
@@ -234,13 +247,20 @@ public class AlbumService : IAlbumService
 
         }
 
-        if (!string.IsNullOrEmpty(tag) && files.Count > 0)
+        if (!string.IsNullOrEmpty(tag) && matchedFiles.Count > 0)
         {
-            files = files.Where(f => f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
-            files.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
+            matchedFiles = matchedFiles.Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
+            matchedFiles.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
         }
 
-        return files;
+        return matchedFiles.Select(file => new PhotoMetadataResponse
+        {
+            PhotoId = file.PhotoId,
+            FileName = file.FileName,
+            MimeType = file.MimeType,
+            Tags = file.Tags,
+            DateCreated = file.DateCreated
+        }).ToList();
     }
 
 
@@ -310,5 +330,15 @@ public class AlbumService : IAlbumService
 
         return newAlbum;
     }
-
+    
+    /// <summary>
+    /// gets albums from list of trips
+    /// </summary>
+    /// <param name="tripIds">ids of trips for album</param>
+    /// <returns>the album of the respective trips</returns>
+    public async Task<List<Album>> GetAlbumsByTripIdsAsync(List<int> tripIds)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.Albums.Where(a => tripIds.Contains(a.TripId)).ToListAsync();
+    }
 }

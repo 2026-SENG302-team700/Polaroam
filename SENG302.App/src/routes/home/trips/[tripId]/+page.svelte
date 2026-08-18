@@ -193,7 +193,7 @@
 
 <ConfirmationModal
     bind:show={deletionModalShown}
-    message="Are you sure you want to delete this post? This action cannot be undone."
+    message="Are you sure you want to delete this trip? This action cannot be undone."
     option1Text="Delete"
     option2Text="Do not delete"
     onOption1={deleteTrip}
