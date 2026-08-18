@@ -21,8 +21,8 @@ public class ImageController : ControllerBase
 
 
     public ImageController(
-        IUserService userService, 
-        IFileService fileService, 
+        IUserService userService,
+        IFileService fileService,
         IImageTaggingQueue imageTaggingQueue,
         IImageService imageService
     )
@@ -57,7 +57,7 @@ public class ImageController : ControllerBase
             {
                 return Ok(tags);
             }
-            
+
             var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
             return imageInQueue
@@ -69,41 +69,41 @@ public class ImageController : ControllerBase
             return NotFound(e.Message);
         }
     }
-    
-    /// <summary>
-/// Returns a list of suggested tags for the user
-/// based on the query provided. Tags are selected from real
-/// tags belonging to the user.
-/// Max 5 tags are returned.
-/// </summary>
-/// <param name="query">The string to match with</param>
-/// <returns>
-/// 200 - List containing the suggested tags 
-/// Unauthorized - User is not authenticated
-/// BadRequest - Unknown error
-/// </returns>
-[HttpGet("tags")]
-public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
-{
-    try
-    {
-        // Get the user id so only their tags are returned
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
-        if (user == null)
-        {
-            return Unauthorized();
-        }
 
-        // Get the suggested tags
-        var tags = await _imageService.GetSuggestedTagsForUser(userId, query);
-        return Ok(tags);
-    }
-    catch (Exception e) // Unknown error
+    /// <summary>
+    /// Returns a list of suggested tags for the user
+    /// based on the query provided. Tags are selected from real
+    /// tags belonging to the user.
+    /// Max 5 tags are returned.
+    /// </summary>
+    /// <param name="query">The string to match with</param>
+    /// <returns>
+    /// 200 - List containing the suggested tags 
+    /// Unauthorized - User is not authenticated
+    /// BadRequest - Unknown error
+    /// </returns>
+    [HttpGet("tags")]
+    public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     {
-        return BadRequest("Failed to get suggested tags." + e.Message);
+        try
+        {
+            // Get the user id so only their tags are returned
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            // Get the suggested tags
+            var tags = await _imageService.GetSuggestedTagsForUser(userId, query);
+            return Ok(tags);
+        }
+        catch (Exception e) // Unknown error
+        {
+            return BadRequest("Failed to get suggested tags." + e.Message);
+        }
     }
-}
 
     /// <summary>
     /// Returns a list of suggested tags for the user
@@ -142,7 +142,7 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     }
 
     /// <summary>
-    /// Gets post from photo id
+    /// Gets a images context from the photoId. This includes the trip and post it belongs to.
     /// </summary>
     /// <param name="photoId"></param>
     /// <returns>
@@ -150,8 +150,8 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     /// Not Found - Photo has no corelating post
     /// Ok - Returned with post Id.
     /// </returns>
-    [HttpGet("{photoId:int}/post")]
-    public async Task<ActionResult> GetPostFromPhotoId(int photoId)
+    [HttpGet("{photoId:int}/context")]
+    public async Task<ActionResult> GetImageContext(int photoId)
     {
         try
         {
@@ -162,11 +162,11 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
                 return Unauthorized();
             }
 
-            var postId = await _imageService.GetPostFromPhotoId(photoId, userId);
+            var imageContext = await _imageService.GetImageContextAsync(photoId, userId);
 
-            if (postId != null)
+            if (imageContext != null)
             {
-                return Ok(postId);
+                return Ok(imageContext);
             }
 
             return NotFound();

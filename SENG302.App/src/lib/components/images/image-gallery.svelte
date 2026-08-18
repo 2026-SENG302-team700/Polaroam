@@ -20,14 +20,14 @@
         children: Snippet;
     } = $props();
 
-    let photoIds = $derived(imageMetadata?.map(m => m.photoId) ?? []);
-    
+    let photoIds = $derived(imageMetadata?.map((m) => m.photoId) ?? []);
+
     let letDelete = true;
     let confirmDeleteModal = $state(false);
     let goToPostModal = $state(false);
     let pendingDeleteIndex: number | null = $state(null);
-    let dataUrl = $state('');
-    
+    let dataUrl = $state("");
+
     let deleteError = $state("");
     let linkedPostId = $state(0);
 
@@ -59,18 +59,20 @@
                     },
                 );
                 if (response.status == 200 || response.status == 204) {
-                    imageMetadata = imageMetadata.filter((_, i) => i !== pendingDeleteIndex);
+                    imageMetadata = imageMetadata.filter(
+                        (_, i) => i !== pendingDeleteIndex,
+                    );
                 }
-                
+
                 if (response.status == 405) {
                     linkedPostId = await response.json();
                     goToPostModal = true;
                 }
             } catch {
                 deleteError = "Failed to delete image";
-                console.log(deleteError)
+                console.log(deleteError);
             }
-            
+
             pendingDeleteIndex = null;
         }
         confirmDeleteModal = false;
@@ -79,7 +81,7 @@
 
 <div class="d-flex justify-content-center">
     <div
-            class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
+        class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
     >
         <div class="col">
             <div class="picker-tile">
@@ -90,18 +92,22 @@
             <div class="col">
                 <div class="position-relative">
                     <LazyClickableImage
-                            src={resolve(`/api/album/${tripId}/images/${image.photoId}`)}
-                            {index}
-                            {tripId}
-                            images={imageMetadata.map(m => resolve(`/api/album/${tripId}/images/${m.photoId}`))}
-                            photoId={image.photoId}
-                            {photoIds}
+                        src={resolve(
+                            `/api/album/${tripId}/images/${image.photoId}`,
+                        )}
+                        {index}
+                        viewContext="album"
+                        images={imageMetadata.map((m) =>
+                            resolve(`/api/album/${tripId}/images/${m.photoId}`),
+                        )}
+                        photoId={image.photoId}
+                        {photoIds}
                     />
                     {#if letDelete}
                         <div class="position-absolute top-0 end-0 m-1">
                             <DeleteButton
-                                    deleteAction={() => RequestDelete(index)}
-                                    class="btn-sm"
+                                deleteAction={() => RequestDelete(index)}
+                                class="btn-sm"
                             />
                         </div>
                     {/if}
@@ -111,22 +117,22 @@
     </div>
 </div>
 
-
-
 {#if !imageMetadata || imageMetadata.length === 0}
-    <div class="position-relative d-flex flex-column align-items-center justify-content-center text-center">
+    <div
+        class="position-relative d-flex flex-column align-items-center justify-content-center text-center"
+    >
         <p class="fs-3">No images found</p>
     </div>
 {/if}
 <ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
-        bind:show={confirmDeleteModal}
-        message="Are you sure you want to delete this image?"
-        option1Text="Delete"
-        option2Text="Do not delete"
-        onOption1={() => ConfirmDelete()}
-        onOption2={() => (confirmDeleteModal = false)}
+    bind:show={confirmDeleteModal}
+    message="Are you sure you want to delete this image?"
+    option1Text="Delete"
+    option2Text="Do not delete"
+    onOption1={() => ConfirmDelete()}
+    onOption2={() => (confirmDeleteModal = false)}
 />
 
 <ConfirmationModal
@@ -134,7 +140,9 @@
     message="Selected image belongs to a post, delete the image from the post to remove the image."
     option1Text="Go to post"
     option2Text="Cancel"
-    onOption1={() => {goto(resolve(`/home/trips/${tripId}/posts/${linkedPostId}`))}}
+    onOption1={() => {
+        goto(resolve(`/home/trips/${tripId}/posts/${linkedPostId}`));
+    }}
     onOption2={() => (goToPostModal = false)}
 />
 

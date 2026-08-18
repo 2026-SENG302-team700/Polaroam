@@ -5,6 +5,8 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import ExpandableErrorDisplay from "$lib/components/forms/expandable-error-display.svelte";
 
+    type ImageViewContext = "search" | "album" | "post" | "none";
+
     let {
         images = $bindable([]),
         photoIds = [],
@@ -12,6 +14,7 @@
         ondelete,
         errors = [],
         pickerFirst = false,
+        viewContext = "none",
         children,
     }: {
         images?: File[] | null;
@@ -20,6 +23,7 @@
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
         pickerFirst?: boolean;
+        viewContext?: ImageViewContext;
         children?: Snippet;
     } = $props();
 
@@ -69,7 +73,14 @@
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>
-                <ClickableImage {image} {index} {images} photoId={photoIds[index]} {photoIds} />
+                <ClickableImage
+                    {image}
+                    {index}
+                    {images}
+                    photoId={photoIds[index]}
+                    {photoIds}
+                    {viewContext}
+                />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">
                         <DeleteButton
@@ -97,12 +108,12 @@
 <ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
-        bind:show={confirmationModalShown}
-        message="Are you sure you want to delete this image?"
-        option1Text="Delete"
-        option2Text="Do not delete"
-        onOption1={() => ConfirmDelete()}
-        onOption2={() => (confirmationModalShown = false)}
+    bind:show={confirmationModalShown}
+    message="Are you sure you want to delete this image?"
+    option1Text="Delete"
+    option2Text="Do not delete"
+    onOption1={() => ConfirmDelete()}
+    onOption2={() => (confirmationModalShown = false)}
 />
 
 <style>
