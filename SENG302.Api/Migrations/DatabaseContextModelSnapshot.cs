@@ -204,6 +204,9 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("PreferenceMapVisible")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("ProfilePicture")
                         .HasColumnType("integer");
 

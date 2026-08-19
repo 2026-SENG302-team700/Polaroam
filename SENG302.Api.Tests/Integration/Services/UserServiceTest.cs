@@ -265,6 +265,8 @@ public class UserServiceTest : BaseIntegrationTestFixture
         // Use the TripService function to create a new trip with the name and user email
         User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
 
+        user.ShouldNotBeNull();
+
         user.OneTimeCode.ShouldBe(code);
         user.CodeGenerationTime.ShouldBe(timeCreated);
         user.EmailVerified.ShouldBe(userVerified);
@@ -288,8 +290,12 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
+        id.ShouldNotBeNull();
+
         // Use the TripService function to create a new trip with the name and user email
         User? user = await ServiceUnderTest.DeleteUserByIdAsync((int)id);
+
+        user.ShouldNotBeNull();
 
         user.Id.ShouldBe((int)id);
         user.Email.ShouldBe(email);
@@ -516,5 +522,22 @@ public class UserServiceTest : BaseIntegrationTestFixture
         var singleItemInDB = context.Users.ShouldHaveSingleItem();
     
         singleItemInDB.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task MapVisibility_SetX_IsX()
+    {
+        await ServiceUnderTest.CreateNewUserAsync(
+            "jon@bler.com",
+            "Jon Bler",
+            "paSSWord123#@%",
+            "paSSWord123#@%",
+            "SK");
+        
+        await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, true);
+        (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeTrue();
+        
+        await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
+        (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeFalse();
     }
 }

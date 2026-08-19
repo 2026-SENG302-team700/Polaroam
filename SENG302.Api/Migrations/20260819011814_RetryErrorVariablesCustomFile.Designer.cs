@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260818235923_MissingRetryTaggingColumnFix")]
-    partial class MissingRetryTaggingColumnFix
+    [Migration("20260819011814_RetryErrorVariablesCustomFile")]
+    partial class RetryErrorVariablesCustomFile
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -206,6 +206,9 @@ namespace SENG302.Api.Migrations
                     b.Property<string>("PasswordKey")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("PreferenceMapVisible")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("ProfilePicture")
                         .HasColumnType("integer");
