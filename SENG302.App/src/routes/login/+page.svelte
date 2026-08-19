@@ -429,7 +429,7 @@
                 },
             );
             if (response.ok) {
-                addToast("New password updated successfully");
+                addToast("Password reset successfully");
                 authModal.hide();
                 return;
             }
