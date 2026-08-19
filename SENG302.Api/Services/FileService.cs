@@ -14,8 +14,10 @@ public interface IFileService
     string GenerateFileKey(IFormFile file);
     Task<bool> CheckFileOwnership(int fileId, int userId);
     Task<List<string>?> GetTagsAsync(int id);
+    Task RemoveTagAsync(int id, string tag);
     Task SetTagQueueStatus(int id);
     Task<bool> GetTagQueueStatus(int id);
+    public Task<string?> GetTagErrors(int id);
     Task<List<CustomFile>> GetFilesByIdsAsync(List<int> ids);
 }
 
@@ -189,6 +191,26 @@ public class FileService : IFileService
     }
 
     /// <summary>
+    /// Removes a specific tag from a file
+    /// </summary>
+    /// <param name="id">the id of the file we are removing a tag from</param>
+    /// <param name="tag">the tag we are removing, as a string</param>
+    /// <returns></returns>
+    public async Task RemoveTagAsync(int id, string tag)
+    {
+        var file = await GetFileByIdAsync(id);
+
+        if (file.Tags == null || !file.Tags.Contains(tag)) throw new TagNotFoundException($"Tag '{tag}' is not found");
+
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        file.Tags.Remove(tag);
+        context.Update(file);
+
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
     /// Sets the status of a file that it is in the queue to be tagged or the job is being performed.
     /// </summary>
     /// <param name="id">ID of the image to be set as being tagged</param>
@@ -220,6 +242,12 @@ public class FileService : IFileService
     {
         var file = await GetFileByIdAsync(id);
         return file.InTagQueue;
+    }
+
+    public async Task<string?> GetTagErrors(int id)
+    {
+        var file = await GetFileByIdAsync(id);
+        return file.TagError;
     }
     
     /// <summary>

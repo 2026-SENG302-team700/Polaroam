@@ -242,6 +242,7 @@
 
                 if (result.success) {
                     aiToggle = true;
+                    sessionStorage.setItem("aiTaggingPreference", aiToggle.toString())
                 } else {
                     addToast(
                         result.message || "Failed to enable AI tagging.",
@@ -536,6 +537,9 @@
             );
 
             if (response.ok) {
+                
+                sessionStorage.setItem("aiTaggingPreference", aiToggle.toString())
+                
                 return { 
                     success: true 
                 };

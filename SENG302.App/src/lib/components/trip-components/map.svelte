@@ -5,7 +5,12 @@
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { onMount } from 'svelte';
 
-    let { locations, posts, hoveredPostId = null } = $props();
+    let { 
+        locations, 
+        posts, 
+        hoveredPostId = null,
+        selectedPost = $bindable(null)
+    } = $props();
 
     let map = $state();
     let mapLoaded = $state(false);
@@ -31,6 +36,14 @@
     onMount(() => {
         fetchMapVisibility();
     })
+
+    /**
+     * gets the post from a pin + centres map on pin
+     */
+    function pinClick(location) {
+        selectedPost = location.postId;
+        map?.flyTo({ center: [parseFloat(location.lon), parseFloat(location.lat)], duration: 1000 });
+    }
 
     /**
      * Recenter the map to fit all the locations
@@ -208,10 +221,14 @@
                                 <span>{index + 1}</span>
                             </button>
 
-                            <Popup offset={[0, -20]}>
-                                <div class="post-popup">
-                                    {#if post}
-                                        <h3>{post.title}</h3>
+                        <Popup
+                            offset={[0, -20]}
+                            open={selectedPost === location.postId}
+                            onopen={() => pinClick(location)}
+                        >
+                            <div class="post-popup">
+                                {#if post}
+                                    <h3>{post.title}</h3>
 
                                         {#if post.date}
                                             <p class="post-date">

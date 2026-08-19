@@ -5,14 +5,19 @@
 
     import ImageCarousel from "../images/image-carousel.svelte";
 
-    let { post, onHover = () => {}, onLeave = () => {} } = $props();
+    let {
+        post,
+        isSelected = false,
+        onHover = () => {}, 
+        onLeave = () => {}
+    } = $props();
 
     function goToPost() {
         goto(resolve(`/home/trips/${post.tripId}/posts/${post.postId}`));
     }
 </script>
 
-<div class="card mb-3" data-testid={`post-card-${post.postId}`}>
+<div class="card mb-3" class:highlighted={isSelected} data-testid={`post-card-${post.postId}`}>
     <div class="card-body" onmouseenter={onHover} onmouseleave={onLeave}>
         <div
             class="card-body"
@@ -40,3 +45,10 @@
         </div>
     {/if}
 </div>
+
+<style>
+    .highlighted {
+        border-color: #117a8b;
+        background-color: #b9d5df;
+    }
+</style>

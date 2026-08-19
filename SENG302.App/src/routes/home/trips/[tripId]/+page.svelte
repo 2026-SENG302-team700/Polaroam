@@ -32,6 +32,7 @@
 
     let postLocations = $state([]);
     let posts = $state([]);
+    let selectedPost = $state(null);
 
     onMount(() => {
         fetchTrip();
@@ -178,7 +179,7 @@
             </div>
         </div>
         <div class="card-body">
-            <Map locations={postLocations} {posts} {hoveredPostId} />
+        <Map locations={postLocations} {posts} {hoveredPostId} bind:selectedPost />
         </div>
         <div class="card-footer text-muted images">
             <PostSection
@@ -186,6 +187,7 @@
                 tripId={tripObject.id}
                 onPostHover={(postId: number) => (hoveredPostId = postId)}
                 onPostLeave={() => (hoveredPostId = null)}
+                {selectedPost}
             />
         </div>
     </div>
@@ -193,7 +195,7 @@
 
 <ConfirmationModal
     bind:show={deletionModalShown}
-    message="Are you sure you want to delete this post? This action cannot be undone."
+    message="Are you sure you want to delete this trip? This action cannot be undone."
     option1Text="Delete"
     option2Text="Do not delete"
     onOption1={deleteTrip}
