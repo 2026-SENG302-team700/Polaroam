@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 namespace SENG302.Api.Models.Responses;
 
 
-[PrimaryKey(nameof(OsmId), nameof(PostId))]
+[PrimaryKey(nameof(PostId))]
 public class Location
 {
     public required long OsmId { get; set; }
