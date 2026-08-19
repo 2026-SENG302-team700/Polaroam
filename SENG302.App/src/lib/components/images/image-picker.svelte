@@ -21,6 +21,7 @@
         fileErrors = $bindable<string[]>([]),
         loading = $bindable(false),
         uploadFunc,
+        fill = false,
     }: {
         filesList?: File[] | null | undefined;
         errors: string[];
@@ -28,6 +29,7 @@
         fileErrors?: string[];
         loading: boolean;
         uploadFunc?: () => void;
+        fill?: boolean;
     } = $props();
 
     let displayedErrors = $derived([...errors, ...fileErrors]);
@@ -128,7 +130,7 @@
     }
 </script>
 
-<div class="d-flex flex-column mb-2">
+<div class="d-flex flex-column mb-2" class:fill>
     <button
         type="button"
         class="btn image-picker-button"
@@ -181,5 +183,10 @@
     .image-picker-button.is-invalid {
         border-color: var(--bs-danger);
         color: var(--bs-danger);
+    }
+
+    .fill {
+        flex: 1;
+        margin-bottom: 0 !important;
     }
 </style>

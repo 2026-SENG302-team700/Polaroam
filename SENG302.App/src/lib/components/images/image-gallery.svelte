@@ -8,13 +8,17 @@
     import { fetchWithCsrf } from "$lib/csrf.js";
     import { goto } from "$app/navigation";
 
+    type ImageMetadata = {
+        photoId: number;
+    };
+
     let {
         imageMetadata = $bindable([]),
         tripId,
         errors = [],
         children,
     }: {
-        imageMetadata?: [] | null;
+        imageMetadata?: ImageMetadata[] | null;
         tripId: number;
         errors?: string[];
         children: Snippet;

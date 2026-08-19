@@ -11,6 +11,7 @@ using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers.UserController;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -23,6 +24,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
     public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
+        
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
         _mockFileService = Substitute.For<IFileService>();
         _controller =
@@ -298,5 +300,43 @@ public class UserControllerTests : BaseIntegrationTestFixture
         await using var verifyContext = DbContextFactory.CreateDbContext();
         var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
         updatedUser!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task MapVisibility_SetX_IsX()
+    {
+        await AddTestUser();
+        
+        var dataTrue = new { MapVisible = true };
+        var response1 = await HttpClient.PutAsJsonAsync("/api/user/preference/mapvisible", dataTrue);
+        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeTrue();
+        
+        var dataFalse = new { MapVisible = false };
+        var response2 = await HttpClient.PutAsJsonAsync("/api/user/preference/mapvisible", dataFalse);
+        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task MapVisibility_IsX_GetX()
+    {
+        await AddTestUser();
+
+        await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, true);
+        
+        var response1 = await HttpClient.GetAsync("/api/user/preference/mapvisible");
+        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content1 = await response1.Content.ReadFromJsonAsync<MapVisibleObject>();
+        content1.ShouldNotBeNull();
+        content1.MapVisible.ShouldBeTrue();
+
+        await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
+        
+        var response2 = await HttpClient.GetAsync("/api/user/preference/mapvisible");
+        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content2 = await response2.Content.ReadFromJsonAsync<MapVisibleObject>();
+        content2.ShouldNotBeNull();
+        content2.MapVisible.ShouldBeFalse();
     }
 }

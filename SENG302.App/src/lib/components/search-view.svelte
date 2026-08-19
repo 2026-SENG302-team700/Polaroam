@@ -72,10 +72,11 @@
 
 <style>
     .trip-object-wrapper {
-        padding-top: 3px;
+        padding: 3px 8px 10px 0;
         display: grid;
-        grid-template-columns: 33% 33% 33%;
-        align-items: center;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 1.25rem;
     }
 
     .photo-trip-list {
@@ -121,5 +122,17 @@
 
     .photo-trip-body {
         padding: 1.25rem;
+    }
+
+    @media (max-width: 992px) {
+        .trip-object-wrapper {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 576px) {
+        .trip-object-wrapper {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

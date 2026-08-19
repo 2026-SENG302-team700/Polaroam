@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { MapLibre, Marker, Popup } from "svelte-maplibre";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -12,7 +13,7 @@
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
-    import AlbumButton from '$lib/components/buttons/album-button.svelte';
+    import AlbumButton from "$lib/components/buttons/album-button.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -148,13 +149,11 @@
     }
 </script>
 
-
-
 <div class="container trip-page-content">
     <div class="button-wrapper">
         <NavigationButton path="/home" text="Back" />
         <div class="modify-button-wrapper">
-            <AlbumButton tripid = {params.tripId}/>
+            <AlbumButton tripid={params.tripId} />
             <EditButton path={`/home/trips/${params.tripId}/edit`} />
             <DeleteButton deleteAction={showConfirmationModal} />
         </div>
@@ -168,14 +167,15 @@
                 <p>No description</p>
             {/if}
             <ErrorDisplay errors={[error]} />
-            <div class="header-content-wrapper"> 
+            <div class="header-content-wrapper">
                 <div class="header-content-item">
                     <div class="bi-calendar-event"></div>
-                    <h6 class="card-subtitle mb-2 text-muted">{formatDate(tripObject.startDate)} - {formatDate(
-                        tripObject.endDate,
-                    )}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        {formatDate(tripObject.startDate)} - {formatDate(
+                            tripObject.endDate,
+                        )}
+                    </h6>
                 </div>
-
             </div>
         </div>
         <div class="card-body">
@@ -203,7 +203,6 @@
 />
 
 <style>
-
     .button-wrapper {
         display: flex;
         justify-content: space-between;

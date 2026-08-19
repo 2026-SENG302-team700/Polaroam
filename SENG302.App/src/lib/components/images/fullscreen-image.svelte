@@ -292,7 +292,7 @@
                         onclick={() =>
                             goto(
                                 resolve(
-                                    `/home/trips/${imageContext.tripId}/posts/${imageContext.postId}`,
+                                    `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
                                 ),
                             )}>Go to Post</button
                     >
@@ -303,7 +303,7 @@
                         onclick={() =>
                             goto(
                                 resolve(
-                                    `/home/trips/${imageContext.tripId}/album`,
+                                    `/home/trips/${imageContext!.tripId}/album`,
                                 ),
                             )}>Go to Trip Album</button
                     >

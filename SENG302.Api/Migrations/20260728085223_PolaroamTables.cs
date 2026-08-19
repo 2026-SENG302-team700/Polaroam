@@ -5,7 +5,7 @@
 namespace SENG302.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class MigrationFixPlease : Migration
+    public partial class PolaroamTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

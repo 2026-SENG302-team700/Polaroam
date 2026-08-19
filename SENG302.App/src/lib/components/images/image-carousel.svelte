@@ -1,6 +1,4 @@
 <script lang="ts">
-    import RightArrowButton from "../buttons/right-arrow-button.svelte"
-    import LeftArrowButton from "../buttons/left-arrow-button.svelte"
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
@@ -102,10 +100,20 @@
       <div class="close-button-wrapper">
          <img src={imageUrl} alt="Image" class="image" />
          {#if photos !== null && photos?.length > 1 && index !== photos?.length-1}
-            <RightArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={photos} {moveToRightImage}/>
+            <button
+               type="button"
+               class="btn btn-secondary bi-arrow-right carousel-arrow right-arrow"
+               title="Next image"
+               onclick={moveToRightImage}
+            ></button>
          {/if}
          {#if photos !== null && photos?.length > 1 && index !== 0}
-            <LeftArrowButton class="position-absolute" bind:image={image} bind:index={index} bind:images={photos} {moveToLeftImage}/>
+            <button
+               type="button"
+               class="btn btn-secondary bi-arrow-left carousel-arrow left-arrow"
+               title="Previous image"
+               onclick={moveToLeftImage}
+            ></button>
          {/if}
       </div>    
    </div>  
@@ -115,24 +123,43 @@
 
  .image-container {
     position: relative;
-    width: 30%;
-    height: 30%;
+    width: 100%;
+    height: 14rem;
     display: flex;
     justify-content: center;
     align-items: center;
+    background: #efe7d6;
  }
  .image {
     position: relative;
-    max-height: 100%;
-    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
  }
  .close-button-wrapper {
    position:relative;
+   width: 100%;
+   height: 100%;
  }
  .fullscreen-image-wrapper {
    display: flex;
 
    justify-content: center;
+ }
+
+ .carousel-arrow {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    transform: translateY(-50%);
+ }
+
+ .left-arrow {
+    left: 0.75rem;
+ }
+
+ .right-arrow {
+    right: 0.75rem;
  }
 
 </style>

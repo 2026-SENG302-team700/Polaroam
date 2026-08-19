@@ -14,6 +14,11 @@
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import { onMount } from "svelte";
+    import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
+
+    let aiTaggingEnabled = $state(false);
+    let aiTaggingForUpload = $state(false);
 
     type PostFormErrors = {
         title: string[];
@@ -68,6 +73,25 @@
     let showConfirmationModal = $state(false);
 
     /**
+     * Fetches the display name of the user based on the post
+     */
+    async function loadAiTaggingPreference() {
+        const response = await fetchWithCsrf(resolve("/api/user" as any), {
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        aiTaggingEnabled = user.aiTagging;
+        aiTaggingForUpload = user.aiTagging;
+    }
+
+    onMount(async () => {
+        await loadAiTaggingPreference();
+    });
+
+    /**
      * Function for creating a post
      */
     async function createPost() {
@@ -89,6 +113,8 @@
                     form.append("files", files[i]);
                 }
             }
+            // add the ai tagging option to the form data
+            form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
 
             const response = await fetchWithCsrf(resolve(`/api/post` as any), {
                 method: "POST",
@@ -119,7 +145,7 @@
                     errors.content.includes(
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
-                    errors.title.length === 0 && 
+                    errors.title.length === 0 &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
                     !errors.date &&
@@ -186,7 +212,11 @@
         />
     </ImageDisplay>
 
-    <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
+    <AiTaggingOption
+        bind:enabled={aiTaggingEnabled}
+        bind:aiTaggingForUpload
+        {loading}
+    />
 
     <div class="post-form-actions">
         <ConfirmCancelButton

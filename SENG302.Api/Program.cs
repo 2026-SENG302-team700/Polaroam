@@ -80,8 +80,7 @@ public class Program
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         }
-
-
+        
         builder.Services.AddHttpContextAccessor();
 
         // Register custom services 
