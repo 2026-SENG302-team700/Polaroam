@@ -303,7 +303,7 @@ public class PostService : IPostService
 
         if (postUpdates.OsmId != post.OsmId || postUpdates.OsmType != post.OsmType)
         {
-            location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType!);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -311,6 +311,15 @@ public class PostService : IPostService
                     ["location"] = ["This isn't a valid location"]
                 });
             }
+
+            var postLocation = await context.Locations.FirstOrDefaultAsync(l => l.PostId == post.PostId);
+            if (postLocation == null) throw new KeyNotFoundException("Could not find original location");
+            postLocation.OsmId = location.OsmId;
+            postLocation.OsmType = location.OsmType;
+            postLocation.Lat = location.Latitude;
+            postLocation.Lon = location.Longitude;
+            postLocation.DisplayName = location.DisplayName;
+            await context.SaveChangesAsync();
         }
 
         User? user = await _userService.GetUserByIdAsync(userId);
@@ -353,13 +362,12 @@ public class PostService : IPostService
 
         await context.SaveChangesAsync();
 
-
         // Update post content
         post.Title = postUpdates.Title;
         post.Content = postUpdates.Content;
         post.Date = postUpdates.Date;
         post.OsmId = postUpdates.OsmId;
-        post.OsmType = postUpdates.OsmType;
+        post.OsmType = postUpdates.OsmType!;
         post.PhotoIds = post.PhotoIds.Count > 0
             ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList()
             : post.PhotoIds = customFileIds;
