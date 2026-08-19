@@ -67,7 +67,8 @@ public static class CreateExampleUsersHelper
             {
                 var trip = new Trip
                 {
-                    Title = "Name_" + i.ToString(),
+                    Id = i,
+                    Title = "Name " + i.ToString(),
                     UserId = user.Id,
                     StartDate = DateTimeOffset.UtcNow,
                     EndDate = DateTimeOffset.UtcNow.AddDays(1),
@@ -75,13 +76,21 @@ public static class CreateExampleUsersHelper
 
                 dbContext.Add(trip);
 
+                var album = new Album
+                {
+                    TripId = i,
+                    PhotoIds = new List<int>()
+                };
+                
+                dbContext.Add(album);
+
                 await dbContext.SaveChangesAsync();
 
                 for (int j = 0; j < (i % 10); j++)
                 {
                     var post = new Post
                     {
-                        Title = "Post_" + j.ToString(),
+                        Title = "Post " + j.ToString(),
                         TripId = trip.Id,
                         Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
                         Date = DateTimeOffset.MaxValue,

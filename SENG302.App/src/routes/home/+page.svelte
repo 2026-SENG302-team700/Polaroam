@@ -143,33 +143,33 @@
             My Trips
         </h1>
     </div>
-
-    <div class="card-body d-flex align-items-center my-trips-top-bar">
-        <AddButton path="/home/trips/create-trip" />
-        <div class="global-search">
-            <TagSearchForm
-                bind:query={tagQuery}
-                placeholder="search your trips and images"
-                {performSearch}
-                onClear={clearSearch}
-            />
+    <div class="card">
+        <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
+            <AddButton path="/home/trips/create-trip" />
+            <div style="width: 40%;">
+                <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} placeholder="search your trips and images"/>
+            </div>
+            
+        </div>
+        <div class="card-footer">
+            {#if inSearch}
+                <SearchView trips={searchTrips} photoTrips={searchPhotoTrips} query={tagQuery}/>
+            {:else}
+                {#if trips.length > 0}
+                    <div class="trip-object-wrapper">
+                        {#each trips as trip}
+                            <TripCard tripObject={trip} />
+                        {/each}
+                    </div>
+                {:else}
+                    <div class="no-trips-message">
+                        <p>You have no trips yet! Create one with the "+" button</p>
+                    </div>
+                {/if}
+            {/if}
         </div>
     </div>
-    {#if inSearch}
-        <SearchView trips={searchTrips} photoTrips={searchPhotoTrips} query={tagQuery}/>
-    {:else}
-        {#if trips.length > 0}
-            <div class="trip-object-wrapper">
-                {#each trips as trip}
-                    <TripCard tripObject={trip} />
-                {/each}
-            </div>
-        {:else}
-            <div class="no-trips-message">
-                <p>You have no trips yet! Create one with the "+" button</p>
-            </div>
-        {/if}
-    {/if}
+    
 </div>
 
 <style>
@@ -184,7 +184,7 @@
         width: 50vw;
         display: flex;
         flex-direction: row;
-        position: absolute;
+
         align-items: center;
         text-align: center;
     }
@@ -195,10 +195,6 @@
         width: 100%;
     }
 
-    .global-search {
-        flex: 1;
-        min-width: 0;
-    }
 
     @media (max-width: 992px) {
         .trip-object-wrapper {

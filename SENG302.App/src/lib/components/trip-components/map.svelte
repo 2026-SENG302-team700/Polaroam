@@ -1,15 +1,15 @@
 <script lang="ts">
     import { MapLibre, Marker, Popup } from "svelte-maplibre";
-    import {  resolve  } from "$app/paths";
+    import { resolve } from "$app/paths";
     import { formatDate } from "$lib/datepicker/formatDate";
     import { fetchWithCsrf } from "$lib/csrf.js";
-    import { onMount } from 'svelte';
+    import { onMount } from "svelte";
 
-    let { 
-        locations, 
-        posts, 
+    let {
+        locations,
+        posts,
         hoveredPostId = null,
-        selectedPost = $bindable(null)
+        selectedPost = $bindable(null),
     } = $props();
 
     let map = $state();
@@ -32,17 +32,20 @@
         return content.length > 100 ? `${content.slice(0, 100)}…` : content;
     }
 
-
     onMount(() => {
         fetchMapVisibility();
-    })
+    });
 
     /**
      * gets the post from a pin + centres map on pin
      */
     function pinClick(location) {
         selectedPost = location.postId;
-        map?.flyTo({ center: [parseFloat(location.lon), parseFloat(location.lat)], duration: 1000 });
+        map?.flyTo({
+            center: [parseFloat(location.lon), parseFloat(location.lat)],
+            zoom: 8,
+            duration: 1000,
+        });
     }
 
     /**
@@ -112,13 +115,13 @@
 
             map.easeTo({
                 center: [longitude, latitude],
-                zoom: Math.max(map.getZoom(), 2),
-                duration: 500,
+                zoom: 8,
+                duration: 1500,
             });
         }, 200);
     });
 
-     /**
+    /**
      * Toggle the map visibility, sending a request to the backend to save the user's preference
      */
     async function toggleMapVisibility() {
@@ -133,14 +136,13 @@
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({mapVisible})
+                    body: JSON.stringify({ mapVisible }),
                 },
             );
 
             if (!response.ok) {
                 mapToggleError = "Failed to toggle map";
             }
-
         } catch (err) {
             mapToggleError = "Failed to toggle map: " + (err as Error).message;
         }
@@ -158,25 +160,26 @@
                     credentials: "include",
                 },
             ).then(async (response) => {
-                    mapPreferenceFetched = true;
+                mapPreferenceFetched = true;
 
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                        mapToggleError = data.message || "Failed to get map visiblitiy preference";
-                        return false;
-                    }
-                    
-                    mapVisible = data.mapVisible;
+                const data = await response.json();
+
+                if (!response.ok) {
+                    mapToggleError =
+                        data.message ||
+                        "Failed to get map visiblitiy preference";
+                    return false;
                 }
-            )
 
+                mapVisible = data.mapVisible;
+            });
         } catch (err) {
-            mapToggleError = "Failed to get map visiblitiy preference: " + (err as Error).message;
+            mapToggleError =
+                "Failed to get map visiblitiy preference: " +
+                (err as Error).message;
         }
     }
 </script>
-
 
 <div class="container" data-testid="trip-map">
     {#if posts.length === 0}
@@ -184,42 +187,41 @@
             <i class="bi bi-map" aria-hidden="true"></i>
             <p>No posts yet. Create a post to view the map</p>
         </div>
-    {:else}
-        {#if mapVisible}
-            <div
-                class="position-relative rounded overflow-hidden"
-                style="height: 480px;"
+    {:else if mapVisible}
+        <div
+            class="position-relative rounded overflow-hidden"
+            style="height: 480px;"
+        >
+            <MapLibre
+                style={mapStyle}
+                bind:map
+                class="map"
+                id="trip-map"
+                onload={() => {
+                    mapLoaded = true;
+                    recenterMap();
+                }}
             >
-                <MapLibre
-                    style={mapStyle}
-                    bind:map
-                    class="map"
-                    id="trip-map"
-                    onload={() => {
-                        mapLoaded = true;
-                        recenterMap();
-                    }}
-                >
-                    {#each locations as location, index (location.postId)}
-                        {@const post = getPosts(location.postId)}
-                        <Marker
-                            lngLat={[
-                                parseFloat(location.lon),
-                                parseFloat(location.lat),
-                            ]}
-                            anchor="bottom"
+                {#each locations as location, index (location.postId)}
+                    {@const post = getPosts(location.postId)}
+                    <Marker
+                        lngLat={[
+                            parseFloat(location.lon),
+                            parseFloat(location.lat),
+                        ]}
+                        anchor="bottom"
+                    >
+                        <button
+                            data-testid={`post-marker-${location.postId}`}
+                            class="post-marker"
+                            class:if-highlighted={hoveredPostId ===
+                                location.postId}
+                            type="button"
+                            aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
                         >
-                            <button
-                                data-testid={`post-marker-${location.postId}`}
-                                class="post-marker"
-                                class:if-highlighted={hoveredPostId ===
-                                    location.postId}
-                                type="button"
-                                aria-label={`View ${post?.title ?? "post"} at ${location.name}`}
-                            >
-                                <i class="bi bi-geo-fill"></i>
-                                <span>{index + 1}</span>
-                            </button>
+                            <i class="bi bi-geo-fill"></i>
+                            <span>{index + 1}</span>
+                        </button>
 
                         <Popup
                             offset={[0, -20]}
@@ -230,67 +232,53 @@
                                 {#if post}
                                     <h3>{post.title}</h3>
 
-                                        {#if post.date}
-                                            <p class="post-date">
-                                                <i class="bi bi-calendar3"></i>
-                                                {formatDate(post.date)}
-                                            </p>
-                                        {/if}
-
-                                        <p class="post-location">
-                                            <i class="bi bi-geo-alt-fill"></i>
-                                            {location.name}
+                                    {#if post.date}
+                                        <p class="post-date">
+                                            <i class="bi bi-calendar3"></i>
+                                            {formatDate(post.date)}
                                         </p>
-
-                                        <p class="post-content">
-                                            {postExcerpt(post.content)}
-                                        </p>
-
-                                        <a
-                                            class="post-link"
-                                            href={resolve(
-                                                `/home/trips/${post.tripId}/posts/${post.postId}` as any,
-                                            )}
-                                        >
-                                            View post
-                                            <i class="bi bi-arrow-right"></i>
-                                        </a>
-                                    {:else}
-                                        <strong>{location.displayName}</strong>
                                     {/if}
-                                </div>
-                            </Popup>
-                        </Marker>
-                    {/each}
-                </MapLibre>
 
-                <div class="position-absolute top-0 end-0 m-2">
-                    <button
-                            class="btn btn-secondary"
-                            style="width: 34px; height: 34px; padding: 0;"
-                            onclick={recenterMap}
-                            type="button"
-                            aria-label="Recenter map"
-                    >
-                        <i class="bi bi-arrows-angle-expand"></i>
-                    </button>
+                                    <p class="post-location">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        {location.name}
+                                    </p>
 
-                    <button
-                        class="btn btn-secondary m-1"
-                        style="width: 34px; height: 34px; padding: 0;"
-                        onclick={toggleMapVisibility}
-                        type="button"
-                        aria-label="Recenter map"
-                    >
-                        <i class="bi bi-map"></i>
-                    </button>
-                </div>
-            </div>
-        {:else}
-            <div class="menu-bar p-2 m-0 d-flex flex-row-reverse">
-                
+                                    <p class="post-content">
+                                        {postExcerpt(post.content)}
+                                    </p>
+
+                                    <a
+                                        class="post-link"
+                                        href={resolve(
+                                            `/home/trips/${post.tripId}/posts/${post.postId}` as any,
+                                        )}
+                                    >
+                                        View post
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                {:else}
+                                    <strong>{location.displayName}</strong>
+                                {/if}
+                            </div>
+                        </Popup>
+                    </Marker>
+                {/each}
+            </MapLibre>
+
+            <div class="position-absolute top-0 end-0 m-2">
                 <button
                     class="btn btn-secondary"
+                    style="width: 34px; height: 34px; padding: 0;"
+                    onclick={recenterMap}
+                    type="button"
+                    aria-label="Recenter map"
+                >
+                    <i class="bi bi-arrows-angle-expand"></i>
+                </button>
+
+                <button
+                    class="btn btn-secondary m-1"
                     style="width: 34px; height: 34px; padding: 0;"
                     onclick={toggleMapVisibility}
                     type="button"
@@ -298,11 +286,22 @@
                 >
                     <i class="bi bi-map"></i>
                 </button>
-
-                <i class="m-1">Map hidden</i>
-                
             </div>
-        {/if}
+        </div>
+    {:else}
+        <div class="menu-bar p-2 m-0 d-flex flex-row-reverse">
+            <button
+                class="btn btn-secondary"
+                style="width: 34px; height: 34px; padding: 0;"
+                onclick={toggleMapVisibility}
+                type="button"
+                aria-label="Recenter map"
+            >
+                <i class="bi bi-map"></i>
+            </button>
+
+            <i class="m-1">Map hidden</i>
+        </div>
     {/if}
 </div>
 

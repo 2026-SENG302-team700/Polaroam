@@ -48,7 +48,7 @@ public class UserControllerUnitTests
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
-    
+
     [Fact]
     public async Task GetUser_UserExists_ReturnsOkWithNoPassword()
     {
@@ -71,13 +71,13 @@ public class UserControllerUnitTests
 
         result.Result.ShouldBeOfType<NotFoundResult>();
     }
-    
+
     [Fact]
     public async Task GetUserVerificationCountdown_ValidTime_ReturnsRemainingSeconds()
     {
         var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
         var mockUser = new User { Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 };
-        
+
         _mockUserService.GetUserFromEmailAsync(request.Email).Returns(mockUser);
         _mockCodeService.GetEpochTime().Returns(1050);
         _mockCodeService.TimeoutTimeSeconds.Returns(300);
@@ -110,7 +110,7 @@ public class UserControllerUnitTests
         mockfile.ContentType.Returns(mimeType);
         mockfile.OpenReadStream().Returns(stream);
 
-        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
+        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 };
         var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = mimeType };
         var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = mimeType };
 
@@ -145,7 +145,7 @@ public class UserControllerUnitTests
 
         var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
-        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image not added, supported file types are .jpeg, .png, .svg, .gif, .webp");
     }
 
     [Fact]
@@ -170,6 +170,6 @@ public class UserControllerUnitTests
 
         var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
         result.Result.ShouldBeOfType<BadRequestObjectResult>();
-        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image too large, maximum file size is 10MB");
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image not added, image is too large, maximum file size is 10MB");
     }
 }

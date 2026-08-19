@@ -67,7 +67,7 @@
         if (modalElement) {
             authModal = new BootstrapModal(modalElement);
         }
-        
+
         newPassword = "";
         confirmPassword = "";
     });
@@ -159,7 +159,6 @@
             });
 
             const data = await response.json().catch(() => null);
-            
 
             if (response.status === 404 || response.status === 401) {
                 password = "";
@@ -182,8 +181,7 @@
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
             addToast(`Welcome to Polaroam ${data?.message}!`);
-            
-            
+
             goto(resolve(`/home`));
         } catch (err) {
             password = "";
@@ -241,7 +239,6 @@
             );
 
             if (response.ok) {
-
                 currentModalStep = ModalStep.VERIFY;
 
                 startTimerCountdown();
@@ -432,7 +429,7 @@
                 },
             );
             if (response.ok) {
-                addToast("New password updated successfully");
+                addToast("Password reset successfully");
                 authModal.hide();
                 return;
             }
@@ -502,7 +499,7 @@
     </form>
     <div class="mb-3 mt-3">
         <button
-            class="btn btn-link btn-sm text-decoration-none"
+            class="btn btn-outline-primary btn-sm text-decoration-none"
             onclick={requestNewPassword}>Forgot Password?</button
         >
     </div>
@@ -541,9 +538,9 @@
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold">
                         {currentModalStep === ModalStep.EMAIL_INPUT
-                            ? "Request Reset Code"
+                            ? "Forgot Password"
                             : currentModalStep === ModalStep.VERIFY
-                              ? "Verify Your Identity"
+                              ? "Reset Code"
                               : "Reset Password"}
                     </h5>
                 </div>
@@ -589,7 +586,9 @@
                                 />
                             </div>
                             <div>
-                                <p class="small"><strong>Password reset email sent</strong></p>
+                                <p class="small">
+                                    <strong>Password reset email sent</strong>
+                                </p>
                                 <p class="m-0 small">
                                     Please enter the verification code here:
                                 </p>
@@ -649,7 +648,7 @@
                         {:else if currentModalStep === ModalStep.EMAIL_INPUT}
                             Get reset code
                         {:else if currentModalStep === ModalStep.RESET_PASSWORD}
-                            Update Password
+                            Reset Password
                         {/if}
                     </button>
                     <button
