@@ -10,7 +10,7 @@
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import AiTaggingUploadOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
-    let tripName = "my amazing helsinki trip";
+    let tripName = $state("");
     let filesToUpload: File[] | null | undefined = $state([]);
     let loading = $state(false);
     let { params } = $props();
@@ -78,6 +78,7 @@
 
     onMount(async () => {
         await loadAiTaggingPreference();
+        fetchTrip();
     });
 
     /**
@@ -126,6 +127,33 @@
         }
     }
 
+    /**
+     * Fetches the trip from the backend corresponding
+     * with the slug value being the trip's id
+     */
+    async function fetchTripName() {
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            const data = await response.json();
+
+            if (!response.ok) {
+                error = data.message || "Failed to fetch trip.";
+                return;
+            }
+            tripName = data.title;
+        } catch (err) {
+            error = "Failed to fetch trip: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
     function preparePhotoUpload() {
         if (!filesToUpload?.length) return;
 
