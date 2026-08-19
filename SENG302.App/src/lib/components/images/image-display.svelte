@@ -115,11 +115,7 @@
 </div>
 
 {#if !images || images.length === 0}
-<<<<<<< Updated upstream
     <p class="empty-message">No image selected</p>
-=======
-    <p>No image selected</p>
->>>>>>> Stashed changes
 {/if}
 <ExpandableErrorDisplay {errors} lines={5} />
 
