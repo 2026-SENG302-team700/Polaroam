@@ -185,7 +185,7 @@ public class UserController : ControllerBase
 
         if (!ImageValidator.IsValidFilesize(file))
         {
-            return BadRequest("Image too large, maximum file size is 10MB");
+            return BadRequest("Image not added, image is too large, maximum file size is 10MB");
         }
 
         // implement into one big callback function later.
@@ -345,6 +345,6 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
         var mapVisible = await _userService.GetPreferenceMapVisibleAsync(userId);
-        return Ok(new MapVisibleObject() {MapVisible = mapVisible});
+        return Ok(new MapVisibleObject() { MapVisible = mapVisible });
     }
 }
