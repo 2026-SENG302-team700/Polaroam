@@ -26,7 +26,23 @@
 
     let isOpen = $state(false);
     let items = $state<LocationResult[]>([]);
+    let searchContainer: HTMLDivElement;
 
+    /**
+     * Handle when the user closes the location input
+     * @param event
+     */
+    function handleFocusOut(event: FocusEvent) {
+        const nextElement = event.relatedTarget as Node | null;
+
+        if (!nextElement || !searchContainer.contains(nextElement)) {
+            isOpen = false;
+        }
+    }
+
+    /**
+     * Set the base variable to defaults
+     */
     function handleInput() {
         location = {
             osmId: 0,
@@ -114,7 +130,11 @@
     }
 </script>
 
-<div class="search-container mb-3">
+<div
+    class="search-container mb-3"
+    bind:this={searchContainer}
+    onfocusout={handleFocusOut}
+>
     <div class="input-group" style="gap:2px;">
         <input
             type="text"
@@ -124,7 +144,6 @@
             bind:value={searchQuery}
             oninput={handleInput}
             onkeydown={handleKeydown}
-            onblur={() => setTimeout(() => (isOpen = false), 200)}
             disabled={loading}
         />
         <button

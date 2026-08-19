@@ -69,23 +69,14 @@
     }
 </script>
 <nav class="navBar menu-bar">
-    <div
-        style="display: flex; flex-direction: row; align-items: center; padding-top: 3px; "
-    >
-        <div style="flex: 0.01;"></div>
-
+    <div class="content-wrapper">
         <AppLogo />
         <NavBarMenuButton path="/home" text="My Trips" />
-
-
-        <div
-            style="display: flex; flex-direction: row; align-items: center; flex: 1; justify-content: flex-end; margin-right: 5px;"
-        >
-            <p class="text"
-                style="font-size: 18px; vertical-align: bottom; margin-bottom: 0px; padding-bottom: 0px;"
-            >
+        <div class="right">
+            <h5 class="text"
+                style=" margin-bottom: 0px; padding-bottom: 0px;">
                 {$user.displayName}
-            </p>
+            </h5>
             <div
                 class="profile-button"
                 onclick={() => goto(resolve("/home/profile"))}
@@ -118,14 +109,34 @@
         z-index: 1000;
         vertical-align: top;
         background-color: white;
-        height: 50px;
+        height: 60px;
         border-radius: 10px;
         margin-bottom: 20px;
+        display: flex;
+        align-content: center;
+        
+    }
+    .right  {
+        position: relative;
+        right: 0;
+        display: flex; 
+        flex-direction: row; 
+        align-items: center; 
+        flex: 1; 
+        justify-content: flex-end; 
+        margin-right: 5px;
     }
 
     .page-wrapper {
         min-height: 80vh;
         display: flex;
         flex-direction: column;
+    }
+
+    .content-wrapper {
+        display: flex; 
+        flex-direction: row; 
+        align-items: center; 
+        width: 100%;
     }
 </style>
