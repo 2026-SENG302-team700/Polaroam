@@ -63,9 +63,8 @@ $font-weight-bold: 700;
     }
 
     &:disabled {
-        box-shadow:
-            0px 0px 0 $ink,
-            1px 1px 0 $ink inset;
+        box-shadow: $shadow-small;
+        border-color: $ink;
         transform: none;
         opacity: 0.55;
     }
@@ -74,6 +73,7 @@ $font-weight-bold: 700;
 .bg-light {
     background-color: #{$bg-color} !important;
 }
+
 body {
     background-color: #{$bg-color} !important;
 }
@@ -212,6 +212,7 @@ body {
     gap: 1rem;
     margin-top: 1.75rem;
 }
+
 @media (max-width: 500px) {
     .post-form-actions {
         grid-template-columns: 1fr;
@@ -318,7 +319,7 @@ body {
     }
 
     &:disabled {
-        box-shadow: none;
+        box-shadow: $shadow-small;
         transform: none;
         opacity: 0.55;
     }
@@ -339,9 +340,11 @@ body {
 .modal-footer {
     border-color: $ink;
 }
+
 .menu-bar {
     border: solid $ink;
 }
+
 .clickable-image {
     transition: transform $transition-fast;
 
