@@ -429,7 +429,7 @@
                 },
             );
             if (response.ok) {
-                addToast("New password updated successfully");
+                addToast("Password reset successfully");
                 authModal.hide();
                 return;
             }
@@ -538,9 +538,9 @@
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold">
                         {currentModalStep === ModalStep.EMAIL_INPUT
-                            ? "Request Reset Code"
+                            ? "Forgot Password"
                             : currentModalStep === ModalStep.VERIFY
-                              ? "Verify Your Identity"
+                              ? "Reset Code"
                               : "Reset Password"}
                     </h5>
                 </div>
@@ -648,7 +648,7 @@
                         {:else if currentModalStep === ModalStep.EMAIL_INPUT}
                             Get reset code
                         {:else if currentModalStep === ModalStep.RESET_PASSWORD}
-                            Update Password
+                            Reset Password
                         {/if}
                     </button>
                     <button

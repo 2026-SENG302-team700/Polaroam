@@ -661,13 +661,13 @@
                         </button>
                     </div>
                 </div>
+                <div class="post-form-actions">
+                    <CancelButton path={"/home/profile"} />
+                    <AuthenticatorButton buttonType={"update"} />
+                </div>
             </form>
-            <div class="post-form-actions">
-                <CancelButton path={"/home/profile"} />
-
-                <AuthenticatorButton buttonType={"update"} />
-            </div>
-        </div>
+    </div>
+    
     </div>
 </div>
 

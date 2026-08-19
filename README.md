@@ -1,6 +1,10 @@
-# SENG302 Project Overview
+# Polaroam
 
-Welcome to the project for SENG302 2026. In this README we have included some useful information to help you get started. We advise you take some time reading through this entire document, as doing so may save you many headaches down the line!
+Polaroam is a travel journal application for creating trips and posts, uploading and searching images, and viewing geotagged memories on a map.
+
+## Authors
+
+SENG302 Team 700: Sam Ladbrook, Shaun Souness, Shivam Pandya, Vlad Nistor, Shawn Neal, and jsa162.
 
 ## Dependencies
 
@@ -59,7 +63,7 @@ npm install
 
 #### 2 - Setting environment variables (SMTP)
 
-To run the API you need to ensure you have the user secrects set locally. You can refer to **appsettings.json** to see variables you need set in **appsettings.Local.json**. To download the **appsettings.Local.json** file please refer to the team 700 teaching team communications chat within mattermost. There will be a pinned message that has the file attached. Please ensure the name of this file does not chnage and you move the file to _team700/SENG302.Api/_ e.g. _(team700/SENG302.Api/appsettings.Local.json)_
+Local secrets can be placed in `SENG302.Api/appsettings.Local.json`. Obtain the development values from the pinned Team 700 Mattermost message; do not commit this file or secret values.
 
 #### 3 - Running the project
 
@@ -78,3 +82,70 @@ npm run dev
 ```
 
 The app should now be available on port 5173 and visible in your browser at <http://localhost:5173>.
+
+### Building
+
+From the repository root:
+
+```bash
+dotnet build SENG302.slnx
+cd SENG302.App
+npm run build
+```
+
+## Tests
+
+Run all backend test suites from the repository root:
+
+```bash
+dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj
+```
+
+Run an individual suite by replacing `Unit` with `Integration`, `Acceptance`, or `E2E`:
+
+```bash
+dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~Unit"
+```
+
+Before running E2E tests for the first time, build the test project and install Playwright Chromium:
+
+```bash
+dotnet build SENG302.Api.Tests/SENG302.Api.Tests.csproj
+pwsh SENG302.Api.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
+```
+
+Generate test coverage with:
+
+```bash
+dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --collect:"XPlat Code Coverage"
+```
+
+Check the frontend with:
+
+```bash
+cd SENG302.App
+npm run check
+```
+
+## Local test accounts
+
+The development database is seeded with these verified accounts:
+
+| Account | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@outstanding.com` | `Team700!` |
+| John (sample trips and posts) | `john@example.com` | `P4$$word` |
+| Jane (blank account) | `jane@example.com` | `P4$$word` |
+
+## Configuration
+
+Do not commit real credentials. Development values may be supplied through `appsettings.Local.json`; deployment values are supplied as environment variables.
+
+| Setting | Purpose |
+| --- | --- |
+| `EmailSettings:Host`, `EmailSettings:Port`, `EmailSettings:FromEmail`, `EmailSettings:Password` | Local SMTP configuration |
+| `EMAIL_HOST`, `EMAIL`, `EMAIL_PASS` | Deployed SMTP configuration; port defaults to 587 |
+| `LLM_API_KEY` | API key used for AI image tagging |
+| `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` | PostgreSQL connection settings required in staging and production |
+| `ASPNETCORE_ENVIRONMENT` | Selects `Development`, `Staging`, or `Production` configuration |
+| `PathBase` | Optional URL base path used when deployed below a sub-path |
