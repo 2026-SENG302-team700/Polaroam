@@ -18,6 +18,7 @@
     let imageMetadata = $state<{ photoId: number }[]>([]);
     let tripId = Number(params.tripId);
     let tagQuery = $state("");
+
     let tagDataError = $state("");
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -194,6 +195,7 @@
     </div>
 </div>
 
+
 {#if uploadModalShown}
     <div class="modal-backdrop show"></div>
     <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
@@ -264,32 +266,33 @@
         margin-bottom: 1.25rem;
     }
 
-    .header-content-wrapper {
-        width: 100%;
-    }
+.header-content-wrapper {
+    width: 100%;
+}
 
-    .trip-name {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        margin: 0;
-        max-width: 40%;
-        min-width: 20%;
-        text-align: center;
-    }
+.trip-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    max-width: 40%;
+    min-width: 20%;
+    text-align: center;
+}
 
-    .post-wrapper {
-        margin-top: 10px;
-    }
+.post-wrapper {
+    margin-top: 10px;
+}
 
-    .card-body {
-        max-height: 500px;
-        overflow: scroll;
-    }
+.card-body {
+    max-height: 500px;
+    overflow: scroll;
+}
 
-    .images {
-        max-height: 800px;
-        overflow: scroll;
-    }
+.images {
+    max-height: 800px;
+    overflow: scroll;
+}
+
 </style>

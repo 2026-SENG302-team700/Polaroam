@@ -4,14 +4,13 @@
     import TripCard from "$lib/components/trip-components/trip-card.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
 
-    let {
-        trips,
-        photoTrips,
-        query = ""
-    } = $props();
+    let { trips, photoTrips, query = "" } = $props();
 
     let imageCount = $derived(
-        photoTrips.reduce((sum, photoTrip) => sum + (photoTrip.photos?.length ?? 0), 0)
+        photoTrips.reduce(
+            (sum, photoTrip) => sum + (photoTrip.photos?.length ?? 0),
+            0,
+        ),
     );
 
     /**
@@ -21,38 +20,43 @@
         goto(resolve(`/home/trips/${tripId}`));
     }
 </script>
+
 <div>
     <h1>Search Results</h1>
-    {#if query}
+    {#if query && imageCount > 0}
         <p class="search-summary">
             {imageCount} image{imageCount == 1 ? "" : "s"} found matching "{query}"
         </p>
     {/if}
     <div class="photo-trip-list">
         {#if photoTrips.length > 0}
-                {#each photoTrips as photoTrip}
-                    <div class="photo-trip">
-                        <div
-                            tabindex="0"
-                            role="button"
-                            class="photo-trip-header"
-                            onclick={() => goToTrip(photoTrip.tripId)}
-                            onkeydown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                    goToTrip(photoTrip.tripId);
-                                }
-                            }}
-                        >
-                            <span class="header-icon bi-journal-richtext" />
-                            <h3>{photoTrip.tripTitle}</h3>
-                        </div>
-                        <div class="photo-trip-body">
-                            <ImageDisplay images={photoTrip.photos} photoIds={photoTrip.photoIds} viewContext="search"/>
-                        </div>
+            {#each photoTrips as photoTrip}
+                <div class="photo-trip">
+                    <div
+                        tabindex="0"
+                        role="button"
+                        class="photo-trip-header"
+                        onclick={() => goToTrip(photoTrip.tripId)}
+                        onkeydown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                goToTrip(photoTrip.tripId);
+                            }
+                        }}
+                    >
+                        <span class="header-icon bi-journal-richtext" />
+                        <h3>{photoTrip.tripTitle}</h3>
                     </div>
-                {/each}
+                    <div class="photo-trip-body">
+                        <ImageDisplay
+                            images={photoTrip.photos}
+                            photoIds={photoTrip.photoIds}
+                            viewContext="search"
+                        />
+                    </div>
+                </div>
+            {/each}
         {:else}
-            <span>No images found matching your search.</span>
+            <span>No images found matching your search</span>
         {/if}
     </div>
 
@@ -88,7 +92,7 @@
         background: #ffffff;
         box-shadow: 7px 7px 0 #686868;
     }
-    
+
     .photo-trip-header {
         display: flex;
         align-items: center;

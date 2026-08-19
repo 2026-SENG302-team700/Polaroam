@@ -113,10 +113,7 @@
             }
 
             aiTaggingPreference = String(data.aiTagging);
-            sessionStorage.setItem(
-                "aiTaggingPreference",
-                aiTaggingPreference,
-            );
+            sessionStorage.setItem("aiTaggingPreference", aiTaggingPreference);
         } catch {
             console.log("Cannot get user AI tagging preferences");
         } finally {
@@ -134,8 +131,7 @@
             );
             if (!response.ok) {
                 error =
-                    (await response.text()) ||
-                    "Failed to fetch image context.";
+                    (await response.text()) || "Failed to fetch image context.";
                 return;
             }
             imageContext = await response.json();
@@ -274,10 +270,18 @@
 
             {#if imageContext}
                 <div class="image-details">
-                    <span class="image-detail">trip: {imageContext.tripTitle}</span>
-                    {#if imageContext.postId}
-                        <span class="image-detail">post: {imageContext.postTitle}</span>
-                    {/if}
+                    <div class="image-detail btn btn-secondary btn-sm">
+                        <span
+                            ><strong>Trip:</strong>
+                            {imageContext.tripTitle}</span
+                        >
+                        {#if imageContext.postId}
+                            <span class="detail-divider"
+                                ><strong>Post:</strong>
+                                {imageContext.postTitle}</span
+                            >
+                        {/if}
+                    </div>
                 </div>
             {/if}
 
@@ -380,15 +384,22 @@
     }
     .image-detail {
         display: inline-flex;
+        flex-direction: row;
         align-items: center;
-        gap: 0.35rem;
-        padding: 0.3rem 0.65rem;
-        color: var(--bs-secondary-color);
-        background-color: var(--bs-secondary-bg);
-        border: 1px solid var(--bs-border-color);
-        border-radius: var(--bs-border-radius-sm);
-        font-size: 0.875rem;
-        white-space: nowrap;
+        gap: 0.6rem;
+        height: calc(1.5em + 0.5rem + 2px);
+        box-sizing: border-box;
+        border-radius: 0.65rem;
+        border-width: 0;
+        cursor: default;
+        pointer-events: none;
+    }
+    .detail-divider {
+        width: auto;
+        padding-top: 0;
+        padding-left: 0.6rem;
+        border-top: 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.45);
     }
     .action-buttons {
         position: absolute;
