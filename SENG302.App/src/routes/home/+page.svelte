@@ -184,7 +184,7 @@
         width: 50vw;
         display: flex;
         flex-direction: row;
-        position: absolute;
+
         align-items: center;
         text-align: center;
     }
@@ -195,10 +195,6 @@
         width: 100%;
     }
 
-    .global-search {
-        flex: 1;
-        min-width: 0;
-    }
 
     @media (max-width: 992px) {
         .trip-object-wrapper {
