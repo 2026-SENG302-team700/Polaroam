@@ -7,6 +7,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
+using SENG302.Api.Models.Jobs;
 
 using static SENG302.Api.Helpers.DateHelper;
 
@@ -18,6 +19,9 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
     private IAlbumService ServiceUnderTest => ServiceProvider.GetRequiredService<IAlbumService>();
     public AlbumServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
+    byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+
     private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
@@ -26,6 +30,43 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
             Headers = new HeaderDictionary(),
             ContentType = mimeType
         };
+    }
+
+    private async Task SetupUserAndTrip(int userId, int tripId)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = userId,
+            Email = $"test{userId}@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        context.Trips.Add(new Trip
+        {
+            Id = tripId,
+            Title = "Test List",
+            UserId = userId,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
+        });
+        context.Albums.Add(new Album
+        {
+            TripId = tripId,
+            PhotoIds = [],
+        });
+        await context.SaveChangesAsync();
+    }
+
+    private async Task EnableAiTagging(int userId)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        var user = await context.Users.FirstAsync(u => u.Id == userId);
+        user.AcceptedAiPrivacyPolicy = true;
+        user.AiTaggingEnabled = true;
+        await context.SaveChangesAsync();
     }
 
     private void SetupGeoMock()
@@ -53,6 +94,28 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
         var album = await ServiceUnderTest.GetAlbumByIdAsync(1);
         album.ShouldNotBeNull();
         album.PhotoIds.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task UploadImagesToAlbumAsync_AiTaggingDisabledForUpload_DoesNotQueueImage()
+    {
+        await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
+
+        var image = GetMockFile(
+            "test.png",
+            pngBytes,
+            "image/png"
+        );
+
+        await ServiceUnderTest.UploadImagesToAlbumAsync(
+            [image],
+            1,
+            aiTaggingForUpload: false
+        );
+
+        ImageTaggingQueueMock.DidNotReceive()
+            .QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>());
     }
 
     [Fact]
