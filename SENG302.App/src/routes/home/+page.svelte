@@ -146,11 +146,14 @@
     <div class="card">
         <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
             <AddButton path="/home/trips/create-trip" />
-            <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} />
+            <div>
+                <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} placeholder="search your trips and images"/>
+            </div>
+            
         </div>
         <div class="card-footer">
             {#if inSearch}
-                <SearchView trips={searchTrips} photoTrips={searchPhotoTrips}/>
+                <SearchView trips={searchTrips} photoTrips={searchPhotoTrips} query={tagQuery}/>
             {:else}
                 {#if trips.length > 0}
                     <div class="trip-object-wrapper">

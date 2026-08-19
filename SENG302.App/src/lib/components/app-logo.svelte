@@ -14,8 +14,8 @@
 		font-weight: 800;
 		text-align: center;
 		margin-bottom: 0;
-		margin-left: 5px;
-		margin-right: 10px;
+		margin-left: 15px;
+		margin-right: 20px;
 		cursor: pointer;
 	}
 </style>
