@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using SENG302.Api.Helpers;
 
 namespace SENG302.Api.Models.Requests;
 
@@ -10,8 +11,12 @@ public class UpdateTripRequest
     public string? Title { get; set; }
     public string? Description { get; set; }
 
-    public DateTimeOffset? StartDate { get;
-        set {
+    [JsonConverter(typeof(NullableDateTimeOffsetConverter))]
+    public DateTimeOffset? StartDate
+    {
+        get;
+        set
+        {
             field = value;
             StartDateSupplied = true;
         }
@@ -19,9 +24,12 @@ public class UpdateTripRequest
     [JsonIgnore]
     public bool StartDateSupplied { get; set; } = false;
 
-
-    public DateTimeOffset? EndDate { get;
-        set {
+    [JsonConverter(typeof(NullableDateTimeOffsetConverter))]
+    public DateTimeOffset? EndDate
+    {
+        get;
+        set
+        {
             field = value;
             EndDateSupplied = true;
         }
