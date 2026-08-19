@@ -16,11 +16,13 @@
         imageMetadata = $bindable([]),
         tripId,
         errors = [],
+        errorsBesidePicker = false,
         children,
     }: {
         imageMetadata?: ImageMetadata[] | null;
         tripId: number;
         errors?: string[];
+        errorsBesidePicker?: boolean;
         children: Snippet;
     } = $props();
 
@@ -92,6 +94,13 @@
                 {@render children?.()}
             </div>
         </div>
+        {#if errorsBesidePicker && errors.some((error) => error?.trim())}
+            <div class="col">
+                <div class="picker-errors">
+                    <ExpandableErrorDisplay {errors} lines={5} />
+                </div>
+            </div>
+        {/if}
         {#each imageMetadata ?? [] as image, index (image.photoId)}
             <div class="col">
                 <div class="position-relative">
@@ -128,7 +137,9 @@
         <p class="fs-3">No images found</p>
     </div>
 {/if}
-<ExpandableErrorDisplay {errors} lines={5} />
+{#if !errorsBesidePicker}
+    <ExpandableErrorDisplay {errors} lines={5} />
+{/if}
 
 <ConfirmationModal
     bind:show={confirmDeleteModal}
@@ -171,6 +182,16 @@
     .picker-tile :global(button) {
         flex: 1;
         font-size: 1.5rem;
+    }
+
+    .picker-errors {
+        min-height: 100%;
+        padding: 0.85rem 1rem;
+        border: 2px solid var(--bs-danger);
+        border-radius: 0.5rem;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
     }
 
     .clickable-image-wrapper img {

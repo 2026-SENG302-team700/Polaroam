@@ -10,7 +10,7 @@
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import AiTaggingUploadOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
-    let tripName = "my amazing helsinki trip";
+    let tripName = $state("");
     let filesToUpload: File[] | null | undefined = $state([]);
     let loading = $state(false);
     let { params } = $props();
@@ -153,10 +153,7 @@
 
 <div class="card mb-2 post-wrapper">
     <div class="card-header">
-        <NavigationButton
-            path={`/home/trips/${params.tripId}`}
-            text="Back"
-        />
+        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
         <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
     </div>
     <div class="card-body"></div>
@@ -179,7 +176,12 @@
         {/if}
 
         <div class:empty-album={imageMetadata.length === 0}>
-            <ImageGallery bind:imageMetadata {tripId}>
+            <ImageGallery
+                bind:imageMetadata
+                {tripId}
+                errors={[errors.generic, ...errors.photos, ...fileErrors]}
+                errorsBesidePicker
+            >
                 <div class="header-content-item">
                     <ImagePicker
                         bind:filesList={filesToUpload}
@@ -195,7 +197,6 @@
     </div>
 </div>
 
-
 {#if uploadModalShown}
     <div class="modal-backdrop show"></div>
     <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
@@ -206,8 +207,8 @@
                 </div>
                 <div class="modal-body">
                     <p>
-                        AI image tagging is enabled. The selected images will
-                        be analysed and tagged after they are uploaded.
+                        AI image tagging is enabled. The selected images will be
+                        analysed and tagged after they are uploaded.
                     </p>
                     <AiTaggingUploadOption
                         enabled={aiTaggingEnabled}
@@ -266,33 +267,32 @@
         margin-bottom: 1.25rem;
     }
 
-.header-content-wrapper {
-    width: 100%;
-}
+    .header-content-wrapper {
+        width: 100%;
+    }
 
-.trip-name {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    margin: 0;
-    max-width: 40%;
-    min-width: 20%;
-    text-align: center;
-}
+    .trip-name {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        max-width: 40%;
+        min-width: 20%;
+        text-align: center;
+    }
 
-.post-wrapper {
-    margin-top: 10px;
-}
+    .post-wrapper {
+        margin-top: 10px;
+    }
 
-.card-body {
-    max-height: 500px;
-    overflow: scroll;
-}
+    .card-body {
+        max-height: 500px;
+        overflow: scroll;
+    }
 
-.images {
-    max-height: 800px;
-    overflow: scroll;
-}
-
+    .images {
+        max-height: 800px;
+        overflow: scroll;
+    }
 </style>
