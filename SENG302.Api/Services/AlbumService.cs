@@ -13,7 +13,7 @@ namespace SENG302.Api.Services;
 public interface IAlbumService
 {
     public Task<List<PhotoMetadataResponse>> GetImagesMetadataFromAlbumAsync(int tripId, string? tag = null);
-    public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId);
+    public Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId, bool aiTaggingForUpload = false);
     public Task<int?> DeleteImageFromAlbumAsync(int photoId, int tripId);
     public Task<Album> CreateNewAlbumAsync(int tripId);
     public Task<Album> GetAlbumByIdAsync(int tripId);
@@ -27,7 +27,7 @@ public class AlbumService : IAlbumService
     private readonly IFileService _fileService;
     private readonly IUserService _userService;
     private readonly IImageTaggingService _imageTaggingService;
-    public AlbumService(IFileService fileService, 
+    public AlbumService(IFileService fileService,
                         IDbContextFactory<DatabaseContext> dbContextFactory,
                         IUserService userService,
                         IImageTaggingService imageTaggingService)
@@ -126,6 +126,19 @@ public class AlbumService : IAlbumService
         return null;
     }
 
+    /// <summary>
+    /// Determines if an image is suitable for AI tagging.
+    /// </summary>
+    /// <param name="image"></param>
+    /// <returns></returns>
+    private static bool IsAiTaggable(IFormFile image)
+    {
+        return image.ContentType is
+            "image/jpg" or
+            "image/jpeg" or
+            "image/png" or
+            "image/gif";
+    }
 
     /// <summary>
     /// Take a list of IFormFiles and tripId. Validate each file and then upload  it
@@ -137,7 +150,7 @@ public class AlbumService : IAlbumService
     /// <returns></returns>
     /// <exception cref="KeyNotFoundException"></exception>
     /// <exception cref="MultipleValidationListException"></exception>
-    public async Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId)
+    public async Task<Album> UploadImagesToAlbumAsync(List<IFormFile> photos, int tripId, bool aiTaggingForUpload = true)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var album = await context.Albums.FirstOrDefaultAsync(a => a.TripId == tripId);
@@ -161,7 +174,7 @@ public class AlbumService : IAlbumService
         {
             throw new KeyNotFoundException("Trip does not exist");
         }
-        
+
         User? user = await _userService.GetUserByIdAsync(trip.UserId);
 
         if (user == null)
@@ -174,9 +187,11 @@ public class AlbumService : IAlbumService
             var file = await _fileService.SaveFileAsync(photo, trip.UserId);
             album.PhotoIds.Add(file.Id);
 
-            if (user.AiTaggingEnabled && user.AcceptedAiPrivacyPolicy)
+            if (await _userService.UserAiTaggingCheckAsync(trip.UserId)
+                && aiTaggingForUpload
+                && IsAiTaggable(photo))
             {
-               await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
+                await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
             else
             {
@@ -188,11 +203,10 @@ public class AlbumService : IAlbumService
                     await context.SaveChangesAsync();
                 }
             }
-        }  
+        }
         context.Albums.Update(album);
         await context.SaveChangesAsync();
-        
-        
+
 
         return album;
     }
@@ -240,7 +254,8 @@ public class AlbumService : IAlbumService
                     Tags = file.Tags ?? [],
                     DateCreated = file.DateCreated
                 });
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine($"Failed to get file with id {photoId}: {ex.Message}");
             }

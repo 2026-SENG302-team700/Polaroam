@@ -377,6 +377,7 @@ public class ImageTaggingService : IImageTaggingService
             {
                 if (imageFile != null)
                 {
+                    imageFile.InTagQueue = false;
                     imageFile.TagError = "Queue was full";
                     imageFile.CanRetryTagging = true;
                 }

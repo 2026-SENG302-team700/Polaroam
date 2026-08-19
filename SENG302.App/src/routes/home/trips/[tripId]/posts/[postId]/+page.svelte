@@ -207,7 +207,13 @@
         />
         <DeleteButton deleteAction={showConfirmationModal} />
         <ErrorDisplay errors={[error]} />
-        <PostDisplayCard post={postObject} userName={displayName} {photos} {photoIds}/>
+
+        <PostDisplayCard
+            post={postObject}
+            userName={displayName}
+            {photos}
+            {photoIds}
+        />
     </div>
 </div>
 

@@ -10,18 +10,22 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
+    import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
+    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
 
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
     let photoIds = $state([]);
     let photoIdFileMap = new WeakMap();
+    let aiTaggingEnabled = $state(false);
+    let aiTaggingForUpload = $state(false);
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0);
@@ -74,8 +78,11 @@
     let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
-        await fetchPost();
-        await fetchImages();
+        await Promise.all([
+            loadAiTaggingPreference(),
+            fetchPost(),
+            fetchImages(),
+        ]);
     });
 
     /**
@@ -108,13 +115,21 @@
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
                         resolve(
-                            `/api/post/${page.params.postId}/images/${meta.photoId}` as any,
+                            `/api/image/${meta.photoId}` as any,
                         ),
                         {
                             method: "GET",
                             credentials: "include",
                         },
                     );
+
+                    if (!res.ok) {
+                        throw new Error(
+                            (await res.text()) ||
+                                `Failed to fetch image ${meta.photoId}`,
+                        );
+                    }
+
                     const blob = await res.blob();
                     const file = new File([blob], meta.fileName, {
                         type: meta.mimeType,
@@ -169,6 +184,21 @@
     }
 
     /**
+     * Fetches the display name of the user based on the post
+     */
+    async function loadAiTaggingPreference() {
+        const response = await fetchWithCsrf(resolve("/api/user" as any), {
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        aiTaggingEnabled = user.aiTagging;
+        aiTaggingForUpload = user.aiTagging;
+    }
+
+    /**
      * Updates the trip with the new values from the form.
      * Sends a PUT request to the backend with the updated trip details.
      */
@@ -192,6 +222,8 @@
             form.append("Content", content);
             form.append("Date", date?.toISOString() ?? "");
             form.append("NoContentAllowed", noContentAllowed);
+            // add the ai tagging option to the form data
+            form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
 
             const newUploadedFiles =
                 newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
@@ -311,21 +343,25 @@
 
     <ImageDisplay
         bind:images={files}
-        photoIds={photoIds}
+        {photoIds}
         errors={[...errors.photos, ...fileErrors]}
         letDelete={true}
         ondelete={removePhoto}
     >
         <ImagePicker
             bind:filesList={files}
-            errors={errors.photos}
             bind:newUploadsCount
+            errors={errors.photos}
             bind:fileErrors
             {loading}
         />
     </ImageDisplay>
 
-    <MultipleErrorDisplay errors={errors.generic ? [errors.generic] : []} />
+    <AiTaggingOption
+        bind:enabled={aiTaggingEnabled}
+        bind:aiTaggingForUpload
+        {loading}
+    />
 
     <div class="post-form-actions">
         <ConfirmCancelButton

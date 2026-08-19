@@ -6,9 +6,9 @@
         images = $bindable(),
         moveToRightImage,
     } : {class?:string, 
-        image: File,
+        image: File | string,
         index: number,
-        images: File[] | null
+        images: (File | string)[] | null
         moveToRightImage: () => void,
     } = $props();
     

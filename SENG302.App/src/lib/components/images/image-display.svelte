@@ -5,12 +5,16 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import ExpandableErrorDisplay from "$lib/components/forms/expandable-error-display.svelte";
 
+    type ImageViewContext = "search" | "album" | "post" | "none";
+
     let {
         images = $bindable([]),
         photoIds = [],
         letDelete = false,
         ondelete,
         errors = [],
+        pickerFirst = false,
+        viewContext = "none",
         children,
     }: {
         images?: File[] | null;
@@ -18,6 +22,8 @@
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
+        pickerFirst?: boolean;
+        viewContext?: ImageViewContext;
         children?: Snippet;
     } = $props();
 
@@ -57,10 +63,24 @@
 <div
     class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-2 container image-display-wrapper"
 >
+    {#if pickerFirst}
+        <div class="col">
+            <div class="picker-tile">
+                {@render children?.()}
+            </div>
+        </div>
+    {/if}
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>
-                <ClickableImage {image} {index} {images} photoId={photoIds[index]} {photoIds} />
+                <ClickableImage
+                    {image}
+                    {index}
+                    {images}
+                    photoId={photoIds[index]}
+                    {photoIds}
+                    {viewContext}
+                />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">
                         <DeleteButton
@@ -72,7 +92,7 @@
             </div>
         </div>
     {/each}
-    {#if images && images.length > 0}
+    {#if images && images.length > 0 && !pickerFirst}
         <div class="col">
             <div class="picker-tile">
                 {@render children?.()}
@@ -88,12 +108,12 @@
 <ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
-        bind:show={confirmationModalShown}
-        message="Are you sure you want to delete this image?"
-        option1Text="Delete"
-        option2Text="Do not delete"
-        onOption1={() => ConfirmDelete()}
-        onOption2={() => (confirmationModalShown = false)}
+    bind:show={confirmationModalShown}
+    message="Are you sure you want to delete this image?"
+    option1Text="Delete"
+    option2Text="Do not delete"
+    onOption1={() => ConfirmDelete()}
+    onOption2={() => (confirmationModalShown = false)}
 />
 
 <style>
