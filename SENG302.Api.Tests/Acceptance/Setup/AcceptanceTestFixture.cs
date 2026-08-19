@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.Extensions.DependencyInjection;
+using SENG302.Api.Services.ImageTagging;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Acceptance.Setup;
 
@@ -17,6 +19,7 @@ public class AcceptanceTestFixture : BaseIntegrationTestFixture
     public new IDbContextFactory<DatabaseContext> DbContextFactory => base.DbContextFactory;
     public IEmailService EmailMock => ServiceProvider.GetRequiredService<IEmailService>();
     public new IGeoService GeoServiceMock => base.GeoServiceMock;
+    public new IImageTaggingQueue ImageTaggingQueueMock => base.ImageTaggingQueueMock;
 
 
     public AcceptanceTestFixture(WebApplicationFactory<Program> factory) : base(factory)

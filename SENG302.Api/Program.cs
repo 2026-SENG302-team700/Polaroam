@@ -2,13 +2,12 @@ using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
+using SENG302.Api.Services.ImageTagging;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api;
 
@@ -29,7 +28,7 @@ public class Program
         {
             builder.Services.AddOpenApi();
         }
-        
+
         // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews(options =>
         {
@@ -39,7 +38,7 @@ public class Program
 
         // Add authorization service
         builder.Services.AddAuthorization();
-        
+
         // Add rate limit handler
         builder.Services.AddSingleton(new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
         {
@@ -50,7 +49,7 @@ public class Program
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
             QueueLimit = 15
         }));
-        
+
         builder.Services.AddTransient<NominatimRateLimitingHandler>();
 
 
@@ -81,10 +80,9 @@ public class Program
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         }
-
-
-        builder.Services.AddHttpContextAccessor();
         
+        builder.Services.AddHttpContextAccessor();
+
         // Register custom services 
         RegisterServices(builder.Services);
 
@@ -146,12 +144,20 @@ public class Program
         builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 
         // bind it in email service
-        //var emailSettings = new EmailSettings();
-        //builder.Configuration.GetSection("EmailSettings").Bind(emailSettings);
-        builder.Services.AddSingleton(new EmailSettings());
+        var emailSettings = new EmailSettings();
+
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Configuration.GetSection("EmailSettings").Bind(emailSettings);
+        }
+        builder.Services.AddSingleton(emailSettings);
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
+        builder.Services.AddHostedService<EmailBackgroundService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
-        
+        builder.Services.AddSingleton<IImageTaggingQueue, ImageTaggingQueue>();
+        builder.Services.AddHostedService<ImageTaggingBackgroundService>();
+
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -196,7 +202,7 @@ public class Program
             var tokens = antiforgery.GetAndStoreTokens(context);
             return Results.Ok(new { token = tokens.RequestToken });
         });
-        
+
         app.MapControllers();
 
         if (app.Environment.IsDevelopment())
@@ -207,7 +213,7 @@ public class Program
                 options.SwaggerEndpoint("/openapi/v1.json", "SENG302  API v1");
             });
         }
-        
+
         // returns http code 413 payload to large if size exceeds kestrel size limit
         // block below written by claude.
         app.Use(async (ctx, next) =>
@@ -223,7 +229,7 @@ public class Program
 
         app.Run();
     }
-    
+
     protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
@@ -252,12 +258,14 @@ public class Program
 
     protected static void RegisterServices(IServiceCollection services)
     {
-        // Register a TimeProvider so we don't need to rely on DateTime.Now, and can mock the time in automated tests
+        // Register a TimeProvider so we don't need to rely on DateTimeOffset.UtcNow, and can mock the time in automated tests
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITripService, TripService>();
         services.AddScoped<IPostService, PostService>();
+        services.AddScoped<IAlbumService, AlbumService>();
+        services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {
@@ -265,8 +273,15 @@ public class Program
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Polaroam/0.1 (noreply.outstanding@gmail.com)");
         })
         .AddHttpMessageHandler<NominatimRateLimitingHandler>();
+        services.AddHttpClient<IImageTaggingService, ImageTaggingService>(
+            client =>
+            {
+                client.BaseAddress = new Uri("https://apps.csse.canterbury.ac.nz/llm/v1/");
+                client.Timeout = TimeSpan.FromSeconds(60);
+            }
+        );
 
-    // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
+        // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
     }
 

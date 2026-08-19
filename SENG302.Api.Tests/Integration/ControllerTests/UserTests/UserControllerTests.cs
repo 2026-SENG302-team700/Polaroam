@@ -11,12 +11,12 @@ using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers.UserController;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class UserControllerTests : BaseIntegrationTestFixture
 {
-    private readonly IEmailService _mockEmailService;
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
     private readonly IFileService _mockFileService;
     private readonly UserController _controller;
@@ -24,13 +24,13 @@ public class UserControllerTests : BaseIntegrationTestFixture
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
     public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
+        
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
         _mockFileService = Substitute.For<IFileService>();
         _controller =
-            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService, _mockEmailService);
+            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService);
     }
-    
+
 
     private async Task AddTestUser()
     {
@@ -46,7 +46,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
     }
-    
+
     private void SetupUserContext(string userId, string name, string email)
     {
         var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId), new Claim(ClaimTypes.Name, name), new Claim(ClaimTypes.Email, email) };
@@ -59,16 +59,21 @@ public class UserControllerTests : BaseIntegrationTestFixture
         };
     }
     
-    
-
-    
-    
     private async Task SetupTestUser()
     {
         await AddTestUser();
         SetupUserContext("1", "Test User", "test@example.com");
     }
 
+    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(), ContentType = mimeType
+        };
+    }
+        
     [Fact]
     public async Task UpdateUser_Success_ReturnOk()
     {
@@ -188,17 +193,150 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
     }
     
-    
-
-    
-
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    [Fact]
+    public async Task AcceptPrivacyPolicy_Success_UpdatesAndOk()
     {
-        var stream = new MemoryStream(content);
-        return new FormFile(stream, 0, stream.Length, "file", filename)
+        await AddTestUser();
+
+        var response = await HttpClient.PutAsync("/api/user/accept-policy", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AcceptedAiPrivacyPolicy.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ToggleAiTagging_PolicyAccepted_TogglesAndOk()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
         {
-            Headers = new HeaderDictionary(),
-            ContentType = mimeType
-        };
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "vulad@nispor.md",
+                DisplayName = "Vulad Nispor",
+                PasswordKey = "P4$$word",
+                Country = "MD",
+                AcceptedAiPrivacyPolicy = true
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeTrue();
+    }
+    
+    [Fact] 
+    public async Task ToggleAiTagging_AiTaggingOn_TogglesAndOk()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1,
+                Email = "vulad@nispor.md",
+                DisplayName = "Vulad Nispor",
+                PasswordKey = "P4$$word",
+                Country = "MD",
+                AcceptedAiPrivacyPolicy = true,
+                AiTaggingEnabled = true
+            });
+            await context.SaveChangesAsync();
+        }
+    
+        var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+    
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleAiTagging_ToggleTwice_AiTaggingDisabledAndOk()
+    {
+        await using (var context = DbContextFactory.CreateDbContext())
+        {
+            context.Users.Add(new User
+            {
+                Id = 1, 
+                Email = "vulad@nispor.md",
+                DisplayName = "Vulad Nispor",
+                PasswordKey = "P4$$word",
+                Country = "MD",
+                AcceptedAiPrivacyPolicy = true
+            });
+            await context.SaveChangesAsync();
+        }
+
+        var response1 = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+        var response2 = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleAiTagging_PrivacyPolicyNotAccepted_ReturnsForbiddenNoAiToggle()
+    {
+        await AddTestUser();
+
+        var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
+        updatedUser!.AiTaggingEnabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task MapVisibility_SetX_IsX()
+    {
+        await AddTestUser();
+        
+        var dataTrue = new { MapVisible = true };
+        var response1 = await HttpClient.PutAsJsonAsync("/api/user/preference/mapvisible", dataTrue);
+        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeTrue();
+        
+        var dataFalse = new { MapVisible = false };
+        var response2 = await HttpClient.PutAsJsonAsync("/api/user/preference/mapvisible", dataFalse);
+        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task MapVisibility_IsX_GetX()
+    {
+        await AddTestUser();
+
+        await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, true);
+        
+        var response1 = await HttpClient.GetAsync("/api/user/preference/mapvisible");
+        response1.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content1 = await response1.Content.ReadFromJsonAsync<MapVisibleObject>();
+        content1.ShouldNotBeNull();
+        content1.MapVisible.ShouldBeTrue();
+
+        await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
+        
+        var response2 = await HttpClient.GetAsync("/api/user/preference/mapvisible");
+        response2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content2 = await response2.Content.ReadFromJsonAsync<MapVisibleObject>();
+        content2.ShouldNotBeNull();
+        content2.MapVisible.ShouldBeFalse();
     }
 }

@@ -4,6 +4,7 @@
 
     type LocationResult = {
         osmId: number;
+        osmType: string;
         lat: string;
         lon: string;
         name: string;
@@ -20,7 +21,7 @@
             displayName: "",
         }),
         error = $bindable(""),
-        loading = false,
+        loading = $bindable(false),
     } = $props();
 
     let isOpen = $state(false);
@@ -29,6 +30,7 @@
     function handleInput() {
         location = {
             osmId: 0,
+            osmType: "",
             lat: 0,
             lon: 0,
             name: "",
@@ -68,6 +70,7 @@
             items = data.map(
                 (item: any): LocationResult => ({
                     osmId: item.osm_id,
+                    osmType: item.osm_type,
                     lat: item.lat,
                     lon: item.lon,
                     name: item.name,
@@ -99,6 +102,7 @@
     function selectItem(item: LocationResult) {
         location = {
             osmId: item.osmId,
+            osmType: item.osmType,
             lat: item.lat,
             lon: item.lon,
             name: item.name,
@@ -121,12 +125,14 @@
             oninput={handleInput}
             onkeydown={handleKeydown}
             onblur={() => setTimeout(() => (isOpen = false), 200)}
+            disabled={loading}
         />
         <button
             type="button"
             title="search your trips using the provided query."
             class="btn btn-outline-secondary"
             onclick={getSearchResults}
+            disabled={loading}
         >
             {#if loading}
                 <div

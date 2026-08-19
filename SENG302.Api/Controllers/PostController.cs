@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
+using SENG302.Api.Models.Responses;
+using SENG302.Api.Helpers.Validators;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -62,15 +65,16 @@ public class PostController : ControllerBase
     [Authorize]
     [HttpPost]
     [RequestSizeLimit(200000000)]
-    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files)
+    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
     {
+
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
         if (user == null) return Unauthorized();
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, files, userId);
+            var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload);
             return Ok(response);
         }
         catch (MultipleValidationListException e)
@@ -118,33 +122,22 @@ public class PostController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<Post>> UpdatePost([FromForm] UpdatePostRequest postUpdates, [FromForm] List<IFormFile>? files)
+    public async Task<ActionResult<Post>> UpdatePost(
+        [FromForm] UpdatePostRequest postUpdates,
+        [FromForm] List<IFormFile>? files,
+        [FromForm] bool aiTaggingForUpload = true)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        
-        if (!await _postService.UserOwnsPost(userId, postUpdates.TripId))
+        User? user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null || !await _postService.UserOwnsPost(userId, postUpdates.TripId))
         {
             return Unauthorized();
         }
 
-        if (files != null)
-        {
-            try
-            {
-                await _postService.UploadPhotosToPostAsync(files, postUpdates.Id, userId);
-            }
-            catch (MultipleValidationListException e)
-            {
-                return BadRequest(new BadRequestValidationListResponse
-                {
-                    Errors = e.Errors
-                });
-            }
-        }
-        
         try
         {
-            var post = await _postService.UpdatePostAsync(postUpdates);
+            var post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
             return Ok(post);
         }
         catch (MultipleValidationListException e)
@@ -154,12 +147,19 @@ public class PostController : ControllerBase
                 Errors = e.Errors
             });
         }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(
+                "Post does not exist"
+            );
+        }
         catch (Exception e)
         {
             return BadRequest(e.Message);
         }
+
     }
-    
+
     /// <summary>
     /// Takes a post id and returns all the metadata related to the photos
     /// </summary>
@@ -172,7 +172,7 @@ public class PostController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized("You do not have authorisation to upload photos to this post!");
+            return Unauthorized("You do not have authorisation to view the images in this post");
         }
 
         var post = await _postService.GetPostAsync(postId);
@@ -182,95 +182,20 @@ public class PostController : ControllerBase
         }
 
         List<PhotoMetadataResponse> photos = [];
-        foreach(int photoId in post.PhotoIds ?? [])
+        foreach (int photoId in post.PhotoIds ?? [])
         {
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
             photos.Add(new PhotoMetadataResponse
             {
                 PhotoId = photoId,
                 FileName = file.OriginalFileName ?? $"photo-{photoId}",
-                MimeType = file.MimeType
+                MimeType = file.MimeType,
+                Tags = file.Tags,
+                DateCreated = file.DateCreated
             });
         }
 
         return Ok(photos);
-    }
-
-    /// <summary>
-    /// Streams a single photo back with correct types
-    /// </summary>
-    /// <param name="postId">post Id</param>
-    /// <param name="photoId">id of photo</param>
-    /// <returns>an image file</returns>
-    [Authorize]
-    [HttpGet("{postId:int}/images/{photoId:int}")]
-    public async Task<IActionResult> GetPostPhoto(int postId, int photoId)
-    {
-        var post = await _postService.GetPostAsync(postId);
-        if (post == null)
-        {
-            return NotFound("Post not found");
-        }
-
-        if (post.PhotoIds is null || !post.PhotoIds.Contains(photoId))
-        {
-            return NotFound("Photo not found on this post.");
-        }
-
-        CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-        byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
-
-        return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");
-    }
-
-    /// <summary>
-    /// Controller method for uploading photos to a post
-    /// </summary>
-    /// <param name="files">The photo files being uploaded</param>
-    /// <param name="postId">The id of the post corresponding to the photos being uploaded</param>
-    /// <returns>The ids of the newly create custom files for the photos</returns>
-    [Authorize]
-    [HttpPut("images")]
-    public async Task<ActionResult<List<int>>> UploadPostPhotos(
-        [FromForm] List<IFormFile> files,
-        [FromForm] string postId,
-        [FromForm] string tripId
-        )
-    {
-
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized("You do not have authorisation to upload photos to this post!");
-        }
-
-        var userId = int.Parse(userIdString);
-        var user = await _userService.GetUserByIdAsync(userId);
-
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
-
-        var ownsPost = await _postService.UserOwnsPost(userId, int.Parse(tripId));
-
-        if (ownsPost == false)
-        {
-            return Unauthorized("You do not have authorisation to upload photos to this post!");
-        }
-
-        try
-        {
-            var customFileIds = await _postService.UploadPhotosToPostAsync(files, int.Parse(postId), userId);
-            return Ok(customFileIds);
-        }
-        catch (MultipleValidationListException e)
-        {
-            return BadRequest(new BadRequestValidationListResponse
-            {
-                Errors = e.Errors
-            });
-        }
     }
 
     /// <summary>

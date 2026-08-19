@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
@@ -15,11 +16,14 @@ public class TripController : ControllerBase
 {
     private readonly ITripService _tripService;
     private readonly IPostService _postService;
+    private readonly IAlbumService _albumService;
+    
 
-    public TripController(ITripService tripService,IPostService postService)
+    public TripController(ITripService tripService,IPostService postService, IAlbumService albumService)
     {
         _tripService = tripService;
         _postService = postService;
+        _albumService = albumService;
     }
 
     /// <summary>
@@ -59,7 +63,6 @@ public class TripController : ControllerBase
     public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        Console.WriteLine("\n\n" + "id: " + userIdString + "\n\n");
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
@@ -85,6 +88,9 @@ public class TripController : ControllerBase
             if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized();
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
+
+            var album = await _albumService.CreateNewAlbumAsync(trip.Id);
+            
             return Ok(trip);
         }
         catch (MultipleValidationListException e)
@@ -126,6 +132,7 @@ public class TripController : ControllerBase
             }
 
             await _tripService.DeleteTripByIdAsync(id);
+            await _postService.DeleteAllPostOfTrip(id);
             return Ok();
         }
         catch (ArgumentException)
@@ -176,7 +183,7 @@ public class TripController : ControllerBase
         }
     }
 
-     /// <summary>
+    /// <summary>
     /// Fetches all posts associated to the id of the given trip. If
     /// no trip is provided, then throw a BadRequest Error.
     /// </summary>
@@ -197,6 +204,19 @@ public class TripController : ControllerBase
         }
         var taskList = await _postService.GetPostsByTripAsync(tripId);
         return Ok(taskList);
+    }
+
+     /// <summary>
+     /// Gets all locations associated with a trip.
+     /// </summary>
+     /// <param name="tripId"></param>
+     /// <returns>A list of location objects</returns>
+    [Authorize]
+    [HttpGet("locations/{tripId:int}")]
+    public async Task<ActionResult<IEnumerable<Location>>> GetPostLocations(int tripId)
+    {
+        var locations = await _tripService.GetTripLocations(tripId);
+        return Ok(locations);
     }
 
 }

@@ -5,7 +5,7 @@ using SENG302.Api.Models.Requests;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 using System.Net;
-using System.Runtime.InteropServices.JavaScript;
+using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
 
@@ -17,16 +17,16 @@ public class U7001CreateTrip
     private HttpResponseMessage? _lastResponse;
     private string _title;
     private string _description;
-    private DateOnly _startDate;
-    private DateOnly _endDate;
+    private DateTimeOffset _startDate;
+    private DateTimeOffset _endDate;
 
     public U7001CreateTrip(AcceptanceTestFixture fixture)
     {
         _fixture = fixture;
         _title = "";
         _description = "";
-        _startDate = new DateOnly();
-        _endDate = new DateOnly();
+        _startDate = new DateTimeOffset();
+        _endDate = new DateTimeOffset();
 
     }
 
@@ -35,7 +35,7 @@ public class U7001CreateTrip
     public async Task ValidTripAttributes()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
-        context.Users.Add(new Models.Entities.User
+        context.Users.Add(new User
         {
             Id = 1,
             Email = "test@example.com",
@@ -46,8 +46,8 @@ public class U7001CreateTrip
 
         _title = "Test trip";
         _description = "Test description";
-        _startDate = new DateOnly(2022, 1, 1);
-        _endDate = new DateOnly(2022, 2, 1);
+        _startDate = DateToDateTimeOffset(2022, 1, 1);
+        _endDate = DateToDateTimeOffset(2022, 1, 7);
 
         await context.SaveChangesAsync();
     }
@@ -75,6 +75,8 @@ public class U7001CreateTrip
 
         var retrievedTrip = await _fixture.HttpClient.GetFromJsonAsync<Trip>($"api/trip/{trip.Id}");
 
+        retrievedTrip.ShouldNotBeNull();
+
         retrievedTrip.Id.ShouldBe(trip.Id);
     }
 
@@ -83,7 +85,7 @@ public class U7001CreateTrip
     public async Task InvalidTripEndDateBeforeStartDate()
     {
         await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
-        context.Users.Add(new Models.Entities.User
+        context.Users.Add(new User
         {
             Id = 1,
             Email = "test@example.com",
@@ -94,14 +96,14 @@ public class U7001CreateTrip
 
         _title = "Test trip";
         _description = "Test description";
-        _startDate = new DateOnly(2022, 1, 1);
-        _endDate = new DateOnly(2021, 2, 1);
+        _startDate = DateToDateTimeOffset(2022, 1, 9);
+        _endDate = DateToDateTimeOffset(2022, 1, 7);
 
         await context.SaveChangesAsync();
     }
 
     [Then(@"the trip is not created, And I see an error message 'End date must not be before the start date' preserved and displayed in the trip description")]
-    public async Task checkDateErrorStartDateBeforeEndDate()
+    public async Task CheckDateErrorStartDateBeforeEndDate()
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

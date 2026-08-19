@@ -9,13 +9,16 @@ namespace SENG302.Api.Models.Entities;
 public class NewPostRequest : IPostRequest
 {
     public required int TripId { get; set; }
+    [Required(AllowEmptyStrings = true)]
+    [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Title { get; set; }
     public required long OsmId { get; set; }
+    public string? OsmType { get; set; } = "node";
 
     [Required(AllowEmptyStrings = true)]
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Content { get; set; }
-    public DateOnly? Date
+    public DateTimeOffset? Date
     {
         get;
         set
@@ -28,5 +31,4 @@ public class NewPostRequest : IPostRequest
     public bool DateSupplied { get; set; } = false;
     public bool NoContentAllowed { get; set; } = false;
 }
-
 

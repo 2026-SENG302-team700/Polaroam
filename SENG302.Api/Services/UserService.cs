@@ -2,7 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using SENG302.Api.Helpers;
+using SENG302.Api.Helpers.Validators;
 
 namespace SENG302.Api.Services;
 
@@ -14,13 +14,18 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
-    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry, bool profanityFiltering);
+    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
     Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
-    Task ToggleProfanityFilterAsync(int userId, bool profanityFilter);
+    Task AcceptPrivacyPolicyAsync(int userId);
+    Task<bool> PrivacyPolicyCheckAsync(int userId);
+    Task ToggleAiTaggingAsync(int userId);
+    Task<bool> UserAiTaggingCheckAsync(int userId);
+    Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible);
+    Task<bool> GetPreferenceMapVisibleAsync(int userId);
 }
 
 public enum UserVerificationResult
@@ -107,26 +112,18 @@ public class UserService : IUserService
         {
             errors[field] = message;
         }
-        
+
         if (string.IsNullOrWhiteSpace(email))
         {
             errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
         }
-        
+
 
         if (string.IsNullOrWhiteSpace(displayName))
         {
             errors["displayName"] = "Display name must be between 3 and 64 characters";
         }
-        
-        var profanityFilter = new ProfanityFilter.ProfanityFilter();
-        var swearList = profanityFilter.DetectAllProfanities(displayName);
 
-        if (swearList.Count > 0)
-        {
-            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
-        }
-        
         if (string.IsNullOrWhiteSpace(country))
         {
             errors["country"] = "Country is required!";
@@ -135,13 +132,13 @@ public class UserService : IUserService
         {
             UserCredentialsValidator.ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
         }
-        
+
         if (string.IsNullOrWhiteSpace(passwordString))
         {
             errors["password"] =
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
         }
-        
+
         if (string.IsNullOrWhiteSpace(passwordConfirm))
         {
             errors["passwordConfirm"] = "Passwords do not match";
@@ -278,13 +275,11 @@ public class UserService : IUserService
     /// <param name="newEmail">a string of the provided email</param>
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
-    /// <param name="profanityFiltering">a boolean that represents whether profanity filtering is enabled or disabled</param>
     /// <returns>The new user that has been saved in the database</returns>
     public async Task<User?> UpdateUser(int userId,
         string newEmail,
         string newDisplayName,
-        string newCountry,
-        bool profanityFiltering
+        string newCountry
         )
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -317,7 +312,6 @@ public class UserService : IUserService
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
-        user.ProfanityFiltering = profanityFiltering;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
@@ -481,16 +475,110 @@ public class UserService : IUserService
     }
 
     /// <summary>
-    /// Toggles the profanity filter
+    /// Sets a flag to show that the user has accepted the AI privacy policy.
     /// </summary>
-    /// <param name="userId">The ID of the user</param>
-    /// <param name="profanityFilter">The requested state of the profanity filter</param>
-    public async Task ToggleProfanityFilterAsync(int userId, bool profanityFilter)
+    /// <param name="userId">User that has accepted the AI privacy policy</param>
+    public async Task AcceptPrivacyPolicyAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var user = await context.Users.FindAsync(userId);
-        if (user == null) throw new UnauthorizedAccessException("a user with that id does not exist");
-        user.ProfanityFiltering = profanityFilter;
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        
+        user!.AcceptedAiPrivacyPolicy = true;
+        
+        context.Users.Update(user);
         await context.SaveChangesAsync();
+    }
+    
+    /// <summary>
+    /// Checks to see whether or not a user has accepted the AI privacy policy.
+    /// </summary>
+    /// <param name="userId">user id being checked against.</param>
+    /// <returns>
+    /// True: if the user has accepted the AI privacy policy.
+    /// False: if the user hasn't accepted the AI privacy policy.
+    /// </returns>
+    public async Task<bool> PrivacyPolicyCheckAsync(int userId)
+    {
+        User? user = await GetUserByIdAsync(userId);
+        
+        // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Id didn't match any user");
+        }
+
+        return user.AcceptedAiPrivacyPolicy;
+    }
+    
+    /// <summary>
+    /// Switches the state of the "AiTaggingEnabled" field in a user.
+    /// </summary>
+    /// <param name="userId">ID of user toggling AI tagging</param>
+    /// <exception cref="PrivacyPolicyNotAcceptedException">User has not accepted the AI privacy policy</exception>
+    public async Task ToggleAiTaggingAsync(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (!user!.AcceptedAiPrivacyPolicy)
+        {
+            throw new PrivacyPolicyNotAcceptedException("You must accept the AI privacy policy in order to turn on AI image tagging");
+        }
+
+        user.AiTaggingEnabled = !user.AiTaggingEnabled;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Returns whether or not the user has enabled ai tagging or not.
+    /// </summary>
+    /// <param name="userId">ID of the user being checked for their AI tagging settings</param>
+    /// <returns>
+    /// True: User has AI tagging enabled.
+    /// False: User does not have AI tagging enabled.
+    /// </returns>
+    public async Task<bool> UserAiTaggingCheckAsync(int userId)
+    {
+        User? user = await GetUserByIdAsync(userId);
+        
+        // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Id didn't match any user");
+        }
+
+        return user.AiTaggingEnabled;
+    }
+
+    /// <summary>
+    /// Updates the map visible preference on the user
+    /// </summary>
+    /// <param name="userId">Which user to update</param>
+    /// <param name="mapVisible">What the new value is</param>
+    public async Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
+
+        user.PreferenceMapVisible = mapVisible;
+
+        context.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Updates the map visible preference on the user
+    /// </summary>
+    /// <param name="userId">Which user to update</param>
+    /// <param name="mapVisible">What the new value is</param>
+    public async Task<bool> GetPreferenceMapVisibleAsync(int userId)
+    {
+        User user = await GetUserByIdAsync(userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        return user.PreferenceMapVisible;
     }
 }

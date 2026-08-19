@@ -8,9 +8,10 @@ public interface IPostRequest
 {
     public string Title { get; set; }
     public string Content { get; set; }
-    public DateOnly? Date { get; set; }
+    public DateTimeOffset? Date { get; set; }
     [JsonIgnore]
     public bool DateSupplied { get; set; }
     public long OsmId { get; set; }
+    public string? OsmType { get; set; }
     public bool NoContentAllowed { get; set; }
 }

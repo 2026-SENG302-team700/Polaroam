@@ -2,6 +2,8 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
+using SENG302.Api.Helpers.Validators;
 
 namespace SENG302.Api.Services;
 
@@ -13,6 +15,8 @@ public interface ITripService
     Task DeleteTripByIdAsync(int tripId);
     Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
     Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
+    Task<List<Location>> GetTripLocations(int tripId);
+    Task<List<Trip>> GetTripsFromQuery(int userId, string query);
 }
 
 public class TripService : ITripService
@@ -29,25 +33,14 @@ public class TripService : ITripService
     }
 
     /// <summary>
-    /// Gets all trips associated with a user's email and checks for profanity if applicable
+    /// Gets all trips associated with a user's email
     /// </summary>
     /// <param name="userId"></param>
     /// <returns></returns>
     public async Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         var trips = await context.Set<Trip>().Where(t => t.UserId == userId).ToListAsync();
-
-        var user = await _userService.GetUserByIdAsync(userId);
-        // check for profanity filtering
-        if (user?.ProfanityFiltering != true) return trips;
-
-        var profanityFiltering = new ProfanityFilter.ProfanityFilter();
-        foreach (Trip trip in trips)
-        {
-            trip.Title = profanityFiltering.CensorString(trip.Title);
-        }
         return trips;
     }
 
@@ -63,12 +56,11 @@ public class TripService : ITripService
     {
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         // Clean request
         trip.Title = trip.Title.Trim();
         trip.Description = trip.Description.Trim();
-        trip.StartDate = trip.StartDate == DateOnly.MinValue ? null : trip.StartDate;
-        trip.EndDate = trip.EndDate == DateOnly.MinValue ? null : trip.EndDate;
+        trip.StartDate = trip.StartDate.HasValue ? trip.StartDate : null;
+        trip.EndDate = trip.EndDate.HasValue ? trip.EndDate : null;
 
         // Validation
         var errors = new Dictionary<string, List<string>>();
@@ -118,6 +110,7 @@ public class TripService : ITripService
             EndDate = trip.EndDate
         };
         context.Set<Trip>().Add(newTrip);
+
         await context.SaveChangesAsync();
         return newTrip;
     }
@@ -140,6 +133,7 @@ public class TripService : ITripService
 
         return trip;
     }
+
 
     /// <summary>
     /// Delete the trip from the database
@@ -240,5 +234,46 @@ public class TripService : ITripService
         await context.SaveChangesAsync();
 
         return trip;
+    }
+
+    /// <summary>
+    /// Gets all locations that have been posted in a trip
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>List of location objects</returns>
+    public async Task<List<Location>> GetTripLocations(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var locations = await context.Set<Post>()
+            .Where(p => p.TripId == tripId)
+            .Join(context.Set<Location>(),
+                post => post.OsmId,
+                location => location.OsmId,
+                (post, location) => location)
+            .Distinct()
+            .ToListAsync();
+
+        return locations;
+    }
+
+    /// <summary>
+    /// Gets a list of trips owned by the user based on the query provided, looks through a trips title and description.
+    /// </summary>
+    /// <param name="userId">id of the user who owns the trips</param>
+    /// <param name="query">query to be queried</param>
+    /// <returns>List of trips that have matched the query</returns>
+    public async Task<List<Trip>> GetTripsFromQuery(int userId, string query)
+    {
+        query = query.Trim().ToLower();
+        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trips = await context.Trips
+            .Where(trip => trip.UserId == userId &&
+                (trip.Title.ToLower().Contains(query) || trip.Description.ToLower().Contains(query)))
+            .ToListAsync();
+
+        return trips.OrderBy(trip => trip.StartDate).ToList();
     }
 }

@@ -24,10 +24,7 @@ public class SmtpClientWrapper : ISmtpClientWrapper
 
     public Task ConnectAsync(string host, int port, SecureSocketOptions options)
     {
-        if (OperatingSystem.IsWindows())
-        {
-            _client.CheckCertificateRevocation = false;
-        }
+        _client.CheckCertificateRevocation = false;
         return _client.ConnectAsync(host, port, options);
     }
     public Task AuthenticateAsync(string userName, string password) => _client.AuthenticateAsync(userName, password);

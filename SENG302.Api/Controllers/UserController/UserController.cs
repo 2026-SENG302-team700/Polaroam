@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
-using SENG302.Api.Helpers;
+using SENG302.Api.Helpers.Validators;
+using SENG302.Api.Models.Responses;
 namespace SENG302.Api.Controllers.UserController;
 
 [ConditionalValidateAntiForgeryToken]
@@ -19,15 +20,13 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
-    private readonly IEmailService _emailService;
     private readonly IOneTimeCodeService _codeService;
 
-    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService, IEmailService emailService)
+    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService)
     {
         _userService = userService;
         _fileService = fileService;
         _codeService = codeService;
-        _emailService = emailService;
     }
 
     /// <summary>
@@ -52,9 +51,19 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        // Remove hashed password from user
-        user.PasswordKey = "---";
-        return Ok(user);
+        return Ok(new GetUserResponse
+        {
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            Country = user.Country,
+            ProfilePicture = user.ProfilePicture,
+            ProfilePictureZoom = user.ProfilePictureZoom,
+            ProfilePictureOffsetX = user.ProfilePictureOffsetX,
+            ProfilePictureOffsetY = user.ProfilePictureOffsetY,
+            AcceptedAiPrivacyPolicy = user.AcceptedAiPrivacyPolicy,
+            AiTagging = user.AiTaggingEnabled
+        });
     }
 
     [AllowAnonymous]
@@ -105,8 +114,7 @@ public class UserController : ControllerBase
                 userId,
                 updateUserRequest.Email,
                 updateUserRequest.DisplayName,
-                updateUserRequest.Country,
-                updateUserRequest.ProfanityFiltering);
+                updateUserRequest.Country);
 
             if (user == null)
             {
@@ -175,13 +183,13 @@ public class UserController : ControllerBase
             return Unauthorized("You do not have authorisation to change this profile picture!");
         }
 
-        if (!ImageValidationTools.IsValidFilesize(file))
+        if (!ImageValidator.IsValidFilesize(file))
         {
             return BadRequest("Image too large, maximum file size is 10MB");
         }
 
         // implement into one big callback function later.
-        if (!ImageValidationTools.IsValidMimeType(file))
+        if (!ImageValidator.IsValidMimeType(file))
         {
             return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
         }
@@ -212,7 +220,7 @@ public class UserController : ControllerBase
         await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);
         return Ok();
     }
-    
+
 
     /// <summary>
     /// Gets a user's profile picture and sends it as a form
@@ -248,29 +256,95 @@ public class UserController : ControllerBase
 
         return File(fileBytes, customFile.MimeType);
     }
-    
+
     /// <summary>
-    /// API Endpoint for toggling the profanity filter on and off.
+    /// Set's a flag in the user that the user has agreed to Polaroam's Privacy Policy.
     /// </summary>
-    /// <param name="profanityFilter">A boolean with true representing profanity filtering on and false representing off</param>
     /// <returns>
-    /// Unauthorized - If user is unauthorized to change the profanity filter of the requested user
-    /// Ok - If profanity filter has been set.
+    /// Unauthorized: No cookie saved
+    /// Ok: User flagged to have accepted the privacy policy.
     /// </returns>
-    [Authorize]
-    [HttpPatch("profanity-filter")]
-    public async Task<ActionResult> ToggleProfanityFilter([FromBody] bool profanityFilter)
+    [HttpPut("accept-policy")]
+    public async Task<IActionResult> AcceptPrivacyPolicy()
     {
-        // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
             return Unauthorized();
         }
-        
+
         var userId = int.Parse(userIdString);
 
-        await _userService.ToggleProfanityFilterAsync(userId, profanityFilter);
+        await _userService.AcceptPrivacyPolicyAsync(userId);
         return Ok();
+    }
+
+    /// <summary>
+    /// Endpoint allowing for a user to toggle their AI tagging settings.
+    /// </summary>
+    /// <returns>
+    /// Unauthorized: No cookie saved
+    /// Forbidden: User hasn't accepted the privacy policy yet.
+    /// Ok: Setting has been toggled.
+    /// </returns>
+    [HttpPut("ai-toggle")]
+    public async Task<IActionResult> ToggleAiSetting()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var userId = int.Parse(userIdString);
+
+        try
+        {
+            await _userService.ToggleAiTaggingAsync(userId);
+        }
+        catch (PrivacyPolicyNotAcceptedException e)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, e.Message);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Set the map visible preference
+    /// </summary>
+    /// <param name="mapVisibleObject">The value of the new preference</param>
+    /// <returns></returns>
+    [HttpPut("preference/mapvisible")]
+    public async Task<IActionResult> SetMapShownPreference([FromBody] MapVisibleObject mapVisibleObject)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to update the map visible preference");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        await _userService.SetPreferenceMapVisibleAsync(userId, mapVisibleObject.MapVisible);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Get the map visible preference
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("preference/mapvisible")]
+    public async Task<IActionResult> GetMapShownPreference()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to get the map visible preference");
+        }
+
+        var userId = int.Parse(userIdString);
+        var mapVisible = await _userService.GetPreferenceMapVisibleAsync(userId);
+        return Ok(new MapVisibleObject() {MapVisible = mapVisible});
     }
 }

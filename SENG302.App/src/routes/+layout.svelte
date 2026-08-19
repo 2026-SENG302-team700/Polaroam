@@ -6,11 +6,15 @@
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
     import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
+	import maplibregl from 'maplibre-gl';
+	import workerUrl from 'maplibre-gl/dist/maplibre-gl-csp-worker.js?url';
 
 	interface Props { children?: import("svelte").Snippet }
 
 	let { children }: Props = $props();
 
+	maplibregl.setWorkerUrl(workerUrl);
+	
 	// added to ensure we can make use of bootstrap js for things like dropdowns
 	onMount(async () => {
 		// @ts-ignore
@@ -28,8 +32,9 @@
 	<footer class="footerBar menu-bar ">
 		<div class="footerContent display: flex; flex-direction: row; align-items: center; padding-top: 5px; "
     >
-			<NavBarMenuButton path={`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`} text= {"Content Policy"}/>
-			<NavBarMenuButton path={`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`} text= {"Privacy Policy"}/>
+			<NavBarMenuButton path="/policies/content-policy" text= {"Content Policy"}/>
+			<NavBarMenuButton path="/policies/privacy-policy" text= {"Privacy Policy"}/>
+			<NavBarMenuButton path="/policies/ai-privacy-policy" text= {"AI Privacy Policy"}/>
 		</div>
 	</footer>
 {/key}

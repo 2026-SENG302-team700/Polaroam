@@ -11,6 +11,9 @@ using NSubstitute;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Reqnroll.Assist;
+using SENG302.Api.Services.Email;
+using SENG302.Api.Services.ImageTagging;
+using Microsoft.Extensions.Hosting;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -26,10 +29,11 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     protected IDbContextFactory<DatabaseContext> DbContextFactory => ServiceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
 
     protected IGeoService GeoServiceMock { get; }
+    protected IImageTaggingQueue ImageTaggingQueueMock { get; }
 
     // As our tests run, time passes, which can make it difficult to check exactly when something happened.
     // For this reason, we fake (similar to mocking) our time provider, effectively freezing time while we run our tests.
-    // Note: This will only work if we remember to use a TimeProvider instead of DateTime.Now or DateTimeOffset.Now in our code.
+    // Note: This will only work if we remember to use a TimeProvider instead of DateTimeOffset.UtcNow in our code.
     protected DateTimeOffset TestNow;
     protected readonly FakeTimeProvider FakeTimeProvider;
     protected string FakeTestDirectory; // Fake Test Directory for Unit Tests regarding FileService
@@ -39,12 +43,12 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     protected BaseIntegrationTestFixture(WebApplicationFactory<Program> webAppFactory)
     {
-        TestNow = DateTimeOffset.Now;
+        TestNow = DateTimeOffset.UtcNow;
         FakeTimeProvider = new FakeTimeProvider(TestNow);
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         GeoServiceMock = Substitute.For<IGeoService>();
-
+        ImageTaggingQueueMock = Substitute.For<IImageTaggingQueue>();
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
@@ -81,14 +85,35 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.RemoveAll<IGeoService>();
                 services.AddSingleton(GeoServiceMock);
 
+                services.RemoveAll<IImageTaggingQueue>();
+                services.AddSingleton(ImageTaggingQueueMock);
+
+                // replace the real image tagging background service with a mock
+                // so that we don't actually try to tag images in our tests
+                var imageTaggingWorker = services.FirstOrDefault(descriptor =>
+                    descriptor.ServiceType == typeof(IHostedService) &&
+                    descriptor.ImplementationType == typeof(ImageTaggingBackgroundService));
+
+                if (imageTaggingWorker != null)
+                {
+                    services.Remove(imageTaggingWorker);
+                }
+
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
+                
+                ConfigureAdditionalServices(services);
             });
         });
 
         HttpClient = _webAppFactory.CreateClient();
     }
-
+    
+    // Used to add mocks to new services
+    protected virtual void ConfigureAdditionalServices(IServiceCollection services)
+    {
+        // no mocked services by default
+    }
     public virtual async Task InitializeAsync()
     {
         // At the start of a test, make sure the database is created fresh

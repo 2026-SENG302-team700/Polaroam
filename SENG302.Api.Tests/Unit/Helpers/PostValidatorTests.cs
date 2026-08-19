@@ -1,3 +1,4 @@
+using SENG302.Api.Helpers.Validators;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
@@ -7,16 +8,14 @@ public class PostValidatorTests
     [Fact]
     public async Task ValidatePostDate_PastDate_ReturnNoErrors()
     {
-        var errors = PostValidator.ValidatePostDate(
-            DateOnly.FromDateTime(DateTime.Today.AddDays(-1)));
+        var errors = PostValidator.ValidatePostDate(DateTimeOffset.UtcNow.AddDays(-1));
         errors.Count.ShouldBe(0);
     }
 
     [Fact]
     public async Task ValidatePostDate_FutureDate_ReturnCorrectError()
     {
-        var errors = PostValidator.ValidatePostDate(
-            DateOnly.FromDateTime(DateTime.Today.AddDays(1)));
+        var errors = PostValidator.ValidatePostDate(DateTimeOffset.UtcNow.AddDays(1));
         errors.Count.ShouldBe(1);
         errors.ShouldContain("Invalid date, date cannot be in the future");
     }
@@ -26,7 +25,7 @@ public class PostValidatorTests
     {
         var errors = PostValidator.ValidatePostDate(null);
         errors.Count.ShouldBe(1);
-        errors[0].ShouldContain("Invalid date, date must be formatted ");
+        errors[0].ShouldContain("Date is invalid");
     }
 
     [Fact]
@@ -44,12 +43,27 @@ public class PostValidatorTests
         errrors.Count.ShouldBe(0);
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void ValidatePostLocation_InvalidOsmId_ReturnsError(long osmId)
+    [Fact]
+    public void ValidatePostContent_ContentAtMaxLength_ReturnsNoErrors()
     {
-        var errors = PostValidator.ValidatePostLocation(osmId);
+        var errors = PostValidator.ValidatePostContent(new string('a', 8196), false);
+        errors.Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public void ValidatePostContent_ContentOverMaxLength_ReturnsError()
+    {
+        var errors = PostValidator.ValidatePostContent(new string('a', 8197), false);
+        errors.Count.ShouldBe(1);
+        errors.ShouldContain("Content needs to be less than 8196 characters long");
+    }
+
+    [Theory]
+    [InlineData(0, "node")]
+    [InlineData(-1, "node")]
+    public void ValidatePostLocation_InvalidOsmId_ReturnsError(long osmId, string osmType)
+    {
+        var errors = PostValidator.ValidatePostLocation(osmId, osmType);
 
         errors.ShouldContain("This isn't a valid location");
     }
@@ -57,7 +71,7 @@ public class PostValidatorTests
     [Fact]
     public void ValidatePostLocation_ValidOsmId_ReturnsNoErrors()
     {
-        var errors = PostValidator.ValidatePostLocation(123);
+        var errors = PostValidator.ValidatePostLocation(123, "node");
 
         errors.ShouldBeEmpty();
     }

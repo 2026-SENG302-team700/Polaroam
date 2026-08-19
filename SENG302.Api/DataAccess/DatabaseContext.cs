@@ -13,4 +13,6 @@ public class DatabaseContext : DbContext
     public DbSet<CustomFile> CustomFiles { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<Location> Locations { get; set; }
+    public DbSet<Album> Albums { get; set; }
+
 }

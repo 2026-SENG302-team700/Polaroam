@@ -14,12 +14,13 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers.UserController.PasswordController;
 using SENG302.Api.Models.Requests.Password;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class ResetPasswordTests : BaseIntegrationTestFixture
 {
-    private readonly IEmailService _mockEmailService;
+    private readonly IEmailQueue _mockEmailQueue;
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
     private readonly ResetPasswordController _controller;
 
@@ -28,9 +29,9 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
     public ResetPasswordTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
-        _mockEmailService = Substitute.For<IEmailService>();
+        _mockEmailQueue = Substitute.For<IEmailQueue>();
         _controller =
-            new ResetPasswordController(ServiceUnderTest, _mockOneTimeCodeService, _mockEmailService);
+            new ResetPasswordController(ServiceUnderTest, _mockOneTimeCodeService, _mockEmailQueue);
     }
 
     private void SetupTempSessionContext(string email)
@@ -59,17 +60,18 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
         var userId = user.Id;
         SetupTempSessionContext("test@example.com");
-
-        var request = new ResetPasswordRequest { NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
-        var response = await _controller.resetPassword(request);
+        
+        
+        var request = new ResetPasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
+        var response = await _controller.ResetPassword(request);
         response.ShouldBeOfType<OkResult>();
-
-        var verifyContext = await DbContextFactory.CreateDbContextAsync();
-        PasswordHasher<User> passwordHasher = new();
-        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
-
-        Assert.NotNull(updatedUser);
-        Assert.Equal("test@example.com", updatedUser.Email);
+        
+        var verifyContext = await  DbContextFactory.CreateDbContextAsync();
+        PasswordHasher<User> passwordHasher = new(); 
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(x => x.Id == userId); 
+        
+        Assert.NotNull(updatedUser); 
+        Assert.Equal("test@example.com", updatedUser.Email); 
         Assert.Equal(PasswordVerificationResult.Success, passwordHasher.VerifyHashedPassword(updatedUser, updatedUser.PasswordKey, "Test700!"));
     }
 
@@ -77,13 +79,13 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
     public async Task ResetPassword_MissmatchedPasswords_BadRequest()
     {
         var context = await DbContextFactory.CreateDbContextAsync();
-        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" };
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" }; 
+        context.Users.Add(user); 
+        await context.SaveChangesAsync(); 
         SetupTempSessionContext("test@example.com");
-
-        var request = new ResetPasswordRequest { NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
-        var response = await _controller.resetPassword(request);
+        
+        var request = new ResetPasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
+        var response = await _controller.ResetPassword(request);
         response.ShouldBeOfType<BadRequestObjectResult>();
     }
 }

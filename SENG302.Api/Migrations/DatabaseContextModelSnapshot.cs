@@ -23,6 +23,23 @@ namespace SENG302.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Album", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Albums");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.CustomFile", b =>
                 {
                     b.Property<int>("Id")
@@ -31,12 +48,21 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("CanRetryTagging")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("FileKey")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("InTagQueue")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("MimeType")
                         .IsRequired()
@@ -48,6 +74,12 @@ namespace SENG302.Api.Migrations
 
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TagError")
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<List<string>>("Tags")
+                        .HasColumnType("text[]");
 
                     b.HasKey("Id");
 
@@ -66,8 +98,11 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateOnly?>("Date")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("Date")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LocationName")
                         .IsRequired()
@@ -76,7 +111,12 @@ namespace SENG302.Api.Migrations
                     b.Property<long>("OsmId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("OsmType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.PrimitiveCollection<List<int>>("PhotoIds")
+                        .IsRequired()
                         .HasColumnType("integer[]");
 
                     b.Property<string>("Title")
@@ -85,9 +125,6 @@ namespace SENG302.Api.Migrations
 
                     b.Property<int>("TripId")
                         .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset>("creationTime")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("PostId");
 
@@ -106,11 +143,11 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("EndDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -132,6 +169,12 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AcceptedAiPrivacyPolicy")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AiTaggingEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("CodeGenerationTime")
                         .HasColumnType("bigint");
@@ -161,7 +204,7 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("ProfanityFiltering")
+                    b.Property<bool>("PreferenceMapVisible")
                         .HasColumnType("boolean");
 
                     b.Property<int>("ProfilePicture")
@@ -189,11 +232,11 @@ namespace SENG302.Api.Migrations
 
             modelBuilder.Entity("SENG302.Api.Models.Responses.Location", b =>
                 {
-                    b.Property<long>("OsmId")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("PostId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PostId"));
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
@@ -211,7 +254,14 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("OsmId", "PostId");
+                    b.Property<long>("OsmId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OsmType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PostId");
 
                     b.ToTable("Locations");
                 });

@@ -28,24 +28,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
 
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
-    
-    [Fact]
-    public async Task RegisterUser_ProfanitiesInDisplayName_ReturnBadRequest()
-    {
-        var data = new PostUserRequest
-        {
-            Email = "great.person@gmail.com",
-            DisplayName = "Fuck",
-            PasswordString = "Gre@tPerson69",
-            PasswordConfirm = "Gre@tPerson69",
-            Country = "NZ",
-        };
 
-        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
-
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-    
     [Theory]
     [InlineData("shiv.sheep@gmail.com", "ShivSheep", "", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "")]
@@ -64,7 +47,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
 
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
 
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);;
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest); ;
     }
 
 
@@ -95,10 +78,11 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
 
         var message2 = await HttpClient.PostAsJsonAsync("/api/register", data2);
         message2.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        
-        var content = await message2.Content.ReadAsStringAsync();                                                                     
-        var json = JsonSerializer.Deserialize<JsonElement>(content);                                                                  
+
+        var content = await message2.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
         var errors = json.GetProperty("errors");
+
         errors.GetProperty("email").GetString().ShouldContain("This email address is already in use by another account");
     }
 
@@ -113,12 +97,12 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         var message = await HttpClient.PutAsJsonAsync("/api/register/code/generation", data);
 
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        
+
         var content = await message.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("message").GetString().ShouldBe("User email is missing");
     }
-    
+
 
     [Fact]
     public async Task ValidateCode_IncorrectCode_ReturnBadRequest()
@@ -143,17 +127,17 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             email = "test@example.com",
             Code = "609809"
         };
-        
+
         var message = await HttpClient.PostAsJsonAsync("/api/register/code/validation", data);
-        
+
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        
+
         var content = await message.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("message").GetString().ShouldBe("Invalid Code");
     }
-    
-    
+
+
     [Fact]
     public async Task ValidateCode_InvalidTimedOutCode_ReturnBadRequest()
     {
@@ -177,16 +161,16 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             email = "test@example.com",
             Code = "609809"
         };
-        
+
         var message = await HttpClient.PostAsJsonAsync("/api/register/code/validation", data);
-        
+
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        
+
         var content = await message.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("message").GetString().ShouldBe("Code is no longer valid, account no longer exists");
     }
-    
+
     [Fact]
     public async Task ValidateCode_ValidCode_ReturnOk()
     {
@@ -210,11 +194,11 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             email = "test@example.com",
             Code = "608975"
         };
-        
+
         var message = await HttpClient.PostAsJsonAsync("/api/register/code/validation", data);
-        
+
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
-        
+
+
     }
 }

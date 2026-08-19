@@ -76,6 +76,10 @@ acceptance-tests:
 coverage-reporting:
   extends: .not-scheduled
   stage: coverage-report
+  only:
+    refs:
+      - dev
+      - main
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
     - apt-get update && apt-get install -y bc
@@ -106,6 +110,10 @@ coverage-reporting:
 sonarqube-report:
   extends: .not-scheduled
   stage: sonarqube
+  only:
+    refs:
+      - dev
+      - main
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
     - dotnet tool install --global dotnet-sonarscanner
@@ -113,7 +121,7 @@ sonarqube-report:
 
       # begin report analysis from test jobs
     - dotnet sonarscanner begin /k:"$SONAR_PROJECT_KEY" /d:sonar.host.url="https://sonarqube.csse.canterbury.ac.nz"
-      /d:sonar.token="$SONARQUBE_TOKEN" /d:sonar.cs.opencover.reportPaths="SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml"
+      /d:sonar.token="$SONARQUBE_TOKEN" /d:sonar.cs.opencover.reportsPaths="SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml"
 
     # build required for sonarqube to analyse compiled output
     - dotnet build SENG302.Api/SENG302.Api.csproj -c Release
@@ -145,6 +153,7 @@ deploy-staging:
     - echo "export DB_NAME=${TEST_DB_NAME}" >> /home/gitlab-runner/staging/.env
     - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/staging/.env
     - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/staging/.env
+    - echo "export LLM_API_KEY=${LLM_API_KEY}" >> /home/gitlab-runner/staging/.env
 
     - echo "export EMAIL_HOST=${EMAIL_HOST}" >> /home/gitlab-runner/staging/.env
     - echo "export EMAIL=${EMAIL}" >> /home/gitlab-runner/staging/.env
@@ -192,6 +201,7 @@ deploy-production:
     - echo "export DB_NAME=${PROD_DB_NAME}" >> /home/gitlab-runner/production/.env
     - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/production/.env
     - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/production/.env
+    - echo "export LLM_API_KEY=${LLM_API_KEY}" >> /home/gitlab-runner/production/.env
 
     - echo "export EMAIL_HOST=${EMAIL_HOST}" >> /home/gitlab-runner/production/.env
     - echo "export EMAIL=${EMAIL}" >> /home/gitlab-runner/production/.env

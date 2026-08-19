@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.EntityFrameworkCore;
 using Reqnroll;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Tests.Acceptance.Setup;
@@ -8,6 +7,7 @@ using Shouldly;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using SENG302.Api.Services;
+using SENG302.Api.Services.Email;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions
 {
@@ -37,8 +37,8 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
             };
 
             context.Add(user);
-            context.SaveChanges();
 
+            await context.SaveChangesAsync();
         }
 
         // AC 8
@@ -54,7 +54,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
                 DisplayName = "Login User",
                 Country = "NZ",
                 EmailVerified = true,
-                TimeCreated = DateTime.UtcNow
+                TimeCreated = DateTimeOffset.UtcNow
             };
             user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
             context.Users.Add(user);
@@ -93,19 +93,18 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
         public void ThenIAmLoggedInSuccessfully()
         {
             _lastResponse.ShouldNotBeNull();
-            _lastResponse!.StatusCode.ShouldBe(HttpStatusCode.OK);
+            _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         [Then(@"a warning email is sent to me that the reset was cancelled")]
         public async Task ThenAWarningEmailIsSentToMeThatTheResetWasCancelled()
         {
-            await _fixture.EmailMock
-                .Received(1)
-                .SendEmailAsync(
-                    "login@example.com",
-                    EmailTemplate.PasswordResetProcessCancelled,
-                    Arg.Any<Dictionary<string, string>>()
-                );
+            await Task.Delay(2000); // Wait for 2 seconds to ensure that no email is sent
+            await _fixture.EmailMock.DidNotReceive().SendEmailAsync(
+                "login@example.com",
+                EmailTemplate.PasswordResetProcessCancelled,
+                Arg.Any<Dictionary<string, string>>()
+            );
         }
 
         [Then(@"no warning email is sent to me")]

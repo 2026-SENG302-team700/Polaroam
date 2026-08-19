@@ -1,7 +1,8 @@
 <script lang="ts">
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import PostForm from "$lib/components/forms/post-form.svelte";
+    import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
@@ -9,27 +10,33 @@
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
+    import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
 
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
+    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
 
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
     let photoIds = $state([]);
     let photoIdFileMap = new WeakMap();
+    let aiTaggingEnabled = $state(false);
+    let aiTaggingForUpload = $state(false);
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0);
+    let fileErrors: string[] = $state([]);
     let confirmationModalShown = $state(false);
     let noContentAllowed = $state(false);
     let searchQuery = $state("");
     let files: File[] | null | undefined = $state([]);
     let location = $state({
         osmId: 0,
+        osmType: "",
         lat: 0,
         lon: 0,
         name: "",
@@ -71,8 +78,11 @@
     let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
-        await fetchPost();
-        await fetchImages();
+        await Promise.all([
+            loadAiTaggingPreference(),
+            fetchPost(),
+            fetchImages(),
+        ]);
     });
 
     /**
@@ -105,13 +115,21 @@
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
                         resolve(
-                            `/api/post/${page.params.postId}/images/${meta.photoId}` as any,
+                            `/api/image/${meta.photoId}` as any,
                         ),
                         {
                             method: "GET",
                             credentials: "include",
                         },
                     );
+
+                    if (!res.ok) {
+                        throw new Error(
+                            (await res.text()) ||
+                                `Failed to fetch image ${meta.photoId}`,
+                        );
+                    }
+
                     const blob = await res.blob();
                     const file = new File([blob], meta.fileName, {
                         type: meta.mimeType,
@@ -127,33 +145,6 @@
         } finally {
             loading = false;
         }
-    }
-
-    /**
-     * Parse date stored within database to the local format
-     * @param dateString the strin value of the date
-     */
-    function parseLocalDate(dateString: string): Date {
-        const datePart = dateString.split("T")[0];
-        const [year, month, day] = datePart.split("-").map(Number);
-
-        return new Date(year, month - 1, day);
-    }
-
-    /**
-     * Converts a local date to a date only string without UTC timezone shifting
-     * @param date
-     */
-    function serialiseLocalDate(date: Date | null): string | null {
-        if (!date || Number.isNaN(date.getTime())) {
-            return null;
-        }
-
-        const year = date.getFullYear().toString().padStart(4, "0");
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const day = date.getDate().toString().padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
     }
 
     /**
@@ -177,12 +168,11 @@
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
                 return;
             }
-            console.log(`PhotoIds: ${data.photoIds}`);
-
             title = data.title;
             content = data.content;
-            date = parseLocalDate(data.date);
+            date = new Date(data.date);
             location.osmId = data.osmId;
+            location.osmType = data.osmType;
             photoIds = data.photoIds;
             searchQuery = data.locationName;
         } catch (err) {
@@ -191,6 +181,21 @@
         } finally {
             loading = false;
         }
+    }
+
+    /**
+     * Fetches the display name of the user based on the post
+     */
+    async function loadAiTaggingPreference() {
+        const response = await fetchWithCsrf(resolve("/api/user" as any), {
+            credentials: "include",
+        });
+
+        if (!response.ok) return;
+
+        const user = await response.json();
+        aiTaggingEnabled = user.aiTagging;
+        aiTaggingForUpload = user.aiTagging;
     }
 
     /**
@@ -213,9 +218,12 @@
             form.append("TripId", tripId);
             form.append("Title", title);
             form.append("OsmId", location.osmId);
+            form.append("OsmType", location.osmType);
             form.append("Content", content);
-            form.append("Date", serialiseLocalDate(date) ?? "");
+            form.append("Date", date?.toISOString() ?? "");
             form.append("NoContentAllowed", noContentAllowed);
+            // add the ai tagging option to the form data
+            form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
 
             const newUploadedFiles =
                 newUploadsCount > 0 ? files?.slice(-newUploadsCount) : [];
@@ -243,7 +251,9 @@
                 errors.photos = data.errors?.photos ?? [];
 
                 if (
-                    errors.content.length === 1 &&
+                    errors.content.includes(
+                        "Post contains no content, are you sure you want to create post?",
+                    ) &&
                     errors.title.length === 0 &&
                     !errors.date &&
                     errors.generic.length === 0 &&
@@ -304,40 +314,65 @@
     }
 </script>
 
-<div class="container d-flex justify-content-center align-items-center">
-    <div class="w-100" style="max-width: 600px;">
-        <TitleForm bind:name={title} errors={errors.title} />
-        <DatePicker bind:value={date} error={errors.date} />
-        {#if errors.date}
-            <div class="invalid-feedback d-block">{errors.date}</div>
-        {/if}
-        <LocationForm
-            bind:searchQuery
-            bind:location
-            bind:error={errors.location}
-        />
-        <DescriptionForm placeholder="Content" bind:description={content} />
-        <ImageDisplay
-            bind:images={files}
-            errors={errors.photos}
-            letDelete={true}
-            ondelete={removePhoto}
-        >
-            <ImagePicker
-                bind:filesList={files}
-                errors={errors.photos}
-                bind:newUploadsCount
-            />
-        </ImageDisplay>
-        <MultipleErrorDisplay errors={[errors.generic]} />
-        <div class="d-grid">
-            <CreationButton onClick={updatePost} text="Update Post" />
-        </div>
-        <div class="d-grid mt-3">
-            <CancelButton path={`/home/trips/${page.params.tripId}`} />
-        </div>
+<PostForm heading="Edit Post">
+    <div class="section-heading">
+        <i class="bi bi-pencil-square"></i>
+        <h2>Post Details</h2>
     </div>
-</div>
+    <TitleForm bind:name={title} errors={errors.title} {loading} />
+
+    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+
+    <LocationForm
+        bind:searchQuery
+        bind:location
+        bind:error={errors.location}
+        bind:loading
+    />
+    <DescriptionForm
+        placeholder="Content"
+        bind:description={content}
+        errors={errors.content}
+    />
+    <div class="section-divider"></div>
+
+    <div class="section-heading">
+        <i class="bi bi-camera"></i>
+        <h2>Photos</h2>
+    </div>
+
+    <ImageDisplay
+        bind:images={files}
+        {photoIds}
+        errors={[...errors.photos, ...fileErrors]}
+        letDelete={true}
+        ondelete={removePhoto}
+    >
+        <ImagePicker
+            bind:filesList={files}
+            bind:newUploadsCount
+            errors={errors.photos}
+            bind:fileErrors
+            {loading}
+        />
+    </ImageDisplay>
+
+    <AiTaggingOption
+        bind:enabled={aiTaggingEnabled}
+        bind:aiTaggingForUpload
+        {loading}
+    />
+
+    <div class="post-form-actions">
+        <ConfirmCancelButton
+            path={`/home/trips/${tripId}`}
+            option1Text="Back to your Trip"
+            option2Text="Stay on This Page"
+        />
+
+        <CreationButton onClick={updatePost} text="Update Post" {loading} />
+    </div>
+</PostForm>
 
 <ConfirmationModal
     bind:show={confirmationModalShown}
@@ -351,3 +386,42 @@
     }}
     onOption2={() => (confirmationModalShown = false)}
 />
+
+<style>
+    .section-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 1.25rem 0 1rem;
+        color: #686868;
+    }
+
+    .section-heading h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .section-heading i {
+        font-size: 1.15rem;
+    }
+
+    .section-divider {
+        margin: 1.75rem 0;
+        border-top: 2px dashed #686868;
+        opacity: 0.65;
+    }
+
+    .post-form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1.75rem;
+    }
+
+    @media (max-width: 500px) {
+        .post-form-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

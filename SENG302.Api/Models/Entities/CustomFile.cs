@@ -18,4 +18,14 @@ public class CustomFile
     public required string MimeType { get; set; }
 
     public long FileSize { get; set; }
+
+    public List<string>? Tags { get; set; }
+
+    public String? TagError { get; set; }
+
+    public bool InTagQueue { get; set; } = false;
+    
+    public DateTimeOffset DateCreated { get; set; } = DateTimeOffset.UtcNow;
+
+    public bool CanRetryTagging { get; set; } = true;
 }
