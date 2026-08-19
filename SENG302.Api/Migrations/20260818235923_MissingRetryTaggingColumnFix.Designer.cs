@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260818233101_MigrationFixPlease")]
-    partial class MigrationFixPlease
+    [Migration("20260818235923_MissingRetryTaggingColumnFix")]
+    partial class MissingRetryTaggingColumnFix
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
