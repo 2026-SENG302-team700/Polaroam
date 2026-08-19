@@ -268,47 +268,49 @@
                 <img src={displaySrc} alt="Image" class="image" />
             {/if}
 
-            {#if imageContext}
-                <div class="image-details">
-                    <div class="image-detail btn btn-secondary btn-sm">
-                        <span
-                            ><strong>Trip:</strong>
-                            {imageContext.tripTitle}</span
-                        >
-                        {#if imageContext.postId}
-                            <span class="detail-divider"
-                                ><strong>Post:</strong>
-                                {imageContext.postTitle}</span
+            <div class="image-toolbar">
+                {#if imageContext}
+                    <div class="image-details">
+                        <div class="image-detail btn btn-secondary btn-sm">
+                            <span
+                                ><strong>Trip:</strong>
+                                {imageContext.tripTitle}</span
                             >
-                        {/if}
+                            {#if imageContext.postId}
+                                <span class="detail-divider"
+                                    ><strong>Post:</strong>
+                                    {imageContext.postTitle}</span
+                                >
+                            {/if}
+                        </div>
                     </div>
-                </div>
-            {/if}
+                {/if}
 
-            <div class="action-buttons">
-                {#if imageContext?.postId && showPostButton}
-                    <button
-                        class="btn btn-secondary btn-sm"
-                        onclick={() =>
-                            goto(
-                                resolve(
-                                    `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
-                                ),
-                            )}>Go to Post</button
-                    >
-                {/if}
-                {#if imageContext && showTripAlbumButton}
-                    <button
-                        class="btn btn-secondary btn-sm"
-                        onclick={() =>
-                            goto(
-                                resolve(
-                                    `/home/trips/${imageContext!.tripId}/album`,
-                                ),
-                            )}>Go to Trip Album</button
-                    >
-                {/if}
-                <CloseButton bind:close={enlarged} class="btn-sm" />
+                <div class="action-buttons">
+                    {#if imageContext?.postId && showPostButton}
+                        <button
+                            class="btn btn-secondary btn-sm"
+                            onclick={() =>
+                                goto(
+                                    resolve(
+                                        `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
+                                    ),
+                                )}>Go to Post</button
+                        >
+                    {/if}
+                    {#if imageContext && showTripAlbumButton}
+                        <button
+                            class="btn btn-secondary btn-sm"
+                            onclick={() =>
+                                goto(
+                                    resolve(
+                                        `/home/trips/${imageContext!.tripId}/album`,
+                                    ),
+                                )}>Go to Trip Album</button
+                        >
+                    {/if}
+                    <CloseButton bind:close={enlarged} class="btn-sm" />
+                </div>
             </div>
 
             {#if images !== null && images.length > 1 && index !== images.length - 1}
@@ -373,11 +375,6 @@
 
 <style>
     .image-details {
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 2;
-        padding: 5px;
         display: flex;
         align-items: center;
         gap: 0.4rem;
@@ -394,6 +391,12 @@
         cursor: default;
         pointer-events: none;
     }
+    .image-detail span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     .detail-divider {
         width: auto;
         padding-top: 0;
@@ -402,11 +405,19 @@
         border-left: 1px solid rgba(255, 255, 255, 0.45);
     }
     .action-buttons {
+        display: flex;
+        gap: 0.4rem;
+        margin-left: auto;
+    }
+    .image-toolbar {
         position: absolute;
         top: 0;
+        left: 0;
         right: 0;
         z-index: 2;
         display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
         gap: 0.4rem;
         padding: 5px;
     }
@@ -451,4 +462,5 @@
         justify-content: center;
         margin-bottom: 10px;
     }
+
 </style>
