@@ -146,7 +146,7 @@
     <div class="card">
         <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
             <AddButton path="/home/trips/create-trip" />
-            <div>
+            <div style="width: 40%;">
                 <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} placeholder="search your trips and images"/>
             </div>
             
@@ -184,7 +184,7 @@
         width: 50vw;
         display: flex;
         flex-direction: row;
-        position: absolute;
+
         align-items: center;
         text-align: center;
     }
@@ -195,10 +195,6 @@
         width: 100%;
     }
 
-    .global-search {
-        flex: 1;
-        min-width: 0;
-    }
 
     @media (max-width: 992px) {
         .trip-object-wrapper {
