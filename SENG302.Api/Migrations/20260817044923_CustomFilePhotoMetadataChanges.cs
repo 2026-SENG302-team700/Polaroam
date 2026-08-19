@@ -17,13 +17,6 @@ namespace SENG302.Api.Migrations
                 type: "timestamp with time zone",
                 nullable: false,
                 defaultValue: new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)));
-
-            migrationBuilder.AddColumn<bool>(
-                name: "InTagQueue",
-                table: "CustomFiles",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
         }
 
         /// <inheritdoc />
@@ -31,10 +24,6 @@ namespace SENG302.Api.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "DateCreated",
-                table: "CustomFiles");
-
-            migrationBuilder.DropColumn(
-                name: "InTagQueue",
                 table: "CustomFiles");
         }
     }

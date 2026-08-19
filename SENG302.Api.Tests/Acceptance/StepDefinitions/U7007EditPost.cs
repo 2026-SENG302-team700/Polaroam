@@ -88,7 +88,7 @@ public class U7007EditPost
             Title = "My post",
             Content = "",
             PhotoIds = [],
-            OsmId = 1,
+            OsmId = 1,  
             LocationName = "Christchurch"
         });
         await context.SaveChangesAsync();
