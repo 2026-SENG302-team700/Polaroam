@@ -575,7 +575,7 @@
     }
 </script>
 
-<div class="container d-flex flex-column flex-md-row">
+<div class="container d-flex flex-column flex-md-row card">
     <div
         class="d-flex flex-column align-items-center justify-content-center m-3"
     >
@@ -597,13 +597,7 @@
 
     <div class="container d-flex flex-column flex-md-row">
         <div class="flex-grow-1 m-3">
-            <form onsubmit={updateUser} novalidate>
-                <div class="m-3" style="display: flex; ">
-                    <CancelButton path={"/home/profile"} />
-                    <div class="ms-auto">
-                        <AuthenticatorButton buttonType={"update"} />
-                    </div>
-                </div>
+            <form onsubmit={updateUser} novalidate class="">
                 <div class="mb-4">
                     <h5 class="text-muted mb-2">Personal Information</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
@@ -663,7 +657,15 @@
                     </div>
                 </div>
             </form>
-        </div>
+            <div class="post-form-actions">
+                <CancelButton path={"/home/profile"} />
+
+                <AuthenticatorButton buttonType={"update"} />
+
+            </div>
+        
+    </div>
+    
     </div>
 </div>
 

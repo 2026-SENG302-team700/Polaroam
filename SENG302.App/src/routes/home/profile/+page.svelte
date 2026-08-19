@@ -80,22 +80,28 @@
 </script>
 
 <div class="display: flex; flex-direction: row;">
-    <div class="profile-box">
+    <div class="profile-box ca">
         <button
             class="btn btn-primary ms-auto"
             onclick={() => goto(resolve("/home/profile/edit-profile"))}
             >Edit Profile</button
         >
-        <ProfilePic pfpData={$user.pfpData} size="large" />
-        <p class="username">{username}</p>
-        <p class="user_email">Email: {email}</p>
-        <button
+    <div class="profile-content card">
+        <div class="card-body card-content">
+            <ProfilePic pfpData={$user.pfpData} size="large" />
+            <p class="username">{username}</p>
+            <p class="user_email">Email: {email}</p>
+        </div>
+        <div class="card-footer card-content">
+            <button
             type="button"
-            class="btn btn-outline-danger"
+            class="btn btn-danger"
             onclick={showModal}
         >
             Logout
         </button>
+        </div>
+    </div>
     </div>
     <div class="modal fade" bind:this={modalElement} tabindex="-1">
         <div class="modal-dialog">
@@ -124,17 +130,12 @@
 </div>
 
 <style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
-    .profile-image {
-        width: 20%;
-        height: 20%;
-
-        display: inline-block;
-        object-fit: cover;
-        border-radius: 50%;
+    .card-content {
+        display:flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        
     }
 
     .profile-box {
@@ -145,6 +146,7 @@
     }
 
     .username {
+        
         margin-top: 20px;
         font-weight: 600;
         font-style: normal;

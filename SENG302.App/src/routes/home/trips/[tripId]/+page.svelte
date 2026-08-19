@@ -160,23 +160,24 @@
     </div>
     <div class="card mb-2 post-wrapper">
         <div class="card-header">
-            <h1 class="card-subtitle mb-2 h1 user-name">{tripObject.title}</h1>
-            {#if tripObject.description.length > 0}
-                <span>{tripObject.description}</span>
-            {:else}
-                <p>No description</p>
-            {/if}
-            <ErrorDisplay errors={[error]} />
-            <div class="header-content-wrapper">
-                <div class="header-content-item">
+            <div class="title-and-date" style="display: flex; flex-direction: row;">
+                <h1 class="card-subtitle mb-2 h1 user-name">{tripObject.title}</h1>
+                <div class="header-content-item" style="display: flex; align-items: center; flex:1; justify-content: end;">
                     <div class="bi-calendar-event"></div>
-                    <h6 class="card-subtitle mb-2 text-muted">
+                    <h6 class="card-subtitle text-muted" style="margin-left: 5px;">
                         {formatDate(tripObject.startDate)} - {formatDate(
                             tripObject.endDate,
                         )}
                     </h6>
                 </div>
             </div>
+            {#if tripObject.description.length > 0}
+                <span>{tripObject.description}</span>
+            {:else}
+                <p>No description</p>
+            {/if}
+            <ErrorDisplay errors={[error]} />
+
         </div>
         <div class="card-body">
         <Map locations={postLocations} {posts} {hoveredPostId} bind:selectedPost />
