@@ -5,24 +5,17 @@
 namespace SENG302.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class MissingRetryTaggingColumnFix : Migration
+    public partial class RetryErrorVariablesCustomFile : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "OsmType",
-                table: "Posts",
-                type: "text",
+            migrationBuilder.AddColumn<bool>(
+                name: "PreferenceMapVisible",
+                table: "Users",
+                type: "boolean",
                 nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "OsmType",
-                table: "Locations",
-                type: "text",
-                nullable: false,
-                defaultValue: "");
+                defaultValue: false);
 
             migrationBuilder.AddColumn<bool>(
                 name: "CanRetryTagging",
@@ -42,12 +35,8 @@ namespace SENG302.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "OsmType",
-                table: "Posts");
-
-            migrationBuilder.DropColumn(
-                name: "OsmType",
-                table: "Locations");
+                name: "PreferenceMapVisible",
+                table: "Users");
 
             migrationBuilder.DropColumn(
                 name: "CanRetryTagging",
