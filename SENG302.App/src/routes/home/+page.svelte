@@ -146,7 +146,7 @@
     <div class="card">
         <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
             <AddButton path="/home/trips/create-trip" />
-            <div>
+            <div style="width: 40%;">
                 <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} placeholder="search your trips and images"/>
             </div>
             
