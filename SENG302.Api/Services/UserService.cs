@@ -24,6 +24,8 @@ public interface IUserService
     Task<bool> PrivacyPolicyCheckAsync(int userId);
     Task ToggleAiTaggingAsync(int userId);
     Task<bool> UserAiTaggingCheckAsync(int userId);
+    Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible);
+    Task<bool> GetPreferenceMapVisibleAsync(int userId);
 }
 
 public enum UserVerificationResult
@@ -550,5 +552,33 @@ public class UserService : IUserService
         }
 
         return user.AiTaggingEnabled;
+    }
+
+    /// <summary>
+    /// Updates the map visible preference on the user
+    /// </summary>
+    /// <param name="userId">Which user to update</param>
+    /// <param name="mapVisible">What the new value is</param>
+    public async Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
+
+        user.PreferenceMapVisible = mapVisible;
+
+        context.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Updates the map visible preference on the user
+    /// </summary>
+    /// <param name="userId">Which user to update</param>
+    /// <param name="mapVisible">What the new value is</param>
+    public async Task<bool> GetPreferenceMapVisibleAsync(int userId)
+    {
+        User user = await GetUserByIdAsync(userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        return user.PreferenceMapVisible;
     }
 }

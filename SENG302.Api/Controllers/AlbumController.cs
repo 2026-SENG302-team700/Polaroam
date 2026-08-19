@@ -19,7 +19,7 @@ public class AlbumController : ControllerBase
     private readonly IUserService _userService;
     private readonly ITripService _tripService;
     private readonly IFileService _fileService;
-    
+
     public AlbumController(IAlbumService albumService, IUserService userService, ITripService tripService, IFileService fileService)
     {
         _albumService = albumService;
@@ -27,7 +27,7 @@ public class AlbumController : ControllerBase
         _tripService = tripService;
         _fileService = fileService;
     }
-    
+
     /// <summary>
     /// Helper function to get the content type of the file.
     /// </summary>
@@ -42,7 +42,7 @@ public class AlbumController : ControllerBase
         }
         return contentType;
     }
-    
+
     /// <summary>
     /// Gets an image from an album.
     /// </summary>
@@ -85,7 +85,7 @@ public class AlbumController : ControllerBase
             return BadRequest("Failed to get image: " + photoId);
         }
     }
-    
+
     /// <summary>
     /// Gets all images from an album. This includes images added
     /// directly to the album and images added to a post in the trip.
@@ -157,7 +157,7 @@ public class AlbumController : ControllerBase
             return BadRequest("An unexpected error occurred.");
         }
     }
-    
+
     /// <summary>
     /// Adds images to an album.
     /// </summary>
@@ -170,21 +170,29 @@ public class AlbumController : ControllerBase
     /// NotFound - trip not found
     /// </returns>
     [HttpPost("images")]
-    public async Task<ActionResult> AddImagesToAlbum(int tripId, [FromForm] List<IFormFile>? files)
+    public async Task<ActionResult> AddImagesToAlbum(int tripId, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
     {
         try
         {
-            // Get user and return unauthorized if not logged in or access to the trip
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = int.Parse(
+              User.FindFirstValue(ClaimTypes.NameIdentifier)!
+          );
+
             User? user = await _userService.GetUserByIdAsync(userId);
+
             if (user == null ||
                 !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+            {
                 return Unauthorized();
+            }
 
-            if (files == null) return BadRequest("No files were uploaded.");
+            if (files == null || files.Count == 0)
+            {
+                return BadRequest("No files were uploaded.");
+            }
 
             // Upload images to the album
-            await _albumService.UploadImagesToAlbumAsync(files, tripId);
+            await _albumService.UploadImagesToAlbumAsync(files, tripId, aiTaggingForUpload);
             return Created();
         }
         catch (MultipleValidationListException e) // Image validation failed
@@ -200,7 +208,7 @@ public class AlbumController : ControllerBase
             return BadRequest("Failed to upload images." + e.Message);
         }
     }
-    
+
     /// <summary>
     /// Deletes an image from an album.
     /// </summary>

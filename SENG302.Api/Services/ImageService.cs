@@ -1,14 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1.Crmf;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
 public interface IImageService
 {
-    public Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
+    Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
     public Task<List<TripPhotoGroupResponse>> GetPhotosFromQueryAsync(int userId, string query);
+    Task<ImageContextResponse?> GetImageContextAsync(int photoId, int userId);
 }
 
 public class ImageService : IImageService
@@ -29,7 +32,7 @@ public class ImageService : IImageService
         _albumService = albumService;
         _tripService = tripService;
     }
-    
+
     /// <summary>
     /// Gets a list of suggested tags for a user based on the query.
     /// Will return a maximum of 5 tags.
@@ -54,7 +57,7 @@ public class ImageService : IImageService
         // Query creation assisted by claude code
         var albumsQuery = context.Albums
             .Where(a => userTripIds.Contains(a.TripId));
-        
+
         // If a trip id is provided, filter the query to only include albums in that trip
         if (tripId.HasValue)
         {
@@ -65,7 +68,7 @@ public class ImageService : IImageService
         var photoIdLists = await albumsQuery
             .Select(a => a.PhotoIds)
             .ToListAsync();
-        
+
         var photoIds = photoIdLists
             .SelectMany(ids => ids)
             .Distinct()
@@ -160,5 +163,49 @@ public class ImageService : IImageService
             .OfType<TripPhotoGroupResponse>()
             .OrderBy(g => g.TripTitle)
             .ToList();
+    }
+
+    /// <summary>
+    /// Finds the post id from a provided photo id
+    /// </summary>
+    /// <param name="photoId">photo id</param>
+    /// <param name="userId">user id, used for verifying file ownership</param>
+    /// <returns>
+    /// postId: the post id where the image has been found
+    /// null: image not apart of any post (just part of a trip album)
+    /// </returns>
+    /// <exception cref="UnauthorizedAccessException">if user does not own the file.</exception>
+    public async Task<ImageContextResponse?> GetImageContextAsync(int photoId, int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        if (!await _fileService.CheckFileOwnership(photoId, userId))
+        {
+            throw new UnauthorizedAccessException();
+        }
+
+        var album = await context.Albums.FirstOrDefaultAsync(a => a.PhotoIds.Contains(photoId));
+
+        if (album == null)
+        {
+            throw new KeyNotFoundException("The image does not belong to any album.");
+        }
+
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == album.TripId && t.UserId == userId);
+
+        if (trip == null)
+        {
+            throw new UnauthorizedAccessException();
+        }
+
+        var post = await context.Posts.FirstOrDefaultAsync(p => p.TripId == trip.Id && p.PhotoIds.Contains(photoId));
+
+        return new ImageContextResponse
+        {
+            TripId = trip.Id,
+            TripTitle = trip.Title,
+            PostId = post?.PostId,
+            PostTitle = post?.Title
+        };
     }
 }

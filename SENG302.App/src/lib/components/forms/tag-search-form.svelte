@@ -8,7 +8,7 @@
         selectedTag = $bindable(""),
         performSearch,
         getSuggestionsUrl,
-        onClear
+        onClear,
     }: {
         query?: string;
         placeholder?: string;
@@ -28,15 +28,15 @@
      * @param query - the partial tag text to search for
      */
     async function fetchTagSuggestions(query: string) {
-        const url = (getSuggestionsUrl != null) ? getSuggestionsUrl : `/api/image/tags?query=${encodeURIComponent(query)}`
-        
-        const response = await fetchWithCsrf(
-            resolve(url as any),
-            {
-                method: "GET",
-                credentials: "include",
-            },
-        );
+        const url =
+            getSuggestionsUrl != null
+                ? getSuggestionsUrl
+                : `/api/image/tags?query=${encodeURIComponent(query)}`;
+
+        const response = await fetchWithCsrf(resolve(url as any), {
+            method: "GET",
+            credentials: "include",
+        });
 
         if (!response.ok) {
             throw new Error("Failed to fetch tag suggestions.");
@@ -45,7 +45,7 @@
         const data = await response.json();
         return data;
     }
-    
+
     /**
      * Fetches tag suggestions from the caller-provided function
      */
@@ -71,7 +71,7 @@
             loading = false;
         }
     }
-    
+
     function handleInput() {
         selectedTag = "";
         error = "";
@@ -101,36 +101,37 @@
         query = tag;
         error = "";
         isOpen = false;
+        performSearch();
     }
 </script>
 
 <div class="search-container">
     <div class="input-group search-group">
         <input
-                type="search"
-                class="form-control"
-                class:is-invalid={Boolean(error)}
-                {placeholder}
-                bind:value={query}
-                oninput={handleInput}
-                onkeydown={handleKeydown}
-                onblur={() => setTimeout(() => (isOpen = false), 200)}
+            type="search"
+            class="form-control"
+            class:is-invalid={Boolean(error)}
+            {placeholder}
+            bind:value={query}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
+            onblur={() => setTimeout(() => (isOpen = false), 200)}
         />
         <button
-                type="button"
-                title="search your trips using the provided query."
-                class="btn btn-outline-secondary"
-                onclick={() => {
-                    query = "";
-                    selectedTag = "";
-                    error = "";
-                    isOpen = false;
-                    if (onClear) {
-                        onClear();
-                    } else {
-                        performSearch();
-                    }
-                }}
+            type="button"
+            title="search your trips using the provided query."
+            class="btn btn-outline-secondary"
+            onclick={() => {
+                query = "";
+                selectedTag = "";
+                error = "";
+                isOpen = false;
+                if (onClear) {
+                    onClear();
+                } else {
+                    performSearch();
+                }
+            }}
         >
             Clear
         </button>
@@ -148,7 +149,7 @@
         </ul>
     {:else if isOpen}
         <ul class="dropdown-list no-results">
-            <li>No tags found matching your search</li>
+            <li>No images found matching your search</li>
         </ul>
     {/if}
 
@@ -168,7 +169,11 @@
         display: flex;
         align-items: center;
         gap: 2px;
+        margin-bottom: 0;
+    }
 
+    .search-group input {
+        background-color: #fffdf7;
     }
 
     .dropdown-list {

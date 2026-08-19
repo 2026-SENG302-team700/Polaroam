@@ -172,6 +172,119 @@ public class FileServiceTests : BaseIntegrationTestFixture
     }
     
     [Fact]
+    public async Task RemoveTagAsync_HasTags_ReturnsOk()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        List<string> insertTags = new List<string>(["ich bin gut", "germanic", "ich bin sprechen ze deutsch", "remove"]);
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+            Tags = insertTags
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+
+        await Should.NotThrowAsync(async () => await ServiceUnderTest.RemoveTagAsync(file.Id, "remove"));
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldNotBeNull();
+        tags.ShouldBeEquivalentTo(file.Tags.Where(u => u != "remove").ToList());
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_RemoveAll_NoneLeft()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        List<string> insertTags = new List<string>(["tag1", "tag2"]);
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+            Tags = insertTags
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        await Should.NotThrowAsync(async () => await ServiceUnderTest.RemoveTagAsync(file.Id, "tag1"));
+        await Should.NotThrowAsync(async () => await ServiceUnderTest.RemoveTagAsync(file.Id, "tag2"));
+
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldNotBeNull();
+        tags.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_TagNonexistent_Error()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        List<string> insertTags = new List<string>(["tag1", "tag2"]);
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+            Tags = insertTags
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        await Should.ThrowAsync<TagNotFoundException>(async () => await ServiceUnderTest.RemoveTagAsync(file.Id, "tag3"));
+
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldNotBeNull();
+        tags.ShouldBeEquivalentTo(file.Tags);
+    }
+
+    [Fact]
+    public async Task RemoveTagAsync_FileNonexistent_Error()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        List<string> insertTags = new List<string>(["tag1", "tag2"]);
+        
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+            Tags = insertTags
+        };
+        
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await ServiceUnderTest.RemoveTagAsync(100, "tag1"));
+
+        var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
+        tags.ShouldNotBeNull();
+        tags.ShouldBeEquivalentTo(file.Tags);
+    }
+
+    [Fact]
     public async Task GetTagsAsync_HasTags_ReturnsTags()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();

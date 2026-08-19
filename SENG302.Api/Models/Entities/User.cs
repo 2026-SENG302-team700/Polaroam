@@ -49,4 +49,7 @@ public class User
     public bool AcceptedAiPrivacyPolicy { get; set; } = false;
 
     public bool AiTaggingEnabled { get; set; } = false;
+    
+    public bool PreferenceMapVisible { get; set; } = true;
+
 }

@@ -21,8 +21,8 @@ public class ImageController : ControllerBase
 
 
     public ImageController(
-        IUserService userService, 
-        IFileService fileService, 
+        IUserService userService,
+        IFileService fileService,
         IImageService imageService,
         IImageTaggingService imageTaggingService
     )
@@ -51,68 +51,103 @@ public class ImageController : ControllerBase
 
         try
         {
+            var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
+
+            if (imageInQueue)
+            {
+                return Ok("Tags are being generated.");
+            }
+
             var tags = await _fileService.GetTagsAsync(photoId);
 
             if (tags != null)
             {
                 return Ok(tags);
             }
-            
             var error = await _fileService.GetTagErrors(photoId);
-            
+
             if (error != null)
             {
                 return Problem(detail: error,
                     statusCode: 500);
             }
-            
-            
-            var imageInQueue = await _fileService.GetTagQueueStatus(photoId);
 
-            return imageInQueue
-                ? Ok("Tags are being generated.")
-                : NoContent();
+
+            return NoContent();
         }
         catch (KeyNotFoundException e)
         {
             return NotFound(e.Message);
         }
     }
-    
+
     /// <summary>
-/// Returns a list of suggested tags for the user
-/// based on the query provided. Tags are selected from real
-/// tags belonging to the user.
-/// Max 5 tags are returned.
-/// </summary>
-/// <param name="query">The string to match with</param>
-/// <returns>
-/// 200 - List containing the suggested tags 
-/// Unauthorized - User is not authenticated
-/// BadRequest - Unknown error
-/// </returns>
-[HttpGet("tags")]
-public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
-{
-    try
+    /// Removes a tag from an image owned by the current user.
+    /// </summary>
+    [HttpDelete("{photoId:int}/tags/{tag}")]
+    public async Task<IActionResult> RemovePhotoTag(int photoId, string tag)
     {
-        // Get the user id so only their tags are returned
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
+        var user = await _userService.GetUserByIdAsync(userId);
         if (user == null)
         {
             return Unauthorized();
         }
 
-        // Get the suggested tags
-        var tags = await _imageService.GetSuggestedTagsForUser(userId, query);
-        return Ok(tags);
+        try
+        {
+            if (!await _fileService.CheckFileOwnership(photoId, userId))
+            {
+                return Unauthorized();
+            }
+
+            await _fileService.RemoveTagAsync(photoId, tag);
+            return Ok();
+        }
+        catch (TagNotFoundException)
+        {
+            return NotFound("Tag not found");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound("Photo not found");
+        }
     }
-    catch (Exception e) // Unknown error
+
+    /// <summary>
+    /// Returns a list of suggested tags for the user
+    /// based on the query provided. Tags are selected from real
+    /// tags belonging to the user.
+    /// Max 5 tags are returned.
+    /// </summary>
+    /// <param name="query">The string to match with</param>
+    /// <returns>
+    /// 200 - List containing the suggested tags 
+    /// Unauthorized - User is not authenticated
+    /// BadRequest - Unknown error
+    /// </returns>
+    [HttpGet("tags")]
+    public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     {
-        return BadRequest("Failed to get suggested tags." + e.Message);
+        try
+        {
+            // Get the user id so only their tags are returned
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            // Get the suggested tags
+            var tags = await _imageService.GetSuggestedTagsForUser(userId, query);
+            return Ok(tags);
+        }
+        catch (Exception e) // Unknown error
+        {
+            return BadRequest("Failed to get suggested tags." + e.Message);
+        }
     }
-}
 
     /// <summary>
     /// Returns a list of suggested tags for the user
@@ -170,7 +205,7 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
         {
             return Unauthorized();
         }
-        
+
         // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
         CustomFile file = await _fileService.GetFileByIdAsync(photoId);
         if (file.CanRetryTagging && user.AcceptedAiPrivacyPolicy && user.AiTaggingEnabled && file.TagError != null && file.TagError.Contains("Queue"))
@@ -183,7 +218,8 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
                 length: stream.Length,
                 name: file.OriginalFileName,
                 fileName: file.OriginalFileName
-            ){
+            )
+            {
                 Headers = new HeaderDictionary(),
                 ContentType = file.MimeType
             };
@@ -191,7 +227,7 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
             try
             {
                 await _imageTaggingService.QueueImageTaggingJobs(formFile, photoId);
-                
+
                 return Ok();
             }
             catch (Exception ex)
@@ -202,7 +238,7 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
 
         return BadRequest("Image cannot be tagged");
     }
-    
+
     /// <summary>
     /// Streams a single photo back with correct types
     /// </summary>
@@ -222,6 +258,50 @@ public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
         catch (KeyNotFoundException e)
         {
             return NotFound(e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Gets a images context from the photoId. This includes the trip and post it belongs to.
+    /// </summary>
+    /// <param name="photoId"></param>
+    /// <returns>
+    /// Unauthorized - no userid provided or user doesn't own image
+    /// Not Found - Photo has no corelating post
+    /// Ok - Returned with post Id.
+    /// </returns>
+    [HttpGet("{photoId:int}/context")]
+    public async Task<ActionResult> GetImageContext(int photoId)
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var imageContext = await _imageService.GetImageContextAsync(photoId, userId);
+
+            if (imageContext != null)
+            {
+                return Ok(imageContext);
+            }
+
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
         }
     }
 }

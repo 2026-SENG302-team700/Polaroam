@@ -309,4 +309,42 @@ public class UserController : ControllerBase
 
         return Ok();
     }
+
+    /// <summary>
+    /// Set the map visible preference
+    /// </summary>
+    /// <param name="mapVisibleObject">The value of the new preference</param>
+    /// <returns></returns>
+    [HttpPut("preference/mapvisible")]
+    public async Task<IActionResult> SetMapShownPreference([FromBody] MapVisibleObject mapVisibleObject)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to update the map visible preference");
+        }
+
+        var userId = int.Parse(userIdString);
+
+        await _userService.SetPreferenceMapVisibleAsync(userId, mapVisibleObject.MapVisible);
+        return Ok();
+    }
+
+    /// <summary>
+    /// Get the map visible preference
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("preference/mapvisible")]
+    public async Task<IActionResult> GetMapShownPreference()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("You do not have authorisation to get the map visible preference");
+        }
+
+        var userId = int.Parse(userIdString);
+        var mapVisible = await _userService.GetPreferenceMapVisibleAsync(userId);
+        return Ok(new MapVisibleObject() {MapVisible = mapVisible});
+    }
 }
