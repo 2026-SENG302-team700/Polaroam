@@ -13,7 +13,7 @@ public class NewPostRequest : IPostRequest
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Title { get; set; }
     public required long OsmId { get; set; }
-    public string OsmType { get; set; } = "node";
+    public string? OsmType { get; set; } = "node";
 
     [Required(AllowEmptyStrings = true)]
     [DisplayFormat(ConvertEmptyStringToNull = false)]
