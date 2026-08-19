@@ -242,7 +242,10 @@
 
                 if (result.success) {
                     aiToggle = true;
-                    sessionStorage.setItem("aiTaggingPreference", aiToggle.toString())
+                    sessionStorage.setItem(
+                        "aiTaggingPreference",
+                        aiToggle.toString(),
+                    );
                 } else {
                     addToast(
                         result.message || "Failed to enable AI tagging.",
@@ -537,22 +540,24 @@
             );
 
             if (response.ok) {
-                
-                sessionStorage.setItem("aiTaggingPreference", aiToggle.toString())
-                
-                return { 
-                    success: true 
+                sessionStorage.setItem(
+                    "aiTaggingPreference",
+                    aiToggle.toString(),
+                );
+
+                return {
+                    success: true,
                 };
             }
 
             const message = await response.text().catch(() => "");
-            return { 
-                success: false, 
-                message 
+            return {
+                success: false,
+                message,
             };
         } catch (err) {
-            return { 
-                success: false
+            return {
+                success: false,
             };
         }
     }
@@ -622,7 +627,7 @@
                 </div>
                 <div class="mb-3"></div>
                 <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Preferences</h5>
+                    <h5 class="text-muted mb-2">Settings</h5>
                     <hr class="mt-0" style="opacity: 0.15;" />
                     <div
                         class="d-flex align-items-center justify-content-between"
@@ -661,8 +666,6 @@
                     <AuthenticatorButton buttonType={"update"} />
                 </div>
             </form>
-            
-        
     </div>
     
     </div>
@@ -692,13 +695,13 @@
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
                         <CodeForm
-                                bind:digit1
-                                bind:digit2
-                                bind:digit3
-                                bind:digit4
-                                bind:digit5
-                                bind:digit6
-                                error={codeError}
+                            bind:digit1
+                            bind:digit2
+                            bind:digit3
+                            bind:digit4
+                            bind:digit5
+                            bind:digit6
+                            error={codeError}
                         />
 
                         <button
@@ -851,7 +854,10 @@
     }}
 >
     {#snippet children()}
-        <p>You must accept the AI privacy policy in order to turn on AI image tagging.</p>
+        <p>
+            You must accept the AI privacy policy in order to turn on AI image
+            tagging.
+        </p>
         <AiPrivacyPolicy />
     {/snippet}
 </PolicyModal>

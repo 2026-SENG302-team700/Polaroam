@@ -145,7 +145,9 @@
     async function deleteImageTag(id: number, tag: string) {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/tags/${encodeURIComponent(tag)}` as any),
+                resolve(
+                    `/api/image/${id}/tags/${encodeURIComponent(tag)}` as any,
+                ),
                 { method: "DELETE", credentials: "include" },
             );
 
@@ -192,7 +194,7 @@
             if (!response.ok) {
                 if (response.status === 500) {
                     const data = await response.json();
-                    if (data?.detail === "Queue was full") {
+                    if (data?.detail === "Tagging failed: Queue was full") {
                         error = data.detail;
                         showRetryTagging = true;
                         return;
@@ -354,7 +356,11 @@
                             />
                         {/each}
                     {:else if tagStatus}
-                        <TagPill {tagColour} tag={tagStatus} isRealTag={false} />
+                        <TagPill
+                            {tagColour}
+                            tag={tagStatus}
+                            isRealTag={false}
+                        />
                     {/if}
                 </div>
                 {#if showRetryTagging && currentPhotoId !== undefined}

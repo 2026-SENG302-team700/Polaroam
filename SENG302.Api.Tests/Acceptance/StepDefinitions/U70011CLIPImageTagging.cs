@@ -191,7 +191,7 @@ public class U70011ClipImageTagging
         var content = await _lastResponse.Content.ReadFromJsonAsync<ValidationProblemDetails>();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         content.ShouldNotBeNull();
-        content.Detail.ShouldBe("Queue was full");
+        content.Detail.ShouldBe("Tagging failed: Queue was full");
     }
 
     [Given(@"I have just registered for Polaroam")]
