@@ -70,6 +70,13 @@
             </div>
         </div>
     {/if}
+    {#if (!images || images.length === 0) && !pickerFirst && children}
+        <div class="col">
+            <div class="picker-tile">
+                {@render children()}
+            </div>
+        </div>
+    {/if}
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>
@@ -98,12 +105,17 @@
                 {@render children?.()}
             </div>
         </div>
+    {:else if (!images || images.length === 0) && !pickerFirst}
+        <div class="col">
+            <div class="picker-tile">
+                {@render children?.()}
+            </div>
+        </div>
     {/if}
 </div>
 
 {#if !images || images.length === 0}
-    <p>No image selected</p>
-    {@render children?.()}
+    <p class="empty-message">No image selected</p>
 {/if}
 <ExpandableErrorDisplay {errors} lines={5} />
 
@@ -137,5 +149,11 @@
     .picker-tile :global(button) {
         flex: 1;
         font-size: 1.5rem;
+    }
+
+    .empty-message {
+        margin: 0.5rem 0 0;
+        color: #686868;
+        font-size: 0.9rem;
     }
 </style>

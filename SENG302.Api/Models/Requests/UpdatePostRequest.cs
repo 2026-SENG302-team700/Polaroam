@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
 using SENG302.Api.Models.Interfaces;
 using System.ComponentModel.DataAnnotations;
+using SENG302.Api.Helpers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -14,11 +16,12 @@ public class UpdatePostRequest : IPostRequest
     public required int TripId { get; set; }
     public required string Title { get; set; }
     public long OsmId { get; set; }
-    public string OsmType { get; set; } = "node";
+    public string? OsmType { get; set; } = "node";
     [Required(AllowEmptyStrings = true)]
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public string Content { get; set; } = string.Empty;
 
+    [ModelBinder(typeof(NullableDateTimeOffsetModelBinder))]
     public required DateTimeOffset? Date
     {
         get;

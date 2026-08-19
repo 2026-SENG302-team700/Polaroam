@@ -232,11 +232,11 @@ namespace SENG302.Api.Migrations
 
             modelBuilder.Entity("SENG302.Api.Models.Responses.Location", b =>
                 {
-                    b.Property<long>("OsmId")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("PostId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PostId"));
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
@@ -254,11 +254,14 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long>("OsmId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("OsmType")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("OsmId", "PostId");
+                    b.HasKey("PostId");
 
                     b.ToTable("Locations");
                 });

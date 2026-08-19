@@ -675,6 +675,31 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task GetImagesFromAlbum_MultipleImages_ReturnsNewestFirst()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var olderImage = GetMockFile("older.png", pngBytes, "image/png");
+        var newerImage = GetMockFile("newer.png", pngBytes, "image/png");
+
+        await ServiceUnderTest.UploadImagesToAlbumAsync([olderImage, newerImage], 1);
+
+        await using (var context = await DbContextFactory.CreateDbContextAsync())
+        {
+            var files = await context.CustomFiles.OrderBy(file => file.Id).ToListAsync();
+            files[0].DateCreated = DateTimeOffset.UtcNow.AddDays(-1);
+            files[1].DateCreated = DateTimeOffset.UtcNow;
+            await context.SaveChangesAsync();
+        }
+
+        var images = await ServiceUnderTest.GetImagesMetadataFromAlbumAsync(1);
+
+        images.Count.ShouldBe(2);
+        images[0].FileName.ShouldBe("newer.png");
+        images[1].FileName.ShouldBe("older.png");
+    }
+
+    [Fact]
     public async Task GetSingleImageFromAlbum_ValidTripId_GetCustomFile()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();

@@ -156,8 +156,8 @@
                 }
                 return;
             }
-
-            goto(resolve(`/home/trips/${tripId}`));
+            console.log(data);
+            goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;
@@ -240,42 +240,3 @@
     }}
     onOption2={() => (showConfirmationModal = false)}
 />
-
-<style>
-    .section-heading {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        margin: 1.25rem 0 1rem;
-        color: #686868;
-    }
-
-    .section-heading h2 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 700;
-    }
-
-    .section-heading i {
-        font-size: 1.15rem;
-    }
-
-    .section-divider {
-        margin: 1.75rem 0;
-        border-top: 2px dashed #686868;
-        opacity: 0.65;
-    }
-
-    .post-form-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-top: 1.75rem;
-    }
-
-    @media (max-width: 500px) {
-        .post-form-actions {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>

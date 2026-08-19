@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
+using SENG302.Api.Helpers;
 using SENG302.Api.Models.Interfaces;
 namespace SENG302.Api.Models.Entities;
 
@@ -13,11 +15,13 @@ public class NewPostRequest : IPostRequest
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Title { get; set; }
     public required long OsmId { get; set; }
-    public string OsmType { get; set; } = "node";
+    public string? OsmType { get; set; } = "node";
 
     [Required(AllowEmptyStrings = true)]
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public required string Content { get; set; }
+
+    [ModelBinder(typeof(NullableDateTimeOffsetModelBinder))]
     public DateTimeOffset? Date
     {
         get;

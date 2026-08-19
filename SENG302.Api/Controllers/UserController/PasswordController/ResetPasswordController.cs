@@ -151,41 +151,38 @@ public class ResetPasswordController : ControllerBase
             return BadRequest(new { message = "An email is required" });
         }
 
+        var user = await _userService.GetUserFromEmailAsync(cancelRequest.Email);
+
         // Authenticate this context based on the password reset scheme
-        var result = await HttpContext.AuthenticateAsync(ResetSchemeName);
-
-        // Using the results from the authentication, if it is null therefore the password reset has expired
-        if (result.Principal == null)
-        {
-            await HttpContext.SignOutAsync(ResetSchemeName);
-            return Ok("Code has already expired");
-        }
-
-        // If the reset scheme is still active, make sure the user email matches the claimed email
-        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
-        if (email != cancelRequest.Email)
-        {
-            // Return an error message if they do not match
-            return BadRequest(new { message = "Emails do not match" });
-        }
-
-        // Sign the user out from the password reset scheme, cancelling the code
         await HttpContext.SignOutAsync(ResetSchemeName);
 
-        // Retrieve the user from the user service - this is to get the name of the user
-        var user = await _userService.GetUserFromEmailAsync(email);
-
-        // If the user exists, send an email saying the password reset process has been cancelled
-        if (user != null)
+        if (user == null)
         {
-            var emailDictionary = new Dictionary<string, string>
-            {
-                {"DISPLAY_NAME", user.DisplayName}
-            };
-            await _emailQueue.QueueEmailAsync(new EmailJob(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary));
+            return Ok();
         }
 
-        return Ok("Code cancelled");
+        // Immediately invalidate the stored reset code.
+        await _userService.UpdateUserOneTimeCode(
+            user.Email,
+            "",
+            0,
+            user.EmailVerified
+        );
+
+        var emailDictionary = new Dictionary<string, string>
+        {
+          { "DISPLAY_NAME", user.DisplayName }
+        };
+
+        await _emailQueue.QueueEmailAsync(
+            new EmailJob(
+                user.Email,
+                EmailTemplate.PasswordResetProcessCancelled,
+                emailDictionary
+            )
+        );
+
+        return Ok();
     }
 
     /// <summary>
