@@ -265,8 +265,9 @@ public class AlbumService : IAlbumService
         if (!string.IsNullOrEmpty(tag) && matchedFiles.Count > 0)
         {
             matchedFiles = matchedFiles.Where(f => f.Tags != null && f.Tags.Any(t => t.Contains(tag, StringComparison.OrdinalIgnoreCase))).ToList();
-            matchedFiles.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
         }
+
+        matchedFiles.Sort((a, b) => b.DateCreated.CompareTo(a.DateCreated));
 
         return matchedFiles.Select(file => new PhotoMetadataResponse
         {
@@ -345,7 +346,7 @@ public class AlbumService : IAlbumService
 
         return newAlbum;
     }
-    
+
     /// <summary>
     /// gets albums from list of trips
     /// </summary>
