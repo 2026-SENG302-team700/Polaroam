@@ -191,7 +191,7 @@ public class UserController : ControllerBase
         // implement into one big callback function later.
         if (!ImageValidator.IsValidMimeType(file))
         {
-            return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+            return BadRequest("Image not added, supported file types are .jpeg, .png, .svg, .gif, .webp");
         }
 
         var userId = int.Parse(userIdString);
