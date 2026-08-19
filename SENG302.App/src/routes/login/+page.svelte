@@ -538,9 +538,9 @@
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold">
                         {currentModalStep === ModalStep.EMAIL_INPUT
-                            ? "Request Reset Code"
+                            ? "Forgot Password"
                             : currentModalStep === ModalStep.VERIFY
-                              ? "Verify Your Identity"
+                              ? "Reset Code"
                               : "Reset Password"}
                     </h5>
                 </div>
