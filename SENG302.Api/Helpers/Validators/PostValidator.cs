@@ -17,9 +17,12 @@ public static class PostValidator
         var errors = new List<string>();
         if (date == null)
         {
-            errors.Add($"Date is invalid");
+            errors.Add("Date is invalid");
             return errors;
         }
+
+        if (date < new DateTimeOffset(new DateOnly(1900, 1, 1), TimeOnly.MinValue, TimeSpan.Zero))
+            errors.Add("Invalid date, date must not be before January 1st 1900 (UTC)");
 
         if (date > DateTimeOffset.UtcNow) errors.Add("Invalid date, date cannot be in the future");
         return errors;
