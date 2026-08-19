@@ -1,9 +1,9 @@
 // Theme variables
-$ink: #000000;
+$ink: rgb(31, 31, 31);
 $paper: #ffffff;
-$bg-color: #fff27c;
+$bg-color: #f8ca40;
 $button-hover-colour: #cccccc;
-$primary-colour: #54c9ff;
+$primary-colour: rgb(34, 202, 207);
 $danger-colour: #e63c1e;
 $success-colour: #95df1d;
 $secondary-colour: #fff;
@@ -52,7 +52,9 @@ $font-weight-bold: 700;
     &:active,
     &:focus:active {
         transform: translate(3px, 3px);
-        box-shadow: 0px 0px 0 $ink, 1px 1px 0 $ink inset;
+        box-shadow:
+            0px 0px 0 $ink,
+            1px 1px 0 $ink inset;
     }
 
     &:focus-visible {
@@ -61,7 +63,9 @@ $font-weight-bold: 700;
     }
 
     &:disabled {
-        box-shadow: 0px 0px 0 $ink, 1px 1px 0 $ink inset;
+        box-shadow:
+            0px 0px 0 $ink,
+            1px 1px 0 $ink inset;
         transform: none;
         opacity: 0.55;
     }
@@ -70,17 +74,15 @@ $font-weight-bold: 700;
 .bg-light {
     background-color: #{$bg-color} !important;
 }
+body {
+    background-color: #{$bg-color} !important;
+}
 
 .badge {
     z-index: 3;
     font-weight: 700;
     letter-spacing: 0.01em;
     box-shadow: $shadow-small;
-}
-
-.text {
-    font-weight: 700;
-    letter-spacing: 0.01em;
 }
 
 .text-bg-secondary {
@@ -94,12 +96,11 @@ $font-weight-bold: 700;
 }
 
 .nav-link {
-    font-weight: 700;
-    letter-spacing: 0.01em;
     padding-left: 10px;
     padding-right: 10px;
     padding-top: 5px;
     padding-bottom: 5px;
+    text-align: center;
     transition:
         transform $transition-fast,
         box-shadow $transition-fast,
@@ -206,7 +207,9 @@ $font-weight-bold: 700;
 
     &:focus {
         transform: translate(3px, 3px);
-        box-shadow: 0px 0px 0 $ink, 2px 2px 0 $ink inset;
+        box-shadow:
+            0px 0px 0 $ink,
+            2px 2px 0 $ink inset;
     }
 
     &:disabled {
@@ -231,13 +234,9 @@ $font-weight-bold: 700;
 .modal-footer {
     border-color: $ink;
 }
-
 .menu-bar {
-    border: 2px solid $ink;
-    border-radius: 0.35rem;
-    box-shadow: $shadow-small;
+    border: solid $ink;
 }
-
 .clickable-image {
     transition: transform $transition-fast;
 

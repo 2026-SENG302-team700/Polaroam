@@ -168,7 +168,7 @@
         display: flex;
         align-items: center;
         gap: 2px;
-        margin-bottom: 20px;
+
     }
 
     .dropdown-list {

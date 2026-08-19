@@ -143,28 +143,30 @@
             My Trips
         </h1>
     </div>
-
-    <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
-        <AddButton path="/home/trips/create-trip" />
-        <div>
+    <div class="card">
+        <div class="card-body d-flex justify-content-between align-items-center my-trips-top-bar">
+            <AddButton path="/home/trips/create-trip" />
             <TagSearchForm bind:query={tagQuery} {performSearch} onClear={clearSearch} />
         </div>
+        <div class="card-footer">
+            {#if inSearch}
+                <SearchView trips={searchTrips} photoTrips={searchPhotoTrips}/>
+            {:else}
+                {#if trips.length > 0}
+                    <div class="trip-object-wrapper">
+                        {#each trips as trip}
+                            <TripCard tripObject={trip} />
+                        {/each}
+                    </div>
+                {:else}
+                    <div class="no-trips-message">
+                        <p>You have no trips yet! Create one with the "+" button</p>
+                    </div>
+                {/if}
+            {/if}
+        </div>
     </div>
-    {#if inSearch}
-        <SearchView trips={searchTrips} photoTrips={searchPhotoTrips}/>
-    {:else}
-        {#if trips.length > 0}
-            <div class="trip-object-wrapper">
-                {#each trips as trip}
-                    <TripCard tripObject={trip} />
-                {/each}
-            </div>
-        {:else}
-            <div class="no-trips-message">
-                <p>You have no trips yet! Create one with the "+" button</p>
-            </div>
-        {/if}
-    {/if}
+    
 </div>
 
 <style>
