@@ -3,6 +3,7 @@
         message,
         option1Text = "Confirm",
         option2Text = "Cancel",
+        option1Style = "danger",
         onOption1,
         onOption2,
         show = $bindable(false),
@@ -10,6 +11,7 @@
         message: string;
         option1Text?: string;
         option2Text?: string;
+        option1Style?: "danger" | "primary";
         onOption1: () => void;
         onOption2: () => void;
         show: boolean;
@@ -44,7 +46,7 @@
                     </button>
                     <button
                             type="button"
-                            class="btn btn-danger flex-fill"
+                            class="btn btn-{option1Style} flex-fill"
                             onclick={handleOption1}
                     >
                         {option1Text}

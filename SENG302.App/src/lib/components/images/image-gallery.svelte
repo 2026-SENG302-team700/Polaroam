@@ -42,9 +42,34 @@
      * Shows the confirmation modal
      * @param index, the index of the image to be deleted
      */
-    function RequestDelete(index: number) {
-        pendingDeleteIndex = index;
-        confirmDeleteModal = true;
+    async function RequestDelete(index: number) {
+        const image = imageMetadata?.[index];
+        if (!image) return;
+
+        deleteError = "";
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/image/${image.photoId}/context` as any),
+                { method: "GET", credentials: "include" },
+            );
+
+            if (!response.ok) {
+                deleteError = "Failed to check whether the image can be deleted";
+                return;
+            }
+
+            const imageContext = await response.json();
+            if (imageContext.postId) {
+                linkedPostId = imageContext.postId;
+                goToPostModal = true;
+                return;
+            }
+
+            pendingDeleteIndex = index;
+            confirmDeleteModal = true;
+        } catch {
+            deleteError = "Failed to check whether the image can be deleted";
+        }
     }
 
     /**
@@ -140,6 +165,7 @@
 {#if !errorsBesidePicker}
     <ExpandableErrorDisplay {errors} lines={5} />
 {/if}
+<ExpandableErrorDisplay errors={[deleteError]} lines={1} />
 
 <ConfirmationModal
     bind:show={confirmDeleteModal}
@@ -155,6 +181,7 @@
     message="Selected image belongs to a post, delete the image from the post to remove the image."
     option1Text="Go to post"
     option2Text="Cancel"
+    option1Style="primary"
     onOption1={() => {
         goto(resolve(`/home/trips/${tripId}/posts/${linkedPostId}`));
     }}
