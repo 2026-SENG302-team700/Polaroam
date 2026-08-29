@@ -7,9 +7,8 @@
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
-    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import PostForm from "$lib/components/forms/post-form.svelte";
+    import PostForm from "$lib/components/forms/form-wrapper.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";

@@ -3,10 +3,12 @@
 
     let {
         heading,
-        children,
+        body,
+        footer,
     }: {
         heading: string;
-        children: Snippet;
+        body: Snippet;
+        footer?: Snippet;
     } = $props();
 </script>
 
@@ -18,7 +20,11 @@
         </div>
 
         <div class="post-form-body">
-            {@render children()}
+            {@render body()}
+            {#if footer != null}
+                <div class="section-divider"></div>
+                {@render footer()}
+            {/if}
         </div>
     </div>
 </div>

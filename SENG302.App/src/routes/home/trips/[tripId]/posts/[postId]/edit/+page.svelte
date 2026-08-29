@@ -1,23 +1,20 @@
 <script lang="ts">
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import PostForm from "$lib/components/forms/post-form.svelte";
+    import PostForm from "$lib/components/forms/form-wrapper.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
-    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
-
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
-    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
 
     let title = $state("");
     let content = $state("");
@@ -114,9 +111,7 @@
             files = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(
-                            `/api/image/${meta.photoId}` as any,
-                        ),
+                        resolve(`/api/image/${meta.photoId}` as any),
                         {
                             method: "GET",
                             credentials: "include",
