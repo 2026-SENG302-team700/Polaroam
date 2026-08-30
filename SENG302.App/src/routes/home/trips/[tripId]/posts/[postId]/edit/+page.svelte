@@ -15,6 +15,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
 
     let title = $state("");
     let content = $state("");
@@ -309,28 +310,12 @@
     }
 </script>
 
-<PostForm heading="Edit Post">
-    <div class="section-heading">
-        <i class="bi bi-pencil-square"></i>
-        <h2>Post Details</h2>
-    </div>
-    <TitleForm bind:name={title} errors={errors.title} {loading} />
+{#snippet header()}
+    <span class="header-icon bi-journal-richtext"></span>
+    <h1>{"Create Post"}</h1>
+{/snippet}
 
-    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
-
-    <LocationForm
-        bind:searchQuery
-        bind:location
-        bind:error={errors.location}
-        bind:loading
-    />
-    <DescriptionForm
-        placeholder="Content"
-        bind:description={content}
-        errors={errors.content}
-    />
-    <div class="section-divider"></div>
-
+{#snippet footer()}
     <div class="section-heading">
         <i class="bi bi-camera"></i>
         <h2>Photos</h2>
@@ -367,7 +352,34 @@
 
         <CreationButton onClick={updatePost} text="Update Post" {loading} />
     </div>
-</PostForm>
+{/snippet}
+
+{#snippet body()}
+    <div class="section-heading">
+        <i class="bi bi-pencil-square"></i>
+        <h2>Post Details</h2>
+    </div>
+
+    <TitleForm bind:name={title} errors={errors.title} {loading} />
+
+    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+
+    <LocationForm
+        bind:searchQuery
+        bind:location
+        bind:error={errors.location}
+        bind:loading
+    />
+
+    <DescriptionForm
+        placeholder="Content"
+        bind:description={content}
+        errors={errors.content}
+        bind:loading
+    />
+{/snippet}
+
+<FormWrapper {header} {footer} {body} />
 
 <ConfirmationModal
     bind:show={confirmationModalShown}

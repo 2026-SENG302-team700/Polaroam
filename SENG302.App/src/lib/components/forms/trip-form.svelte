@@ -3,6 +3,7 @@
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import Datepicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "./description-form.svelte";
+    import FormWrapper from "./form-wrapper.svelte";
     import TitleForm from "./title-form.svelte";
 
     type TripFormErrors = {
@@ -19,8 +20,6 @@
         startDate = $bindable(null),
         endDate = $bindable(null),
         heading,
-        submitText,
-        cancelPath,
         errors = {
             title: [],
             description: [],
@@ -44,14 +43,14 @@
     } = $props();
 </script>
 
-<div class="container max-w-md post-form-page">
-    <div class="post-form">
-        <div class="post-form-header" >
-            <span class="header-icon bi-camera"></span>
-            <h1>{heading}</h1>
-        </div>
+{#snippet header()}
+    <span class="header-icon bi-camera"></span>
+    <h1>{heading}</h1>
+{/snippet}
+
+{#snippet body()}
     <div class="post-form-body">
-         <form>
+        <form>
             <div class="section-heading">
                 <i class="bi bi-pencil-square"></i>
                 <h2>Trip Details</h2>
@@ -92,20 +91,16 @@
                     {errors.generic}
                 </div>
             {/if}
-            
-            </form>
+        </form>
 
         <div class="post-form-actions">
-            <CancelButton
-                path={`/home`}
-            />
+            <CancelButton path={`/home`} />
             <CreationButton onClick={onSubmit} text="Create Post" {loading} />
         </div>
+    </div>
+{/snippet}
 
-    </div>
-    </div>
-    
-</div>
+<FormWrapper {header} {body} />
 
 <style>
     .form-header {

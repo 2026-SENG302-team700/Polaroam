@@ -8,13 +8,13 @@
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import PostForm from "$lib/components/forms/form-wrapper.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { onMount } from "svelte";
     import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
 
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -167,7 +167,12 @@
     }
 </script>
 
-<PostForm heading="Create Post">
+{#snippet header()}
+    <span class="header-icon bi-journal-richtext"></span>
+    <h1>{"Create Post"}</h1>
+{/snippet}
+
+{#snippet body()}
     <div class="section-heading">
         <i class="bi bi-pencil-square"></i>
         <h2>Post Details</h2>
@@ -190,9 +195,9 @@
         errors={errors.content}
         bind:loading
     />
+{/snippet}
 
-    <div class="section-divider"></div>
-
+{#snippet footer()}
     <div class="section-heading">
         <i class="bi bi-camera"></i>
         <h2>Photos</h2>
@@ -225,7 +230,9 @@
         />
         <CreationButton onClick={createPost} text="Create Post" {loading} />
     </div>
-</PostForm>
+{/snippet}
+
+<FormWrapper {header} {body} {footer} />
 
 <ConfirmationModal
     bind:show={showConfirmationModal}

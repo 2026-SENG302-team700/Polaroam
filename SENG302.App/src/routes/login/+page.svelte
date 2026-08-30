@@ -11,6 +11,8 @@
     import PasswordForm from "$lib/components/forms/password-form.svelte";
     import EmailForm from "$lib/components/forms/email-form.svelte";
     import CodeForm from "$lib/components/forms/code-form.svelte";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
+    import CreationButton from "$lib/components/buttons/creation-button.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -459,51 +461,47 @@
     }
 </script>
 
-<div class="container">
-    <div class="mb-3">
-        <CancelButton path="/"></CancelButton>
-    </div>
+{#snippet header()}
     <h1 class="text-center mb-4">Login</h1>
+{/snippet}
 
-    <form
-        onsubmit={(e) => {
-            e.preventDefault();
-            loginUser();
-        }}
-        novalidate
-    >
-        <div class="mb-3">
-            <EmailForm error={errors.email} {loading} bind:email />
-        </div>
-        <div class="mb-3">
-            <PasswordForm
-                bind:password
-                error={errors.password}
-                {loading}
-                id="password"
-            />
-        </div>
-        <div class="mb-3">
-            <AuthenticatorButton buttonType={"login"} />
-        </div>
-        <div class="mb-3">
-            <button
-                class="btn btn-primary w-100"
-                hidden={errors.email !=
-                    "Account is not validated yet, check your emails."}
-                onclick={() => goto(resolve("/register/verification"))}
-            >
-                Verify Email
-            </button>
-        </div>
-    </form>
-    <div class="mb-3 mt-3">
+{#snippet body()}
+    <div class="mb-3">
+        <EmailForm error={errors.email} {loading} bind:email />
+    </div>
+    <div class="mb-3">
+        <PasswordForm
+            bind:password
+            error={errors.password}
+            {loading}
+            id="password"
+        />
         <button
             class="btn btn-outline-primary btn-sm text-decoration-none"
             onclick={requestNewPassword}>Forgot Password?</button
         >
     </div>
-</div>
+    <div class="mb-3"></div>
+    <div class="mb-3">
+        <button
+            class="btn btn-primary w-100"
+            hidden={errors.email !=
+                "Account is not validated yet, check your emails."}
+            onclick={() => goto(resolve("/register/verification"))}
+        >
+            Verify Email
+        </button>
+    </div>
+{/snippet}
+
+{#snippet footer()}
+    <div class="mb-3 post-form-actions">
+        <AuthenticatorButton buttonType={"login"} onClick={loginUser} />
+        <CancelButton path="/"></CancelButton>
+    </div>
+{/snippet}
+
+<FormWrapper {header} {body} {footer} />
 
 <!-- Reset password modal -->
 <div
