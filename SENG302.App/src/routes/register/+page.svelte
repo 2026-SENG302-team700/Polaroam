@@ -133,14 +133,7 @@
             passConfirm={true}
         />
     </div>
-    <div class="mb-3">
-        <PasswordForm
-            bind:password
-            error={errors.password}
-            {loading}
-            id="password"
-        />
-    </div>
+
     <div class="mb-3"></div>
     <div class="mb-3">
         <button
