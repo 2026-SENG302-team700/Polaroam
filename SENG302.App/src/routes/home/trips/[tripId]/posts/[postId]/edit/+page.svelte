@@ -413,12 +413,6 @@
         font-size: 1.15rem;
     }
 
-    .section-divider {
-        margin: 1.75rem 0;
-        border-top: 2px dashed #686868;
-        opacity: 0.65;
-    }
-
     .post-form-actions {
         display: grid;
         grid-template-columns: 1fr 1fr;

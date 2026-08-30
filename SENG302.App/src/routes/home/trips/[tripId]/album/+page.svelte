@@ -295,10 +295,6 @@
         margin-bottom: 1.25rem;
     }
 
-    .header-content-wrapper {
-        width: 100%;
-    }
-
     .trip-name {
         position: absolute;
         top: 50%;
