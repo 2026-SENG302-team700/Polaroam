@@ -47,7 +47,7 @@ public class ResetPasswordController : ControllerBase
         long timerStartTime = _codeService.GetEpochTime();
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user == null) return Ok();
-        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified);
+        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified, true);
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -81,7 +81,6 @@ public class ResetPasswordController : ControllerBase
             return BadRequest(new { message = "An email is required" });
         }
 
-
         var user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return BadRequest(new { message = "Invalid Code" });
 
@@ -93,6 +92,7 @@ public class ResetPasswordController : ControllerBase
 
         if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
+            await _userService.UpdateUserOneTimeCode(user.Email, "", 0, user.EmailVerified, false);
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
 
@@ -105,7 +105,7 @@ public class ResetPasswordController : ControllerBase
 
         if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
         {
-            var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true, false);
             if (userUpdated == null) return Problem();
 
 
@@ -166,7 +166,8 @@ public class ResetPasswordController : ControllerBase
             user.Email,
             "",
             0,
-            user.EmailVerified
+            user.EmailVerified,
+            false
         );
 
         var emailDictionary = new Dictionary<string, string>

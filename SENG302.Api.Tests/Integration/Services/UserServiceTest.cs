@@ -263,7 +263,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         // Use the TripService function to create a new trip with the name and user email
-        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
+        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified, false);
 
         user.ShouldNotBeNull();
 

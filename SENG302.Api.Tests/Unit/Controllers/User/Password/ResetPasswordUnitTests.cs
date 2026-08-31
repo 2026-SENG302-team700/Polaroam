@@ -147,7 +147,7 @@ public class ResetPasswordUnitTests
         _mockCodeService.GetEpochTime().Returns(1_000L);
         _mockCodeService.VerfiyCode(user, Arg.Any<long>(), request.Code)
             .Returns(CodeVerificationResult.CodeSuccessful);
-        _mockUserService.UpdateUserOneTimeCode(user.Email, "", 0, true).Returns(user);
+        _mockUserService.UpdateUserOneTimeCode(user.Email, "", 0, true, user.ForgotIsResettingPassword).Returns(user);
 
         var result = await _controller.ValidateResetPasswordCode(request);
 

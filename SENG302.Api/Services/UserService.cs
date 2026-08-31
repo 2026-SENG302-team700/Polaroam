@@ -15,7 +15,7 @@ public interface IUserService
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
     Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry);
-    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
+    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified, bool isResetting);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
@@ -350,15 +350,16 @@ public class UserService : IUserService
     /// <summary>
     /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
     /// </summary>
-    /// <param name="email"></param> The user's email
-    /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
-    /// an empty string if the code is expired
-    /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired
-    /// <param name="userVerified"></param> A boolean that notifies method whether the user has successfully verified their account or not
+    /// <param name="email">The user's email</param>
+    /// <param name="oneTimeCode">The code that was generated and emailed to the user or
+    /// an empty string if the code is expired</param>
+    /// <param name="epochTime">The time that code was generated at or 0 to represent that the code expired</param>
+    /// <param name="userVerified">A boolean that notifies method whether the user has successfully verified their account or not</param>
+    /// <param name="forgotIsResetting">A boolean corresponding to whether the user is trying to reset their email through 'forgot password'</param>
     /// <returns>
     /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
     /// </returns>
-    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified)
+    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified, bool forgotIsResetting)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -374,6 +375,11 @@ public class UserService : IUserService
         if (userVerified)
         {
             user.EmailVerified = true;
+        }
+
+        if (forgotIsResetting)
+        {
+            user.ForgotIsResettingPassword = true;
         }
 
         context.Users.Update(user);
