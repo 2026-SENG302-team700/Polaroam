@@ -312,7 +312,7 @@
 
 {#snippet header()}
     <span class="header-icon bi-journal-richtext"></span>
-    <h1>{"Create Post"}</h1>
+    <h1>{"Edit Post"}</h1>
 {/snippet}
 
 {#snippet footer()}

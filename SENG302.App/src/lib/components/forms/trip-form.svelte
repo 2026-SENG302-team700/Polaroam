@@ -20,6 +20,7 @@
         startDate = $bindable(null),
         endDate = $bindable(null),
         heading,
+        submitText,
         errors = {
             title: [],
             description: [],
@@ -95,7 +96,7 @@
 {#snippet footer()}
     <div class="post-form-actions">
         <CancelButton path={`/home`} />
-        <CreationButton onClick={onSubmit} text="Create Post" {loading} />
+        <CreationButton onClick={onSubmit} text={submitText} {loading} />
     </div>
 {/snippet}
 
