@@ -29,7 +29,7 @@
     </div>
     <div class="card-footer text-muted images">
         {#if photos.length > 0}
-            <ImageDisplay images={photos} {photoIds} viewContext="post" />
+            <ImageDisplay images={photos} {photoIds} viewContext="none" />
         {/if}
     </div>
 </div>
