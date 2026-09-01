@@ -99,7 +99,7 @@
             <CancelButton
                 path={`/home`}
             />
-            <CreationButton onClick={onSubmit} text="Create Post" {loading} />
+            <CreationButton onClick={onSubmit} text={submitText} {loading} />
         </div>
 
     </div>
