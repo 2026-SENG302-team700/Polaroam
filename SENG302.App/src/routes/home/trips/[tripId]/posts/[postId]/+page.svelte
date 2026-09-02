@@ -225,20 +225,3 @@
     onOption1={deletePost}
     onOption2={hideConfirmationModal}
 />
-
-<style>
-    .post-head-grid {
-        display: flex;
-        flex-direction: column;
-    }
-    .date-object {
-        margin-left: 10px;
-        bottom: 0;
-    }
-
-    .photo-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 600px));
-        gap: 0.75rem;
-    }
-</style>

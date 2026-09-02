@@ -9,6 +9,7 @@
     import CountrySelectForm from "$lib/components/forms/country-select-form.svelte";
     import AuthenticatorButton from "$lib/components/buttons/authenticator-button.svelte";
     import CancelButton from "$lib/components/buttons/cancel-button.svelte";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -91,51 +92,66 @@
     }
 </script>
 
-<div class="container">
-    <div class="mb-3">
-        <CancelButton path="/" />
-    </div>
+{#snippet header()}
     <h1 class="text-center mb-4">Register</h1>
+{/snippet}
 
-    <form onsubmit={registerUser} novalidate>
-        <div class="mb-3">
-            <EmailForm bind:email error={errors.email} {loading} />
-        </div>
-        <div class="mb-3">
-            <DisplayNameForm
-                bind:displayName
-                error={errors.displayName}
-                {loading}
-                registering={true}
-            />
-        </div>
-        <div class="mb-3">
-            <CountrySelectForm
-                bind:selectedCountryCode
-                error={errors.country}
-                {loading}
-            />
-        </div>
-        <div class="mb-3">
-            <PasswordForm
-                id="initial-password-input"
-                bind:password
-                error={errors.password}
-                {loading}
-                passConfirm={false}
-            />
-        </div>
-        <div class="mb-3">
-            <PasswordForm
-                id="confirm-password"
-                bind:password={passwordConfirm}
-                error={errors.passwordConfirm}
-                {loading}
-                passConfirm={true}
-            />
-        </div>
-        <div>
-            <AuthenticatorButton buttonType={"register"} />
-        </div>
-    </form>
-</div>
+{#snippet body()}
+    <div class="mb-3">
+        <EmailForm error={errors.email} {loading} bind:email />
+    </div>
+    <div class="mb-3">
+        <DisplayNameForm
+            bind:displayName
+            error={errors.displayName}
+            {loading}
+            registering={true}
+        />
+    </div>
+    <div class="mb-3">
+        <CountrySelectForm
+            bind:selectedCountryCode
+            error={errors.country}
+            {loading}
+        />
+    </div>
+    <div class="mb-3">
+        <PasswordForm
+            id="initial-password-input"
+            bind:password
+            error={errors.password}
+            {loading}
+            passConfirm={false}
+        />
+    </div>
+    <div class="mb-3">
+        <PasswordForm
+            id="confirm-password"
+            bind:password={passwordConfirm}
+            error={errors.passwordConfirm}
+            {loading}
+            passConfirm={true}
+        />
+    </div>
+
+    <div class="mb-3"></div>
+    <div class="mb-3">
+        <button
+            class="btn btn-primary w-100"
+            hidden={errors.email !=
+                "Account is not validated yet, check your emails."}
+            onclick={() => goto(resolve("/register/verification"))}
+        >
+            Verify Email
+        </button>
+    </div>
+{/snippet}
+
+{#snippet footer()}
+    <div class="mb-3 post-form-actions">
+        <AuthenticatorButton buttonType={"register"} onClick={registerUser} />
+        <CancelButton path="/"></CancelButton>
+    </div>
+{/snippet}
+
+<FormWrapper {header} {body} {footer} />
