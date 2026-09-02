@@ -39,6 +39,7 @@ public class ImageTaggingServiceUnitTests : DatabaseUnitTestFixture
     private readonly IImageTaggingQueue _imageTaggingQueue = new ImageTaggingQueue();
     private readonly IFileService _fileService;
     
+    // This method is attribute to claude code
     public ImageTaggingServiceUnitTests()
     {
         var fileServiceConfig = new ConfigurationBuilder()
