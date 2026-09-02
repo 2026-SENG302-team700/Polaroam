@@ -1,13 +1,18 @@
+﻿using Microsoft.AspNetCore.Mvc.Testing;
+
+namespace SENG302.Api.Tests.Integration.Services;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.ImageTagging;
 
-namespace SENG302.Api.Tests.Unit.Services;
 
-public class ImageTaggingBackgroundServiceUnitTests
+public class ImageTaggingBackgroundServiceTests : BaseIntegrationTestFixture
 {
+    
+    public ImageTaggingBackgroundServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
     private static ImageTaggingJob CreateJob(int imageId)
     {
         var stream = new MemoryStream([0x89, 0x50, 0x4E, 0x47]);

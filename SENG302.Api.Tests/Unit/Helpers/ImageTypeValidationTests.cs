@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Services;
 
-public class ImageTypeValidationTests
+public class ImageTypeValidationTests : DatabaseUnitTestFixture
 {
 
     private IFormFile GetMockFile(string filename, Byte[] content, string? mimeType = null)

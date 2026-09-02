@@ -1,7 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using NSubstitute.Routing.Handlers;
 using SENG302.Api.DataAccess;
 
 namespace SENG302.Api.Tests.Unit;

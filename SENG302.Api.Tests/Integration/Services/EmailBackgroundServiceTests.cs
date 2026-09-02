@@ -1,12 +1,16 @@
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.Email;
 
-namespace SENG302.Api.Tests.Unit.Services;
+namespace SENG302.Api.Tests.Integration.Services;
 
-public class EmailBackgroundServiceUnitTests
+public class EmailBackgroundServiceTests : BaseIntegrationTestFixture
 {
+    
+    public EmailBackgroundServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) {}
+    
     private static EmailJob CreateJob(string email)
     {
         return new EmailJob(

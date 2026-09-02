@@ -2,7 +2,7 @@ using System.Net;
 using System.Threading.RateLimiting;
 using Shouldly;
 
-namespace SENG302.Api.Tests.Unit.Handlers;
+namespace SENG302.Api.Tests.Integration.Handlers;
 
 public class NominatimRateLimitingHandlerTests
 {

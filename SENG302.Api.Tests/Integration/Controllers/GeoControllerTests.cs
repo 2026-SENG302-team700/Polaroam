@@ -1,18 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
 using SENG302.Api.Controllers;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 
-namespace SENG302.Api.Tests.Unit.Controllers;
+namespace SENG302.Api.Tests.Integration.ControllerTests;
 
-public class GeoControllerUnitTests
+public class GeoControllerTests : BaseIntegrationTestFixture
 {
     private readonly IGeoService _mockGeoService;
     private readonly GeoController _controller;
 
-    public GeoControllerUnitTests()
+    public GeoControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
         _mockGeoService = Substitute.For<IGeoService>();
         _controller = new GeoController(_mockGeoService);
