@@ -153,35 +153,34 @@ public class ResetPasswordController : ControllerBase
 
         var user = await _userService.GetUserFromEmailAsync(cancelRequest.Email);
 
-        // Authenticate this context based on the password reset scheme
-        await HttpContext.SignOutAsync(ResetSchemeName);
-
         if (user == null)
         {
             return Ok();
         }
 
-        // Immediately invalidate the stored reset code.
-        await _userService.UpdateUserOneTimeCode(
-            user.Email,
-            "",
-            0,
-            user.EmailVerified,
-            false
-        );
-
-        var emailDictionary = new Dictionary<string, string>
+        // Authenticate this context based on the password reset scheme
+         var resetResult = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        
+        // check if the user has requested a reset password
+        if ((resetResult.Succeeded && resetResult.Principal != null) || user.ForgotIsResettingPassword)
         {
-          { "DISPLAY_NAME", user.DisplayName }
-        };
+            await HttpContext.SignOutAsync("PasswordResetScheme");
 
-        await _emailQueue.QueueEmailAsync(
-            new EmailJob(
+            // Immediately invalidate the stored reset code.
+            await _userService.UpdateUserOneTimeCode(
                 user.Email,
-                EmailTemplate.PasswordResetProcessCancelled,
-                emailDictionary
-            )
-        );
+                string.Empty,
+                0,
+                user.EmailVerified,
+                false
+            );
+
+            var emailDictionary = new Dictionary<string, string>
+            {
+                { "DISPLAY_NAME", user.DisplayName }
+            };
+            await _emailQueue.QueueEmailAsync(new EmailJob(user.Email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary));
+        }
 
         return Ok();
     }

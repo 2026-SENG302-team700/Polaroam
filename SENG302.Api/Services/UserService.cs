@@ -377,10 +377,8 @@ public class UserService : IUserService
             user.EmailVerified = true;
         }
 
-        if (forgotIsResetting)
-        {
-            user.ForgotIsResettingPassword = true;
-        }
+
+        user.ForgotIsResettingPassword = forgotIsResetting;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();

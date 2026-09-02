@@ -84,7 +84,6 @@ public class LoginController : ControllerBase
                 new Claim(ClaimTypes.Name, user.DisplayName)
             };
 
-
             var principle = new ClaimsPrincipal(
                 new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
             );
