@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class TripValidatorTests
+public class TripValidatorTests : DatabaseUnitTestFixture
 {
     [Theory]
     [InlineData("ab")]
