@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
@@ -198,7 +199,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         NewTripRequest tripRequest = new NewTripRequest
         {
             Title = "test",
-            Description = new string('a', 2049),
+            Description = new string('a', descriptionLength),
             StartDate = DateToDateTimeOffset(2022, 1, 1),
             EndDate = DateToDateTimeOffset(2022, 1, 7),
         };
@@ -672,6 +673,50 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await Should.NotThrowAsync(async () => await _tripService.DeleteTripByIdAsync(trip.Id));
 
         await Should.ThrowAsync<ArgumentException>(async () => await _tripService.GetTripByIdAsync(trip.Id));
+    }
+
+        private readonly NewTripRequest testTripRequest = new NewTripRequest
+    {
+        Title = "test trip",
+        Description = "Description",
+        StartDate = DateToDateTimeOffset(2021, 12, 29),
+        EndDate = DateToDateTimeOffset(2022, 12, 31),
+    };
+
+    [Fact]
+    public async Task CreateNewTrip_UserDoesNotExist_ThrowsArgumentException()
+    {
+        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
+    }
+
+    [Fact]
+    public async Task DeleteTrip_NoTripExists_Fails()
+    {
+        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.DeleteTripByIdAsync(45));
+    }
+
+    [Fact]
+    public async Task UpdateTrip_TripDoesNotExist_DoesNotCreateTrip()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var numberOfTripsBefore = await context.Set<Trip>().CountAsync();
+
+        var request = new UpdateTripRequest
+        {
+            Id = 999,
+            Title = "Updated trip"
+        };
+
+        await Should.ThrowAsync<ArgumentException>(
+            () => _tripService.UpdateTripAsync(request, 1)
+        );
+        await context.SaveChangesAsync();
+        await using var context2 = DbContextFactory.CreateDbContext();
+
+        var numberOfTripsAfter = await context2.Set<Trip>().CountAsync();
+
+        numberOfTripsAfter.ShouldBe(numberOfTripsBefore);
     }
 
 }

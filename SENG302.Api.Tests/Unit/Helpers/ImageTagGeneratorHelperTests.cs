@@ -44,7 +44,6 @@ public class ImageTagGeneratorHelperTests : DatabaseUnitTestFixture
         var file = GetMockFile("test", bytes);
         FormFile newFile = await ImageTagGeneratorHelper.createFormFileForTagging(file);
         
-        Byte[] newFileBytes;
         using var newStream = newFile.OpenReadStream();
         
         newStream.Position.ShouldBe(0);
