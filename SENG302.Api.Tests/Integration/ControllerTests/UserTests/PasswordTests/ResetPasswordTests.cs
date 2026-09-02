@@ -16,7 +16,7 @@ using SENG302.Api.Models.Requests.Password;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services.Email;
 
-namespace SENG302.Api.Tests.Integration.ControllerTests;
+namespace SENG302.Api.Tests.Integration.ControllerTests.UserTests.PasswordTests;
 
 public class ResetPasswordTests : BaseIntegrationTestFixture
 {
