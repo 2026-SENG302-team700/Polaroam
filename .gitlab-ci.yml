@@ -76,10 +76,6 @@ acceptance-tests:
 coverage-reporting:
   extends: .not-scheduled
   stage: coverage-report
-  only:
-    refs:
-      - dev
-      - main
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
     - apt-get update && apt-get install -y bc
@@ -110,10 +106,6 @@ coverage-reporting:
 sonarqube-report:
   extends: .not-scheduled
   stage: sonarqube
-  only:
-    refs:
-      - dev
-      - main
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
     - dotnet tool install --global dotnet-sonarscanner

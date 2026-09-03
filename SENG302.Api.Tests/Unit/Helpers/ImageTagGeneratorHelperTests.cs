@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class ImageTagGeneratorHelperTests
+public class ImageTagGeneratorHelperTests : DatabaseUnitTestFixture
 {
     private IFormFile GetMockFile(string filename, Byte[] content, string? mimeType = null)
     {
@@ -44,7 +44,6 @@ public class ImageTagGeneratorHelperTests
         var file = GetMockFile("test", bytes);
         FormFile newFile = await ImageTagGeneratorHelper.createFormFileForTagging(file);
         
-        Byte[] newFileBytes;
         using var newStream = newFile.OpenReadStream();
         
         newStream.Position.ShouldBe(0);

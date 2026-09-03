@@ -1,6 +1,9 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
+using NSubstitute;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
@@ -12,8 +15,43 @@ namespace SENG302.Api.Tests.Integration.Services;
 public class TripServiceTests : BaseIntegrationTestFixture
 {
     private ITripService ServiceUnderTest => ServiceProvider.GetRequiredService<ITripService>();
+    
+    private readonly ITripService _tripService;
+    private readonly FakeTimeProvider _fakeTimeProvider;
+    private readonly IUserService _mockUserService;
+    public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
+    {
+        _mockUserService = Substitute.For<IUserService>();
+        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        _tripService = new TripService(DbContextFactory, _fakeTimeProvider, _mockUserService);
+    }
+    
+    private async Task<Trip> CreateTestTripWithUserId(int userId)
+    {
+        _mockUserService.GetUserByIdAsync(userId).Returns(Substitute.For<User>());
+        
+        NewTripRequest testTripRequest = new NewTripRequest
+        {
+            Title = "test trip",
+            Description = "Description",
+            StartDate = DateToDateTimeOffset(2021, 12, 29),
+            EndDate = DateToDateTimeOffset(2022, 12, 31),
+        };
 
-    public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
+        var creation = await _tripService.CreateNewTripAsync(testTripRequest, userId);
+
+        Assert.NotNull(creation);
+
+        return creation;
+    }
+    
+    [Fact]
+    public async Task CreateNewTrip_TripExists_Success()
+    {
+        Trip trip = await CreateTestTripWithUserId(1);
+
+        await Should.NotThrowAsync(async () => await _tripService.GetTripByIdAsync(trip.Id));
+    }
 
     [Theory]
     [InlineData("test", 1, "2026-07-04", "2026-07-12")] // Basic Test
@@ -48,8 +86,10 @@ public class TripServiceTests : BaseIntegrationTestFixture
         };
 
         // Use the TripService function to create a new trip with the name and user email
+        
         var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId);
 
+        trip.ShouldNotBeNull();
         trip.Title.ShouldBe(title.Trim());
         trip.UserId.ShouldBe(userId);
         trip.Description.ShouldBe("Description");
@@ -159,7 +199,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         NewTripRequest tripRequest = new NewTripRequest
         {
             Title = "test",
-            Description = new string('a', 2049),
+            Description = new string('a', descriptionLength),
             StartDate = DateToDateTimeOffset(2022, 1, 1),
             EndDate = DateToDateTimeOffset(2022, 1, 7),
         };
@@ -403,6 +443,280 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await Should.ThrowAsync<ArgumentException>(
             () => ServiceUnderTest.UpdateTripAsync(request, 1)
         );
+    }
+    
+    [Fact]
+    public async Task UserModifyAccessCheck_Valid_Success()
+    {
+        int userId = 100;
+        Trip trip = await CreateTestTripWithUserId(userId);
+
+        Assert.True(await _tripService.UserHasModifyAccessToTrip(userId, trip.Id));
+    }
+
+    [Fact]
+    public async Task UserModifyAccessCheck_NotValid_Fail()
+    {
+        int userId = 100;
+        Trip trip = await CreateTestTripWithUserId(userId);
+
+        Assert.False(await _tripService.UserHasModifyAccessToTrip(userId + 1, trip.Id));
+    }
+
+    [Fact]
+    public async Task UpdateTrip_ValidRequest_UpdatesTrip()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        var newStartDate = DateToDateTimeOffset(2026, 8, 1);
+        var newEndDate = DateToDateTimeOffset(2026, 8, 10);
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = newStartDate,
+            EndDate = newEndDate
+        };
+
+        var updatedTrip = await _tripService.UpdateTripAsync(request, 1);
+
+        updatedTrip.Title.ShouldBe("Updated trip");
+        updatedTrip.Description.ShouldBe("Updated description");
+        updatedTrip.StartDate.ShouldBe(newStartDate);
+        updatedTrip.EndDate.ShouldBe(newEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_OnlyTitleProvided_UpdatesTitleOnly()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        var originalDescription = trip.Description;
+        var originalStartDate = trip.StartDate;
+        var originalEndDate = trip.EndDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            StartDate = originalStartDate,
+            EndDate = originalEndDate
+        };
+
+        await _tripService.UpdateTripAsync(request, 1);
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe("Updated trip");
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_OnlyDescriptionProvided_UpdatesDescriptionOnly()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        var originalTitle = trip.Title;
+        var originalStartDate = trip.StartDate;
+        var originalEndDate = trip.EndDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Description = "Updated description",
+            StartDate = originalStartDate,
+            EndDate = originalEndDate
+        };
+
+        await _tripService.UpdateTripAsync(request, 1);
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe("Updated description");
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_OnlyStartDateProvided_UpdatesStartDateOnly()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        var originalTitle = trip.Title;
+        var originalDescription = trip.Description;
+        var originalEndDate = trip.EndDate;
+        var newStartDate = DateToDateTimeOffset(2022, 10, 10);
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            StartDate = newStartDate,
+            EndDate = originalEndDate
+        };
+
+        await _tripService.UpdateTripAsync(request, 1);
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(newStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_OnlyEndDateProvided_UpdatesEndDateOnly()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        var originalTitle = trip.Title;
+        var originalDescription = trip.Description;
+        var originalStartDate = trip.StartDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            StartDate = originalStartDate,
+            EndDate = DateToDateTimeOffset(2023, 10, 10)
+        };
+
+        await _tripService.UpdateTripAsync(request, 1);
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(DateToDateTimeOffset(2023, 10, 10));
+    }
+    
+    [Fact]
+    public async Task UpdateTrip_EndDateBeforeStartDate_ThrowsValidationException()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+
+        var originalTitle = trip.Title;
+        var originalDescription = trip.Description;
+        var originalStartDate = trip.StartDate;
+        var originalEndDate = trip.EndDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = DateToDateTimeOffset(2026, 8, 10),
+            EndDate = DateToDateTimeOffset(2026, 8, 1)
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => _tripService.UpdateTripAsync(request, 1)
+            );
+
+        exception.Errors.ShouldContainKey("dateTwo");
+        exception.Errors["dateTwo"].ShouldContain(
+            "End date must not be before the start date"
+        );
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
+    }
+
+    [Fact]
+    public async Task UpdateTrip_NullStartDate_ThrowsValidationException()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+
+        var originalTitle = trip.Title;
+        var originalDescription = trip.Description;
+        var originalStartDate = trip.StartDate;
+        var originalEndDate = trip.EndDate;
+
+        var request = new UpdateTripRequest
+        {
+            Id = trip.Id,
+            Title = "Updated trip",
+            Description = "Updated description",
+            StartDate = null,
+            EndDate = DateToDateTimeOffset(2026, 8, 10)
+        };
+
+        var exception =
+            await Should.ThrowAsync<MultipleValidationListException>(
+                () => _tripService.UpdateTripAsync(request, 1)
+            );
+
+        exception.Errors.ShouldContainKey("dateOne");
+        exception.Errors["dateOne"][0].ShouldContain(
+            "Date is invalid"
+        );
+
+        var savedTrip = await _tripService.GetTripByIdAsync(trip.Id);
+
+        savedTrip.Title.ShouldBe(originalTitle);
+        savedTrip.Description.ShouldBe(originalDescription);
+        savedTrip.StartDate.ShouldBe(originalStartDate);
+        savedTrip.EndDate.ShouldBe(originalEndDate);
+    }
+
+
+    [Fact]
+    public async Task DeleteTrip_TripDeleted_Success()
+    {
+        Trip trip = await CreateTestTripWithUserId(1);
+
+        await Should.NotThrowAsync(async () => await _tripService.DeleteTripByIdAsync(trip.Id));
+
+        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.GetTripByIdAsync(trip.Id));
+    }
+
+        private readonly NewTripRequest testTripRequest = new NewTripRequest
+    {
+        Title = "test trip",
+        Description = "Description",
+        StartDate = DateToDateTimeOffset(2021, 12, 29),
+        EndDate = DateToDateTimeOffset(2022, 12, 31),
+    };
+
+    [Fact]
+    public async Task CreateNewTrip_UserDoesNotExist_ThrowsArgumentException()
+    {
+        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
+    }
+
+    [Fact]
+    public async Task DeleteTrip_NoTripExists_Fails()
+    {
+        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.DeleteTripByIdAsync(45));
+    }
+
+    [Fact]
+    public async Task UpdateTrip_TripDoesNotExist_DoesNotCreateTrip()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var numberOfTripsBefore = await context.Set<Trip>().CountAsync();
+
+        var request = new UpdateTripRequest
+        {
+            Id = 999,
+            Title = "Updated trip"
+        };
+
+        await Should.ThrowAsync<ArgumentException>(
+            () => _tripService.UpdateTripAsync(request, 1)
+        );
+        await context.SaveChangesAsync();
+        await using var context2 = DbContextFactory.CreateDbContext();
+
+        var numberOfTripsAfter = await context2.Set<Trip>().CountAsync();
+
+        numberOfTripsAfter.ShouldBe(numberOfTripsBefore);
     }
 
 }

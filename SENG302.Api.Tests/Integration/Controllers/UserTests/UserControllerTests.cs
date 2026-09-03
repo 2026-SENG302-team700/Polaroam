@@ -6,12 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers.UserController;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -19,6 +21,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
 {
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
     private readonly IFileService _mockFileService;
+    private readonly IAuthenticationService _mockAuthService;
     private readonly UserController _controller;
 
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
@@ -27,6 +30,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
         _mockFileService = Substitute.For<IFileService>();
+        _mockAuthService = Substitute.For<IAuthenticationService>();
         _controller =
             new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService);
     }
@@ -338,5 +342,140 @@ public class UserControllerTests : BaseIntegrationTestFixture
         var content2 = await response2.Content.ReadFromJsonAsync<MapVisibleObject>();
         content2.ShouldNotBeNull();
         content2.MapVisible.ShouldBeFalse();
+    }
+    
+    
+
+    [Fact]
+    public async Task GetUser_UserExists_ReturnsOkWithNoPassword()
+    {
+        await SetupTestUser();
+        var result = await _controller.GetUser();
+
+        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
+        var user = okResult.Value.ShouldBeOfType<GetUserResponse>();
+    }
+
+    [Fact]
+    public async Task GetUser_UserNotFound_ReturnsNotFound()
+    {
+        SetupUserContext("99","Test User", "test@example.com");
+
+        var result = await _controller.GetUser();
+
+        result.Result.ShouldBeOfType<NotFoundResult>();
+    }
+
+    [Fact]
+    public async Task GetUserVerificationCountdown_ValidTime_ReturnsRemainingSeconds()
+    {
+        var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User{ Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 });
+        await context.SaveChangesAsync();
+
+        SetupUserContext("10", "testName", "test@test.com");
+        
+        _mockOneTimeCodeService.GetEpochTime().Returns(1050);
+        _mockOneTimeCodeService.TimeoutTimeSeconds.Returns(300);
+
+        var result = await _controller.GetUserVerificationCountdown(request);
+
+        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
+        okResult.Value.ShouldBe(250L);
+    }
+
+    [Fact]
+    public async Task GetUserVerificationCountdown_ExpiredCode_ReturnsUnauthorized()
+    {
+        var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User{ Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 });
+        await context.SaveChangesAsync();
+        
+        SetupUserContext("1", "testName", "test@test.com");
+        
+        _mockOneTimeCodeService.GetEpochTime().Returns(2000); // past timeout
+        _mockOneTimeCodeService.TimeoutTimeSeconds.Returns(300);
+
+        var result = await _controller.GetUserVerificationCountdown(request);
+
+        result.Result.ShouldBeOfType<UnauthorizedObjectResult>();
+    }
+
+    public async Task<IFormFile> CreateMockFile(byte[] bytes, string mimeType)
+    {
+        var stream = new MemoryStream(bytes);
+        var mockfile = Substitute.For<IFormFile>();
+        mockfile.ContentType.Returns(mimeType);
+        mockfile.OpenReadStream().Returns(stream);
+
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User{ Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 });
+        await context.SaveChangesAsync();
+        var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = mimeType };
+        var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = mimeType };
+
+        SetupUserContext("10", "testName", "test@test.com");
+        _mockFileService.GetFileByIdAsync(50).Returns(oldFile);
+        _mockFileService.GetFileByIdAsync(101).Returns(newFile);
+        _mockFileService.SaveFileAsync(mockfile, 10).Returns(newFile);
+
+        return mockfile;
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ValidImage_ReplacesOldAndReturnsOk()
+    {
+        var mockfile = await CreateMockFile([0x89, 0x50, 0x4e, 0x47], "image/png");
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
+        result.Result.ShouldBeOfType<OkResult>();
+
+        await _mockFileService.Received(1).DeleteFileAsync("old-key");
+        
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 10);
+        updatedUser.ShouldNotBeNull();
+        updatedUser.ProfilePicture.ShouldBe(101);
+        updatedUser.ProfilePictureOffsetX.ShouldBe(0f);
+        updatedUser.ProfilePictureOffsetY.ShouldBe(0f);
+        updatedUser.ProfilePictureZoom.ShouldBe(1f);
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ImageInvalidRealMime_UnsupportedType()
+    {
+        await SetupTestUser();
+        var mockfile = await CreateMockFile([0x89, 0x50, 0x4e, 0xff], "image/png");
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
+        result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image not added, supported file types are .jpeg, .png, .svg, .gif, .webp");
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ImageTooBig_Fail()
+    {
+        var stream = new MemoryStream([0x89, 0x50, 0x4e, 0x47]);
+        var mockfile = Substitute.For<IFormFile>();
+        mockfile.ContentType.Returns("image/png");
+        mockfile.Length.Returns(10000001);
+        mockfile.OpenReadStream().Returns(stream);
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User{ Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 });
+        await context.SaveChangesAsync();
+        var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = "image/png" };
+        var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = "image/png" };
+
+        SetupUserContext("10", "testName", "test@test.com");
+        _mockFileService.GetFileByIdAsync(50).Returns(oldFile);
+        _mockFileService.GetFileByIdAsync(101).Returns(newFile);
+        _mockFileService.SaveFileAsync(mockfile, 10).Returns(newFile);
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
+        result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image not added, image is too large, maximum file size is 10MB");
     }
 }
