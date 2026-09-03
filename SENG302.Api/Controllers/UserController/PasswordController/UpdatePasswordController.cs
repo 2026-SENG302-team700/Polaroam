@@ -98,7 +98,7 @@ public class UpdatePasswordController : ControllerBase
     /// <param name="updatePasswordRequest"></param>
     /// <returns>response to frontend based on status of request</returns>
     [HttpPut]
-    public async Task<ActionResult> updatePassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
+    public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
     {
         try
         {
