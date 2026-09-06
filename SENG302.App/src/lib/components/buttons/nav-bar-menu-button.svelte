@@ -3,15 +3,15 @@
     import { resolve } from "$app/paths";
     let { path = `/`, text = "" } = $props();
 </script>
+
 <button class="nav-link active" onclick={() => goto(resolve(path))}>
-    <h5 style="margin-bottom: 0;">
+    <h5 style="margin-bottom: 0;" class="nav-bar-text">
         {text}
     </h5>
 </button>
 
-<style >
+<style>
     .nav-link {
         text-align: center;
-
     }
 </style>

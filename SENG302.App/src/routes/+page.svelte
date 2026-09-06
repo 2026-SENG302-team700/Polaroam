@@ -8,16 +8,26 @@
 </svelte:head>
 
 <main class="landing-page-flex">
-    <div class="landing-page-wrapper">
+    <div class="landing-page-wrapper post-form">
         <LandingLogo />
-        <div class="card text-center landing-card" style="font-size:x-large;">
-            <div class="card-header">Welcome to Polaroam</div>
-            <div
-                class="card-body"
-                style="display: grid; grid-template-columns: auto; row-gap: 10px;"
-            >
-                <NavigationButton path="/register" text="Register" />
-                <NavigationButton path="/login" text="Log In" />
+        <p class="subheader">
+            <i>Your trips captured, collected and collaged.</i>
+        </p>
+        <div class="post-form-actions">
+            <NavigationButton path="/login" text="Login" />
+            <NavigationButton path="/register" text="Register" />
+        </div>
+        <div class="selling-points">
+            <div class="post-form-footer">
+                <div class="section-divider"></div>
+                <p>
+                    hello hello hello hello hello hello hello hello hello hello
+                    hello hello hello hello hello hello hello hello hello hello
+                    hello hello hello hello hello hello hello hello hello hello
+                    hello hello hello hello hello hello hello hello hello hello
+                    hello hello hello hello hello hello hello hello hello hello
+                    hello
+                </p>
             </div>
         </div>
     </div>
@@ -26,29 +36,25 @@
 <style>
     .landing-page-flex {
         height: 80vh;
+        margin-top: 60px;
+    }
+    .landing-page-wrapper {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
+        gap: 60px;
+        flex-shrink: 1;
     }
-    .landing-card {
-        width: 90vw;
+    .subheader {
+        font-size: max(18px, 1.3vw);
+        margin: 0;
     }
-
-    @media (min-width: 576px) {
-        .landing-card {
-            width: 70vw;
-        }
+    .post-form-actions {
+        margin: 0;
+        width: max(50%, 300px);
     }
-
-    @media (min-width: 768px) {
-        .landing-card {
-            width: 50vw;
-        }
-    }
-
-    @media (min-width: 992px) {
-        .landing-card {
-            width: 30vw;
-        }
+    .selling-points {
+        width: 80%;
     }
 </style>

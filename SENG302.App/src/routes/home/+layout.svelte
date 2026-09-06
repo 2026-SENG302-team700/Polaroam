@@ -24,7 +24,7 @@
      */
     async function retrieveUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(resolve(`/api/user` as any), {
                 method: "GET",
                 credentials: "include",
             });
@@ -39,7 +39,7 @@
 
             if (data.profilePicture !== 0) {
                 const pfpResponse = await fetchWithCsrf(
-                    resolve("/api/user/pfp"),
+                    resolve("/api/user/pfp" as any),
                     {
                         method: "GET",
                         credentials: "include",
@@ -74,7 +74,10 @@
         <AppLogo />
         <NavBarMenuButton path="/home" text="My Trips" />
         <div class="right">
-            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
+            <h5
+                class="text username"
+                style=" margin-bottom: 0px; padding-bottom: 0px;"
+            >
                 {$user.displayName}
             </h5>
             <div
@@ -105,8 +108,7 @@
     }
 
     .navBar {
-        z-index: 1000;
-        vertical-align: top;
+        z-index: 1;
         background-color: white;
         height: 60px;
         border-radius: 10px;
@@ -122,7 +124,7 @@
         align-items: center;
         flex: 1;
         justify-content: flex-end;
-        margin-right: 5px;
+        margin-right: 15px;
     }
 
     .page-wrapper {
@@ -136,5 +138,12 @@
         flex-direction: row;
         align-items: center;
         width: 100%;
+        flex-shrink: 1;
+    }
+
+    @media (max-width: 650px) {
+        .username {
+            display: none;
+        }
     }
 </style>

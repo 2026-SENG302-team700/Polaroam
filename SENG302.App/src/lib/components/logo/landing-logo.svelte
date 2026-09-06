@@ -1,11 +1,14 @@
 <script lang="ts">
-    import Polaroam from "$lib/assets/images/Polaroam.png";
+    import Polaroam from "$lib/assets/images/Polaroam.svg";
 </script>
 
-<img src={Polaroam} class="logo" />
+<img src={Polaroam} class="logo" alt="logo" />
 
 <style>
     .logo {
-        height: 50px;
+        margin-top: 60px;
+        max-width: 100%;
+        height: auto;
+        min-width: 0;
     }
 </style>
