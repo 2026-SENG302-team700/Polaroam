@@ -20,14 +20,50 @@
         <div class="selling-points">
             <div class="post-form-footer">
                 <div class="section-divider"></div>
-                <p>
-                    hello hello hello hello hello hello hello hello hello hello
-                    hello hello hello hello hello hello hello hello hello hello
-                    hello hello hello hello hello hello hello hello hello hello
-                    hello hello hello hello hello hello hello hello hello hello
-                    hello hello hello hello hello hello hello hello hello hello
-                    hello
-                </p>
+                <div class="topic-grid">
+                    <div class="info-box card">
+                        <p class="header">
+                            Organise your memories into dedicated Trips.
+                        </p>
+                        <p class="content">
+                            Organise all of your photos, posts and maps into a
+                            single trip for easy access to each holiday!
+                        </p>
+                    </div>
+                    <div class="info-box card">
+                        <p class="header">
+                            Highlight specific moments, locations and photos
+                            with Posts.
+                        </p>
+                        <p class="content">
+                            Visited the Eiffel Tower, or just landed in Paris?
+                            Create a post to curate photos, document your
+                            adventures and pin locations on a map!
+                        </p>
+                    </div>
+                    <div class="info-box card">
+                        <p class="header">
+                            Search through your photos using our AI Image
+                            Tagging System.
+                        </p>
+                        <p class="content">
+                            Use our AI system to intelligently tag your images
+                            as you upload them so that you can search for the
+                            Eiffel Tower by searching for the Eiffel Tower!
+                        </p>
+                    </div>
+                    <div class="info-box card">
+                        <p class="header">
+                            Create collages of your favourite memories with
+                            Scrapbooks.
+                        </p>
+                        <p class="content">
+                            Create collages of all of your favourite moments
+                            from each trip, alongside a suite of creative tools
+                            to add the finishing touches to your memory.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -37,14 +73,26 @@
     .landing-page-flex {
         height: 80vh;
         margin-top: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     .landing-page-wrapper {
+        width: 70%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 60px;
         flex-shrink: 1;
+    }
+    .section-divider {
+        width: 100%;
+    }
+    .post-form-footer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     .subheader {
         font-size: max(18px, 1.3vw);
@@ -56,5 +104,19 @@
     }
     .selling-points {
         width: 80%;
+    }
+    .topic-grid {
+        width: 80%;
+        display: grid;
+        grid-template-columns: 50% 50%;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .info-box {
+        padding: 5px;
+    }
+    .header {
+        font-size: 0.8vw;
+        font-weight: 500;
     }
 </style>

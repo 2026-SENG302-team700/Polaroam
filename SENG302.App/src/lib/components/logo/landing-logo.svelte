@@ -7,6 +7,7 @@
 <style>
     .logo {
         margin-top: 60px;
+        padding: 20px;
         max-width: 100%;
         height: auto;
         min-width: 0;
