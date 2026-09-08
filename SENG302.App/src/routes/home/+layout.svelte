@@ -7,6 +7,7 @@
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
     import AppLogo from "$lib/components/app-logo.svelte";
+    import NotificationBell from "$lib/components/content/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
 
@@ -68,13 +69,16 @@
         }
     }
 </script>
+
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
         <AppLogo />
         <NavBarMenuButton path="/home" text="My Trips" />
         <div class="right">
-            <h5 class="text"
-                style=" margin-bottom: 0px; padding-bottom: 0px;">
+            <div class="p-2">
+                <NotificationBell notificationCount={2} pressFunction={null} />
+            </div>
+            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
                 {$user.displayName}
             </h5>
             <div
@@ -94,7 +98,6 @@
 </div>
 
 <style>
-
     .profile-button {
         width: 40px;
         height: 40px;
@@ -114,16 +117,15 @@
         margin-bottom: 20px;
         display: flex;
         align-content: center;
-        
     }
-    .right  {
+    .right {
         position: relative;
         right: 0;
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        flex: 1; 
-        justify-content: flex-end; 
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex: 1;
+        justify-content: flex-end;
         margin-right: 5px;
     }
 
@@ -134,9 +136,9 @@
     }
 
     .content-wrapper {
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         width: 100%;
     }
 </style>
