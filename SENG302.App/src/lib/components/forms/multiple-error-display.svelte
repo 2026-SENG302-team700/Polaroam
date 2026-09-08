@@ -15,7 +15,7 @@
             </div>
         {:else}
             <div class="invalid-feedback d-block mb-0">
-                <span>{nonEmptyErrors[0]}</span>
+                <div>{nonEmptyErrors[0]}</div>
             </div>
         {/if}
     {/if}
