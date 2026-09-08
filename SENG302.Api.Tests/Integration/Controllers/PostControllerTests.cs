@@ -533,6 +533,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var post = await response.Content.ReadFromJsonAsync<Post>();
         post!.PhotoIds!.Count.ShouldBe(2);
+        post.PhotoIds.ShouldBeUnique();
+
+        await using var verificationContext = DbContextFactory.CreateDbContext();
+        var album = await verificationContext.Albums.SingleAsync(album => album.TripId == 1);
+        album.PhotoIds.ShouldBe(post.PhotoIds, ignoreOrder: true);
     }
 
     [Fact]
