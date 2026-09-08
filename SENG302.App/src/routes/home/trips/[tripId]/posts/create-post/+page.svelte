@@ -193,6 +193,7 @@
         placeholder="Content"
         bind:description={content}
         errors={errors.content}
+        maxLength={8196}
         bind:loading
     />
 {/snippet}
