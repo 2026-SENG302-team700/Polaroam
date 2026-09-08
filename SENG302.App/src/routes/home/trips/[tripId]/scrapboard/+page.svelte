@@ -35,20 +35,29 @@
         scrollToContent: true,
     };
 </script>
-
-<div class="scrapboard-wrapper">
-    <Excalidraw
-            {initialData}
-            theme="light"
-            name="Basic Test"
-            viewModeEnabled={false}
-            zenModeEnabled={false}
-            gridModeEnabled={true}
-            autoFocus={true}
-    />
+<div class="page-wrapper">
+    <div class="scrapboard-wrapper">
+        <Excalidraw
+                {initialData}
+                theme="light"
+                name="Basic Test"
+                viewModeEnabled={false}
+                zenModeEnabled={false}
+                gridModeEnabled={true}
+                autoFocus={true}
+        />
+    </div>
 </div>
 <style>
+.page-wrapper {
+    display: flex;
+    justify-content: center;
+}
     .scrapboard-wrapper {
-        height: 600px;
+        height: 800px;
+        width: 80vw;
+        border: 3px solid black;
+        border-radius: 5px;
+        box-shadow: 8px 8px black;
     }
 </style>
