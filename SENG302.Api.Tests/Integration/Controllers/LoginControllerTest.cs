@@ -262,7 +262,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task LogoutUser_ValidInformation_ReturnOk()
     {
-        var response = await HttpClient.DeleteAsync("/api/logout");
+        var response = await HttpClient.PostAsync("/api/logout", new StringContent(string.Empty));
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }

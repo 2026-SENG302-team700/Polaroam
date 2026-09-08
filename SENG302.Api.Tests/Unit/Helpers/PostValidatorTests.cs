@@ -3,7 +3,7 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
 
-public class PostValidatorTests : DatabaseUnitTestFixture
+public class PostValidatorTests
 {
     [Fact]
     public async Task ValidatePostDate_PastDate_ReturnNoErrors()
