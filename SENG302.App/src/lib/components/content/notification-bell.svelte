@@ -1,23 +1,43 @@
 <script lang="ts">
+    import NotificationList from "./notification-list.svelte";
+
+    let toggled = $state(false);
+
     let {
         notificationCount = 0,
-        pressFunction = null,
     }: {
         notificationCount: number;
-        pressFunction: Function | null;
     } = $props();
 </script>
 
-<button class="notification-parent" aria-label="notifications">
-    <i class="bi bi-bell icon-centered"></i>
-    {#if notificationCount > 0}
-        <div class="notificationCounter">
-            {notificationCount > 9 ? "9+" : notificationCount.toString()}
+<div>
+    <button
+        class="notification-parent nav-link-button-colours"
+        aria-label="notifications"
+        onclick={() => {
+            toggled = !toggled;
+        }}
+    >
+        <i class="bi bi-bell icon-centered"></i>
+        {#if notificationCount > 0}
+            <div class="notificationCounter">
+                {notificationCount > 9 ? "9+" : notificationCount.toString()}
+            </div>
+        {/if}
+    </button>
+    {#if toggled || true}
+        <div class="notification-list-parent">
+            <NotificationList></NotificationList>
         </div>
     {/if}
-</button>
+</div>
 
 <style>
+    .notification-list-parent {
+        position: absolute;
+        padding: 5px 5px;
+    }
+
     .icon-centered {
         width: 100%;
         height: 100%;
@@ -29,7 +49,7 @@
         height: 40px;
         border-radius: 50%;
         align-content: center;
-        border: 0;
+        border: 2px solid black;
     }
 
     .notificationCounter {
@@ -41,5 +61,17 @@
         width: 22px;
         height: 22px;
         font-size: smaller;
+    }
+
+    .nav-link-button-colours {
+        background-color: white;
+    }
+
+    .nav-link-button-colours:hover {
+        background-color: rgb(230, 228, 228);
+    }
+
+    .nav-link-button-colours:active {
+        background-color: rgb(207, 207, 207);
     }
 </style>
