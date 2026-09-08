@@ -106,14 +106,21 @@
             );
 
             if (response.status != 201) {
-                let data = await response.json();
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
-                errors.photos =
-                    data.errors?.photos ?? data.errors?.Photos ?? [];
+                const contentType = response.headers.get("content-type");
+                if (contentType?.includes("application/json")) {
+                    const data = await response.json();
+                    errors.photos =
+                        data.errors?.photos ?? data.errors?.Photos ?? [];
+                    errors.generic = data.message ?? "";
+                } else {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                }
                 return;
             }
         } catch (err) {

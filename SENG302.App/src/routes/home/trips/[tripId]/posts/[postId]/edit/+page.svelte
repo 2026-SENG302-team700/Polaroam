@@ -237,9 +237,22 @@
                     credentials: "include",
                 },
             );
-            const data = await response.json();
 
             if (!response.ok) {
+                if (response.status === 413) {
+                    errors.generic =
+                        "Upload too large, please upload fewer photos at a time";
+                    return;
+                }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType?.includes("application/json")) {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                    return;
+                }
+
+                const data = await response.json();
                 errors.date = data.errors?.date?.[0] ?? "";
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
@@ -261,6 +274,8 @@
                 }
                 return;
             }
+
+            const data = await response.json();
             goto(resolve(`/home/trips/${data.tripId}`));
         } catch (err) {
             errors.generic =
