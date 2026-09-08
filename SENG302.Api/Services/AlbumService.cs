@@ -200,12 +200,14 @@ public class AlbumService : IAlbumService
                 {
                     if (!aiTaggingForUpload)
                     {
+                        Console.WriteLine("\n\n\n Should be this error \n\n\n");
                         dbFile.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
                         context.CustomFiles.Update(dbFile);
                         await context.SaveChangesAsync();
                     }
                     else if (!IsAiTaggable(photo))
                     {
+                        Console.WriteLine("\n\n\n Not this error \n\n\n");
                         dbFile.TagError = "AI failed to tag images";
                         context.CustomFiles.Update(dbFile);
                         await context.SaveChangesAsync();
