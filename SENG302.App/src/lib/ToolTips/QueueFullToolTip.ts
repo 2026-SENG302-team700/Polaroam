@@ -11,10 +11,10 @@
             position: 'absolute',
             background: '#333',
             color: '#fff',
-            padding: '5px 10px',
+            padding: '5px 1px',
             borderRadius: '4px',
             fontSize: '12px',
-            left: "0%",
+            left: "50%",
             zIndex: '1000',
             pointerEvents: 'none',
             whiteSpace: 'nowrap'
