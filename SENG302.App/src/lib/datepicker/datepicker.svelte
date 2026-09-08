@@ -1,13 +1,14 @@
 <script lang="ts">
+    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import { onMount } from "svelte";
 
     let {
         value = $bindable<Date | null>(null),
-        error = "",
+        error = [],
         disabled = $bindable(false),
     }: {
         value: Date | null;
-        error?: string;
+        error?: string[];
         disabled?: boolean;
     } = $props();
 
@@ -69,9 +70,7 @@
         }}>Clear</button
     >
     {#if error}
-        <div class="invalid-feedback d-block date-error">
-            {error}
-        </div>
+        <MultipleErrorDisplay errors={error} />
     {/if}
 </div>
 
