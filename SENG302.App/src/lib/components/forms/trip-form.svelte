@@ -64,6 +64,7 @@
         <DescriptionForm
             bind:description
             errors={errors.description}
+            maxLength={2048}
             {loading}
         />
 
