@@ -120,14 +120,22 @@
                 body: form,
                 credentials: "include",
             });
-            const data = await response.json();
 
             if (!response.ok) {
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType?.includes("application/json")) {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                    return;
+                }
+
+                const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
                 errors.date =
                     data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
@@ -155,6 +163,8 @@
                 }
                 return;
             }
+
+            const data = await response.json();
             console.log(data);
             goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
         } catch (err) {

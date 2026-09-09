@@ -122,6 +122,7 @@ public class PostController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
+    [RequestSizeLimit(200_000_000)]
     public async Task<ActionResult<Post>> UpdatePost(
         [FromForm] UpdatePostRequest postUpdates,
         [FromForm] List<IFormFile>? files,

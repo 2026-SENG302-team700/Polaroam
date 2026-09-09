@@ -38,6 +38,7 @@
             photos: [],
         };
     }
+    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     /**
      * Gets the image metadata of all images in the album matching the tagQuery
@@ -62,8 +63,6 @@
         }
     }
 
-    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
-
     async function loadAiTaggingPreference() {
         const response = await fetchWithCsrf(resolve("/api/user" as any), {
             credentials: "include",
@@ -86,6 +85,7 @@
      */
     async function uploadPhotos() {
         try {
+            errors = emptyErrors();
             loading = true;
             const form = new FormData();
             if (filesToUpload != null) {
@@ -106,14 +106,21 @@
             );
 
             if (response.status != 201) {
-                let data = await response.json();
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
-                errors.photos =
-                    data.errors?.photos ?? data.errors?.Photos ?? [];
+                const contentType = response.headers.get("content-type");
+                if (contentType?.includes("application/json")) {
+                    const data = await response.json();
+                    errors.photos =
+                        data.errors?.photos ?? data.errors?.Photos ?? [];
+                    errors.generic = data.message ?? "";
+                } else {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                }
                 return;
             }
         } catch (err) {

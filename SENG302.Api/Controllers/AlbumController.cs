@@ -124,7 +124,7 @@ public class AlbumController : ControllerBase
             return BadRequest("An unexpected error occurred.");
         }
     }
-    
+
     /// <summary>
     /// Gets all images from an album that match the tag param. This includes images added
     /// directly to the album and images added to a post in the trip.
@@ -170,6 +170,7 @@ public class AlbumController : ControllerBase
     /// NotFound - trip not found
     /// </returns>
     [HttpPost("images")]
+    [RequestSizeLimit(200_000_000)]
     public async Task<ActionResult> AddImagesToAlbum(int tripId, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
     {
         try
