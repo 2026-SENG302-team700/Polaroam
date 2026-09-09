@@ -137,7 +137,7 @@ public class LoginController : ControllerBase
     /// </returns>
     [Authorize]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    [HttpDelete("logout")]
+    [HttpPost("logout")]
     public async Task<ActionResult> LogoutUser()
     {
         try

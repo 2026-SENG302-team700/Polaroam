@@ -1,13 +1,14 @@
 <script lang="ts">
+    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import { onMount } from "svelte";
 
     let {
         value = $bindable<Date | null>(null),
-        error = "",
+        error = [],
         disabled = $bindable(false),
     }: {
         value: Date | null;
-        error?: string;
+        error?: string[];
         disabled?: boolean;
     } = $props();
 
@@ -44,42 +45,44 @@
     }
 </script>
 
-<div
-    class="date-form-wrapper input-group w-auto"
-    class:has-error={Boolean(error)}
->
-    <input
-        type="date"
-        class="form-control"
-        class:is-invalid={error}
-        value={value != null ? utcDateToLocalISO(value) : ""}
-        oninput={handleInput}
-        bind:this={datePicker}
-        {disabled}
-    />
-    <button
-        type="button"
-        class="btn btn-outline-secondary"
-        {disabled}
-        onclick={() => {
-            value = null;
-            if (datePicker) {
-                datePicker.value = "";
-            }
-        }}>Clear</button
+<div class="date-form-wrapper">
+    <div
+        class="date-form-inputs input-group w-auto"
+        class:has-error={Boolean(error)}
     >
+        <input
+            type="date"
+            class="form-control"
+            class:is-invalid={error}
+            value={value != null ? utcDateToLocalISO(value) : ""}
+            oninput={handleInput}
+            bind:this={datePicker}
+            {disabled}
+        />
+        <button
+            type="button"
+            class="btn btn-outline-secondary"
+            {disabled}
+            onclick={() => {
+                value = null;
+                if (datePicker) {
+                    datePicker.value = "";
+                }
+            }}>Clear</button
+        >
+    </div>
     {#if error}
-        <div class="invalid-feedback d-block date-error">
-            {error}
-        </div>
+        <MultipleErrorDisplay errors={error} />
     {/if}
 </div>
 
 <style>
-    .date-form-wrapper {
+    .date-form-inputs {
         display: flex;
         align-items: center;
         gap: 2px;
+    }
+    .date-form-wrapper {
         margin-bottom: 20px;
     }
 

@@ -167,6 +167,28 @@ public class UserServiceTest : BaseIntegrationTestFixture
         errors.Errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
 
+
+    [Theory]
+    [InlineData("vlad.nistor.email")]
+    [InlineData("pandya@gmail+!.co#m")]
+    [InlineData(".@gmail.com")]
+    [InlineData("cool..man@gmail.com")]
+    [InlineData("person@yahoo.")]
+    [InlineData("crazy.@gmail.nz")]
+    [InlineData("CrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyy@gmail.com")]
+    [InlineData("man@gmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompany")]
+    [InlineData("froggy@-outlook.com")]
+    [InlineData("froggy@outlook.com-")]
+    [InlineData("crazy@.nz")]
+    [InlineData("abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij@abcdefghijabcdefghijabcdefgh")]
+    [InlineData("shidrl@panfgh")]
+    public async Task CreateUser_InvalidEmail_ExpectValidationException(string userEmail)
+    {
+        await Should.ThrowAsync<MultipleValidationException>(async () =>
+            await ServiceUnderTest.CreateNewUserAsync(userEmail, "Test User", "Password123!", "Password123!", "NZ")
+        );
+    }
+
     [Fact]
     public async Task CreateNewUser_InvalidEmail_MultipleValidationException()
     {
@@ -539,5 +561,55 @@ public class UserServiceTest : BaseIntegrationTestFixture
         
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
         (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeFalse();
+    }
+
+        [Fact]
+    public async Task UpdateUser_ValidRequest_ExpectUpdatedUser()
+    {
+        int userId;
+
+        using (var context = await DbContextFactory.CreateDbContextAsync())
+        {
+            var user = new User { Email = "old@test.com", DisplayName = "Old Name", Country = "NZ", PasswordKey = "hash" };
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            userId = user.Id;
+        }
+
+        var updatedUser = await ServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU");
+
+        Assert.NotNull(updatedUser);
+        Assert.Equal("new@test.com", updatedUser.Email);
+        Assert.Equal("New Name", updatedUser.DisplayName);
+        Assert.Equal("AU", updatedUser.Country);
+    }
+
+        [Fact]
+    public async Task CheckUserCredentials_UnverifiedEmail_ExpectAccountUnverifiedResult()
+    {
+        var email = "unverified@test.com";
+        var user = await ServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
+        user.EmailVerified = false;
+        user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
+
+        using (var mockDatabaseContext = await DbContextFactory.CreateDbContextAsync())
+        {
+            mockDatabaseContext.Users.Add(user);
+            await mockDatabaseContext.SaveChangesAsync();
+        }
+
+        var result = await ServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
+        Assert.Equal(UserVerificationResult.AccountUnverified, result.userVerificationResult);
+        Assert.NotNull(result.user);
+
+    }
+
+    [Fact]
+    public async Task CheckUserCredentials_UserDoesNotExist_ExpectDoesNotExistResult()
+    {
+        var result = await ServiceUnderTest.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
+
+        Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
+        Assert.Null(result.user);
     }
 }

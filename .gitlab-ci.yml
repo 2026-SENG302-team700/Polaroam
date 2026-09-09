@@ -121,6 +121,59 @@ sonarqube-report:
     # end analysis
     - dotnet sonarscanner end /d:sonar.token="$SONARQUBE_TOKEN"
 
+# New notification step to remind reviewer to rereview on deployed (dev) after the pipeline is complete
+# gilab usernames dont match mattermost ones, so we need to use a switch
+notify-dev-tester:
+  stage: notify
+  needs:
+    - deploy-staging
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev" && $CI_PIPELINE_SOURCE != "schedule" && $SMOKE_TESTS != "true"'
+      when: on_success
+    - when: never
+  script:
+    - |
+      case "$GITLAB_USER_LOGIN" in
+        "jsa162")
+          MATTERMOST_USERNAME="jonsampson"
+          ;;
+        "sla202")
+          MATTERMOST_USERNAME="samladbrook"
+          ;;
+        "sms251")
+          MATTERMOST_USERNAME="sms251"
+          ;;
+        "sne87")
+          MATTERMOST_USERNAME="sne87"
+          ;;
+        "spa293")
+          MATTERMOST_USERNAME="shivam"
+          ;;
+        "vni21")
+          MATTERMOST_USERNAME="vni21"
+          ;;
+        *)
+          echo "No Mattermost username mapped for $GITLAB_USER_LOGIN"
+          MATTERMOST_USERNAME=""
+          ;;
+      esac
+
+      if [ -n "$MATTERMOST_USERNAME" ]; then
+        MESSAGE="@$MATTERMOST_USERNAME Staging has deployed successfully. Please rerun the relevant manual tests."
+      else
+        MESSAGE="@channel Staging deployed successfully. Please rerun the relevant manual tests."
+      fi
+
+      curl --fail-with-body \
+        --request POST \
+        --url "$MATTERMOST_URL/api/v4/posts" \
+        --header "Authorization: Bearer $MATTERMOST_BOT_TOKEN" \
+        --header "Content-Type: application/json" \
+        --data "$(jq -n \
+          --arg channelId "$MATTERMOST_CHANNEL_ID" \
+          --arg message "$MESSAGE" \
+          '{channel_id: $channelId, message: $message}')"
+
 # During the DevOps workshop in sprint 2 we will cover the deployment configuration below
 deploy-staging:
   extends: .not-scheduled

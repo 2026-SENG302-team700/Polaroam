@@ -160,11 +160,22 @@
     </div>
     <div class="card mb-2 post-wrapper">
         <div class="card-header">
-            <div class="title-and-date" style="display: flex; flex-direction: row;">
-                <h1 class="card-subtitle mb-2 h1 user-name">{tripObject.title}</h1>
-                <div class="header-content-item" style="display: flex; align-items: center; flex:1; justify-content: end;">
+            <div
+                class="title-and-date"
+                style="display: flex; flex-direction: row;"
+            >
+                <h1 class="card-subtitle mb-2 h1 user-name">
+                    {tripObject.title}
+                </h1>
+                <div
+                    class="header-content-item"
+                    style="display: flex; align-items: center; flex:1; justify-content: end;"
+                >
                     <div class="bi-calendar-event"></div>
-                    <h6 class="card-subtitle text-muted" style="margin-left: 5px;">
+                    <h6
+                        class="card-subtitle text-muted"
+                        style="margin-left: 5px;"
+                    >
                         {formatDate(tripObject.startDate)} - {formatDate(
                             tripObject.endDate,
                         )}
@@ -177,10 +188,14 @@
                 <p>No description</p>
             {/if}
             <ErrorDisplay errors={[error]} />
-
         </div>
         <div class="card-body">
-        <Map locations={postLocations} {posts} {hoveredPostId} bind:selectedPost />
+            <Map
+                locations={postLocations}
+                {posts}
+                {hoveredPostId}
+                bind:selectedPost
+            />
         </div>
         <div class="card-footer text-muted images">
             <PostSection
@@ -208,51 +223,5 @@
         display: flex;
         justify-content: space-between;
         margin-bottom: 5px;
-    }
-    .trip-head-grid {
-        align-items: end;
-        display: flex;
-    }
-    .date-object {
-        margin-left: 10px;
-        bottom: 0;
-    }
-
-    .app {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        height: 100%;
-    }
-
-    .search-bar {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .search-bar input {
-        flex: 1;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
-
-    .search-bar button {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 6px;
-        background: #2563eb;
-        color: white;
-        cursor: pointer;
-    }
-
-    .search-bar button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .error {
-        color: #dc2626;
-        font-size: 0.9rem;
     }
 </style>

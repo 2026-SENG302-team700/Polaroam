@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using NSubstitute;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using SENG302.Api.Services.ImageTagging;
@@ -34,11 +33,26 @@ public class ImageTaggingServiceUnitTests : DatabaseUnitTestFixture
             return await responseFactory(request, cancellationToken);
         }
     }
+    
+    
 
-    private readonly IImageTaggingQueue _imageTaggingQueue =
-        Substitute.For<IImageTaggingQueue>();
-    private readonly IFileService _fileService = Substitute.For<IFileService>();
+    private readonly IImageTaggingQueue _imageTaggingQueue = new ImageTaggingQueue();
+    private readonly IFileService _fileService;
+    
+    // This method is attribute to claude code
+    public ImageTaggingServiceUnitTests()
+    {
+        var fileServiceConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["FileStorage:BasePath"] = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())
+            })
+            .Build();
 
+        _fileService = new FileService(_mockDbContextFactory, fileServiceConfig);
+    }
+
+    
     private static IFormFile CreateImage(
         string contentType = "image/png",
         byte[]? content = null

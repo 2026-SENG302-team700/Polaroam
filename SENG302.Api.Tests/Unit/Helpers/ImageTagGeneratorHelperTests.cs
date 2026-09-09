@@ -15,8 +15,8 @@ public class ImageTagGeneratorHelperTests
             ContentType = mimeType!
         };
     }
-    
-    
+
+
     [Fact]
     public async Task IsValidFile_ValidFile_ContentPreservedSuccess()
     {
@@ -35,18 +35,17 @@ public class ImageTagGeneratorHelperTests
         newFileBytes.ShouldBeEquivalentTo(bytes);
         newFileBytes.Length.ShouldBe(bytes.Length);
     }
-    
+
     [Fact]
     public async Task IsValidFile_PositionAt0_Success()
     {
         Byte[] bytes = new byte[] { 0x89, 0x50, 0x4e, 0x47 };
-        
+
         var file = GetMockFile("test", bytes);
         FormFile newFile = await ImageTagGeneratorHelper.createFormFileForTagging(file);
-        
-        Byte[] newFileBytes;
+
         using var newStream = newFile.OpenReadStream();
-        
+
         newStream.Position.ShouldBe(0);
     }
 
@@ -61,13 +60,13 @@ public class ImageTagGeneratorHelperTests
             await ImageTagGeneratorHelper.createFormFileForTagging(file);
         });
     }
-    
+
     [Fact]
     public async Task IsValidData_NullFilenameNullContentType_Success()
     {
         Byte[] bytes = new byte[] { };
         var stream = new MemoryStream(bytes);
-        
+
         var file = new FormFile(stream, 0, stream.Length, "", "")
         {
             Headers = new HeaderDictionary(),

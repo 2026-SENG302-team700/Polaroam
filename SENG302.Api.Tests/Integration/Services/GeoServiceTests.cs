@@ -1,16 +1,21 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
+using SENG302.Api.Tests.Integration;
 using Shouldly;
 
-namespace SENG302.Api.Tests.Unit.Services;
+namespace SENG302.Api.Tests.Integration.Services;
 
-public class GeoServiceUnitTests
+public class GeoServiceTests : BaseIntegrationTestFixture
 {
+    
+    public GeoServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
+    
     private sealed class TestHttpMessageHandler(
         Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> responseFactory
     ) : HttpMessageHandler

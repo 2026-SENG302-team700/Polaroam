@@ -3,6 +3,7 @@
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import Datepicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "./description-form.svelte";
+    import FormWrapper from "./form-wrapper.svelte";
     import TitleForm from "./title-form.svelte";
 
     type TripFormErrors = {
@@ -20,7 +21,6 @@
         endDate = $bindable(null),
         heading,
         submitText,
-        cancelPath,
         errors = {
             title: [],
             description: [],
@@ -44,80 +44,66 @@
     } = $props();
 </script>
 
-<div class="container max-w-md post-form-page">
-    <div class="post-form">
-        <div class="post-form-header" >
-            <span class="header-icon bi-camera"></span>
-            <h1>{heading}</h1>
-        </div>
+{#snippet header()}
+    <span class="header-icon bi-camera"></span>
+    <h1>{heading}</h1>
+{/snippet}
+
+{#snippet body()}
     <div class="post-form-body">
-         <form>
-            <div class="section-heading">
-                <i class="bi bi-pencil-square"></i>
-                <h2>Trip Details</h2>
+        <div class="section-heading">
+            <i class="bi bi-pencil-square"></i>
+            <h2>Trip Details</h2>
+        </div>
+        <TitleForm
+            bind:name={title}
+            type="trip"
+            errors={errors.title}
+            {loading}
+        />
+        <DescriptionForm
+            bind:description
+            errors={errors.description}
+            maxLength={2048}
+            {loading}
+        />
+
+        <div class="date-picker-wrapper">
+            <div class="date-field">
+                <label for="trip-start-date">Start Date</label>
+                <Datepicker
+                    bind:value={startDate}
+                    disabled={loading}
+                    error={errors.dateOne}
+                />
             </div>
-            <TitleForm
-                bind:name={title}
-                type="trip"
-                errors={errors.title}
-                {loading}
-            />
-            <DescriptionForm
-                bind:description
-                errors={errors.description}
-                {loading}
-            />
-
-            <div class="date-picker-wrapper">
-                <div class="date-field">
-                    <label for="trip-start-date">Start Date</label>
-                    <Datepicker
-                        bind:value={startDate}
-                        disabled={loading}
-                        error={errors.dateOne}
-                    />
-                </div>
-                <div class="date-field">
-                    <label for="trip-end-date">End Date</label>
-                    <Datepicker
-                        bind:value={endDate}
-                        disabled={loading}
-                        error={errors.dateTwo}
-                    />
-                </div>
+            <div class="date-field">
+                <label for="trip-end-date">End Date</label>
+                <Datepicker
+                    bind:value={endDate}
+                    disabled={loading}
+                    error={errors.dateTwo}
+                />
             </div>
-
-            {#if errors.generic}
-                <div class="alert alert-danger" role="alert">
-                    {errors.generic}
-                </div>
-            {/if}
-            
-            </form>
-
-        <div class="post-form-actions">
-            <CancelButton
-                path={`/home`}
-            />
-            <CreationButton onClick={onSubmit} text={submitText} {loading} />
         </div>
 
+        {#if errors.generic}
+            <div class="alert alert-danger" role="alert">
+                {errors.generic}
+            </div>
+        {/if}
     </div>
+{/snippet}
+{#snippet footer()}
+    <div class="post-form-actions">
+        <CancelButton path={`/home`} />
+        <CreationButton onClick={onSubmit} text={submitText} {loading} />
     </div>
-    
-</div>
+{/snippet}
+
+<FormWrapper {header} {body} {footer} />
 
 <style>
-    .form-header {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        align-items: start;
-    }
-
-    .form-header h1 {
-        grid-column: 2;
-    }
-
     .date-picker-wrapper {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -132,11 +118,6 @@
     .date-field label {
         display: block;
         margin-bottom: 0.25rem;
-    }
-
-    .date-error {
-        margin-top: -0.75rem;
-        margin-bottom: 0.75rem;
     }
 
     .date-picker-wrapper :global(.date-form-wrapper) {

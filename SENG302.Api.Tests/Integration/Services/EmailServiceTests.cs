@@ -1,17 +1,17 @@
-using Xunit;
+using Microsoft.AspNetCore.Mvc.Testing;
 using NSubstitute;
 using SENG302.Api.Services;
 using MimeKit;
 using SENG302.Api.Services.Email;
 
-namespace SENG302.Api.Tests.Unit.Services;
+namespace SENG302.Api.Tests.Integration.Services;
 
-public class EmailServiceUnitTests
+public class EmailServiceTests : BaseIntegrationTestFixture
 {
     private readonly ISmtpClientWrapper _smtpMock = Substitute.For<ISmtpClientWrapper>();
     private readonly EmailService _service;
-
-    public EmailServiceUnitTests()
+    
+    public EmailServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
     {
         var settings = new EmailSettings
         {

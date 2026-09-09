@@ -1,10 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using SENG302.Api.Models.Entities;
-using SENG302.Api.Services;
-using Shouldly;
-using NSubstitute;
-using SENG302.Api.DataAccess;
+﻿using SENG302.Api.Services;
 using Microsoft.Extensions.Time.Testing;
 
 namespace SENG302.Api.Tests.Unit.Services;

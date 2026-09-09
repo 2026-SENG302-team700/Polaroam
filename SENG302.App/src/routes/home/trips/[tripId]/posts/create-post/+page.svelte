@@ -7,15 +7,14 @@
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
-    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import PostForm from "$lib/components/forms/post-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { onMount } from "svelte";
     import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
 
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -121,14 +120,22 @@
                 body: form,
                 credentials: "include",
             });
-            const data = await response.json();
 
             if (!response.ok) {
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType?.includes("application/json")) {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                    return;
+                }
+
+                const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
                 errors.date =
                     data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
@@ -156,6 +163,8 @@
                 }
                 return;
             }
+
+            const data = await response.json();
             goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
@@ -167,7 +176,12 @@
     }
 </script>
 
-<PostForm heading="Create Post">
+{#snippet header()}
+    <span class="header-icon bi-journal-richtext"></span>
+    <h1>{"Create Post"}</h1>
+{/snippet}
+
+{#snippet body()}
     <div class="section-heading">
         <i class="bi bi-pencil-square"></i>
         <h2>Post Details</h2>
@@ -188,11 +202,12 @@
         placeholder="Content"
         bind:description={content}
         errors={errors.content}
+        maxLength={8196}
         bind:loading
     />
+{/snippet}
 
-    <div class="section-divider"></div>
-
+{#snippet footer()}
     <div class="section-heading">
         <i class="bi bi-camera"></i>
         <h2>Photos</h2>
@@ -225,7 +240,9 @@
         />
         <CreationButton onClick={createPost} text="Create Post" {loading} />
     </div>
-</PostForm>
+{/snippet}
+
+<FormWrapper {header} {body} {footer} />
 
 <ConfirmationModal
     bind:show={showConfirmationModal}

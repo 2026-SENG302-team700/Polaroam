@@ -46,7 +46,7 @@ public class ImageTypeValidationTests
         var file = GetMockFile("test", bytes);
         ImageValidator.GetRealImageMime(file).ShouldBe(expectedMime);
     }
-    
+
     [Theory]
     [InlineData(new byte[] { 0x89, 0x50, 0x4e })]
     [InlineData(new byte[] { 0x89, 0x50, 0x4e, 0x00 })]
@@ -59,7 +59,7 @@ public class ImageTypeValidationTests
         ImageValidator.GetRealImageMime(file).ShouldBe(ImageValidator.InvalidMimeString);
     }
 
-    [Theory] 
+    [Theory]
     [InlineData(10000000)] // at 10MB
     [InlineData(5000000)] // below 10MB
     public async Task IsValidFilesize_AtOrUnderLimit_Success(long fileSize)
@@ -74,11 +74,11 @@ public class ImageTypeValidationTests
         var file = GetMockFile("test", new byte[10000001]);
         ImageValidator.IsValidFilesize(file).ShouldBeFalse();
     }
-    
-    [Fact] 
+
+    [Fact]
     public async Task IsValidMimeType_ValidMimeNoSpoof_Success()
     {
-        var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png"); 
+        var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png");
         ImageValidator.IsValidMimeType(file).ShouldBeTrue();
     }
 

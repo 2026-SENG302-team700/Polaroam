@@ -22,6 +22,9 @@
     let items = $state<string[]>([]);
     let loading = $state(false);
     let error = $state("");
+    
+    let debounceTime = 250;
+    let debounceTimer: ReturnType<typeof setTimeout>;
 
     /**
      * Fetches tag suggestions matching the given query for the current user's trips
@@ -50,8 +53,6 @@
      * Fetches tag suggestions from the caller-provided function
      */
     async function fetchSuggestions() {
-        if (loading) return;
-
         const trimmed = query.trim();
         if (!trimmed) {
             items = [];
@@ -75,8 +76,13 @@
     function handleInput() {
         selectedTag = "";
         error = "";
-        fetchSuggestions();
-        performSearch();
+        
+        // Debounce
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchSuggestions();
+            performSearch();
+        }, debounceTime);
     }
 
     /**
