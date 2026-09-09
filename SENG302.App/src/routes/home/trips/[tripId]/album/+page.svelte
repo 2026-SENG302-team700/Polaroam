@@ -38,6 +38,7 @@
             photos: [],
         };
     }
+    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     /**
      * Gets the image metadata of all images in the album matching the tagQuery
@@ -62,8 +63,6 @@
         }
     }
 
-    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
-
     async function loadAiTaggingPreference() {
         const response = await fetchWithCsrf(resolve("/api/user" as any), {
             credentials: "include",
@@ -86,6 +85,7 @@
      */
     async function uploadPhotos() {
         try {
+            errors = emptyErrors();
             loading = true;
             const form = new FormData();
             if (filesToUpload != null) {
