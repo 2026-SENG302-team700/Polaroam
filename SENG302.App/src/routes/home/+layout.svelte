@@ -76,11 +76,15 @@
         <NavBarMenuButton path="/home" text="My Trips" />
         <div
             class="right"
-            style="gap: 6px; padding-right: 20px; display: flex; flex-direction: row;"
+            style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
         >
             <NotificationBell notificationCount={2} />
 
             <div class="vertical-separator"></div>
+
+            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
+                {$user.displayName}
+            </h5>
 
             <button
                 class="profile-button"
@@ -88,10 +92,6 @@
             >
                 <ProfilePic pfpData={$user.pfpData} size="small" />
             </button>
-
-            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
-                {$user.displayName}
-            </h5>
         </div>
     </div>
 </nav>
@@ -105,9 +105,9 @@
 <style>
     .vertical-separator {
         background-color: red;
-        border-left: 2px solid lightgrey;
-        margin: 0px 13px;
-        height: 40px;
+        border-left: 2px solid black;
+        margin: 0px 5px;
+        height: 35px;
     }
     .profile-button {
         width: 40px;

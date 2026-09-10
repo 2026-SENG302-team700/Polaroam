@@ -34,6 +34,7 @@
 
 <style>
     .notification-list-parent {
+        display: none;
         position: absolute;
         padding: 5px 5px;
     }
