@@ -7,8 +7,20 @@
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
     import AppLogo from "$lib/components/app-logo.svelte";
+    import NotificationBell from "$lib/components/content/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
+
+    let testNotifications: NotificationData[] = [
+        {
+            text: "Hello, nice to meet you",
+            userDisplayName: "Jake Johnson",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+    ];
 
     interface Props {
         children?: import("svelte").Snippet;
@@ -68,21 +80,29 @@
         }
     }
 </script>
+
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
         <AppLogo />
         <NavBarMenuButton path="/home" text="My Trips" />
-        <div class="right">
-            <h5 class="text"
-                style=" margin-bottom: 0px; padding-bottom: 0px;">
+        <div
+            class="right"
+            style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
+        >
+            <NotificationBell notifications={testNotifications} />
+
+            <div class="vertical-separator"></div>
+
+            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
                 {$user.displayName}
             </h5>
-            <div
+
+            <button
                 class="profile-button"
                 onclick={() => goto(resolve("/home/profile"))}
             >
                 <ProfilePic pfpData={$user.pfpData} size="small" />
-            </div>
+            </button>
         </div>
     </div>
 </nav>
@@ -94,7 +114,12 @@
 </div>
 
 <style>
-
+    .vertical-separator {
+        background-color: red;
+        border-left: 2px solid black;
+        margin: 0px 5px;
+        height: 35px;
+    }
     .profile-button {
         width: 40px;
         height: 40px;
@@ -103,6 +128,7 @@
         border-radius: 50%;
         margin-left: 5px;
         cursor: pointer;
+        border: 0;
     }
 
     .navBar {
@@ -114,16 +140,15 @@
         margin-bottom: 20px;
         display: flex;
         align-content: center;
-        
     }
-    .right  {
+    .right {
         position: relative;
         right: 0;
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        flex: 1; 
-        justify-content: flex-end; 
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex: 1;
+        justify-content: flex-end;
         margin-right: 5px;
     }
 
@@ -134,9 +159,9 @@
     }
 
     .content-wrapper {
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         width: 100%;
     }
 </style>
