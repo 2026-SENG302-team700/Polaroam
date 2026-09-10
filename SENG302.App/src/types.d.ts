@@ -11,6 +11,5 @@ type PostPhotoData = {
 
 type NotificationData = {
     text: string,
-    userDisplayName: string,
-    read: boolean,
+    userDisplayName: string
 }
