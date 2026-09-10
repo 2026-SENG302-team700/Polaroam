@@ -43,4 +43,6 @@ public class Trip
             field = value?.ToUniversalTime();
         }
     }
+
+    public List<int> Collaborators { get; set; } = [];
 }

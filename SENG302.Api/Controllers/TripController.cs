@@ -18,9 +18,9 @@ public class TripController : ControllerBase
     private readonly IPostService _postService;
     private readonly IAlbumService _albumService;
     private readonly IUserService _userService;
-    
 
-    public TripController(ITripService tripService,IPostService postService, IAlbumService albumService, IUserService userService)
+
+    public TripController(ITripService tripService, IPostService postService, IAlbumService albumService, IUserService userService)
     {
         _tripService = tripService;
         _postService = postService;
@@ -54,14 +54,14 @@ public class TripController : ControllerBase
             return NotFound();
         }
     }
-    
+
     /// <summary>
     /// Get the user based on trip id
     /// </summary>
     /// <param name="tripId">id for the trip</param>
     /// <returns>user display name</returns>
     [Authorize]
-    [HttpGet("{tripId}:int/user")]
+    [HttpGet("{tripId:int}/user")]
     public async Task<ActionResult<GetUserResponse>> GetTripOwnerName(int tripId)
     {
         var trip = await _tripService.GetTripByIdAsync(tripId);
@@ -112,7 +112,7 @@ public class TripController : ControllerBase
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
 
             var album = await _albumService.CreateNewAlbumAsync(trip.Id);
-            
+
             return Ok(trip);
         }
         catch (MultipleValidationListException e)
@@ -228,11 +228,11 @@ public class TripController : ControllerBase
         return Ok(taskList);
     }
 
-     /// <summary>
-     /// Gets all locations associated with a trip.
-     /// </summary>
-     /// <param name="tripId"></param>
-     /// <returns>A list of location objects</returns>
+    /// <summary>
+    /// Gets all locations associated with a trip.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>A list of location objects</returns>
     [Authorize]
     [HttpGet("locations/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Location>>> GetPostLocations(int tripId)

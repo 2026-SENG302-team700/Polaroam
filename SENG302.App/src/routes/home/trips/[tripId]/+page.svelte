@@ -8,7 +8,7 @@
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-    import CollaborationModal from "$lib/components/modals/collaboration-modal.svelte"
+    import CollaborationModal from "$lib/components/modals/collaboration-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
@@ -21,7 +21,7 @@
     let tripId = params.tripId;
     let ownerDisplayName: null | string = $state(null);
     let hoveredPostId: number | null = $state(null);
-    let showCollaborationModal: boolean = $state(false)
+    let showCollaborationModal: boolean = $state(false);
 
     let tripObject = $state({
         id: 0,
@@ -40,6 +40,7 @@
         fetchTrip();
         fetchPosts();
         fetchLocations();
+        fetchUserName();
     });
 
     /**
@@ -99,7 +100,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/locations/${params.tripId}` as any),
+                resolve(`/api/trip/locations/${tripId}` as any),
                 {
                     method: "Get",
                     credentials: "include",
@@ -119,7 +120,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.tripId}` as any),
+                resolve(`/api/trip/${tripId}` as any),
                 {
                     method: "DELETE",
                     credentials: "include",
@@ -149,10 +150,10 @@
         deletionModalShown = false;
     }
 
-    async function fetchUser() {
+    async function fetchUserName() {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripObject.id}/user` as any),
+                resolve(`/api/trip/${tripId}/user` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -160,8 +161,11 @@
             );
             ownerDisplayName = await response.text();
         } catch (err) {
-            throw new Error("Failed to fetch post creator: " + (err as Error).message);
+            throw new Error(
+                "Failed to fetch post creator: " + (err as Error).message,
+            );
         }
+        console.log(ownerDisplayName);
     }
 </script>
 
@@ -169,7 +173,12 @@
     <div class="button-wrapper">
         <NavigationButton path="/home" text="Back" />
         <div class="modify-button-wrapper">
-            <button class="btn btn-secondary bi-people-fill" onclick={() => {showCollaborationModal = true}}>Collaboration</button>
+            <button
+                class="btn btn-secondary bi-people-fill"
+                onclick={() => {
+                    showCollaborationModal = true;
+                }}>Collaboration</button
+            >
             <AlbumButton tripid={params.tripId} />
             <EditButton path={`/home/trips/${params.tripId}/edit`} />
             <DeleteButton deleteAction={showConfirmationModal} />
@@ -235,8 +244,9 @@
     onOption2={hideConfirmationModal}
 />
 
-<CollaborationModal 
-        bind:show={showCollaborationModal}
+<CollaborationModal
+    bind:show={showCollaborationModal}
+    tripOwner={ownerDisplayName ?? ""}
 />
 
 <style>
