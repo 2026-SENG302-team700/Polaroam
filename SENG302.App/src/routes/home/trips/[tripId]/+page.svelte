@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { MapLibre, Marker, Popup } from "svelte-maplibre";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -8,8 +7,8 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import AddButton from "$lib/components/buttons/add-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import CollaborationModal from "$lib/components/modals/collaboration-modal.svelte"
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
@@ -20,7 +19,9 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
+    let ownerDisplayName: null | string = $state(null);
     let hoveredPostId: number | null = $state(null);
+    let showCollaborationModal: boolean = $state(false)
 
     let tripObject = $state({
         id: 0,
@@ -147,12 +148,28 @@
     function hideConfirmationModal() {
         deletionModalShown = false;
     }
+
+    async function fetchUser() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripObject.id}/user` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            ownerDisplayName = await response.text();
+        } catch (err) {
+            throw new Error("Failed to fetch post creator: " + (err as Error).message);
+        }
+    }
 </script>
 
 <div class="container trip-page-content">
     <div class="button-wrapper">
         <NavigationButton path="/home" text="Back" />
         <div class="modify-button-wrapper">
+            <button class="btn btn-secondary bi-people-fill" onclick={() => {showCollaborationModal = true}}>Collaboration</button>
             <AlbumButton tripid={params.tripId} />
             <EditButton path={`/home/trips/${params.tripId}/edit`} />
             <DeleteButton deleteAction={showConfirmationModal} />
@@ -216,6 +233,10 @@
     option2Text="Do not delete"
     onOption1={deleteTrip}
     onOption2={hideConfirmationModal}
+/>
+
+<CollaborationModal 
+        bind:show={showCollaborationModal}
 />
 
 <style>

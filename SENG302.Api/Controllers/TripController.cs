@@ -17,13 +17,15 @@ public class TripController : ControllerBase
     private readonly ITripService _tripService;
     private readonly IPostService _postService;
     private readonly IAlbumService _albumService;
+    private readonly IUserService _userService;
     
 
-    public TripController(ITripService tripService,IPostService postService, IAlbumService albumService)
+    public TripController(ITripService tripService,IPostService postService, IAlbumService albumService, IUserService userService)
     {
         _tripService = tripService;
         _postService = postService;
         _albumService = albumService;
+        _userService = userService;
     }
 
     /// <summary>
@@ -51,6 +53,26 @@ public class TripController : ControllerBase
         {
             return NotFound();
         }
+    }
+    
+    /// <summary>
+    /// Get the user based on trip id
+    /// </summary>
+    /// <param name="tripId">id for the trip</param>
+    /// <returns>user display name</returns>
+    [Authorize]
+    [HttpGet("{tripId}:int/user")]
+    public async Task<ActionResult<GetUserResponse>> GetTripOwnerName(int tripId)
+    {
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+
+        var user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+        return Ok(user.DisplayName);
     }
 
     /// <summary>
