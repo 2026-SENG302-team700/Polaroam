@@ -1,42 +1,87 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import NotificationList from "./notification-list.svelte";
 
     let toggled = $state(false);
 
     let {
-        notificationCount = 0,
+        notifications = [],
     }: {
-        notificationCount: number;
+        notifications: NotificationData[];
     } = $props();
+
+    let notificationListElement: HTMLDivElement | null = $state(null);
+    let notificationButtonElement: HTMLButtonElement | null = $state(null);
+
+    onMount(() => {
+        document.addEventListener("click", (e) => {
+            if (
+                notificationListElement == null ||
+                notificationButtonElement == null
+            ) {
+                throw new Error("Cannot find the required elements");
+            }
+            const clickedInsideList = e
+                .composedPath()
+                .includes(notificationListElement);
+
+            const clickedOnNotification = e
+                .composedPath()
+                .includes(notificationButtonElement);
+
+            if (!clickedInsideList && !clickedOnNotification) {
+                toggled = false;
+            }
+        });
+    });
 </script>
 
-<div>
+<div class="notification-main">
     <button
         class="notification-parent nav-link-button-colours"
         aria-label="notifications"
+        bind:this={notificationButtonElement}
         onclick={() => {
             toggled = !toggled;
         }}
     >
         <i class="bi bi-bell icon-centered"></i>
-        {#if notificationCount > 0}
-            <div class="notificationCounter">
-                {notificationCount > 9 ? "9+" : notificationCount.toString()}
+        {#if notifications.length > 0}
+            <div class="notification-counter">
+                {notifications.length > 9
+                    ? "9+"
+                    : notifications.length.toString()}
             </div>
         {/if}
     </button>
-    {#if toggled || true}
-        <div class="notification-list-parent">
-            <NotificationList></NotificationList>
-        </div>
-    {/if}
+
+    <div
+        class="notification-list-parent"
+        hidden={!toggled}
+        bind:this={notificationListElement}
+    >
+        <NotificationList {notifications}></NotificationList>
+    </div>
 </div>
 
 <style>
     .notification-list-parent {
-        display: none;
         position: absolute;
         padding: 5px 5px;
+        right: -5px;
+        top: 47px;
+        background-color: white;
+        border: 3px solid black;
+        border-top: 0;
+
+        border-radius: 10px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        z-index: 10;
+    }
+
+    .notification-main {
+        position: relative;
     }
 
     .icon-centered {
@@ -53,7 +98,7 @@
         border: 2px solid black;
     }
 
-    .notificationCounter {
+    .notification-counter {
         position: absolute;
         transform: translate(15px, -40px);
         background-color: red;

@@ -11,6 +11,17 @@
 
     let pfpUrl: string | null = null;
 
+    let testNotifications: NotificationData[] = [
+        {
+            text: "Hello, nice to meet you",
+            userDisplayName: "Jake Johnson",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+    ];
+
     interface Props {
         children?: import("svelte").Snippet;
     }
@@ -78,7 +89,7 @@
             class="right"
             style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
         >
-            <NotificationBell notificationCount={2} />
+            <NotificationBell notifications={testNotifications} />
 
             <div class="vertical-separator"></div>
 

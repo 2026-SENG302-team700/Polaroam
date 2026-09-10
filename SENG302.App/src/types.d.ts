@@ -8,3 +8,9 @@ type PfpData = {
 type PostPhotoData = {
     imageSource: string,
 }
+
+type NotificationData = {
+    text: string,
+    userDisplayName: string,
+    read: boolean,
+}
