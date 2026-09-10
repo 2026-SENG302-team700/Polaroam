@@ -261,10 +261,11 @@
 
 <div class="fullscreen-image-wrapper">
     <div class="image-container">
-        <div class="close-button-wrapper">
-            {#if displaySrc}
-                <img src={displaySrc} alt="Image" class="image" />
-            {/if}
+        <div class="image-content">
+            <div class="image-frame">
+                {#if displaySrc}
+                    <img src={displaySrc} alt="Image" class="image" />
+                {/if}
 
             <div class="image-toolbar">
                 {#if imageContext}
@@ -307,36 +308,44 @@
                                 )}>Go to Trip Album</button
                         >
                     {/if}
-                    <CloseButton bind:close={enlarged} class="btn-sm" />
                 </div>
             </div>
 
+            <div class="close-control">
+                <CloseButton bind:close={enlarged} class="btn-sm" />
+            </div>
+
             {#if images !== null && images.length > 1 && index !== images.length - 1}
-                <RightArrowButton
-                    class="position-absolute"
-                    bind:image
-                    bind:index
-                    bind:images
-                    {moveToRightImage}
-                />
+                <div class="arrow-control right-control">
+                    <RightArrowButton
+                        bind:image
+                        bind:index
+                        bind:images
+                        {moveToRightImage}
+                    />
+                </div>
             {/if}
             {#if images !== null && images.length > 1 && index !== 0}
-                <LeftArrowButton
-                    class="position-absolute"
-                    bind:image
-                    bind:index
-                    bind:images
-                    {moveToLeftImage}
-                />
+                <div class="arrow-control left-control">
+                    <LeftArrowButton
+                        bind:image
+                        bind:index
+                        bind:images
+                        {moveToLeftImage}
+                    />
+                </div>
             {/if}
+            </div>
 
             {#if aiTaggingPreference === "true"}
                 {#if error.length > 0}
                     <div class="error-wrapper">
-                        <span
-                            class="bi bi-exclamation-triangle-fill text-warning fs-2"
+                        <button
+                            type="button"
+                            class="tag-error-button bi bi-exclamation-triangle-fill text-warning fs-2"
                             use:queuetooltip={error}
-                        ></span>
+                            aria-label={`Image tagging error: ${error}`}
+                        ></button>
                     </div>
                 {/if}
                 <div class="tags-wrapper">
@@ -421,7 +430,7 @@
         flex-wrap: wrap;
         align-items: flex-start;
         gap: 0.4rem;
-        padding: 5px;
+        padding: 5px 3rem 5px 5px;
     }
     .fullscreen-image-wrapper {
         z-index: 100;
@@ -440,15 +449,47 @@
         justify-content: center;
         align-items: center;
     }
-    .image {
-        border-radius: 5px;
-        position: relative;
-        min-width: 20vw;
-        max-height: 70vh;
-        max-width: 70vw;
+    .image-content {
+        display: flex;
+        max-width: 90vw;
+        max-height: 90vh;
+        flex-direction: column;
+        align-items: center;
     }
-    .close-button-wrapper {
+    .image-frame {
         position: relative;
+        display: inline-block;
+        max-width: 90vw;
+        max-height: 80vh;
+        line-height: 0;
+    }
+    .image {
+        display: block;
+        border-radius: 5px;
+        width: auto;
+        height: auto;
+        max-width: 90vw;
+        max-height: 80vh;
+    }
+    .close-control {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 3;
+        line-height: normal;
+    }
+    .arrow-control {
+        position: absolute;
+        top: 50%;
+        z-index: 3;
+        line-height: normal;
+        transform: translateY(-50%);
+    }
+    .left-control {
+        left: 0.5rem;
+    }
+    .right-control {
+        right: 0.5rem;
     }
     .tags-wrapper {
         position: relative;
@@ -464,6 +505,14 @@
         justify-content: center;
         align-items: center;
         margin-bottom: 10px;
+    }
+
+    .tag-error-button {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        line-height: 1;
+        cursor: help;
     }
 
 </style>
