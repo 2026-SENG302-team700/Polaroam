@@ -44,53 +44,16 @@
         },
         scrollToContent: true,
     };
-
-    //let blankInitialData = {
-    //    elements: [],
-    //    appState: {
-    //        viewBackgroundColor: "#ffffff",
-    //        gridSize: null,
-    //    },
-    //    scrollToContent: true,
-    //};
-
+    
     async function onClick() {
         console.log("scene elements:")
         console.log(excalidrawAPI!.getSceneElements());
     }
-
-    // async function getScrapboard(tripId: string | undefined) {
-    //    if (tripId == undefined) {
-    //        return blankInitialData;
-    //    }
-
-    //    const response = await fetchWithCsrf(
-    //        resolve(`/api/trip/${tripId}/scrapboard` as any), {
-    //            method: "GET",
-    //            credentials: "include",
-    //        },
-    //    );
-
-    //    if (!response.ok) {
-    //        error = (await response.text()) || "Failed to fetch scrapboard.";
-    //        return;
-    //    }
-    //    if (response.status === 404) {
-    //        return blankInitialData
-    //    }
-    //    return {
-    //        elements: await response.json(),
-    //        appState: {
-    //            viewBackgroundColor: "#ffffff",
-    //            gridSize: null,
-    //    },
-    //        scrollToContent: true,
-    //    }
-    //}
+    
 </script>
-<div class="page-wrapper">
+<div>
     <CreationButton
-            text="Save Scrapboard"
+            text="scrapboard elements"
             onClick={onClick}
             loading={saving}
     />
@@ -103,19 +66,14 @@
                 name="Basic Test"
                 viewModeEnabled={false}
                 zenModeEnabled={false}
-                gridModeEnabled={true}
+                gridModeEnabled={false}
                 autoFocus={true}
         />
     </div>
 </div>
 <style>
-.page-wrapper {
-    display: flex;
-    justify-content: center;
-}
     .scrapboard-wrapper {
-        height: 800px;
-        width: 80vw;
+        height: 70vh;
         border: 3px solid black;
         border-radius: 5px;
         box-shadow: 8px 8px black;
