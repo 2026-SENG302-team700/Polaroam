@@ -195,6 +195,9 @@ namespace SENG302.Api.Migrations
                     b.Property<bool>("EmailVerified")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("ForgotIsResettingPassword")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("OneTimeCode")
                         .IsRequired()
                         .HasMaxLength(6)

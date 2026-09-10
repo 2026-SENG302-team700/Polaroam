@@ -245,7 +245,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
 
         _mockOneTimeCodeService.GenerateOneTimeCode().Returns(user.OneTimeCode);
         _mockOneTimeCodeService.GetEpochTime().Returns(codeGenerationTime);
-        _mockUserService.UpdateUserOneTimeCode(user.Email, user.OneTimeCode, codeGenerationTime, false).Returns(user);
+        _mockUserService.UpdateUserOneTimeCode(user.Email, user.OneTimeCode, codeGenerationTime, false, user.ForgotIsResettingPassword).Returns(user);
 
         var data = new NewOneTimeCodeRequest
         {

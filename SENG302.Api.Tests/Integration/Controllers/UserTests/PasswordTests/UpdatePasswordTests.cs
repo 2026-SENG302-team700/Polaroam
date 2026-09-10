@@ -193,7 +193,7 @@ public class UpdatePasswordTests : BaseIntegrationTestFixture
         UpdatePasswordRequest request = new UpdatePasswordRequest
         { OldPassword = password, NewPassword = "Newpassword@2003", NewPasswordConfirm = "NewPasswordd@2004" };
 
-        var response = await _controller.updatePassword(request);
+        var response = await _controller.UpdatePassword(request);
         response.ShouldBeOfType<BadRequestObjectResult>();
 
         await _mockEmailQueue.DidNotReceive().QueueEmailAsync(
@@ -234,7 +234,7 @@ public class UpdatePasswordTests : BaseIntegrationTestFixture
         UpdatePasswordRequest request = new UpdatePasswordRequest()
         { OldPassword = password, NewPassword = "newpassword", NewPasswordConfirm = "newpassword" };
 
-        var response = await _controller.updatePassword(request);
+        var response = await _controller.UpdatePassword(request);
         response.ShouldBeOfType<BadRequestObjectResult>();
 
         await _mockEmailQueue.DidNotReceive().QueueEmailAsync(
@@ -276,7 +276,7 @@ public class UpdatePasswordTests : BaseIntegrationTestFixture
         UpdatePasswordRequest request = new UpdatePasswordRequest()
         { OldPassword = password, NewPassword = "NewPassword@1999", NewPasswordConfirm = "NewPassword@1999" };
 
-        var response = await _controller.updatePassword(request);
+        var response = await _controller.UpdatePassword(request);
 
         await _mockEmailQueue.Received(1).QueueEmailAsync(
             Arg.Is<EmailJob>(job =>
@@ -299,7 +299,7 @@ public class UpdatePasswordTests : BaseIntegrationTestFixture
         UpdatePasswordRequest request = new UpdatePasswordRequest()
         { OldPassword = password, NewPassword = "NewPassword@1999", NewPasswordConfirm = "NewPassword@1999" };
 
-        var response = await _controller.updatePassword(request);
+        var response = await _controller.UpdatePassword(request);
         response.ShouldBeOfType<UnauthorizedObjectResult>();
 
         await _mockEmailQueue.DidNotReceive().QueueEmailAsync(

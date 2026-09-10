@@ -84,7 +84,6 @@ public class LoginController : ControllerBase
                 new Claim(ClaimTypes.Name, user.DisplayName)
             };
 
-
             var principle = new ClaimsPrincipal(
                 new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
             );
@@ -160,10 +159,21 @@ public class LoginController : ControllerBase
     private async Task CancelPasswordResetAsync(User user)
     {
         var resetResult = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        
         // check if the user has requested a reset password
-        if (resetResult.Succeeded && resetResult.Principal != null)
+        if ((resetResult.Succeeded && resetResult.Principal != null) || user.ForgotIsResettingPassword)
         {
             await HttpContext.SignOutAsync("PasswordResetScheme");
+
+            // Immediately invalidate the stored reset code.
+            await _userService.UpdateUserOneTimeCode(
+                user.Email,
+                string.Empty,
+                0,
+                user.EmailVerified,
+                false
+            );
+
             var emailDictionary = new Dictionary<string, string>
             {
                 { "DISPLAY_NAME", user.DisplayName }
