@@ -60,12 +60,36 @@
         hidden={!toggled}
         bind:this={notificationListElement}
     >
+        <div class="button-parent">
+            <button
+                class="btn exit-button right-pos"
+                aria-label="exit"
+                onclick={() => {
+                    toggled = false;
+                }}><i class="bi bi-x"></i></button
+            >
+        </div>
         <NotificationList {notifications}></NotificationList>
     </div>
 </div>
 
 <style>
+    .exit-button {
+        border-radius: 50%;
+        width: 43px;
+        height: 43px;
+    }
+
+    .button-parent {
+        display: flex;
+        justify-content: flex-end;
+        padding-right: 4px;
+        padding-bottom: 9px;
+    }
+
     .notification-list-parent {
+        display: flex;
+        flex-direction: column;
         position: absolute;
         padding: 5px 5px;
         right: -5px;
