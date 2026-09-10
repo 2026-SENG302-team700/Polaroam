@@ -73,7 +73,7 @@
         resetMessages();
         tags = [];
         showRetryTagging = false;
-
+        
         if (id === undefined || viewContext === "none") {
             imageContext = null;
             return;
@@ -190,26 +190,22 @@
                 resolve(`/api/image/${id}/tags` as any),
                 { method: "GET", credentials: "include" },
             );
-
+            
             if (!response.ok) {
-                if (response.status === 500) {
-                    const data = await response.json();
-                    if (data?.detail === "Tagging failed: Queue was full") {
-                        error = data.detail;
-                        showRetryTagging = true;
-                        return;
-                    }
-                    if (
-                        data?.detail ===
-                        "Tags not available. AI tagging was disabled when image was uploaded"
-                    ) {
-                        error = data.detail;
-                        return;
-                    }
-                    error = "AI failed to generate tags";
+                const errorMessage = await response.text();
+                if (errorMessage === "Tagging failed: Queue was full") {
+                    error = errorMessage;
+                    showRetryTagging = true;
                     return;
                 }
-                error = "No tags available";
+                if (
+                    errorMessage ===
+                    "Tags not available. AI tagging was disabled when image was uploaded"
+                ) {
+                    error = errorMessage;
+                    return;
+                }
+                error = "AI failed to generate tags";
                 return;
             }
 
@@ -466,6 +462,7 @@
         position: relative;
         display: flex;
         justify-content: center;
+        align-items: center;
         margin-bottom: 10px;
     }
 

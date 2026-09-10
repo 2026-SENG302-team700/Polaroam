@@ -11,25 +11,17 @@
             position: 'absolute',
             background: '#333',
             color: '#fff',
-            padding: '5px 10px',
+            padding: '5px 1px',
             borderRadius: '4px',
             fontSize: '12px',
+            left: "50%",
             zIndex: '1000',
             pointerEvents: 'none',
             whiteSpace: 'nowrap'
         });
 
-        document.body.appendChild(tooltipElement);
-        positionTooltip();
-    }
-
-    function positionTooltip() {
-        if (!tooltipElement) return;
-        const rect = node.getBoundingClientRect();
-
-        // Position the tooltip right above the element
-        tooltipElement.style.left = `${rect.left + window.scrollX + rect.width / 2 - tooltipElement.offsetWidth / 2}px`;
-        tooltipElement.style.top = `${rect.top + window.scrollY - tooltipElement.offsetHeight - 8}px`;
+        node.appendChild(tooltipElement);
+        
     }
 
     function handleMouseLeave() {

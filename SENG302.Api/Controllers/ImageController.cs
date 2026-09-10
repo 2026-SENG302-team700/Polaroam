@@ -68,8 +68,7 @@ public class ImageController : ControllerBase
 
             if (error != null)
             {
-                return Problem(detail: error,
-                    statusCode: 500);
+                return BadRequest(error);
             }
 
 
