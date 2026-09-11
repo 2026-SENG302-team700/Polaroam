@@ -4,10 +4,12 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { onMount } from "svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let { params } = $props();
 
     let loading = $state(true);
+    let authorized = $state(false);
     let errors = $state({
         title: [],
         description: [],
@@ -52,14 +54,16 @@
                     credentials: "include",
                 },
             );
-
-            const data = await response.json();
-            if (!response.ok) {
+            
+            if (response.status === 401) {
+                authorized = false;
+            } else if (!response.ok) {
                 errors.generic =
-                    `Failed to fetch trip: ${data}` || "Failed to fetch trip.";
+                    "Failed to fetch trip.";
                 return;
             }
-
+            
+            const data = await response.json();
             tripTitle = data.title;
             tripDescription = data.description;
 
@@ -67,7 +71,7 @@
             endDate = new Date(data.endDate);
         } catch (err) {
             errors.generic =
-                `Failed to fetch trip: ${err}` || "Failed to fetch trip.";
+                "Failed to fetch trip.";
         } finally {
             loading = false;
         }
@@ -126,15 +130,19 @@
     }
 </script>
 
-<TripForm
-    bind:title={tripTitle}
-    bind:description={tripDescription}
-    bind:startDate
-    bind:endDate
-    heading="Edit Trip"
-    submitText="Update Trip"
-    cancelPath={`/home/trips/${params.tripId}`}
-    {errors}
-    {loading}
-    onSubmit={updateTrip}
-/>
+{#if authorized}
+    <TripForm
+        bind:title={tripTitle}
+        bind:description={tripDescription}
+        bind:startDate
+        bind:endDate
+        heading="Edit Trip"
+        submitText="Update Trip"
+        cancelPath={`/home/trips/${params.tripId}`}
+        {errors}
+        {loading}
+        onSubmit={updateTrip}
+    />
+{:else}
+    <NotFound />
+{/if}

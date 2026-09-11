@@ -14,8 +14,10 @@
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let loading = $state(false);
+    let authorized = $state(true);
     let error = $state("");
     let deletionModalShown = $state(false);
     let { params } = $props();
@@ -55,15 +57,21 @@
                     credentials: "include",
                 },
             );
-            const data = await response.json();
-
-            if (!response.ok) {
-                error = data.message || "Failed to fetch trip.";
+            
+            // Check response
+            if (response.status === 401) {
+                authorized = false;
+            } else if (!response.ok) {
+                error = "Failed to fetch trip.";
                 return;
             }
+            
+            // Parse response 
+            const data = await response.json();
             tripObject = data;
+            
         } catch (err) {
-            error = "Failed to fetch trip: " + (err as Error).message;
+            error = "Failed to fetch trip"
         } finally {
             loading = false;
         }
@@ -149,65 +157,69 @@
     }
 </script>
 
-<div class="container trip-page-content">
-    <div class="button-wrapper">
-        <NavigationButton path="/home" text="Back" />
-        <div class="modify-button-wrapper">
-            <AlbumButton tripid={params.tripId} />
-            <EditButton path={`/home/trips/${params.tripId}/edit`} />
-            <DeleteButton deleteAction={showConfirmationModal} />
-        </div>
-    </div>
-    <div class="card mb-2 post-wrapper">
-        <div class="card-header">
-            <div
-                class="title-and-date"
-                style="display: flex; flex-direction: row;"
-            >
-                <h1 class="card-subtitle mb-2 h1 user-name">
-                    {tripObject.title}
-                </h1>
-                <div
-                    class="header-content-item"
-                    style="display: flex; align-items: center; flex:1; justify-content: end;"
-                >
-                    <div class="bi-calendar-event"></div>
-                    <h6
-                        class="card-subtitle text-muted"
-                        style="margin-left: 5px;"
-                    >
-                        {formatDate(tripObject.startDate)} - {formatDate(
-                            tripObject.endDate,
-                        )}
-                    </h6>
-                </div>
+{#if authorized}
+    <div class="container trip-page-content">
+        <div class="button-wrapper">
+            <NavigationButton path="/home" text="Back" />
+            <div class="modify-button-wrapper">
+                <AlbumButton tripid={params.tripId} />
+                <EditButton path={`/home/trips/${params.tripId}/edit`} />
+                <DeleteButton deleteAction={showConfirmationModal} />
             </div>
-            {#if tripObject.description.length > 0}
-                <span>{tripObject.description}</span>
-            {:else}
-                <p>No description</p>
-            {/if}
-            <ErrorDisplay errors={[error]} />
         </div>
-        <div class="card-body">
-            <Map
-                locations={postLocations}
-                {posts}
-                {hoveredPostId}
-                bind:selectedPost
-            />
-        </div>
-        <div class="card-footer text-muted images">
-            <PostSection
-                {posts}
-                tripId={tripObject.id}
-                onPostHover={(postId: number) => (hoveredPostId = postId)}
-                onPostLeave={() => (hoveredPostId = null)}
-                {selectedPost}
-            />
+        <div class="card mb-2 post-wrapper">
+            <div class="card-header">
+                <div
+                    class="title-and-date"
+                    style="display: flex; flex-direction: row;"
+                >
+                    <h1 class="card-subtitle mb-2 h1 user-name">
+                        {tripObject.title}
+                    </h1>
+                    <div
+                        class="header-content-item"
+                        style="display: flex; align-items: center; flex:1; justify-content: end;"
+                    >
+                        <div class="bi-calendar-event"></div>
+                        <h6
+                            class="card-subtitle text-muted"
+                            style="margin-left: 5px;"
+                        >
+                            {formatDate(tripObject.startDate)} - {formatDate(
+                                tripObject.endDate,
+                            )}
+                        </h6>
+                    </div>
+                </div>
+                {#if tripObject.description.length > 0}
+                    <span>{tripObject.description}</span>
+                {:else}
+                    <p>No description</p>
+                {/if}
+                <ErrorDisplay errors={[error]} />
+            </div>
+            <div class="card-body">
+                <Map
+                    locations={postLocations}
+                    {posts}
+                    {hoveredPostId}
+                    bind:selectedPost
+                />
+            </div>
+            <div class="card-footer text-muted images">
+                <PostSection
+                    {posts}
+                    tripId={tripObject.id}
+                    onPostHover={(postId: number) => (hoveredPostId = postId)}
+                    onPostLeave={() => (hoveredPostId = null)}
+                    {selectedPost}
+                />
+            </div>
         </div>
     </div>
-</div>
+{:else }
+    <NotFound />
+{/if}
 
 <ConfirmationModal
     bind:show={deletionModalShown}
