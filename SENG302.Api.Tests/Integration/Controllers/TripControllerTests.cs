@@ -430,7 +430,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
     {
         await AddTestUser();
-        
+
         var data = new Trip
         {
             Title = "Trip!",
@@ -439,7 +439,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
             StartDate = DateToDateTimeOffset(2025, 11, 21),
             EndDate = DateToDateTimeOffset(2025, 12, 21)
         };
-        
+
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Trips.Add(data);
@@ -447,21 +447,21 @@ public class TripControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
+
         var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
-        
+
         collaborators.ShouldBeEmpty();
     }
-    
+
     [Fact]
     public async Task GetTripCollaborators_TwoCollaborators_ReturnsOkResponseWithCollaborators()
     {
         await AddTestUser();
-        
-        await using var context = DbContextFactory.CreateDbContext();
-        
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
         var data = new Trip
         {
             Title = "Trip!",
@@ -471,10 +471,10 @@ public class TripControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [2, 3]
         };
-        
+
         context.Trips.Add(data);
-        
-        
+
+
         context.Users.Add(new User
         {
             Id = 2,
@@ -483,7 +483,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password2",
             Country = "Test Country"
         });
-        
+
         context.Users.Add(new User
         {
             Id = 3,
@@ -496,16 +496,22 @@ public class TripControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         
-        // var collaborators = await response.Content.ReadAsStringAsync();
-        // Console.WriteLine(collaborators);
         var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
-
+        
         collaborators.ShouldNotBeNull();
         collaborators.Count.ShouldBe(2);
+    }
+    
+    [Fact]
+    public async Task GetTripCollaborators_NonexistantTrip_ReturnsNotFound()
+    {
+        await AddTestUser();
         
-        
+        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

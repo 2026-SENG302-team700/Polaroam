@@ -257,21 +257,21 @@ public class TripController : ControllerBase
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
-        if (int.TryParse(userIdString, out var userId))
-        {
-            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
-            {
-                return Unauthorized(
-                    "User does not have access to collaborate on the trip and view collaboration details");
-            }
-        }
-        else
-        {
-            return Unauthorized("User Id does not exist");
-        }
-
         try
         {
+            if (int.TryParse(userIdString, out var userId))
+            {
+                if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
+                {
+                    return Unauthorized(
+                        "User does not have access to collaborate on the trip and view collaboration details");
+                }
+            }
+            else
+            {
+                return Unauthorized("User Id does not exist");
+            }
+
             var collaborators = await _collaborationService.GetTripCollaborators(tripId);
             return Ok(collaborators);
         }
@@ -279,6 +279,10 @@ public class TripController : ControllerBase
         {
             return NotFound(e.Message);
         }
-    }
+        catch (ArgumentException e)
+        {
+            return NotFound("This trip does not exist");
+        }
+}
 
 }

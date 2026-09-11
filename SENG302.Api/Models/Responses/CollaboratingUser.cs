@@ -10,6 +10,8 @@ public class CollaboratingUser
     public int UserId { get; set; }
     public required string DisplayName { get; set; }
 
+    public CollaboratingUser() {}
+
     [SetsRequiredMembers]
     public CollaboratingUser(User user)
     {
