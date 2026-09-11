@@ -3,7 +3,7 @@
     import { onMount } from "svelte";
 
     let {
-        value = $bindable<Date | null | undefined>(null),
+        value = $bindable<Date | null | undefined>(undefined),
         error = [],
         disabled = $bindable(false),
     }: {
@@ -21,6 +21,16 @@
             });
     });
 
+    $effect(() => {
+        if (!datePicker) return;
+        const target = value != null ? utcDateToLocalISO(value) : "";
+        if (datePicker.value !== target) {
+            datePicker.value = target;
+        }
+        console.log("Value: " + target, typeof target)
+        console.log("DatePicker date: " + datePicker.value)
+    });
+
     /**
      * Handles the input event for the date picker updating the value with a new Date object based on the input value.
      * The time of the new date object is set to 0:00
@@ -30,10 +40,11 @@
         const input = event.currentTarget as HTMLInputElement;
         if (input.validity.badInput) {
             value = null;
+        } else if (input.value.length === 0) {
+            value = undefined;
         } else {
             value = input.value ? new Date(`${input.value}T00:00:00`) : undefined;
         }
-        
     }
 
     /**
@@ -58,8 +69,7 @@
         <input
             type="date"
             class="form-control"
-            class:is-invalid={error}
-            value={value != null ? utcDateToLocalISO(value) : ""}
+            class:is-invalid={error.length > 0}
             oninput={handleInput}
             bind:this={datePicker}
             {disabled}
@@ -69,14 +79,14 @@
             class="btn btn-outline-secondary"
             {disabled}
             onclick={() => {
-                value = null;
+                value = undefined;
                 if (datePicker) {
                     datePicker.value = "";
                 }
             }}>Clear</button
         >
     </div>
-    {#if error}
+    {#if error.length > 0}
         <MultipleErrorDisplay errors={error} />
     {/if}
 </div>

@@ -7,11 +7,18 @@
     let loading = $state(false);
     let tripTitle = $state("");
     let tripDescription = $state("");
-    let errors = $state({
+    
+    let errors = $state<{
+        title: string[],
+        description: string[],
+        dateOne: string[],
+        dateTwo: string[],
+        generic: string,
+    }>({
         title: [],
         description: [],
-        dateOne: "",
-        dateTwo: "",
+        dateOne: [],
+        dateTwo: [],
         generic: "",
     });
 
@@ -25,8 +32,8 @@
         errors = {
             title: [],
             description: [],
-            dateOne: "",
-            dateTwo: "",
+            dateOne: [],
+            dateTwo: [],
             generic: "",
         };
     }
@@ -77,10 +84,10 @@
                 errors.dateTwo = data.errors?.dateTwo ?? "";
 
                 if (startDate === undefined) {
-                    errors.dateOne = "Start date is required";
+                    errors.dateOne = ["Start date is required"];
                 } 
                 if (endDate === undefined) {
-                    errors.dateTwo = "End date is required";
+                    errors.dateTwo = ["End date is required"];
                 }
                 return;
             }

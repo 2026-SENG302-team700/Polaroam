@@ -9,23 +9,23 @@
     type TripFormErrors = {
         title: string[];
         description: string[];
-        dateOne: string;
-        dateTwo: string;
+        dateOne: string[];
+        dateTwo: string[];
         generic: string;
     };
 
     let {
         title = $bindable(""),
         description = $bindable(""),
-        startDate = $bindable(null),
-        endDate = $bindable(null),
+        startDate = $bindable(undefined),
+        endDate = $bindable(undefined),
         heading,
         submitText,
         errors = {
             title: [],
             description: [],
-            dateOne: "",
-            dateTwo: "",
+            dateOne: [],
+            dateTwo: [],
             generic: "",
         },
         loading = false,
