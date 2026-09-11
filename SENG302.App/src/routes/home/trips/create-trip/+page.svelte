@@ -15,8 +15,8 @@
         generic: "",
     });
 
-    let startDate = $state(new Date());
-    let endDate = $state(new Date());
+    let startDate: Date | null | undefined = $state(new Date());
+    let endDate: Date | null | undefined = $state(new Date());
 
     /**
      * Removes all errors from the form.
@@ -46,7 +46,11 @@
         tripTitle = tripTitle.trim();
         tripDescription = tripDescription.trim();
 
+        console.log("startdate: " + startDate + " end: " + endDate);
+
         clearErrors();
+
+        
 
         try {
             loading = true;
@@ -71,6 +75,13 @@
                 errors.description = data.errors?.description ?? [];
                 errors.dateOne = data.errors?.dateOne ?? "";
                 errors.dateTwo = data.errors?.dateTwo ?? "";
+
+                if (startDate === undefined) {
+                    errors.dateOne = "Start date is required";
+                } 
+                if (endDate === undefined) {
+                    errors.dateTwo = "End date is required";
+                }
                 return;
             }
 

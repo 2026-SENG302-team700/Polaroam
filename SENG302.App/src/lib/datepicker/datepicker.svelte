@@ -3,11 +3,11 @@
     import { onMount } from "svelte";
 
     let {
-        value = $bindable<Date | null>(null),
+        value = $bindable<Date | null | undefined>(null),
         error = [],
         disabled = $bindable(false),
     }: {
-        value: Date | null;
+        value: Date | null | undefined;
         error?: string[];
         disabled?: boolean;
     } = $props();
@@ -28,7 +28,12 @@
      */
     function handleInput(event: Event) {
         const input = event.currentTarget as HTMLInputElement;
-        value = input.value ? new Date(`${input.value}T00:00:00`) : null;
+        if (input.validity.badInput) {
+            value = null;
+        } else {
+            value = input.value ? new Date(`${input.value}T00:00:00`) : undefined;
+        }
+        
     }
 
     /**

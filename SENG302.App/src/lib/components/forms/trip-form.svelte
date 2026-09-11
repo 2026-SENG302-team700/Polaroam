@@ -33,8 +33,8 @@
     }: {
         title: string;
         description: string;
-        startDate: Date | null;
-        endDate: Date | null;
+        startDate: Date | null | undefined;
+        endDate: Date | null | undefined;
         heading: string;
         submitText: string;
         cancelPath: string;
