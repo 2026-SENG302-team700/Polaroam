@@ -100,8 +100,12 @@ public class PostController : ControllerBase
     {
         try
         {
+            // verify the logged in user owns the post
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             var post = await _postService.GetPostAsync(id);
-            if (post == null) return NotFound();
+
+            if (post == null || !await _postService.UserOwnsPost(userId, post.TripId)) return NotFound();
             return Ok(post);
         }
         catch (Exception e)
@@ -127,17 +131,17 @@ public class PostController : ControllerBase
         [FromForm] List<IFormFile>? files,
         [FromForm] bool aiTaggingForUpload = true)
     {
+        // verify the user owns the post first
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
+        var post = await _postService.GetPostAsync(postUpdates.Id);
 
-        if (user == null || !await _postService.UserOwnsPost(userId, postUpdates.TripId))
-        {
-            return Unauthorized();
-        }
+        if (post == null) return NotFound();
+
+        if (!await _postService.UserOwnsPost(userId, post.TripId)!) return Unauthorized();
 
         try
         {
-            var post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
+            post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
             return Ok(post);
         }
         catch (MultipleValidationListException e)
@@ -169,14 +173,10 @@ public class PostController : ControllerBase
     [HttpGet("{postId:int}/images")]
     public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized("You do not have authorisation to view the images in this post");
-        }
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
-        if (post == null)
+        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
         {
             return NotFound("Post not found");
         }
@@ -203,12 +203,15 @@ public class PostController : ControllerBase
     /// </summary>
     /// <param name="postId"></param>
     /// <returns></returns>
+    [Authorize]
     [HttpGet("{postId:int}/user")]
     public async Task<ActionResult<User>> GetUserNameByPost(int postId)
     {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
         var post = await _postService.GetPostAsync(postId);
 
-        if (post == null)
+        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
         {
             return NotFound("Post not found!");
         }
@@ -270,11 +273,7 @@ public class PostController : ControllerBase
     [HttpDelete("{postId:int}/images/{photoId:int}")]
     public async Task<IActionResult> DeletePhotoFromPost(int postId, int photoId)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized();
-        }
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
 
@@ -283,11 +282,15 @@ public class PostController : ControllerBase
             return NotFound("Post does not exist");
         }
 
-        var userId = int.Parse(userIdString);
-
         if (!await _postService.UserOwnsPost(userId, post.TripId))
         {
             return Unauthorized();
+        }
+
+        // check the photo belongs to the post
+        if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
+        {
+            return NotFound("Photo does not belong to this post");
         }
 
         try
