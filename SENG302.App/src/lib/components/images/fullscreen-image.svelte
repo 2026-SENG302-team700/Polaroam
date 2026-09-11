@@ -45,6 +45,13 @@
     let imageContext = $state<ImageContext | null>(null);
     let objectUrl = $state<string | null>(null);
 
+    const informationalTagMessages = [
+        "Tags not available. AI tagging was disabled when image was uploaded",
+        "No tags available",
+    ];
+
+    let isTagInformation = $derived(informationalTagMessages.includes(error));
+
     let currentPhotoId = $derived(photoIds?.[index] ?? photoId);
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
     let showTripAlbumButton = $derived(
@@ -73,7 +80,7 @@
         resetMessages();
         tags = [];
         showRetryTagging = false;
-        
+
         if (id === undefined || viewContext === "none") {
             imageContext = null;
             return;
@@ -190,7 +197,7 @@
                 resolve(`/api/image/${id}/tags` as any),
                 { method: "GET", credentials: "include" },
             );
-            
+
             if (!response.ok) {
                 const errorMessage = await response.text();
                 if (errorMessage === "Tagging failed: Queue was full") {
@@ -267,74 +274,74 @@
                     <img src={displaySrc} alt="Image" class="image" />
                 {/if}
 
-            <div class="image-toolbar">
-                {#if imageContext}
-                    <div class="image-details">
-                        <div class="image-detail btn btn-secondary btn-sm">
-                            <span
-                                ><strong>Trip:</strong>
-                                {imageContext.tripTitle}</span
-                            >
-                            {#if imageContext.postId}
-                                <span class="detail-divider"
-                                    ><strong>Post:</strong>
-                                    {imageContext.postTitle}</span
+                <div class="image-toolbar">
+                    {#if imageContext}
+                        <div class="image-details">
+                            <div class="image-detail btn btn-secondary btn-sm">
+                                <span
+                                    ><strong>Trip:</strong>
+                                    {imageContext.tripTitle}</span
                                 >
-                            {/if}
+                                {#if imageContext.postId}
+                                    <span class="detail-divider"
+                                        ><strong>Post:</strong>
+                                        {imageContext.postTitle}</span
+                                    >
+                                {/if}
+                            </div>
                         </div>
+                    {/if}
+
+                    <div class="action-buttons">
+                        {#if imageContext?.postId && showPostButton}
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick={() =>
+                                    goto(
+                                        resolve(
+                                            `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
+                                        ),
+                                    )}>Go to Post</button
+                            >
+                        {/if}
+                        {#if imageContext && showTripAlbumButton}
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick={() =>
+                                    goto(
+                                        resolve(
+                                            `/home/trips/${imageContext!.tripId}/album`,
+                                        ),
+                                    )}>Go to Trip Album</button
+                            >
+                        {/if}
+                    </div>
+                </div>
+
+                <div class="close-control">
+                    <CloseButton bind:close={enlarged} class="btn-sm" />
+                </div>
+
+                {#if images !== null && images.length > 1 && index !== images.length - 1}
+                    <div class="arrow-control right-control">
+                        <RightArrowButton
+                            bind:image
+                            bind:index
+                            bind:images
+                            {moveToRightImage}
+                        />
                     </div>
                 {/if}
-
-                <div class="action-buttons">
-                    {#if imageContext?.postId && showPostButton}
-                        <button
-                            class="btn btn-secondary btn-sm"
-                            onclick={() =>
-                                goto(
-                                    resolve(
-                                        `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
-                                    ),
-                                )}>Go to Post</button
-                        >
-                    {/if}
-                    {#if imageContext && showTripAlbumButton}
-                        <button
-                            class="btn btn-secondary btn-sm"
-                            onclick={() =>
-                                goto(
-                                    resolve(
-                                        `/home/trips/${imageContext!.tripId}/album`,
-                                    ),
-                                )}>Go to Trip Album</button
-                        >
-                    {/if}
-                </div>
-            </div>
-
-            <div class="close-control">
-                <CloseButton bind:close={enlarged} class="btn-sm" />
-            </div>
-
-            {#if images !== null && images.length > 1 && index !== images.length - 1}
-                <div class="arrow-control right-control">
-                    <RightArrowButton
-                        bind:image
-                        bind:index
-                        bind:images
-                        {moveToRightImage}
-                    />
-                </div>
-            {/if}
-            {#if images !== null && images.length > 1 && index !== 0}
-                <div class="arrow-control left-control">
-                    <LeftArrowButton
-                        bind:image
-                        bind:index
-                        bind:images
-                        {moveToLeftImage}
-                    />
-                </div>
-            {/if}
+                {#if images !== null && images.length > 1 && index !== 0}
+                    <div class="arrow-control left-control">
+                        <LeftArrowButton
+                            bind:image
+                            bind:index
+                            bind:images
+                            {moveToLeftImage}
+                        />
+                    </div>
+                {/if}
             </div>
 
             {#if aiTaggingPreference === "true"}
@@ -342,9 +349,13 @@
                     <div class="error-wrapper">
                         <button
                             type="button"
-                            class="tag-error-button bi bi-exclamation-triangle-fill text-warning fs-2"
+                            class="tag-error-button bi fs-2"
+                            class:bi-info-square-fill={isTagInformation}
+                            class:text-white={isTagInformation}
+                            class:bi-exclamation-triangle-fill={!isTagInformation}
+                            class:text-warning={!isTagInformation}
                             use:queuetooltip={error}
-                            aria-label={`Image tagging error: ${error}`}
+                            aria-label={`Image tagging ${isTagInformation ? "information" : "error"}: ${error}`}
                         ></button>
                     </div>
                 {/if}
@@ -504,6 +515,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        margin-top: 10px;
         margin-bottom: 10px;
     }
 
@@ -512,7 +524,6 @@
         border: 0;
         background: transparent;
         line-height: 1;
-        cursor: help;
+        cursor: default;
     }
-
 </style>
