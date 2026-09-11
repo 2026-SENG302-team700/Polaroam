@@ -6,21 +6,21 @@
     } = $props();
 </script>
 
-<!-- All this is completely temporary -->
-
 <div class="notification-list">
+    <!-- temporary block until notifications are implemented -->
     {#each notifications as notification}
         <div class="notification">
             <h5>{notification.userDisplayName}</h5>
             <div>{notification.text}</div>
         </div>
     {/each}
+    <!-- end of temp block -->
 </div>
 
 <style>
     .notification-list {
         background-color: white;
-        width: max-content;
+        width: 100%;
     }
 
     .notification {

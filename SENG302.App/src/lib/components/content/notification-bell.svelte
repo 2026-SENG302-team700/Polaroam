@@ -4,12 +4,17 @@
 
     let toggled = $state(false);
 
-    let {
-        notifications = [],
-    }: {
-        notifications: NotificationData[];
-    } = $props();
-
+    let testNotifications: NotificationData[] = [
+        {
+            text: "Hello, nice to meet you llanfairpwllgwyngyllgogerychwryndrobwllllantysiliogogogoch",
+            userDisplayName: "Jake Johnson",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+    ];
+    
     let notificationListElement: HTMLDivElement | null = $state(null);
     let notificationButtonElement: HTMLButtonElement | null = $state(null);
 
@@ -38,7 +43,7 @@
 
 <div class="notification-main">
     <button
-        class="notification-parent nav-link-button-colours"
+        class="notification-bell-button"
         aria-label="notifications"
         bind:this={notificationButtonElement}
         onclick={() => {
@@ -46,11 +51,11 @@
         }}
     >
         <i class="bi bi-bell icon-centered"></i>
-        {#if notifications.length > 0}
+        {#if testNotifications.length > 0}
             <div class="notification-counter">
-                {notifications.length > 9
+                {testNotifications.length > 9
                     ? "9+"
-                    : notifications.length.toString()}
+                    : testNotifications.length.toString()}
             </div>
         {/if}
     </button>
@@ -60,31 +65,28 @@
         hidden={!toggled}
         bind:this={notificationListElement}
     >
-        <div class="button-parent">
+        <div class="notification-topbar">
+            <h4 class="notification-title">Notifications</h4>
             <button
                 class="btn exit-button right-pos"
                 aria-label="exit"
                 onclick={() => {
                     toggled = false;
-                }}><i class="bi bi-x"></i></button
+                }}
             >
+                <i class="bi bi-x" />
+            </button>
         </div>
-        <NotificationList {notifications}></NotificationList>
+        <NotificationList notifications={testNotifications} />
     </div>
 </div>
 
 <style>
-    .exit-button {
-        border-radius: 50%;
-        width: 43px;
-        height: 43px;
-    }
-
-    .button-parent {
+    .notification-topbar {
         display: flex;
-        justify-content: flex-end;
-        padding-right: 4px;
-        padding-bottom: 9px;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 6px;
     }
 
     .notification-list-parent {
@@ -95,9 +97,9 @@
         right: -5px;
         top: 47px;
         background-color: white;
+        
         border: 3px solid black;
         border-top: 0;
-
         border-radius: 10px;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
@@ -114,12 +116,41 @@
         font-size: 1.4rem;
     }
 
-    .notification-parent {
+    .notification-bell-button {
+        background-color: white;
         width: 40px;
         height: 40px;
-        border-radius: 50%;
+        border-radius: 0.25rem;
         align-content: center;
         border: 2px solid black;
+        box-shadow: 3px 3px 0 #1f1f1f;
+        transition:
+                transform 120ms ease
+                box-shadow 120ms ease
+                background-color 120ms ease;
+    }
+    
+    .notification-bell-button:hover {
+        background-color: rgb(230, 228, 228);           
+        border-color: #1f1f1f;
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0 #1f1f1f;
+        transition:
+                transform 120ms ease
+                box-shadow 120ms ease
+                background-color 120ms ease;
+    }
+    
+    .notification-bell-button:active, .notification-bell-button:focus:active {
+        background-color: rgb(207, 207, 207);
+        transform: translate(3px, 3px);
+        box-shadow:
+        0px 0px 0 #1f1f1f,
+        1px 1px 0 #1f1f1f inset;
+        transition:
+                transform 120ms ease
+                box-shadow 120ms ease
+                background-color 120ms ease;
     }
 
     .notification-counter {
@@ -132,16 +163,14 @@
         height: 22px;
         font-size: smaller;
     }
-
-    .nav-link-button-colours {
-        background-color: white;
+    
+    .exit-button {
+        margin-left: 10px;
+        margin-right: 10px;
     }
-
-    .nav-link-button-colours:hover {
-        background-color: rgb(230, 228, 228);
-    }
-
-    .nav-link-button-colours:active {
-        background-color: rgb(207, 207, 207);
+    
+    .notification-title {
+        height: 100%;
+        margin-bottom: 0;
     }
 </style>
