@@ -22,6 +22,7 @@
     let ownerDisplayName: null | string = $state(null);
     let hoveredPostId: number | null = $state(null);
     let showCollaborationModal: boolean = $state(false);
+    let collaboratingUsersError: string = $state("")
 
     let tripObject = $state({
         id: 0,
@@ -31,6 +32,11 @@
         endDate: "9999-12-31",
         userId: 0,
     });
+    
+    let collaboratingUsers = $state({
+        userId: 0,
+        userDisplayName: "",
+    })
 
     let postLocations = $state([]);
     let posts = $state([]);
@@ -165,8 +171,28 @@
                 "Failed to fetch post creator: " + (err as Error).message,
             );
         }
-        console.log(ownerDisplayName);
     }
+
+    /**
+     * Fetch all collaborators of trip from backend
+     */
+    async function fetchTripCollaborators() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/collaborators` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            collaboratingUsers = await response.json()
+            
+        } catch (err: any) {
+            collaboratingUsersError = err.toString();
+        }
+    }
+    
+    
 </script>
 
 <div class="container trip-page-content">

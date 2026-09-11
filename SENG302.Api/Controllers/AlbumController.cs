@@ -63,7 +63,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             // Get the image
@@ -101,7 +101,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId);
@@ -141,7 +141,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             tag = tag ?? "";
@@ -182,7 +182,7 @@ public class AlbumController : ControllerBase
             User? user = await _userService.GetUserByIdAsync(userId);
 
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
             {
                 return Unauthorized();
             }
@@ -230,7 +230,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             var postId = await _albumService.DeleteImageFromAlbumAsync(imageId, tripId);

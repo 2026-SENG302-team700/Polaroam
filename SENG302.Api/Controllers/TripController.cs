@@ -18,14 +18,16 @@ public class TripController : ControllerBase
     private readonly IPostService _postService;
     private readonly IAlbumService _albumService;
     private readonly IUserService _userService;
+    private readonly ICollaborationService _collaborationService;
 
 
-    public TripController(ITripService tripService, IPostService postService, IAlbumService albumService, IUserService userService)
+    public TripController(ITripService tripService, IPostService postService, IAlbumService albumService, IUserService userService, ICollaborationService collaborationService)
     {
         _tripService = tripService;
         _postService = postService;
         _albumService = albumService;
         _userService = userService;
+        _collaborationService = collaborationService;
     }
 
     /// <summary>
@@ -148,7 +150,7 @@ public class TripController : ControllerBase
                 return Unauthorized();
             }
 
-            if (!await _tripService.UserHasModifyAccessToTrip(int.Parse(userIdString), id))
+            if (!await _tripService.UserHasCollaborationAccessToTrip(int.Parse(userIdString), id))
             {
                 return Unauthorized();
             }
@@ -239,6 +241,43 @@ public class TripController : ControllerBase
     {
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
+    }
+    
+    /// <summary>
+    /// Returns all collaborates 
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpGet("{tripId:int}/collaborators")]
+    public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (string.IsNullOrEmpty(userIdString))
+            return Unauthorized();
+
+        if (int.TryParse(userIdString, out var userId))
+        {
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
+            {
+                return Unauthorized(
+                    "User does not have access to collaborate on the trip and view collaboration details");
+            }
+        }
+        else
+        {
+            return Unauthorized("User Id does not exist");
+        }
+        
+        try
+        {
+            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
+            return Ok(collaborators);
+        } catch (KeyNotFoundException e)
+        {
+            return NotFound("This trip does not exist");
+        }
     }
 
 }

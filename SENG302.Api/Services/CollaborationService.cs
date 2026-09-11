@@ -9,7 +9,7 @@ namespace SENG302.Api.Services;
 
 public interface ICollaborationService
 {
-    List<CollaboratingUser> GetTripCollaborators(int tripId);
+    Task<List<CollaboratingUser>> GetTripCollaborators(int tripId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -26,7 +26,13 @@ public class CollaborationService : ICollaborationService
         _tripService = tripService;
     }
 
-    async public List<CollaboratingUser> GetCollaboratingUsers(int tripId)
+    /// <summary>
+    /// Get all collaborators of a given trip and returns them
+    /// </summary>
+    /// <param name="tripId">id of the trip</param>
+    /// <returns>All the collaborators of a trip</returns>
+    /// <exception cref="KeyNotFoundException">If the trip id is invalid and does not correspond to the trip</exception>
+    async public Task<List<CollaboratingUser>> GetTripCollaborators(int tripId)
     {
         var databaseContext = await _dbContextFactory.CreateDbContextAsync();
 

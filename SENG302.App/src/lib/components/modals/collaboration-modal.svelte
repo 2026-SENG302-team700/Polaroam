@@ -1,4 +1,5 @@
 ﻿<script lang="ts">
+
     let {
         show = $bindable(false),
         tripOwner = "",
@@ -6,6 +7,8 @@
         show: boolean;
         tripOwner: string;
     } = $props();
+    
+    
 </script>
 
 {#if show}
