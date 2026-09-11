@@ -6,8 +6,36 @@
 
     let testNotifications: NotificationData[] = [
         {
-            text: "Hello, nice to meet you llanfairpwllgwyngyllgogerychwryndrobwllllantysiliogogogoch",
-            userDisplayName: "Jake Johnson",
+            text: `You've been invited to join the trip "john burger"`,
+            userDisplayName: "You've received a new trip invitation!",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
+        } as NotificationData,
+        {
+            text: "Commented: That is a lie!",
+            userDisplayName: "Grima Wormtounge",
         } as NotificationData,
         {
             text: "Commented: That is a lie!",
@@ -18,6 +46,11 @@
     let notificationListElement: HTMLDivElement | null = $state(null);
     let notificationButtonElement: HTMLButtonElement | null = $state(null);
 
+    function refreshNotifications() {
+        // to be implemented
+        return;
+    }
+    
     onMount(() => {
         document.addEventListener("click", (e) => {
             if (
@@ -66,43 +99,47 @@
         bind:this={notificationListElement}
     >
         <div class="notification-topbar">
-            <h4 class="notification-title">Notifications</h4>
-            <button
-                class="btn exit-button right-pos"
-                aria-label="exit"
-                onclick={() => {
-                    toggled = false;
-                }}
-            >
-                <i class="bi bi-x" />
-            </button>
+            <span class="notification-title">Notifications</span>
+            <div class="notification-topbar-buttons">
+                <button
+                        class="btn notification-topbar-button"
+                        aria-label="refresh notifications"
+                        onclick={refreshNotifications}
+                >
+                    <i class="bi bi-arrow-clockwise" />
+                </button>
+                <button
+                        class="btn notification-topbar-button"
+                        aria-label="exit"
+                        onclick={() => {
+                            toggled = false;
+                        }}
+                >
+                    <i class="bi bi-x" />
+                </button>
+            </div>
+
         </div>
         <NotificationList notifications={testNotifications} />
     </div>
 </div>
 
 <style>
-    .notification-topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-bottom: 6px;
-    }
-
     .notification-list-parent {
+        width: 22rem;
         display: flex;
         flex-direction: column;
         position: absolute;
-        padding: 5px 5px;
-        right: -5px;
+        padding: 0.5rem;
+        right: -14px;
         top: 47px;
         background-color: white;
-        
         border: 3px solid black;
         border-top: 0;
         border-radius: 10px;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
+        overflow-y: scroll;
         z-index: 10;
     }
 
@@ -163,14 +200,22 @@
         height: 22px;
         font-size: smaller;
     }
+
+    .notification-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 6px;
+    }
     
-    .exit-button {
-        margin-left: 10px;
-        margin-right: 10px;
+    .notification-topbar-buttons {
+        display: flex;
+        gap: 5px;
     }
     
     .notification-title {
         height: 100%;
-        margin-bottom: 0;
+        font-weight: 500;
+        font-size: calc(1.275rem + 0.3vw);
     }
 </style>
