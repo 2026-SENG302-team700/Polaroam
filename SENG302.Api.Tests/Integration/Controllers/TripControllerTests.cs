@@ -425,4 +425,87 @@ public class TripControllerTests : BaseIntegrationTestFixture
         locations.Count.ShouldBe(2);
         locations.ShouldNotContain(l => l.OsmId == 3);
     }
+
+    [Fact]
+    public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
+    {
+        await AddTestUser();
+        
+        var data = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
+        };
+        
+        await using var context = DbContextFactory.CreateDbContext();
+
+        context.Trips.Add(data);
+
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
+        
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
+        
+        collaborators.ShouldBeEmpty();
+    }
+    
+    [Fact]
+    public async Task GetTripCollaborators_TwoCollaborators_ReturnsOkResponseWithCollaborators()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var data = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2, 3]
+        };
+        
+        context.Trips.Add(data);
+        
+        
+        context.Users.Add(new User
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password2",
+            Country = "Test Country"
+        });
+        
+        context.Users.Add(new User
+        {
+            Id = 3,
+            Email = "test3@example.com",
+            DisplayName = "Test User 3",
+            PasswordKey = "password3",
+            Country = "Test Country"
+        });
+
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
+        
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+        // var collaborators = await response.Content.ReadAsStringAsync();
+        // Console.WriteLine(collaborators);
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
+
+        collaborators.ShouldNotBeNull();
+        collaborators.Count.ShouldBe(2);
+        
+        
+    }
 }
