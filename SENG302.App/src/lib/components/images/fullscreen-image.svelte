@@ -267,7 +267,8 @@
 />
 
 <div class="fullscreen-image-wrapper">
-    <div class="image-container">
+    <a class="click-to-return" onclick={()=>enlarged = false}/>
+    <div class="image-container" >
         <div class="image-content">
             <div class="image-frame">
                 {#if displaySrc}
@@ -396,6 +397,13 @@
 </div>
 
 <style>
+
+    .click-to-return {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        z-index: 101;
+    }
     .image-details {
         display: flex;
         align-items: center;
@@ -466,6 +474,7 @@
         max-height: 90vh;
         flex-direction: column;
         align-items: center;
+        z-index: 102;
     }
     .image-frame {
         position: relative;
