@@ -11,6 +11,7 @@
     let saving = $state(false);
     let error = $state("");
 
+    // to be removed once proper implementation with backend is created
     const initialData = {
         elements: [
             {
@@ -44,6 +45,7 @@
         },
         scrollToContent: true,
     };
+    // end of init data block
     
     async function onClick() {
         console.log("scene elements:")
