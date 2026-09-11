@@ -1328,6 +1328,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPost_PostExists_ReturnsOkWithPost()
     {
+        SetupUserContext("1");
+
         var post = new Post
         {
             PostId = 10,
@@ -1340,6 +1342,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
+        _mockPostService.UserOwnsPost(1, post.TripId).Returns(true);
 
         var result = await _controller.GetPost(10);
 
@@ -1367,7 +1370,19 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         var request = CreateUpdateRequest();
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
         
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
@@ -1382,6 +1397,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPost_PostDoesNotExist_ReturnsNotFound()
     {
+        SetupUserContext("1");
+
         _mockPostService.GetPostAsync(999).Returns((Post?)null);
 
         var result = await _controller.GetPost(999);
@@ -1423,6 +1440,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPost_ServiceThrowsException_ReturnsBadRequest()
     {
+        SetupUserContext("1");
+
         _mockPostService.GetPostAsync(10).Returns(Task.FromException<Post?>(new Exception("Unable to retrieve post")));
 
         var result = await _controller.GetPost(10);
@@ -1450,7 +1469,19 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         var request = CreateUpdateRequest();
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(false);
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(false);
 
         var result = await _controller.UpdatePost(request, null);
 
@@ -1479,6 +1510,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         var request = CreateUpdateRequest();
 
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
         var updatedPost = new Post
         {
             PostId = request.Id,
@@ -1491,7 +1533,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PhotoIds = []
         };
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>()).Returns(updatedPost);
 
@@ -1521,6 +1564,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
         
         var request = CreateUpdateRequest();
 
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
         var errors = new Dictionary<string, List<string>>{
             {
                 "location",
@@ -1528,7 +1582,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             }
         };
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>())
             .Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
