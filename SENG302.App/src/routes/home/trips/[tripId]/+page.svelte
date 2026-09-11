@@ -21,8 +21,8 @@
     let tripId = params.tripId;
     let ownerDisplayName: null | string = $state(null);
     let hoveredPostId: number | null = $state(null);
-    let showCollaborationModal: boolean = $state(false);
-    let collaboratingUsersError: string = $state("")
+    let collaborationModalShown: boolean = $state(false);
+    let collaboratingUsersError: string = $state("");
 
     let tripObject = $state({
         id: 0,
@@ -32,11 +32,16 @@
         endDate: "9999-12-31",
         userId: 0,
     });
-    
-    let collaboratingUsers = $state({
-        userId: 0,
-        userDisplayName: "",
-    })
+
+    let collaboratingUsers: CollaboratingUser[] = $state([]);
+
+    const LoadState = {
+        UNLOADED: 0,
+        LOADING: 1,
+        LOADED: 2,
+    };
+
+    let collaboratingLoadingState: number = $state(LoadState.UNLOADED);
 
     let postLocations = $state([]);
     let posts = $state([]);
@@ -174,6 +179,25 @@
     }
 
     /**
+     * Turn on the collaboration modal
+     * If the collaborators are not yet loaded then load them
+     */
+    function showCollaborationModal() {
+        if (collaboratingLoadingState === LoadState.UNLOADED) {
+            collaboratingLoadingState = LoadState.LOADING;
+            fetchTripCollaborators()
+                .then(() => {
+                    collaboratingLoadingState = LoadState.LOADED;
+                })
+                .catch((e: Error) => {
+                    collaboratingUsersError = e.message;
+                });
+        }
+
+        collaborationModalShown = true;
+    }
+
+    /**
      * Fetch all collaborators of trip from backend
      */
     async function fetchTripCollaborators() {
@@ -185,14 +209,11 @@
                     credentials: "include",
                 },
             );
-            collaboratingUsers = await response.json()
-            
+            collaboratingUsers = await response.json();
         } catch (err: any) {
             collaboratingUsersError = err.toString();
         }
     }
-    
-    
 </script>
 
 <div class="container trip-page-content">
@@ -202,7 +223,7 @@
             <button
                 class="btn btn-secondary bi-people-fill"
                 onclick={() => {
-                    showCollaborationModal = true;
+                    showCollaborationModal();
                 }}>Collaboration</button
             >
             <AlbumButton tripid={params.tripId} />
@@ -271,8 +292,10 @@
 />
 
 <CollaborationModal
-    bind:show={showCollaborationModal}
+    bind:show={collaborationModalShown}
     tripOwner={ownerDisplayName ?? ""}
+    tripCollaborators={collaboratingUsers}
+    {error}
 />
 
 <style>

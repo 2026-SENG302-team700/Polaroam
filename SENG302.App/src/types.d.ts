@@ -8,3 +8,8 @@ type PfpData = {
 type PostPhotoData = {
     imageSource: string,
 }
+
+type CollaboratingUser = {
+    userId: number,
+    displayName: string,
+}

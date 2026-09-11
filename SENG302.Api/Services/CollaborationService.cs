@@ -38,6 +38,8 @@ public class CollaborationService : ICollaborationService
 
         var collaborators = await databaseContext.Trips.Where(t => t.Id == tripId).Select(t => t.Collaborators).FirstOrDefaultAsync();
 
+
+
         var collaboratingUsers = new List<CollaboratingUser>();
 
         if (collaborators != null)
@@ -48,10 +50,14 @@ public class CollaborationService : ICollaborationService
 
                 if (user is null)
                 {
-                    throw new KeyNotFoundException("The user is not found");
+                    throw new KeyNotFoundException("The user could not be found");
                 }
                 collaboratingUsers.Add(new CollaboratingUser(user));
             }
+        }
+        else
+        {
+            throw new KeyNotFoundException("The trip could not be found");
         }
 
         return collaboratingUsers;

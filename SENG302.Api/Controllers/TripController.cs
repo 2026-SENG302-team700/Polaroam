@@ -242,7 +242,7 @@ public class TripController : ControllerBase
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
     }
-    
+
     /// <summary>
     /// Returns all collaborates 
     /// </summary>
@@ -253,7 +253,7 @@ public class TripController : ControllerBase
     public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        
+
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
@@ -269,14 +269,15 @@ public class TripController : ControllerBase
         {
             return Unauthorized("User Id does not exist");
         }
-        
+
         try
         {
             var collaborators = await _collaborationService.GetTripCollaborators(tripId);
             return Ok(collaborators);
-        } catch (KeyNotFoundException e)
+        }
+        catch (KeyNotFoundException e)
         {
-            return NotFound("This trip does not exist");
+            return NotFound(e.Message);
         }
     }
 
