@@ -22,7 +22,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     /// <param name="content">What bytes are in the file</param>
     /// <param name="mimeType">The mime type for the mock file</param>
     /// <returns>The mock file</returns>
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)

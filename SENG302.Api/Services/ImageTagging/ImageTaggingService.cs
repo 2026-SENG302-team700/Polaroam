@@ -74,7 +74,7 @@ public class ImageTaggingService : IImageTaggingService
         }
         catch (HttpRequestException exception)
         {
-            String errorMessage = exception.Message;
+            string errorMessage = exception.Message;
             await SetTagErrors(imageId, errorMessage);
 
         }
@@ -191,7 +191,7 @@ public class ImageTaggingService : IImageTaggingService
 
         var responseContentElement = responseDocument.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content");
 
-        String? content = responseContentElement.GetString();
+        string? content = responseContentElement.GetString();
 
         return content;
     }
