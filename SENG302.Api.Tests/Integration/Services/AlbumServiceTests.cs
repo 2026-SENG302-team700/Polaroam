@@ -941,8 +941,7 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
             await ServiceUnderTest.CreateNewAlbumAsync(1);
         });
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
-
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
         album.ShouldNotBeNull();
     }
 
@@ -967,7 +966,7 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
         });
         ex.Message.ShouldBe("Trip with that Id does not exist.");
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 2).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 2).FirstOrDefaultAsync();
 
         album.ShouldBeNull();
     }

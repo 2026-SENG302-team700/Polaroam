@@ -1179,7 +1179,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             [image]
         );
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
 
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(post.PhotoIds[0]);
@@ -1229,7 +1229,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         await context.SaveChangesAsync();
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
 
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(updatedPost.PhotoIds[0]);
