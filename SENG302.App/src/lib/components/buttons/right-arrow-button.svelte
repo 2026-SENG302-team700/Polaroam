@@ -18,11 +18,3 @@
         title="right-arrow" 
         onclick={moveToRightImage}
 ></button>
-
-
-<style>
-    .btn{
-        top: 50%;
-        left: 102%;
-    }
-</style>
