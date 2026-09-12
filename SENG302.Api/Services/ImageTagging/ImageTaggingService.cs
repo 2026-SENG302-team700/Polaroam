@@ -343,6 +343,7 @@ public class ImageTaggingService : IImageTaggingService
         }
 
         image.TagError = errorMessage;
+        image.InTagQueue = false;
         image.CanRetryTagging = false;
         context.CustomFiles.Update(image);
         await context.SaveChangesAsync();

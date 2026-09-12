@@ -70,13 +70,6 @@
             </div>
         </div>
     {/if}
-    {#if (!images || images.length === 0) && !pickerFirst && children}
-        <div class="col">
-            <div class="picker-tile">
-                {@render children()}
-            </div>
-        </div>
-    {/if}
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>

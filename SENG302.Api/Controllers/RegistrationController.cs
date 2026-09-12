@@ -101,11 +101,11 @@ public class RegistrationController : ControllerBase
         {
             User? user = await _userService.GetUserFromEmailAsync(codeRequest.Email);
             if (user == null) return Problem();
-            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, user.CodeGenerationTime, false);
+            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, user.CodeGenerationTime, false, false);
         }
         else
         {
-            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
+            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false, false);
         }
 
         if (userUpdated == null) return Problem();
@@ -164,7 +164,7 @@ public class RegistrationController : ControllerBase
 
         if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
         {
-            User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true, false);
             if (userUpdated == null) return Problem();
         }
 

@@ -198,9 +198,18 @@ public class AlbumService : IAlbumService
                 var dbFile = await context.CustomFiles.FindAsync(file.Id);
                 if (dbFile != null)
                 {
-                    dbFile.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
-                    context.CustomFiles.Update(dbFile);
-                    await context.SaveChangesAsync();
+                    if (!aiTaggingForUpload)
+                    {
+                        dbFile.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
+                        context.CustomFiles.Update(dbFile);
+                        await context.SaveChangesAsync();
+                    }
+                    else if (!IsAiTaggable(photo))
+                    {
+                        dbFile.TagError = "AI failed to tag images";
+                        context.CustomFiles.Update(dbFile);
+                        await context.SaveChangesAsync();
+                    }
                 }
             }
         }

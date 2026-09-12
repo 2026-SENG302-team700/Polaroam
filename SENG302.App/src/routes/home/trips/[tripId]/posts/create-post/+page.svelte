@@ -165,7 +165,6 @@
             }
 
             const data = await response.json();
-            console.log(data);
             goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);

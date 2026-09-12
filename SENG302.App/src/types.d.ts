@@ -9,6 +9,11 @@ type PostPhotoData = {
     imageSource: string,
 }
 
+type NotificationData = {
+    text: string,
+    userDisplayName: string
+}
+
 type CollaboratingUser = {
     userId: number,
     displayName: string,
