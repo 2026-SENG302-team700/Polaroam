@@ -4,48 +4,103 @@
 
     let toggled = $state(false);
 
+    const NOTIFICATION_SHOWN_CAP = 5;
+
+    // remove once persistance is done
     let testNotifications: NotificationData[] = [
         {
+            title: "You've received a new trip invitation!",
             text: `You've been invited to join the trip "john burger"`,
-            userDisplayName: "You've received a new trip invitation!",
+            isRead: false,
+            leftAction: {
+                function: () => console.log("Accept"),
+                text: "Accept",
+                colour: "btn-success"
+            },
+            rightAction: { text: "Decline", function: () => console.log("Decline"), colour: "btn-danger" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: false,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: true,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: false,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: true,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
-            text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            title: "You've received a new trip invitation!",
+            text: `You've been invited to join the trip "john burger"`,
+            isRead: false,
+            leftAction: { text: "Accept", function: () => console.log("Accept"), colour: "btn-success" },
+            rightAction: { text: "Decline", function: () => console.log("Decline"), colour: "btn-danger" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: false,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: true,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
         {
+            title: "Grima Wormtounge",
             text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
+            isRead: false,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
         } as NotificationData,
+        {
+            title: "Grima Wormtounge",
+            text: "Commented: That is a lie!",
+            isRead: true,
+            leftAction: { text: "Reply", function: () => console.log("Reply"), colour: "btn-primary" },
+            rightAction: { text: "View", function: () => console.log("View"), colour: "btn-secondary" },
+            readToggle: () => console.log("toggle read"),
+        } as NotificationData
     ];
+    // end of temp blockk
     
     let notificationListElement: HTMLDivElement | null = $state(null);
     let notificationButtonElement: HTMLButtonElement | null = $state(null);
 
+    /**
+     * Refresh's the notification list
+     */
     function refreshNotifications() {
         // to be implemented
         return;
@@ -118,23 +173,27 @@
                     <i class="bi bi-x" />
                 </button>
             </div>
-
         </div>
-        <NotificationList notifications={testNotifications} />
+        
+        <NotificationList notifications={testNotifications.slice(0, NOTIFICATION_SHOWN_CAP)} />
+
+        {#if testNotifications.length > NOTIFICATION_SHOWN_CAP}
+            <span class="see-more">See more...</span>
+        {/if}
     </div>
 </div>
 
 <style>
     .notification-list-parent {
-        width: 22rem;
+        width: 23rem;
+        max-height: 80vh;
         display: flex;
         flex-direction: column;
         position: absolute;
-        padding: 0.5rem;
         right: -14px;
         top: 47px;
-        background-color: white;
-        border: 3px solid black;
+        background-color: #ffffff;
+        border: 3px solid #000000;
         border-top: 0;
         border-radius: 10px;
         border-top-left-radius: 0;
@@ -145,6 +204,12 @@
 
     .notification-main {
         position: relative;
+    }
+
+    .see-more {
+        text-align: center;
+        padding: 0.5rem 0;
+        color: #1f1f1f;
     }
 
     .icon-centered {
@@ -205,7 +270,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding-bottom: 6px;
+        margin: 0.5rem;
     }
     
     .notification-topbar-buttons {

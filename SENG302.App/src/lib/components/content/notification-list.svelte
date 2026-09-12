@@ -6,19 +6,14 @@
     }: {
         notifications: NotificationData[];
     } = $props();
-    
-    
 </script>
 
 <div class="notification-list">
+    {#if (notifications.length === 0)}
+        <span>You have no notifications.</span>
+    {/if}
     {#each notifications as notification}
-        <Notification
-            title={notification.userDisplayName}
-            description={notification.text}
-        >
-            <button>Action Button 1</button>
-            <button>Action Button 2</button>
-        </Notification>
+        <Notification {notification} />
     {/each}
 </div>
 
@@ -26,10 +21,5 @@
     .notification-list {
         background-color: white;
         width: 100%;
-    }
-
-    .notification {
-        border-top: 1px solid black;
-        height: 60px;
     }
 </style>
