@@ -16,6 +16,8 @@ using SENG302.Api.Controllers;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System.Security.Claims;
+using NSubstitute.ExceptionExtensions;
+using Xunit.Sdk;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -465,7 +467,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     {
         await AddTestUser();
 
-        var data = new Trip
+        var trip = new Trip
         {
             Title = "Trip!",
             UserId = 1,
@@ -476,7 +478,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         await using var context = DbContextFactory.CreateDbContext();
 
-        context.Trips.Add(data);
+        context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
 
@@ -492,7 +494,10 @@ public class TripControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
-        var mockObject = new List<CollaboratingUser>();
+        List<CollaboratingUser> mockObject = [
+            new() {DisplayName = "Name", UserId = 2},
+            new() {DisplayName = "Name 2", UserId = 3}
+        ];
 
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(true);
         _mockCollaborationService.GetTripCollaborators(1).Returns(mockObject);
@@ -501,20 +506,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         response.Result.ShouldBeOfType<OkObjectResult>();
 
-        var collaborators = response.Value;
-        collaborators.ShouldBeOfType<List<CollaboratingUser>>();
+        var collaborators = ((OkObjectResult)response.Result).Value;
         collaborators.ShouldNotBeNull();
         collaborators.ShouldBe(mockObject);
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_NonexistantTrip_ReturnsNotFound()
-    {
-        await AddTestUser();
-
-        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -548,4 +542,35 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
     }
+
+    [Fact]
+    public async Task GetTripCollaborators_TripDoesNotExist_ReturnsNotFound()
+    {
+        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws<KeyNotFoundException>();
+
+        var response = await _controller.GetTripCollaborators(1);
+
+        response.Result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetTripCollaborators_UserDoesNotExist_ReturnsNotFound()
+    {
+        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws<ArgumentException>();
+
+        var response = await _controller.GetTripCollaborators(1);
+
+        response.Result.ShouldBeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetTripCollaborators_UserHasNoAccess_ReturnsNotFound()
+    {
+        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(false);
+
+        var response = await _controller.GetTripCollaborators(1);
+
+        response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
+    }
+
 }

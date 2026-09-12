@@ -279,7 +279,7 @@ public class TripController : ControllerBase
         {
             return NotFound(e.Message);
         }
-        catch (ArgumentException e)
+        catch (ArgumentException)
         {
             return NotFound("This trip does not exist");
         }
