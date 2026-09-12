@@ -10,6 +10,12 @@ using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using SENG302.Api.Controllers;
+using SENG302.Api.Services;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using System.Security.Claims;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -17,9 +23,33 @@ public class TripControllerTests : BaseIntegrationTestFixture
 {
     private ITestOutputHelper _output;
 
+    private ITripService _mockTripService;
+    private IPostService _mockPostService;
+    private IAlbumService _mockAlbumService;
+    private IUserService _mockUserService;
+    private ICollaborationService _mockCollaborationService;
+
+    private TripController _controller;
+
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
         base(webApplicationFactory)
     {
+        _mockTripService = Substitute.For<ITripService>();
+        _mockPostService = Substitute.For<IPostService>();
+        _mockAlbumService = Substitute.For<IAlbumService>();
+        _mockUserService = Substitute.For<IUserService>();
+        _mockCollaborationService = Substitute.For<ICollaborationService>();
+
+        _controller = new TripController(
+            _mockTripService,
+            _mockPostService,
+            _mockAlbumService,
+            _mockUserService,
+            _mockCollaborationService
+        );
+
+        AddTestPrincipalToController(_controller);
+
         _output = output;
     }
 
@@ -28,16 +58,20 @@ public class TripControllerTests : BaseIntegrationTestFixture
     /// </summary>
     private async Task AddTestUser()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
+
+        User testUser = new()
         {
             Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country"
-        });
+        };
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(testUser);
         await context.SaveChangesAsync();
+
+        _mockUserService.GetUserByIdAsync(testUser.Id).Returns(Task.FromResult((User?)testUser));
     }
 
     /// <summary>
@@ -456,62 +490,62 @@ public class TripControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task GetTripCollaborators_TwoCollaborators_ReturnsOkResponseWithCollaborators()
+    public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
-        await AddTestUser();
+        var mockObject = new List<CollaboratingUser>();
 
-        await using var context = await DbContextFactory.CreateDbContextAsync();
+        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(true);
+        _mockCollaborationService.GetTripCollaborators(1).Returns(mockObject);
 
-        var data = new Trip
-        {
-            Title = "Trip!",
-            UserId = 1,
-            Description = "Test",
-            StartDate = DateToDateTimeOffset(2025, 11, 21),
-            EndDate = DateToDateTimeOffset(2025, 12, 21),
-            Collaborators = [2, 3]
-        };
+        var response = await _controller.GetTripCollaborators(1);
 
-        context.Trips.Add(data);
+        response.Result.ShouldBeOfType<OkObjectResult>();
 
-
-        context.Users.Add(new User
-        {
-            Id = 2,
-            Email = "test2@example.com",
-            DisplayName = "Test User 2",
-            PasswordKey = "password2",
-            Country = "Test Country"
-        });
-
-        context.Users.Add(new User
-        {
-            Id = 3,
-            Email = "test3@example.com",
-            DisplayName = "Test User 3",
-            PasswordKey = "password3",
-            Country = "Test Country"
-        });
-
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
-        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
-        
+        var collaborators = response.Value;
+        collaborators.ShouldBeOfType<List<CollaboratingUser>>();
         collaborators.ShouldNotBeNull();
-        collaborators.Count.ShouldBe(2);
+        collaborators.ShouldBe(mockObject);
     }
-    
+
     [Fact]
     public async Task GetTripCollaborators_NonexistantTrip_ReturnsNotFound()
     {
         await AddTestUser();
-        
+
         var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetTripCollaborators_NoClaim_ReturnsUnauthorized()
+    {
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        var response = await _controller.GetTripCollaborators(1);
+
+        response.Result.ShouldBeOfType<UnauthorizedResult>();
+    }
+
+    [Fact]
+    public async Task GetTripCollaborators_ClaimHasGarbledId_ReturnsUnauthorized()
+    {
+
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "bad-id") };
+        var identity = new ClaimsIdentity(claims, "IncorrectAuth");
+        var principal = new ClaimsPrincipal(identity);
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+
+        var response = await _controller.GetTripCollaborators(1);
+
+        response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
     }
 }
