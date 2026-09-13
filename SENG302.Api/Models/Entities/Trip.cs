@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -15,10 +16,15 @@ public class Trip
     [MinLength(3)]
     [Required]
     public string Title { get; set; } = string.Empty;
+
+    [ForeignKey("Scrapboard")]
+    public int ScrapboardId {get; set;} = -1;
+    
     [Required]
     public int UserId { get; set; } // Foreign key to the User that owns this trip
 
     public string Description { get; set; } = string.Empty;
+    
     [Required]
     public DateTimeOffset? StartDate
     {
@@ -31,6 +37,7 @@ public class Trip
             field = value?.ToUniversalTime();
         }
     }
+
     [Required]
     public DateTimeOffset? EndDate
     {

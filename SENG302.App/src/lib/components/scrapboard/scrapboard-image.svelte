@@ -1,32 +1,31 @@
 <script lang="ts">
+    import CreationButton from "../buttons/creation-button.svelte";
+
+    let scrapboardCreated: Boolean = false;
 </script>
 
-<div class="scrapboard-image-wrapper empty-map trip-page-element">
-    <i class="bi bi-journal-album" aria-hidden="true"></i>
-    <p>No scrapboard yet.</p>
+<div class="container">
+    {#if !scrapboardCreated}
+        <div class="scrapboard-image-wrapper empty-trip-page-element">
+            <i class="bi bi-journal-album" aria-hidden="true"></i>
+            <p>No Scrapboard yet.</p>
+            <CreationButton
+                text="Create Scrapboard"
+                onClick={() => (scrapboardCreated = true)}
+            />
+            <!-- scrapboard created is a placeholder and please replace it with a call to the backend -->
+        </div>
+    {:else}
+        <img
+            src="../../../static/scrapboard-placeholder.png"
+            alt="scrapboard"
+            class="scrapboard-image card"
+        />
+    {/if}
 </div>
 
 <style>
-    .scrapboard-image-wrapper {
-        display: flex;
-        height: 200px;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        border: 2px dashed #686868;
-        border-radius: 0.375rem;
-        background: #fff8e8;
-        color: #686868;
-        text-align: center;
-    }
-    .empty-map i {
-        font-size: 4rem;
-    }
-
-    .empty-map p {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: 700;
+    .scrapboard-image {
+        width: 100%;
     }
 </style>

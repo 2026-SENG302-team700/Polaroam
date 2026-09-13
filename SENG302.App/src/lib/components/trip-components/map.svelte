@@ -183,7 +183,7 @@
 
 <div class="container" data-testid="trip-map">
     {#if posts.length === 0}
-        <div class="empty-map trip-page-element" data-testid="empty-trip-map">
+        <div class="empty-trip-page-element" data-testid="empty-trip-map">
             <i class="bi bi-map" aria-hidden="true"></i>
             <p>No posts yet. Create a post to view the map</p>
         </div>
@@ -309,30 +309,6 @@
     :global(.map) {
         width: 100%;
         height: 100%;
-    }
-
-    .empty-map {
-        display: flex;
-        height: 200px;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-        border: 2px dashed #686868;
-        border-radius: 0.375rem;
-        background: #fff8e8;
-        color: #686868;
-        text-align: center;
-    }
-
-    .empty-map i {
-        font-size: 4rem;
-    }
-
-    .empty-map p {
-        margin: 0;
-        font-size: 1.1rem;
-        font-weight: 700;
     }
 
     /**
