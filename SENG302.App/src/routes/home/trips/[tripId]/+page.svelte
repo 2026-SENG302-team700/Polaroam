@@ -14,6 +14,7 @@
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
+    import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -196,6 +197,7 @@
                 {hoveredPostId}
                 bind:selectedPost
             />
+            <ScrapboardImage />
         </div>
         <div class="card-footer text-muted images">
             <PostSection

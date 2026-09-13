@@ -183,7 +183,7 @@
 
 <div class="container" data-testid="trip-map">
     {#if posts.length === 0}
-        <div class="empty-map" data-testid="empty-trip-map">
+        <div class="empty-map trip-page-element" data-testid="empty-trip-map">
             <i class="bi bi-map" aria-hidden="true"></i>
             <p>No posts yet. Create a post to view the map</p>
         </div>
@@ -395,13 +395,6 @@
     .post-popup {
         width: 220px;
         color: #686868;
-    }
-
-    .post-popup-number {
-        color: #777;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
     }
 
     .post-popup h3 {

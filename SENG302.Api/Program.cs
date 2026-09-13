@@ -266,6 +266,7 @@ public class Program
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IAlbumService, AlbumService>();
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<IScrapboardService, ScrapboardService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {
