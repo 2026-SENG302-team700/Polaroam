@@ -7,13 +7,13 @@
     let loading = $state(false);
     let tripTitle = $state("");
     let tripDescription = $state("");
-    
+
     let errors = $state<{
-        title: string[],
-        description: string[],
-        dateOne: string[],
-        dateTwo: string[],
-        generic: string,
+        title: string[];
+        description: string[];
+        dateOne: string[];
+        dateTwo: string[];
+        generic: string;
     }>({
         title: [],
         description: [],
@@ -24,6 +24,8 @@
 
     let startDate: Date | null | undefined = $state(new Date());
     let endDate: Date | null | undefined = $state(new Date());
+    let startDateState: "valid" | "invalid" | "empty" = $state("valid");
+    let endDateState: "valid" | "invalid" | "empty" = $state("valid");
 
     /**
      * Removes all errors from the form.
@@ -79,12 +81,23 @@
                 errors.dateOne = data.errors?.dateOne ?? "";
                 errors.dateTwo = data.errors?.dateTwo ?? "";
 
-                if (startDate === undefined) {
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (startDateState === "invalid") {
+                    errors.dateOne = ["Invalid date"];
+                } else if (startDateState === "empty") {
                     errors.dateOne = ["Start date is required"];
-                } 
-                if (endDate === undefined) {
+                }
+
+                if (endDateState === "invalid") {
+                    errors.dateTwo = ["Invalid date"];
+                } else if (endDateState === "empty") {
                     errors.dateTwo = ["End date is required"];
                 }
+
+                if (startDateState !== "valid" || endDateState !== "valid") {
+                    return;
+                }
+
                 return;
             }
 
@@ -102,6 +115,8 @@
     bind:description={tripDescription}
     bind:startDate
     bind:endDate
+    bind:startDateState
+    bind:endDateState
     heading="Create New Trip"
     submitText="Create Trip"
     cancelPath="/home"

@@ -4,13 +4,17 @@
 
     let {
         value = $bindable<Date | null | undefined>(undefined),
+        inputState = $bindable<DateInputState>("empty"),
         error = [],
         disabled = $bindable(false),
     }: {
         value: Date | null | undefined;
+        inputState?: DateInputState;
         error?: string[];
         disabled?: boolean;
     } = $props();
+
+    type DateInputState = "valid" | "invalid" | "empty";
 
     let datePicker: HTMLInputElement | undefined = $state();
 
@@ -23,12 +27,13 @@
 
     $effect(() => {
         if (!datePicker) return;
+
+        if (inputState === "invalid") return;
+
         const target = value != null ? utcDateToLocalISO(value) : "";
         if (datePicker.value !== target) {
             datePicker.value = target;
         }
-        console.log("Value: " + target, typeof target)
-        console.log("DatePicker date: " + datePicker.value)
     });
 
     /**
@@ -39,10 +44,13 @@
     function handleInput(event: Event) {
         const input = event.currentTarget as HTMLInputElement;
         if (input.validity.badInput) {
+            inputState = "invalid";
             value = null;
         } else if (input.value.length === 0) {
+            inputState = "empty";
             value = undefined;
         } else {
+            inputState = "valid";
             value = input.value ? new Date(`${input.value}T00:00:00`) : undefined;
         }
     }
@@ -71,6 +79,8 @@
             class="form-control"
             class:is-invalid={error.length > 0}
             oninput={handleInput}
+            onchange={handleInput}
+            onblur={handleInput}
             bind:this={datePicker}
             {disabled}
         />
@@ -79,6 +89,7 @@
             class="btn btn-outline-secondary"
             {disabled}
             onclick={() => {
+                inputState = "empty";
                 value = undefined;
                 if (datePicker) {
                     datePicker.value = "";

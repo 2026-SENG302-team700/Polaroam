@@ -19,6 +19,8 @@
         description = $bindable(""),
         startDate = $bindable(undefined),
         endDate = $bindable(undefined),
+        startDateState = $bindable<DateInputState>("empty"),
+        endDateState = $bindable<DateInputState>("empty"),
         heading,
         submitText,
         errors = {
@@ -35,6 +37,8 @@
         description: string;
         startDate: Date | null | undefined;
         endDate: Date | null | undefined;
+        startDateState?: DateInputState;
+        endDateState?: DateInputState;
         heading: string;
         submitText: string;
         cancelPath: string;
@@ -42,6 +46,8 @@
         loading?: boolean;
         onSubmit: () => void | Promise<void>;
     } = $props();
+
+    type DateInputState = "valid" | "invalid" | "empty";
 </script>
 
 {#snippet header()}
@@ -73,6 +79,7 @@
                 <label for="trip-start-date">Start Date</label>
                 <Datepicker
                     bind:value={startDate}
+                    bind:inputState={startDateState}
                     disabled={loading}
                     error={errors.dateOne}
                 />
@@ -81,6 +88,7 @@
                 <label for="trip-end-date">End Date</label>
                 <Datepicker
                     bind:value={endDate}
+                    bind:inputState={endDateState}
                     disabled={loading}
                     error={errors.dateTwo}
                 />
