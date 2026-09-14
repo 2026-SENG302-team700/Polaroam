@@ -53,11 +53,7 @@
         tripTitle = tripTitle.trim();
         tripDescription = tripDescription.trim();
 
-        console.log("startdate: " + startDate + " end: " + endDate);
-
         clearErrors();
-
-        
 
         try {
             loading = true;
