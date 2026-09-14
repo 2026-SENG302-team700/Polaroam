@@ -41,7 +41,7 @@ public class TripService : ITripService
     public async Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var trips = await context.Set<Trip>().Where(t => t.UserId == userId).ToListAsync();
+        var trips = await context.Set<Trip>().Where(t => t.UserId == userId || t.Collaborators.Contains(userId)).ToListAsync();
         return trips;
     }
 
