@@ -1,4 +1,6 @@
 <script lang="ts">
+    import Notification from "$lib/components/content/notification.svelte";
+    
     let {
         notifications = [],
     }: {
@@ -6,25 +8,18 @@
     } = $props();
 </script>
 
-<!-- All this is completely temporary -->
-
 <div class="notification-list">
+    {#if (notifications.length === 0)}
+        <span>You have no notifications.</span>
+    {/if}
     {#each notifications as notification}
-        <div class="notification">
-            <h5>{notification.userDisplayName}</h5>
-            <div>{notification.text}</div>
-        </div>
+        <Notification {notification} />
     {/each}
 </div>
 
 <style>
     .notification-list {
         background-color: white;
-        width: max-content;
-    }
-
-    .notification {
-        border-top: 1px solid black;
-        height: 60px;
+        width: 100%;
     }
 </style>
