@@ -5,7 +5,7 @@
     let {
         value = $bindable<Date | null | undefined>(undefined),
         inputState = $bindable<DateInputState>("empty"),
-        error = [],
+        error = $bindable([]),
         disabled = $bindable(false),
     }: {
         value: Date | null | undefined;

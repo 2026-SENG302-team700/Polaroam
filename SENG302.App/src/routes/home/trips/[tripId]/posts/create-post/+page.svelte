@@ -19,6 +19,8 @@
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
 
+    let dateState: "valid" | "invalid" | "empty" = $state("valid");
+
     type PostFormErrors = {
         title: string[];
         content: string[];
@@ -161,6 +163,14 @@
                 ) {
                     showConfirmationModal = true;
                 }
+
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (dateState === "invalid") {
+                    errors.date = "Invalid date";
+                } else if (dateState === "empty") {
+                    errors.date = "Start date is required";
+                }
+                
                 return;
             }
 
@@ -189,7 +199,7 @@
 
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
-    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+    <DatePicker bind:value={date} bind:inputState={dateState} bind:error={[errors.date]} disabled={loading} />
 
     <LocationForm
         bind:searchQuery

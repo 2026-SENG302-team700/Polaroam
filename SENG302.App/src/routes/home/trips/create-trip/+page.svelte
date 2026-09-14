@@ -93,10 +93,7 @@
                 } else if (endDateState === "empty") {
                     errors.dateTwo = ["End date is required"];
                 }
-
-                if (startDateState !== "valid" || endDateState !== "valid") {
-                    return;
-                }
+                
 
                 return;
             }
