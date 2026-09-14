@@ -9,7 +9,11 @@
     let { tripObject }: { tripObject: trip } = $props();
     let coverPhotoId: number | null = $state(null);
 
-    onMount(async () => {
+    onMount(() => {
+        loadTrip();
+    });
+
+    async function loadTrip() {
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/album/${tripObject.id}` as any),
@@ -22,7 +26,7 @@
         } catch {
             coverPhotoId = null;
         }
-    });
+    }
 
     function openTrip() {
         goto(resolve(`/home/trips/${tripObject.id}`));
@@ -56,6 +60,7 @@
 
     <div class="trip-details">
         <h2>{tripObject.title}</h2>
+        <p>{tripObject.userId}</p>
         <p class="dates">
             <i class="bi bi-calendar3"></i>
             <span>
@@ -67,7 +72,9 @@
         {#if tripObject.description}
             <p class="description">{tripObject.description}</p>
         {/if}
-        <span class="view-trip">View trip <i class="bi bi-arrow-right"></i></span>
+        <span class="view-trip"
+            >View trip <i class="bi bi-arrow-right"></i></span
+        >
     </div>
 </article>
 
