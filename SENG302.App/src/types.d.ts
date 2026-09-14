@@ -9,9 +9,19 @@ type PostPhotoData = {
     imageSource: string,
 }
 
-type NotificationData = {
+type NotificationActionButton = {
+    function: () => void,
     text: string,
-    userDisplayName: string
+    colour: string
+}
+
+type NotificationData = {
+    title: string,
+    text: string,
+    isRead: boolean
+    leftAction?: NotificationActionButton,
+    rightAction?: NotificationActionButton,
+    readToggle: () => void,
 }
 
 type CollaboratingUser = {
