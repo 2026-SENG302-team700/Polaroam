@@ -17,7 +17,6 @@
     import NotFound from "$lib/components/content/not-found.svelte";
 
     let loading = $state(false);
-    let authorized = $state(true);
     let error = $state("");
     let deletionModalShown = $state(false);
     let { params } = $props();
@@ -25,7 +24,7 @@
     let hoveredPostId: number | null = $state(null);
 
     let tripObject = $state({
-        id: 0,
+        id: -1,
         title: "No Title",
         description: "No Description",
         startDate: "9998-12-31",
@@ -59,9 +58,7 @@
             );
             
             // Check response
-            if (response.status === 401) {
-                authorized = false;
-            } else if (!response.ok) {
+            if (!response.ok) {
                 error = "Failed to fetch trip.";
                 return;
             }
@@ -157,7 +154,7 @@
     }
 </script>
 
-{#if authorized}
+{#if !loading && tripObject.id !== -1}
     <div class="container trip-page-content">
         <div class="button-wrapper">
             <NavigationButton path="/home" text="Back" />
@@ -217,7 +214,7 @@
             </div>
         </div>
     </div>
-{:else }
+{:else if !loading}
     <NotFound />
 {/if}
 

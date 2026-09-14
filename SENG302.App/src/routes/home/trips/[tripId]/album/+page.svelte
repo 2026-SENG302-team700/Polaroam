@@ -13,8 +13,8 @@
 
     let tripName = $state("");
     let filesToUpload: File[] | null | undefined = $state([]);
-    let loading = $state(false);
-    let authorized = $state(true);
+    let loading = $state(true);
+    let metadataLoaded = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
     let imageMetadata = $state<{ photoId: number }[]>([]);
@@ -47,6 +47,7 @@
      */
     async function getImageMetadata() {
         try {
+            loading = true;
             const response = await fetch(
                 resolve(`/api/album/${tripId}/tag?tag=${tagQuery}` as any),
                 {
@@ -54,12 +55,12 @@
                     credentials: "include",
                 },
             );
-            if (response.status === 401) {
-                authorized = false;
-            } else if (!response.ok) {
+            if (!response.ok) {
                 tagDataError = await response.text();
+                return;
             }
             imageMetadata = await response.json();
+            metadataLoaded = true;
         } catch (err) {
             tagDataError = "An unexpected error occurred: ";
         } finally {
@@ -190,7 +191,7 @@
     onMount(getImageMetadata);
 </script>
 
-{#if authorized}
+{#if !loading && metadataLoaded}
     <div class="card mb-2 post-wrapper">
         <div class="card-header">
             <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
@@ -236,7 +237,7 @@
             </div>
         </div>
     </div>
-{:else}
+{:else if !loading}
     <NotFound />
 {/if}
     

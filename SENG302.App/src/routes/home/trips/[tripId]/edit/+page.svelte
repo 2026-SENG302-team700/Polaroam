@@ -9,7 +9,6 @@
     let { params } = $props();
 
     let loading = $state(true);
-    let authorized = $state(false);
     let errors = $state({
         title: [],
         description: [],
@@ -55,9 +54,7 @@
                 },
             );
             
-            if (response.status === 401) {
-                authorized = false;
-            } else if (!response.ok) {
+            if (!response.ok) {
                 errors.generic =
                     "Failed to fetch trip.";
                 return;
@@ -130,7 +127,7 @@
     }
 </script>
 
-{#if authorized}
+{#if !loading && tripTitle !== ""}
     <TripForm
         bind:title={tripTitle}
         bind:description={tripDescription}
@@ -143,6 +140,6 @@
         {loading}
         onSubmit={updateTrip}
     />
-{:else}
+{:else if !loading}
     <NotFound />
 {/if}
