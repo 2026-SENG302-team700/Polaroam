@@ -150,7 +150,7 @@ public class TripController : ControllerBase
                 return Unauthorized();
             }
 
-            if (!await _tripService.UserHasCollaborationAccessToTrip(int.Parse(userIdString), id))
+            if (!await _tripService.UserIsOwnerOfTrip(int.Parse(userIdString), id))
             {
                 return Unauthorized();
             }

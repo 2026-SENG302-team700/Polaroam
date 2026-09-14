@@ -163,7 +163,7 @@ public class TripService : ITripService
 
         var trip = await GetTripByIdAsync(tripId);
 
-        return trip.UserId == userId;
+        return trip.UserId == userId || trip.Collaborators.Contains(userId);
     }
 
     /// <summary>
@@ -283,7 +283,7 @@ public class TripService : ITripService
     public async Task<List<Trip>> GetTripsFromQuery(int userId, string query)
     {
         query = query.Trim().ToLower();
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var trips = await context.Trips
