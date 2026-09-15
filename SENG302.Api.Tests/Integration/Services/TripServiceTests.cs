@@ -719,4 +719,26 @@ public class TripServiceTests : BaseIntegrationTestFixture
         numberOfTripsAfter.ShouldBe(numberOfTripsBefore);
     }
 
+    [Fact] 
+    public async Task UpdateScrapboardReference_TripHasNoScrapboard_BooleanUpdated()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        trip.HasScrapboard.ShouldBeFalse();
+        await ServiceUnderTest.UpdateScrapboardReferenceAsync(trip.Id);
+        var newTrip = await ServiceUnderTest.GetTripByIdAsync(trip.Id);
+        newTrip.HasScrapboard.ShouldBeTrue();
+    }
+
+    [Fact] 
+    public async Task UpdateScrapboardReference_TripHasScrapboard_ThrowArgumentException()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        trip.HasScrapboard.ShouldBeFalse();
+        await ServiceUnderTest.UpdateScrapboardReferenceAsync(trip.Id);
+        await Should.ThrowAsync<ArgumentException>(
+            () => _tripService.UpdateScrapboardReferenceAsync(trip.Id)
+        );
+
+    }
+
 }

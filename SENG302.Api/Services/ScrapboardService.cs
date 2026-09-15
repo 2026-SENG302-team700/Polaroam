@@ -48,7 +48,7 @@ public class ScrapboardService : IScrapboardService
             FileKey = "temporary-key", //<- **TEMPORARY. PLEASE ADD FILE FUNCTIONALITY**
         };
         trip.HasScrapboard = true;
-        await _tripService.UpdateTripAsync(trip,UserId);
+        await _tripService.UpdateScrapboardReferenceAsync(tripId);
         var scrapboardEntry = context.Set<Scrapboard>().Add(newScrapboard);
         await context.SaveChangesAsync();
 
