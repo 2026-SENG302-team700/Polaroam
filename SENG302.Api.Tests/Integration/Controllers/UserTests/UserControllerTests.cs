@@ -69,7 +69,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         SetupUserContext("1", "Test User", "test@example.com");
     }
 
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
