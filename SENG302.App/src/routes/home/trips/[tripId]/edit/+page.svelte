@@ -1,5 +1,6 @@
 <script lang="ts">
     import TripForm from "$lib/components/forms/trip-form.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
