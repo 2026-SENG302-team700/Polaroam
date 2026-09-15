@@ -13,10 +13,10 @@ public interface IScrapboardService
 
 public class ScrapboardService : IScrapboardService
 {
-    private readonly TripService _tripService;
+    private readonly ITripService _tripService;
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
-    public ScrapboardService(TripService tripService, IDbContextFactory<DatabaseContext> dbContextFactory)
+    public ScrapboardService(ITripService tripService, IDbContextFactory<DatabaseContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
         _tripService = tripService;
@@ -47,6 +47,8 @@ public class ScrapboardService : IScrapboardService
             TripId = tripId,
             FileKey = "temporary-key", //<- **TEMPORARY. PLEASE ADD FILE FUNCTIONALITY**
         };
+        trip.HasScrapboard = true;
+        await _tripService.UpdateTripAsync(trip,UserId);
         var scrapboardEntry = context.Set<Scrapboard>().Add(newScrapboard);
         await context.SaveChangesAsync();
 
