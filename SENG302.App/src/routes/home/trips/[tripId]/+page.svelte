@@ -203,7 +203,7 @@
     async function fetchTripCollaborators() {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/collaborators` as any),
+                resolve(`/api/trip/${tripId}/collaboration` as any),
                 {
                     method: "GET",
                     credentials: "include",

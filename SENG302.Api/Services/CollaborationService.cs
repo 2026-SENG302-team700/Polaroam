@@ -10,6 +10,7 @@ namespace SENG302.Api.Services;
 public interface ICollaborationService
 {
     Task<List<CollaboratingUser>> GetTripCollaborators(int tripId);
+    Task LeaveCollaboration(int userId, int tripId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -32,7 +33,7 @@ public class CollaborationService : ICollaborationService
     /// <param name="tripId">id of the trip</param>
     /// <returns>All the collaborators of a trip</returns>
     /// <exception cref="KeyNotFoundException">If the trip id is invalid and does not correspond to the trip</exception>
-    async public Task<List<CollaboratingUser>> GetTripCollaborators(int tripId)
+    public async Task<List<CollaboratingUser>> GetTripCollaborators(int tripId)
     {
         var databaseContext = await _dbContextFactory.CreateDbContextAsync();
 
@@ -61,5 +62,23 @@ public class CollaborationService : ICollaborationService
         }
 
         return collaboratingUsers;
+    }
+    
+    /// <summary>
+    /// Takes a user and trio ID and attempt to remove the user as a collaborator
+    /// </summary>
+    /// <param name="userId">ID belonging to a user collaborating on the trip</param>
+    /// <param name="tripId">The trip ID of which we wish to remove the user from </param>
+    /// <exception cref="KeyNotFoundException">
+    /// Throws exception if the trip could not be found or the user could not be removed from the trip</exception>
+    public async Task LeaveCollaboration(int userId, int tripId)
+    {
+        var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+        if (trip is null) throw new KeyNotFoundException("The trip could not be found");
+        
+        if (!trip.Collaborators.Remove(userId)) throw new KeyNotFoundException("The user could not be removed");
+        await context.SaveChangesAsync();
     }
 }

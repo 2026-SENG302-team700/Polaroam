@@ -242,47 +242,4 @@ public class TripController : ControllerBase
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
     }
-
-    /// <summary>
-    /// Returns all collaborates 
-    /// </summary>
-    /// <param name="tripId"></param>
-    /// <returns></returns>
-    [Authorize]
-    [HttpGet("{tripId:int}/collaborators")]
-    public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
-    {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrEmpty(userIdString))
-            return Unauthorized();
-
-        try
-        {
-            if (int.TryParse(userIdString, out var userId))
-            {
-                if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
-                {
-                    return Unauthorized(
-                        "User does not have access to collaborate on the trip and view collaboration details");
-                }
-            }
-            else
-            {
-                return Unauthorized("User Id does not exist");
-            }
-
-            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
-            return Ok(collaborators);
-        }
-        catch (KeyNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        catch (ArgumentException)
-        {
-            return NotFound("This trip does not exist");
-        }
-    }
-
 }
