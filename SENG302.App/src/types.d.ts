@@ -23,3 +23,8 @@ type NotificationData = {
     rightAction?: NotificationActionButton,
     readToggle: () => void,
 }
+
+type CollaboratingUser = {
+    userId: number,
+    displayName: string,
+}

@@ -9,10 +9,12 @@
     import { goto } from "$app/navigation";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import AiTaggingUploadOption from "$lib/components/images/ai-tagging-upload-option.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let tripName = $state("");
     let filesToUpload: File[] | null | undefined = $state([]);
-    let loading = $state(false);
+    let loading = $state(true);
+    let metadataLoaded = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
     let imageMetadata = $state<{ photoId: number }[]>([]);
@@ -45,6 +47,7 @@
      */
     async function getImageMetadata() {
         try {
+            loading = true;
             const response = await fetch(
                 resolve(`/api/album/${tripId}/tag?tag=${tagQuery}` as any),
                 {
@@ -54,8 +57,10 @@
             );
             if (!response.ok) {
                 tagDataError = await response.text();
+                return;
             }
             imageMetadata = await response.json();
+            metadataLoaded = true;
         } catch (err) {
             tagDataError = "An unexpected error occurred: ";
         } finally {
@@ -186,52 +191,56 @@
     onMount(getImageMetadata);
 </script>
 
-<div class="card mb-2 post-wrapper">
-    <div class="card-header">
-        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
-        <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-    </div>
-    <div class="card-body"></div>
-    <div class="card-footer text-muted images"></div>
-    <div class="card-body p-4" style="min-height: 100vh;">
-        <div class="album-search container px-0">
-            <TagSearchForm
-                bind:query={tagQuery}
-                performSearch={getImageMetadata}
-                getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
-            />
+{#if !loading && metadataLoaded}
+    <div class="card mb-2 post-wrapper">
+        <div class="card-header">
+            <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
+            <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         </div>
-
-        {#if imageMetadata.length > 0 && tagQuery !== ""}
-            <p class="text-center">
-                {imageMetadata.length} images found matching "{tagQuery}"
-            </p>
-        {:else if imageMetadata.length > 0 && tagQuery === ""}
-            <p class="text-center">{imageMetadata.length} images found</p>
-        {/if}
-
-        <div class:empty-album={imageMetadata.length === 0}>
-            <ImageGallery
-                bind:imageMetadata
-                {tripId}
-                errors={[errors.generic, ...errors.photos, ...fileErrors]}
-                errorsBesidePicker
-            >
-                <div class="header-content-item">
-                    <ImagePicker
-                        bind:filesList={filesToUpload}
-                        errors={errors.photos}
-                        bind:fileErrors
-                        {loading}
-                        uploadFunc={preparePhotoUpload}
-                        fill
-                    />
-                </div>
-            </ImageGallery>
+        <div class="card-body"></div>
+        <div class="card-footer text-muted images"></div>
+        <div class="card-body p-4" style="min-height: 100vh;">
+            <div class="album-search container px-0">
+                <TagSearchForm
+                    bind:query={tagQuery}
+                    performSearch={getImageMetadata}
+                    getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+                />
+            </div>
+    
+            {#if imageMetadata.length > 0 && tagQuery !== ""}
+                <p class="text-center">
+                    {imageMetadata.length} images found matching "{tagQuery}"
+                </p>
+            {:else if imageMetadata.length > 0 && tagQuery === ""}
+                <p class="text-center">{imageMetadata.length} images found</p>
+            {/if}
+    
+            <div class:empty-album={imageMetadata.length === 0}>
+                <ImageGallery
+                    bind:imageMetadata
+                    {tripId}
+                    errors={[errors.generic, ...errors.photos, ...fileErrors]}
+                    errorsBesidePicker
+                >
+                    <div class="header-content-item">
+                        <ImagePicker
+                            bind:filesList={filesToUpload}
+                            errors={errors.photos}
+                            bind:fileErrors
+                            {loading}
+                            uploadFunc={preparePhotoUpload}
+                            fill
+                        />
+                    </div>
+                </ImageGallery>
+            </div>
         </div>
     </div>
-</div>
-
+{:else if !loading}
+    <NotFound />
+{/if}
+    
 {#if uploadModalShown}
     <div class="modal-backdrop show"></div>
     <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">

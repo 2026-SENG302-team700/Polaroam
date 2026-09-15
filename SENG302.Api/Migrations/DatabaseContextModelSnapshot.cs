@@ -139,6 +139,10 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.PrimitiveCollection<List<int>>("Collaborators")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");

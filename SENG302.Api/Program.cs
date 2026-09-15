@@ -80,7 +80,7 @@ public class Program
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         }
-        
+
         builder.Services.AddHttpContextAccessor();
 
         // Register custom services 
@@ -268,6 +268,7 @@ public class Program
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IScrapboardService, ScrapboardService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
+        services.AddScoped<ICollaborationService, CollaborationService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {
             client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
