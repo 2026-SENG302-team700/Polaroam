@@ -268,7 +268,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
     [Theory]
     [InlineData("345678", 123456789, true)]
-    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(String code, long timeCreated, bool userVerified)
+    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(string code, long timeCreated, bool userVerified)
     {
         await using var context = DbContextFactory.CreateDbContext();
 

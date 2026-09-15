@@ -106,7 +106,10 @@ public class SearchControllerTests : BaseIntegrationTestFixture
         await SetupTrip(1, 1, "auckland", "auckland");
 
         var response = await HttpClient.GetAsync("/api/search/my-trips?query=wellington");
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<List<Trip>>();
+        content.ShouldNotBeNull();
+        content.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -131,7 +134,10 @@ public class SearchControllerTests : BaseIntegrationTestFixture
         await SetupTrip(1, 2, "Auckland Adventure", "");
 
         var response = await HttpClient.GetAsync("/api/search/my-trips?query=auckland");
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<List<Trip>>();
+        content.ShouldNotBeNull();
+        content.Count.ShouldBe(0);
     }
 
     [Fact]
@@ -166,13 +172,16 @@ public class SearchControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task SearchPhotos_NoMatchingTags_ReturnsNotFound()
+    public async Task SearchPhotos_NoMatchingTags_ReturnsEmpty()
     {
         await SetupUser(1, "test@example.com");
         await SetupTrip(1, 1, "arthur pass", "");
         await SetupPhotoInAlbum(1, 1, ["mountain"], 1);
 
         var response = await HttpClient.GetAsync("/api/search/photos?query=beach");
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var content = await response.Content.ReadFromJsonAsync<List<TripPhotoGroupResponse>>();
+        content.ShouldNotBeNull();
+        content.Count.ShouldBe(0);
     }
 }
