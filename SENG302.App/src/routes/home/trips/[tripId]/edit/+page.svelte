@@ -1,5 +1,6 @@
 <script lang="ts">
     import TripForm from "$lib/components/forms/trip-form.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
@@ -8,11 +9,17 @@
     let { params } = $props();
 
     let loading = $state(true);
-    let errors = $state({
+    let errors = $state<{
+        title: string[];
+        description: string[];
+        dateOne: string[];
+        dateTwo: string[];
+        generic: string;
+    }>({
         title: [],
         description: [],
-        dateOne: "",
-        dateTwo: "",
+        dateOne: [],
+        dateTwo: [],
         generic: "",
     });
 
@@ -20,7 +27,9 @@
     let tripDescription = $state("");
     let startDate = $state(new Date());
     let endDate = $state(new Date("9999-03-03"));
-
+    let startDateState: "valid" | "invalid" | "empty" = $state("valid");
+    let endDateState: "valid" | "invalid" | "empty" = $state("valid");
+    
     onMount(fetchTrip);
 
     /**
@@ -30,8 +39,8 @@
         errors = {
             title: [],
             description: [],
-            dateOne: "",
-            dateTwo: "",
+            dateOne: [],
+            dateTwo: [],
             generic: "",
         };
     }
@@ -52,14 +61,14 @@
                     credentials: "include",
                 },
             );
-
-            const data = await response.json();
+            
             if (!response.ok) {
                 errors.generic =
-                    `Failed to fetch trip: ${data}` || "Failed to fetch trip.";
+                    "Failed to fetch trip.";
                 return;
             }
-
+            
+            const data = await response.json();
             tripTitle = data.title;
             tripDescription = data.description;
 
@@ -67,7 +76,7 @@
             endDate = new Date(data.endDate);
         } catch (err) {
             errors.generic =
-                `Failed to fetch trip: ${err}` || "Failed to fetch trip.";
+                "Failed to fetch trip.";
         } finally {
             loading = false;
         }
@@ -113,6 +122,19 @@
                             : "Failed to update trip.";
                 }
 
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (startDateState === "invalid") {
+                    errors.dateOne = ["Invalid date"];
+                } else if (startDateState === "empty") {
+                    errors.dateOne = ["Start date is required"];
+                }
+
+                if (endDateState === "invalid") {
+                    errors.dateTwo = ["Invalid date"];
+                } else if (endDateState === "empty") {
+                    errors.dateTwo = ["End date is required"];
+                }
+
                 return;
             }
 
@@ -126,15 +148,21 @@
     }
 </script>
 
-<TripForm
-    bind:title={tripTitle}
-    bind:description={tripDescription}
-    bind:startDate
-    bind:endDate
-    heading="Edit Trip"
-    submitText="Update Trip"
-    cancelPath={`/home/trips/${params.tripId}`}
-    {errors}
-    {loading}
-    onSubmit={updateTrip}
-/>
+{#if !loading && tripTitle !== ""}
+    <TripForm
+            bind:title={tripTitle}
+            bind:description={tripDescription}
+            bind:startDate
+            bind:endDate
+            bind:startDateState
+            bind:endDateState
+            heading="Edit Trip"
+            submitText="Update Trip"
+            cancelPath={`/home/trips/${params.tripId}`}
+            {errors}
+            {loading}
+            onSubmit={updateTrip}
+    />
+{:else if !loading}
+    <NotFound />
+{/if}

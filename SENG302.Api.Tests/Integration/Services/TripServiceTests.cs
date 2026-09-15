@@ -700,7 +700,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
 
-        var numberOfTripsBefore = await context.Set<Trip>().CountAsync();
+        var numberOfTripsBefore = await context.Trips.CountAsync();
 
         var request = new UpdateTripRequest
         {
