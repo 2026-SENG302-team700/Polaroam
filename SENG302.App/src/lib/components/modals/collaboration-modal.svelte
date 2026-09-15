@@ -1,4 +1,6 @@
 ﻿<script lang="ts">
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     let {
         show = $bindable(false),
         tripOwner = "",
@@ -10,6 +12,10 @@
         tripCollaborators: CollaboratingUser[];
         error: string;
     } = $props();
+    
+    // Leave Collaboration
+    let leaveConfirmationModalShown = $state(false);
+    let leaveCollaborationError = $state("");
 
     let inviteShown = $state(false);
     let invite = "";
@@ -32,6 +38,43 @@
     
     function inviteCollaborators() {
         console.log(invite);
+    }
+
+    /**
+     * Opens the leave collaboration confirmation modal
+     */
+    function showLeaveConfirmationModal() {
+        leaveConfirmationModalShown = true;
+    }
+
+    /**
+     * Closes the leave collaboration confirmation modal
+     */
+    function hideLeaveConfirmationModal() {
+        leaveConfirmationModalShown = false;
+    }
+
+    /**
+     * Calls backend to remove the user as a collaborator on the trip.
+     * If successful the user will no longer have access to the trip so 
+     * hides the modal and navigates them to the MyTrips page
+     */
+    async function leaveCollaboration() {
+        try {
+            leaveCollaborationError = "";
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/collaboration/leave` as any),
+                {
+                    method: "POST",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                leaveCollaborationError = "Failed to leave collaboration";
+            }
+        } catch {
+            leaveCollaborationError = "Failed to leave collaboration";
+        }
     }
 </script>
 
@@ -71,10 +114,27 @@
                         >Invite Collaborator</button>
                     </div>
                 </div>
+                <button class="btn btn-secondary mb-2 ms-4 me-4" onclick={backToTrip}>Back</button>
+                <button class="btn danger mb-2 ms-4 me-4" onclick={showLeaveConfirmationModal}>Leave</button>
+                {#if leaveCollaborationError !== ""}
+                    <div class="invalid-feedback d-block mb-2 ms-4 me-4">
+                        <div>{leaveCollaborationError}</div>
+                    </div>
+                {/if}
             </div>
         </div>
     </div>
 {/if}
+
+<ConfirmationModal
+        bind:show={leaveConfirmationModalShown}
+        message="Are you sure you want to stop collaborating and lose access to this trip?"
+        option1Text="Confirm"
+        option2Text="Cancel"
+        onOption1={leaveCollaboration}
+        onOption2={hideLeaveConfirmationModal}
+/>
+
 
 <style>
     .modal-background {
