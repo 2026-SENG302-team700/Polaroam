@@ -13,7 +13,7 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260911020344_AddCollaboratorsToTrip")]
+    [Migration("20260915230256_AddCollaboratorsToTrip")]
     partial class AddCollaboratorsToTrip
     {
         /// <inheritdoc />
@@ -200,6 +200,9 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("EmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ForgotIsResettingPassword")
                         .HasColumnType("boolean");
 
                     b.Property<string>("OneTimeCode")
