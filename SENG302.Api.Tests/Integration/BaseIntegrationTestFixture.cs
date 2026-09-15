@@ -153,30 +153,5 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
             Directory.Delete(FakeTestDirectory, true);
         }
     }
-
-    protected void AddTestPrincipalToController(ControllerBase controller)
-    {
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext
-            {
-                User = CreateTestUserPrincipal()
-            }
-        };
-    }
-
-    protected ClaimsPrincipal CreateTestUserPrincipal()
-    {
-        return CreateUserPrincipal("1", "John Example", "john@example.com");
-    }
-
-    protected ClaimsPrincipal CreateUserPrincipal(string userId, string name, string email)
-    {
-        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId), new Claim(ClaimTypes.Name, name), new Claim(ClaimTypes.Email, email) };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var principal = new ClaimsPrincipal(identity);
-
-        return principal;
-    }
 }
 

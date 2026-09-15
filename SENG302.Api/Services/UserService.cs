@@ -487,13 +487,13 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        
+
         user!.AcceptedAiPrivacyPolicy = true;
-        
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Checks to see whether or not a user has accepted the AI privacy policy.
     /// </summary>
@@ -505,7 +505,7 @@ public class UserService : IUserService
     public async Task<bool> PrivacyPolicyCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);
-        
+
         // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
         if (user == null)
         {
@@ -514,7 +514,7 @@ public class UserService : IUserService
 
         return user.AcceptedAiPrivacyPolicy;
     }
-    
+
     /// <summary>
     /// Switches the state of the "AiTaggingEnabled" field in a user.
     /// </summary>
@@ -548,7 +548,7 @@ public class UserService : IUserService
     public async Task<bool> UserAiTaggingCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);
-        
+
         // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
         if (user == null)
         {
@@ -582,7 +582,7 @@ public class UserService : IUserService
     public async Task<bool> GetPreferenceMapVisibleAsync(int userId)
     {
         User user = await GetUserByIdAsync(userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
-        
+
         return user.PreferenceMapVisible;
     }
 }
