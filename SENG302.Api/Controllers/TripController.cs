@@ -74,7 +74,15 @@ public class TripController : ControllerBase
         {
             return NotFound("User not found");
         }
-        return Ok(user.DisplayName);
+
+        var response = new GetUserResponse
+        {
+            Id = user.Id,
+            Email = user.Email,
+            DisplayName = user.DisplayName,
+            Country = user.Country
+        };
+        return Ok(response);
     }
 
     /// <summary>
