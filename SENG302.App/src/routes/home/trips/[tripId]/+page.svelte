@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { MapLibre, Marker, Popup } from "svelte-maplibre";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -8,8 +7,8 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import AddButton from "$lib/components/buttons/add-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import CollaborationModal from "$lib/components/modals/collaboration-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
@@ -21,7 +20,10 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
+    let ownerDisplayName: null | string = $state(null);
     let hoveredPostId: number | null = $state(null);
+    let collaborationModalShown: boolean = $state(false);
+    let collaboratingUsersError: string = $state("");
 
     let tripObject = $state({
         id: -1,
@@ -32,6 +34,16 @@
         userId: 0,
     });
 
+    let collaboratingUsers: CollaboratingUser[] = $state([]);
+
+    const LoadState = {
+        UNLOADED: 0,
+        LOADING: 1,
+        LOADED: 2,
+    };
+
+    let collaboratingLoadingState: number = $state(LoadState.UNLOADED);
+
     let postLocations = $state([]);
     let posts = $state([]);
     let selectedPost = $state(null);
@@ -40,6 +52,7 @@
         fetchTrip();
         fetchPosts();
         fetchLocations();
+        fetchUserName();
     });
 
     /**
@@ -103,7 +116,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/locations/${params.tripId}` as any),
+                resolve(`/api/trip/locations/${tripId}` as any),
                 {
                     method: "Get",
                     credentials: "include",
@@ -123,7 +136,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.tripId}` as any),
+                resolve(`/api/trip/${tripId}` as any),
                 {
                     method: "DELETE",
                     credentials: "include",
@@ -152,6 +165,60 @@
     function hideConfirmationModal() {
         deletionModalShown = false;
     }
+
+    async function fetchUserName() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/user` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            ownerDisplayName = await response.text();
+        } catch (err) {
+            throw new Error(
+                "Failed to fetch post creator: " + (err as Error).message,
+            );
+        }
+    }
+
+    /**
+     * Turn on the collaboration modal
+     * If the collaborators are not yet loaded then load them
+     */
+    function showCollaborationModal() {
+        if (collaboratingLoadingState === LoadState.UNLOADED) {
+            collaboratingLoadingState = LoadState.LOADING;
+            fetchTripCollaborators()
+                .then(() => {
+                    collaboratingLoadingState = LoadState.LOADED;
+                })
+                .catch((e: Error) => {
+                    collaboratingUsersError = e.message;
+                });
+        }
+
+        collaborationModalShown = true;
+    }
+
+    /**
+     * Fetch all collaborators of trip from backend
+     */
+    async function fetchTripCollaborators() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/collaborators` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            collaboratingUsers = await response.json();
+        } catch (err: any) {
+            collaboratingUsersError = err.toString();
+        }
+    }
 </script>
 
 {#if !loading && tripObject.id !== -1}
@@ -159,6 +226,12 @@
         <div class="button-wrapper">
             <NavigationButton path="/home" text="Back" />
             <div class="modify-button-wrapper">
+                <button
+                        class="btn btn-secondary bi-people-fill"
+                        onclick={() => {
+                    showCollaborationModal();
+                }}>Collaboration</button
+                >
                 <AlbumButton tripid={params.tripId} />
                 <EditButton path={`/home/trips/${params.tripId}/edit`} />
                 <DeleteButton deleteAction={showConfirmationModal} />
@@ -225,6 +298,13 @@
     option2Text="Do not delete"
     onOption1={deleteTrip}
     onOption2={hideConfirmationModal}
+/>
+
+<CollaborationModal
+    bind:show={collaborationModalShown}
+    tripOwner={ownerDisplayName ?? ""}
+    tripCollaborators={collaboratingUsers}
+    {error}
 />
 
 <style>

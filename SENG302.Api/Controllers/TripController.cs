@@ -17,13 +17,17 @@ public class TripController : ControllerBase
     private readonly ITripService _tripService;
     private readonly IPostService _postService;
     private readonly IAlbumService _albumService;
-    
+    private readonly IUserService _userService;
+    private readonly ICollaborationService _collaborationService;
 
-    public TripController(ITripService tripService,IPostService postService, IAlbumService albumService)
+
+    public TripController(ITripService tripService, IPostService postService, IAlbumService albumService, IUserService userService, ICollaborationService collaborationService)
     {
         _tripService = tripService;
         _postService = postService;
         _albumService = albumService;
+        _userService = userService;
+        _collaborationService = collaborationService;
     }
 
     /// <summary>
@@ -50,7 +54,7 @@ public class TripController : ControllerBase
         try
         {
             var trip = await _tripService.GetTripByIdAsync(id);
-            if (!await _tripService.UserHasModifyAccessToTrip(userId, id)) 
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, id)) 
                 return Unauthorized("Trip does not belong to you!");
             return Ok(trip);
         }
@@ -58,6 +62,26 @@ public class TripController : ControllerBase
         {
             return NotFound();
         }
+    }
+
+    /// <summary>
+    /// Get the user based on trip id
+    /// </summary>
+    /// <param name="tripId">id for the trip</param>
+    /// <returns>user display name</returns>
+    [Authorize]
+    [HttpGet("{tripId:int}/user")]
+    public async Task<ActionResult<GetUserResponse>> GetTripOwnerName(int tripId)
+    {
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+
+        var user = await _userService.GetUserByIdAsync(trip.UserId);
+
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+        return Ok(user.DisplayName);
     }
 
     /// <summary>
@@ -138,7 +162,7 @@ public class TripController : ControllerBase
                 return Unauthorized("Not logged in!");
             }
 
-            if (!await _tripService.UserHasModifyAccessToTrip(int.Parse(userIdString), id))
+            if (!await _tripService.UserHasCollaborationAccessToTrip(int.Parse(userIdString), id))
             {
                 return Unauthorized("You do not have permission to delete this trip!");
             }
@@ -175,7 +199,7 @@ public class TripController : ControllerBase
             if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized("Not logged in!");
             var userId = int.Parse(userIdString);
-            if (!await _tripService.UserHasModifyAccessToTrip(userId, tripRequest.Id)) 
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripRequest.Id)) 
                 return Unauthorized("You do not have permission to edit this trip!");
             var trip = await _tripService.UpdateTripAsync(tripRequest, int.Parse(userIdString));
             return Ok(trip);
@@ -218,24 +242,66 @@ public class TripController : ControllerBase
         
         // Check has access to the trip
         var userId = int.Parse(userIdString);
-        if (!await _tripService.UserHasModifyAccessToTrip(userId, tripId)) return Unauthorized("You are not allowed to access this Trip's Posts!");
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId)) return Unauthorized("You are not allowed to access this Trip's Posts!");
         
         // Get list of posts
         var taskList = await _postService.GetPostsByTripAsync(tripId);
         return Ok(taskList);
     }
 
-     /// <summary>
-     /// Gets all locations associated with a trip.
-     /// </summary>
-     /// <param name="tripId"></param>
-     /// <returns>A list of location objects</returns>
+    /// <summary>
+    /// Gets all locations associated with a trip.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>A list of location objects</returns>
     [Authorize]
     [HttpGet("locations/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Location>>> GetPostLocations(int tripId)
     {
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
+    }
+
+    /// <summary>
+    /// Returns all collaborates 
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpGet("{tripId:int}/collaborators")]
+    public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrEmpty(userIdString))
+            return Unauthorized();
+
+        try
+        {
+            if (int.TryParse(userIdString, out var userId))
+            {
+                if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
+                {
+                    return Unauthorized(
+                        "User does not have access to collaborate on the trip and view collaboration details");
+                }
+            }
+            else
+            {
+                return Unauthorized("User Id does not exist");
+            }
+
+            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
+            return Ok(collaborators);
+        }
+        catch (KeyNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+        catch (ArgumentException)
+        {
+            return NotFound("This trip does not exist");
+        }
     }
 
 }
