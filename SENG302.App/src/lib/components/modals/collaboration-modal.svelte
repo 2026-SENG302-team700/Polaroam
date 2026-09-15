@@ -55,6 +55,7 @@
      * Opens the leave collaboration confirmation modal
      */
     function showLeaveConfirmationModal() {
+        leaveCollaborationError = "";
         leaveConfirmationModalShown = true;
     }
 

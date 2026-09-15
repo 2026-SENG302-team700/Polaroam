@@ -284,7 +284,5 @@ public class TripController : ControllerBase
             return NotFound("This trip does not exist");
         }
     }
-    
-
 
 }
