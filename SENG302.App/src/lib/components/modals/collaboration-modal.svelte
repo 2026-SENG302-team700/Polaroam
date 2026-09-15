@@ -18,7 +18,9 @@
     let leaveCollaborationError = $state("");
 
     let inviteShown = $state(false);
-    let invite = "";
+    let invite = $state("");
+    let emailMessage = $state("Completed")
+    let emailMessageStyle = $state("")
     
     /**
      * Go back to trip
@@ -37,7 +39,16 @@
     }
     
     function inviteCollaborators() {
-        console.log(invite);
+        
+        const emailInvite = invite
+        invite = "";
+        
+        console.log("emailInvite: " + emailInvite)
+        console.log(invite)
+        
+        emailMessage = "Completed"
+        
+        
     }
 
     /**
@@ -80,8 +91,8 @@
 
 {#if show}
     <div class="modal-backdrop show"></div>
-    <div class="modal d-block" tabindex="-1" role="dialog">
-        <div class="modal-dialog ...">
+    <div class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
             <div class="modal-content modal-background">
                 <div class="p-4">
                     {#if error !== ""}
@@ -106,21 +117,21 @@
                                 <i class="bi bi-envelope-arrow-up" />
                             </button>
                         </div>
+                        <span>{emailMessage}</span>
                     {/if}
                     <div class="modal-buttons">
                         <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back</button>
-                        <button class="btn btn-secondary modal-footer-button"
+                        <button class="btn btn-primary modal-footer-button"
                                 onclick={() => inviteShown = !inviteShown}
-                        >Invite Collaborator</button>
+                        >Invite</button>
+                        <button class="btn btn-danger modal-footer-button" onclick={showLeaveConfirmationModal}>Leave</button>
                     </div>
+                    {#if leaveCollaborationError !== ""}
+                        <div class="invalid-feedback d-block">
+                            <span>{leaveCollaborationError}</span>
+                        </div>
+                    {/if}
                 </div>
-                <button class="btn btn-secondary mb-2 ms-4 me-4" onclick={backToTrip}>Back</button>
-                <button class="btn danger mb-2 ms-4 me-4" onclick={showLeaveConfirmationModal}>Leave</button>
-                {#if leaveCollaborationError !== ""}
-                    <div class="invalid-feedback d-block mb-2 ms-4 me-4">
-                        <div>{leaveCollaborationError}</div>
-                    </div>
-                {/if}
             </div>
         </div>
     </div>
@@ -137,8 +148,16 @@
 
 
 <style>
-    .modal-background {
-        background-color: #22CACF;
+    .modal {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        align-items: center;
+        vertical-align: center;
+    }
+    
+    .modal-content {
+        width: 33vw;
     }
     
     .modal-buttons {
