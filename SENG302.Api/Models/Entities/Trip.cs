@@ -18,7 +18,7 @@ public class Trip
     public string Title { get; set; } = string.Empty;
 
     [ForeignKey("Scrapboard")]
-    public int ScrapboardId {get; set;} = -1;
+    public bool HasScrapboard {get; set;} = false;
     
     [Required]
     public int UserId { get; set; } // Foreign key to the User that owns this trip

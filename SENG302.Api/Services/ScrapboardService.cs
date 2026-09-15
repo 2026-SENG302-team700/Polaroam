@@ -7,6 +7,7 @@ namespace SENG302.Api.Services;
 
 public interface IScrapboardService
 {
+    public Task<Scrapboard> GetScrapboardByTripAsync(int tripId);
     public Task<ActionResult<Scrapboard>> CreateScrapboardAsync(int tripId, int UserId);
 }
 
@@ -36,20 +37,40 @@ public class ScrapboardService : IScrapboardService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var trip = await _tripService.GetTripByIdAsync(tripId);
         //greater than -1 means the trip has a scrapboard already
-        if (trip.ScrapboardId > -1)
+        if (trip.HasScrapboard)
         {
             throw new ArgumentException("This trip already has a Scrapboard.");
         }
         var newScrapboard = new Scrapboard
         {
-            OwnerId = UserId,
+            OwnerId = [UserId],
             TripId = tripId,
             FileKey = "temporary-key", //<- **TEMPORARY. PLEASE ADD FILE FUNCTIONALITY**
         };
         var scrapboardEntry = context.Set<Scrapboard>().Add(newScrapboard);
-        trip.ScrapboardId = newScrapboard.Id;
         await context.SaveChangesAsync();
 
         return newScrapboard;
+    }
+
+    /// <summary>
+    /// scrapboards use their tripid as their primary key, so
+    /// given a trip's id, return it's corresponding scrapboard
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns>the scrapboard db item</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<Scrapboard> GetScrapboardByTripAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+        if (!trip.HasScrapboard)
+        {
+            throw new ArgumentException("This trip has no Scrapboard");
+        }
+        //if scrapboard id is greater than -1, then it must exist
+        var scrapboard = await context.Scrapboards.FirstOrDefaultAsync(t => t.TripId == tripId);
+        return scrapboard;
+
     }
 }
