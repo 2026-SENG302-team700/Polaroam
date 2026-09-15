@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
@@ -37,7 +38,7 @@ public class TripController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Trip>> GetTrip(int id)
+    public async Task<ActionResult<TripResponse>> GetTrip(int id)
     {
         // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -49,7 +50,8 @@ public class TripController : ControllerBase
         try
         {
             var trip = await _tripService.GetTripByIdAsync(id);
-            return Ok(trip);
+
+            return Ok(await TripToTripResponse(trip));
         }
         catch (ArgumentException)
         {
@@ -64,7 +66,7 @@ public class TripController : ControllerBase
     /// <returns>user display name</returns>
     [Authorize]
     [HttpGet("{tripId:int}/user")]
-    public async Task<ActionResult<GetUserResponse>> GetTripOwnerName(int tripId)
+    public async Task<ActionResult<UserResponse>> GetTripOwnerName(int tripId)
     {
         var trip = await _tripService.GetTripByIdAsync(tripId);
 
@@ -84,15 +86,21 @@ public class TripController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Trip>>> GetTripsForUser()
+    public async Task<ActionResult<IEnumerable<TripResponse>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
-
         var trips = await _tripService.GetTripsByUserIdAsync(int.Parse(userIdString));
-        return Ok(trips);
+
+        var tripResponses = new List<TripResponse>();
+        foreach (Trip trip in trips)
+        {
+            tripResponses.Add(await TripToTripResponse(trip));
+        }
+
+        return Ok(tripResponses);
     }
 
     /// <summary>
@@ -104,7 +112,7 @@ public class TripController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<Trip>> CreateTrip([FromBody] NewTripRequest tripRequest)
+    public async Task<ActionResult<TripResponse>> CreateTrip([FromBody] NewTripRequest tripRequest)
     {
         try
         {
@@ -113,9 +121,11 @@ public class TripController : ControllerBase
                 return Unauthorized();
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
 
-            var album = await _albumService.CreateNewAlbumAsync(trip.Id);
+            await _albumService.CreateNewAlbumAsync(trip.Id);
 
-            return Ok(trip);
+            var tripResponse = await TripToTripResponse(trip);
+
+            return Ok(tripResponse);
         }
         catch (MultipleValidationListException e)
         {
@@ -124,7 +134,10 @@ public class TripController : ControllerBase
                 Errors = e.Errors
             });
         }
-
+        catch (KeyNotFoundException e)
+        {
+            return Problem(e.Message);
+        }
         catch (Exception e)
         {
             return BadRequest(e.Message);
@@ -140,7 +153,7 @@ public class TripController : ControllerBase
     /// 200 if the trip is deleted successfully.
     /// </returns>
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult<Trip>> DeleteTrip(int id)
+    public async Task<ActionResult> DeleteTrip(int id)
     {
         try
         {
@@ -179,7 +192,7 @@ public class TripController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<Trip>> UpdateTrip([FromBody] UpdateTripRequest tripRequest)
+    public async Task<ActionResult<TripResponse>> UpdateTrip([FromBody] UpdateTripRequest tripRequest)
     {
         try
         {
@@ -192,7 +205,7 @@ public class TripController : ControllerBase
             {
                 return NotFound();
             }
-            return Ok(trip);
+            return Ok(await TripToTripResponse(trip));
         }
         catch (MultipleValidationListException exception)
         {
@@ -283,6 +296,24 @@ public class TripController : ControllerBase
         {
             return NotFound("This trip does not exist");
         }
+    }
+
+    public async Task<TripResponse> TripToTripResponse(Trip trip)
+    {
+        var user = await _userService.GetUserByIdAsync(trip.UserId) ?? throw new KeyNotFoundException("User not found");
+
+        var tripResponse = new TripResponse
+        {
+            Id = trip.Id,
+            Title = trip.Title,
+            UserId = trip.UserId,
+            Description = trip.Description,
+            EndDate = trip.EndDate,
+            StartDate = trip.StartDate,
+            OwnerName = user.DisplayName,
+            Collaborators = await _collaborationService.GetTripCollaborators(trip.Id),
+        };
+        return tripResponse;
     }
 
 }

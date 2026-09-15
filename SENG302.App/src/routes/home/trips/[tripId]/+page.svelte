@@ -20,29 +20,19 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
-    let ownerDisplayName: null | string = $state(null);
     let hoveredPostId: number | null = $state(null);
     let collaborationModalShown: boolean = $state(false);
-    let collaboratingUsersError: string = $state("");
 
-    let tripObject = $state({
+    let tripObject: Trip = $state({
         id: 0,
         title: "No Title",
         description: "No Description",
         startDate: "9998-12-31",
         endDate: "9999-12-31",
         userId: 0,
+        ownerName: "No Owner",
+        collaborators: [],
     });
-
-    let collaboratingUsers: CollaboratingUser[] = $state([]);
-
-    const LoadState = {
-        UNLOADED: 0,
-        LOADING: 1,
-        LOADED: 2,
-    };
-
-    let collaboratingLoadingState: number = $state(LoadState.UNLOADED);
 
     let postLocations = $state([]);
     let posts = $state([]);
@@ -52,7 +42,6 @@
         fetchTrip();
         fetchPosts();
         fetchLocations();
-        fetchUserName();
     });
 
     /**
@@ -161,59 +150,12 @@
     function hideConfirmationModal() {
         deletionModalShown = false;
     }
-
-    async function fetchUserName() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/user` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            ownerDisplayName = await response.text();
-        } catch (err) {
-            throw new Error(
-                "Failed to fetch post creator: " + (err as Error).message,
-            );
-        }
-    }
-
     /**
      * Turn on the collaboration modal
      * If the collaborators are not yet loaded then load them
      */
     function showCollaborationModal() {
-        if (collaboratingLoadingState === LoadState.UNLOADED) {
-            collaboratingLoadingState = LoadState.LOADING;
-            fetchTripCollaborators()
-                .then(() => {
-                    collaboratingLoadingState = LoadState.LOADED;
-                })
-                .catch((e: Error) => {
-                    collaboratingUsersError = e.message;
-                });
-        }
-
         collaborationModalShown = true;
-    }
-
-    /**
-     * Fetch all collaborators of trip from backend
-     */
-    async function fetchTripCollaborators() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/collaborators` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            collaboratingUsers = await response.json();
-        } catch (err: any) {
-            collaboratingUsersError = err.toString();
-        }
     }
 </script>
 
@@ -243,6 +185,7 @@
                 <h1 class="card-subtitle mb-2 h1 user-name">
                     {tripObject.title}
                 </h1>
+
                 <div
                     class="header-content-item"
                     style="display: flex; align-items: center; flex:1; justify-content: end;"
@@ -258,6 +201,13 @@
                     </h6>
                 </div>
             </div>
+            <h4>
+                <i
+                    >Owned by {tripObject.userId == $user.id
+                        ? "You"
+                        : tripObject.ownerName}</i
+                >
+            </h4>
             {#if tripObject.description.length > 0}
                 <span>{tripObject.description}</span>
             {:else}
@@ -296,8 +246,8 @@
 
 <CollaborationModal
     bind:show={collaborationModalShown}
-    tripOwner={ownerDisplayName ?? ""}
-    tripCollaborators={collaboratingUsers}
+    tripOwner={tripObject.ownerName ?? ""}
+    tripCollaborators={tripObject.collaborators}
     {error}
 />
 

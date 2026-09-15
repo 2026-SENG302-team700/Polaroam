@@ -28,3 +28,21 @@ type CollaboratingUser = {
     userId: number,
     displayName: string,
 }
+
+type Trip = {
+    id: number,
+    title: string,
+    userId: number,
+    ownerName: string,
+    description: string,
+    startDate: string,
+    endDate: string,
+    collaborators: CollaboratingUser[],
+}
+
+type TripPhotoGroup = {
+    tripId: number,
+    tripTitle: string,
+    photos: File[],
+    photoIds: number[],
+}

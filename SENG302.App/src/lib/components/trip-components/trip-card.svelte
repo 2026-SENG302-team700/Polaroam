@@ -4,9 +4,9 @@
     import { onMount } from "svelte";
     import { formatDate } from "$lib/datepicker/formatDate";
     import { fetchWithCsrf } from "$lib/csrf";
-    import type { trip } from "./trip-tools";
+    import { user } from "$lib/stores/user";
 
-    let { tripObject }: { tripObject: trip } = $props();
+    let { tripObject }: { tripObject: Trip } = $props();
     let coverPhotoId: number | null = $state(null);
 
     onMount(() => {
@@ -60,7 +60,11 @@
 
     <div class="trip-details">
         <h2>{tripObject.title}</h2>
-        <p>{tripObject.userId}</p>
+        <p>
+            Owned by {tripObject.userId == $user.id
+                ? "You"
+                : tripObject.ownerName}
+        </p>
         <p class="dates">
             <i class="bi bi-calendar3"></i>
             <span>
@@ -82,10 +86,10 @@
     .trip-card {
         width: 100%;
         overflow: hidden;
-        border: 2px solid #686868;
+        border: 2px solid black;
         border-radius: 0.55rem;
         background: #fffdf7;
-        box-shadow: 6px 6px 0 #686868;
+        box-shadow: 6px 6px 0 black;
         cursor: pointer;
         transition:
             transform 120ms ease,
@@ -95,7 +99,7 @@
     .trip-card:hover,
     .trip-card:focus-visible {
         transform: translate(-2px, -2px);
-        box-shadow: 8px 8px 0 #686868;
+        box-shadow: 8px 8px 0 black;
         outline: none;
     }
 
@@ -103,7 +107,7 @@
         position: relative;
         aspect-ratio: 16 / 10;
         overflow: hidden;
-        border-bottom: 2px solid #686868;
+        border-bottom: 2px solid black;
         background: #efe7d6;
     }
 
@@ -117,7 +121,7 @@
     .cover-placeholder {
         display: grid;
         place-items: center;
-        color: #686868;
+        color: black;
         background: linear-gradient(
                 135deg,
                 transparent 75%,
@@ -155,7 +159,7 @@
         align-items: center;
         gap: 0.5rem;
         margin: 0;
-        color: #686868;
+        color: black;
         font-size: 0.9rem;
         font-weight: 600;
     }
@@ -164,7 +168,7 @@
         display: -webkit-box;
         margin: 0.7rem 0 0;
         overflow: hidden;
-        color: #5f5f5f;
+        color: black;
         font-size: 0.9rem;
         line-height: 1.35;
         -webkit-box-orient: vertical;
@@ -178,7 +182,7 @@
         gap: 0.35rem;
         margin-top: auto;
         padding-top: 0.8rem;
-        color: #3f3f3f;
+        color: black;
         font-size: 0.85rem;
         font-weight: 800;
     }
