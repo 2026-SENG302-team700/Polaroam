@@ -15,7 +15,21 @@ namespace SENG302.Api.Migrations
                 name: "HasScrapboard",
                 table: "Trips",
                 type: "boolean",
+                nullable: true,
+                defaultValue: false);
+
+            migrationBuilder.Sql("""
+            UPDATE "Trips"
+            SET "HasScrapboard" = false
+            WHERE "HasScrapboard" IS NULL;
+            """);
+
+            migrationBuilder.AlterColumn<bool>(
+                name: "HasScrapboard",
+                table: "Trips",
+                type: "boolean",
                 nullable: false,
+                oldNullable: true,
                 defaultValue: false);
 
             migrationBuilder.CreateTable(
