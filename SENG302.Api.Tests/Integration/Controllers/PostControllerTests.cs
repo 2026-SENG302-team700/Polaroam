@@ -138,6 +138,33 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task GetPost_UserDoesNotOwnPost_ReturnsNotFound()
+    {
+        SetupUserContext("1");
+
+        var post = new Post
+        {
+            PostId = 10,
+            TripId = 20,
+            Title = "Another user's post",
+            Content = "Test content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
+        _mockPostService.GetPostAsync(post.PostId).Returns(post);
+        _mockPostService.UserOwnsPost(1, post.TripId).Returns(false);
+
+        var result = await _controller.GetPost(post.PostId);
+
+        result.Result.ShouldBeOfType<NotFoundResult>();
+
+        await _mockPostService.Received(1).GetPostAsync(post.PostId);
+        await _mockPostService.Received(1).UserOwnsPost(1, post.TripId);
+    }
+
+    [Fact]
     public async Task GetAllPosts_NoPosts_ReturnsEmpty()
     {
         await using var context = DbContextFactory.CreateDbContext();
@@ -1163,7 +1190,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         errors.Errors["photos"].ShouldContain(e => e.Contains("bad1.png"));
         errors.Errors["photos"].ShouldContain(e => e.Contains("bad2.jpeg"));
     }
-    
+
     /// <summary>
     /// Create a new authenticated user
     /// </summary>
@@ -1365,9 +1392,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         var existingPost = new Post
@@ -1383,7 +1410,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
         _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
-        
+
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
 
@@ -1455,7 +1482,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task UpdatePost_UserDoesNotOwnPost_ReturnsUnauthorized()
     {
         SetupUserContext("1");
-        
+
         var user = new User
         {
             Id = 1,
@@ -1464,9 +1491,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         var existingPost = new Post
@@ -1505,9 +1532,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         var existingPost = new Post
@@ -1559,9 +1586,9 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
         var existingPost = new Post
