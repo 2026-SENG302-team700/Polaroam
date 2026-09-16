@@ -13,8 +13,21 @@ namespace SENG302.Api.Migrations
                 name: "Collaborators",
                 table: "Trips",
                 type: "integer[]",
-                nullable: false);
-        }
+                nullable: true);
+
+            migrationBuilder.Sql("""
+                UPDATE "Trips"
+                SET "Collaborators" = ARRAY[]::integer[]
+                WHERE "Collaborators" IS NULL;
+                """);
+
+            migrationBuilder.AlterColumn<List<int>>(
+                name: "Collaborators",
+                table: "Trips",
+                type: "integer[]",
+                nullable: false,
+                oldNullable: true);
+                }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
