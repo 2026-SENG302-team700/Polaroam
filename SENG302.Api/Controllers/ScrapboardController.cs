@@ -55,6 +55,14 @@ public class ScrapboardController : ControllerBase
         }
     }
 
+
+    /// <summary>
+    /// given a scrapboard request, creates a new scrapboard, assuming the user
+    /// is authorised to create the scrapboard for this trip, as well as ensuring 
+    /// the trip exists.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>the scrapboard back to the frontend</returns>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<Scrapboard>> CreateNewScrapboard([FromBody] NewScrapboardRequest request)
