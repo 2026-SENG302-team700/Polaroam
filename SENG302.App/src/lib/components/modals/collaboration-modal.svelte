@@ -21,6 +21,7 @@
     let leaveConfirmationModalShown = $state(false);
     let leaveCollaborationError = $state("");
 
+    // Invite Collaboraters
     let inviteShown = $state(false);
     let invite = $state("");
     let emailMessage = $state("Completed")
@@ -64,8 +65,16 @@
                     email: emailInvite
                 })
             });
+            
+            if (!response.ok) {
+                emailMessageStyle = "invite-message-fail"
+                emailMessage = await response.text();
+            } else {
+                emailMessageStyle = "invite-message-success"
+                emailMessage = await "Invite sent."
+            }
+
         } catch (e) {
-            console.log("hi");
             console.error(e);
         }
     }
@@ -137,7 +146,7 @@
                                 <i class="bi bi-envelope-arrow-up" />
                             </button>
                         </div>
-                        <span>{emailMessage}</span>
+                        <span class={`${emailMessageStyle}`}>{emailMessage}</span>
                     {/if}
                     <div class="modal-buttons">
                         <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back</button>
@@ -206,5 +215,13 @@
     
     .invite-form button {
         width: 4rem;
+    }
+    
+    .invite-message-success {
+        color: #0f5323;
+    }
+    
+    .invite-message-fail {
+        color: #8e1519;
     }
 </style>

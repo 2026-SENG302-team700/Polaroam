@@ -106,25 +106,22 @@ public class CollaborationService : ICollaborationService
         var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);
         var trip = await _tripService.GetTripByIdAsync(tripId);
         
-        // verify if user is already in trip
         if (invitedUser is not null)
         {
+            // user cannot send it to itself
+            if (inviterId == invitedUser.Id)
+            {
+                throw new UserInTripException("You cannot invite yourself to a trip.");
+            }
+            
+            // verify if user is already in trip
             var tripCollaborators = await GetTripCollaborators(tripId);
-            
-            Console.WriteLine(tripCollaborators.FirstOrDefault(u => u.UserId == invitedUser.Id));
-            
             if (
                 tripCollaborators.Any(u => u.UserId == invitedUser.Id)
                 || trip.UserId == invitedUser.Id
                 )
             {
                 throw new UserInTripException("This user is already apart of this trip.");
-            }
-        
-            // user cannot send it to itself
-            if (inviterId == invitedUser.Id)
-            {
-                throw new UserInTripException("You cannot invite yourself to a trip.");
             }
         }
         
