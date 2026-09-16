@@ -21,8 +21,6 @@ public class ResetPasswordController : ControllerBase
     private readonly IEmailQueue _emailQueue;
     private readonly IOneTimeCodeService _codeService;
 
-    private readonly string ResetSchemeName = "PasswordResetScheme";
-
     public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailQueue emailQueue)
     {
         _userService = userService;

@@ -14,6 +14,7 @@
     import Map from "$lib/components/trip-components/map.svelte";
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
+    import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -275,7 +276,8 @@
                     {hoveredPostId}
                     bind:selectedPost
                 />
-            </div>
+                <ScrapboardImage {tripId}/>
+        </div>
             <div class="card-footer text-muted images">
                 <PostSection
                     {posts}
