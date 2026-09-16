@@ -59,19 +59,18 @@
                     credentials: "include",
                 },
             );
-            
+
             // Check response
             if (!response.ok) {
                 error = "Failed to fetch trip.";
                 return;
             }
-            
-            // Parse response 
+
+            // Parse response
             const data = await response.json();
             tripObject = data;
-            
         } catch (err) {
-            error = "Failed to fetch trip"
+            error = "Failed to fetch trip";
         } finally {
             loading = false;
         }
@@ -170,49 +169,17 @@
             <NavigationButton path="/home" text="Back" />
             <div class="modify-button-wrapper">
                 <button
-                        class="btn btn-secondary bi-people-fill"
-                        onclick={() => {
-                    showCollaborationModal();
-                }}>Collaboration</button
-            >
-            <AlbumButton tripid={params.tripId} />
-            <EditButton path={`/home/trips/${params.tripId}/edit`} />
-            {#if tripObject.userId == $user.id}
-                <DeleteButton deleteAction={showConfirmationModal} />
-            {/if}
-        </div>
-    </div>
-    <div class="card mb-2 post-wrapper">
-        <div class="card-header">
-            <div
-                class="title-and-date"
-                style="display: flex; flex-direction: row;"
-            >
-                <h1 class="card-subtitle mb-2 h1 user-name">
-                    {tripObject.title}
-                </h1>
-
-                <div
-                    class="header-content-item"
-                    style="display: flex; align-items: center; flex:1; justify-content: end;"
+                    class="btn btn-secondary bi-people-fill"
+                    onclick={() => {
+                        showCollaborationModal();
+                    }}>Collaboration</button
                 >
                 <AlbumButton tripid={params.tripId} />
                 <EditButton path={`/home/trips/${params.tripId}/edit`} />
-                <DeleteButton deleteAction={showConfirmationModal} />
+                {#if tripObject.userId == $user.id}
+                    <DeleteButton deleteAction={showConfirmationModal} />
+                {/if}
             </div>
-            <h4>
-                <i
-                    >Owned by {tripObject.userId == $user.id
-                        ? "You"
-                        : tripObject.ownerName}</i
-                >
-            </h4>
-            {#if tripObject.description.length > 0}
-                <span>{tripObject.description}</span>
-            {:else}
-                <p>No description</p>
-            {/if}
-            <ErrorDisplay errors={[error]} />
         </div>
         <div class="card mb-2 post-wrapper">
             <div class="card-header">
@@ -228,6 +195,7 @@
                         style="display: flex; align-items: center; flex:1; justify-content: end;"
                     >
                         <div class="bi-calendar-event"></div>
+
                         <h6
                             class="card-subtitle text-muted"
                             style="margin-left: 5px;"
@@ -238,6 +206,13 @@
                         </h6>
                     </div>
                 </div>
+                <h4>
+                    <i
+                        >Owned by {tripObject.userId == $user.id
+                            ? "You"
+                            : tripObject.ownerName}</i
+                    >
+                </h4>
                 {#if tripObject.description.length > 0}
                     <span>{tripObject.description}</span>
                 {:else}
