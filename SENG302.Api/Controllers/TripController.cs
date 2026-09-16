@@ -35,7 +35,11 @@ public class TripController : ControllerBase
     /// Gets a trip by its ID. Returns 404 if no trip with the given ID exists.
     /// </summary>
     /// <param name="id"></param>
-    /// <returns></returns>
+    /// <returns>
+    /// trip with the Given id
+    /// Unauthorized if the user is not signed in or does not own the trip
+    /// Not Found if no trip exists with the given id
+    /// </returns>
     [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TripResponse>> GetTrip(int id)
@@ -44,13 +48,16 @@ public class TripController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized();
+            return Unauthorized("Not logged in!");
         }
+        var userId = int.Parse(userIdString);
 
         try
         {
-            var trip = await _tripService.GetTripByIdAsync(id);
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, id))
+                return Unauthorized("Trip does not belong to you!");
 
+            var trip = await _tripService.GetTripByIdAsync(id);
             return Ok(await TripToTripResponse(trip));
         }
         catch (ArgumentException)
@@ -80,17 +87,20 @@ public class TripController : ControllerBase
     }
 
     /// <summary>
-    /// Gets all trips associated with a user's email. Returns an empty array if no trips are found for the given email.
+    /// Gets all trips associated with the logged-in user
     /// </summary>
-    /// <param name="userEmail"></param>
-    /// <returns></returns>
+    /// <returns>
+    /// Array of trips, empty if none exist
+    /// Unauthorized if not logged in
+    /// Ok on success
+    /// </returns>
     [Authorize]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TripResponse>>> GetTripsForUser()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
-            return Unauthorized();
+            return Unauthorized("Not logged in!");
 
         var trips = await _tripService.GetTripsByUserIdAsync(int.Parse(userIdString));
 
@@ -116,16 +126,17 @@ public class TripController : ControllerBase
     {
         try
         {
+            // Check user is logged in
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
-                return Unauthorized();
+                return Unauthorized("Not logged in!");
+
+            // Create trip belonging to the logged in user
             var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
 
             await _albumService.CreateNewAlbumAsync(trip.Id);
 
-            var tripResponse = await TripToTripResponse(trip);
-
-            return Ok(tripResponse);
+            return Ok(await TripToTripResponse(trip));
         }
         catch (MultipleValidationListException e)
         {
@@ -160,12 +171,12 @@ public class TripController : ControllerBase
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
             {
-                return Unauthorized();
+                return Unauthorized("Not logged in!");
             }
 
             if (!await _tripService.UserIsOwnerOfTrip(int.Parse(userIdString), id))
             {
-                return Unauthorized();
+                return Unauthorized("You do not have permission to delete this trip!");
             }
 
             await _tripService.DeleteTripByIdAsync(id);
@@ -198,8 +209,10 @@ public class TripController : ControllerBase
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
-                return Unauthorized();
-
+                return Unauthorized("Not logged in!");
+            var userId = int.Parse(userIdString);
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripRequest.Id))
+                return Unauthorized("You do not have permission to edit this trip!");
             var trip = await _tripService.UpdateTripAsync(tripRequest, int.Parse(userIdString));
             if (trip == null)
             {
@@ -214,9 +227,9 @@ public class TripController : ControllerBase
                 Errors = exception.Errors
             });
         }
-        catch (ArgumentException exception)
+        catch
         {
-            return BadRequest(exception.Message);
+            return BadRequest("Failed to update trip");
         }
     }
 
@@ -224,21 +237,30 @@ public class TripController : ControllerBase
     /// Fetches all posts associated to the id of the given trip. If
     /// no trip is provided, then throw a BadRequest Error.
     /// </summary>
-    /// <param name="tripId = -1"></param>
+    /// <param name="tripId">Default value of -1, referencing a trip</param>
     /// <returns>The list of tasks</returns>
     [Authorize]
     [HttpGet("post/{tripId:int}")]
     public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
     {
+        // Check tripId has been provided
         if (tripId < 0)
         {
             return BadRequest("Trip not provided");
         }
+
+        // Check logged in
         string? userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized("You are not allowed to access this Trip's Posts!");
+            return Unauthorized("Not logged in!");
         }
+
+        // Check has access to the trip
+        var userId = int.Parse(userIdString);
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId)) return Unauthorized("You are not allowed to access this Trip's Posts!");
+
+        // Get list of posts
         var taskList = await _postService.GetPostsByTripAsync(tripId);
         return Ok(taskList);
     }
