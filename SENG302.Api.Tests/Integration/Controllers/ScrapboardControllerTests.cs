@@ -163,4 +163,38 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         var message = await HttpClient.PostAsJsonAsync("/api/scrapboard", newBoard);
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task CreateScrapboard_NotAuthorised_Unauthorized()
+    {
+        int userId = 1;
+        int tripId = 1;
+        await SetupUserAndTrip(userId,tripId);
+
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        context.Trips.Add(new Trip
+        {
+            Id = tripId+1,
+            Title = "Test List",
+            UserId = userId+1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
+        });
+        context.Scrapboards.Add(new Scrapboard
+        {
+            TripId = tripId+1,
+            OwnerId = tripId+1,
+            FileKey = "empty",
+        });
+        await context.SaveChangesAsync();
+        var newBoard = new NewScrapboardRequest
+        {
+            TripId = 2,
+        };
+
+        var message = await HttpClient.PostAsJsonAsync("/api/scrapboard", newBoard);
+        message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
 }
