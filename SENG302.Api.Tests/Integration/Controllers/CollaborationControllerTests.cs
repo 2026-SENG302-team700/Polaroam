@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -7,8 +8,10 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit.Abstractions;
 using SENG302.Api.Controllers;
+using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
+using static SENG302.Api.Helpers.DateHelper;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.Controllers;
@@ -17,27 +20,50 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 {
     private ITestOutputHelper _output;
 
-    private ITripService _mockTripService;
-    private ICollaborationService _mockCollaborationService;
+    private readonly ITripService _mockTripService;
+    private readonly ICollaborationService _mockCollaborationService;
+    private readonly IUserService _mockUserService;
 
-    private CollaborationController _controller;
+    private readonly CollaborationController _controller;
 
     public CollaborationControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
             base(webApplicationFactory)
+    {
+        _mockTripService = Substitute.For<ITripService>();
+        _mockCollaborationService = Substitute.For<ICollaborationService>();
+        _mockUserService = Substitute.For<IUserService>();
+    
+        _controller = new CollaborationController(
+            _mockTripService,
+            _mockCollaborationService
+        );
+    
+        AddTestPrincipalToController(_controller);
+    
+        _output = output;
+    }
+    
+    /// <summary>
+    /// Creates and adds to the database a test user for these tests
+    /// </summary>
+    private async Task AddTestUser()
+    {
+
+        User testUser = new()
         {
-            _mockTripService = Substitute.For<ITripService>();
-            _mockCollaborationService = Substitute.For<ICollaborationService>();
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(testUser);
+        await context.SaveChangesAsync();
+
+        _mockUserService.GetUserByIdAsync(testUser.Id).Returns(Task.FromResult((User?)testUser));
+    }
     
-            _controller = new CollaborationController(
-                _mockTripService,
-                _mockCollaborationService
-            );
-    
-            AddTestPrincipalToController(_controller);
-    
-            _output = output;
-        }
-        
     [Fact]
     public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
@@ -56,6 +82,36 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         var collaborators = ((OkObjectResult)response.Result).Value;
         collaborators.ShouldNotBeNull();
         collaborators.ShouldBe(mockObject);
+    }
+    
+    [Fact]
+    public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
+    {
+        await AddTestUser();
+
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.GetAsync("/api/trip/1/collaboration");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
+
+        collaborators.ShouldBeEmpty();
     }
 
     [Fact]

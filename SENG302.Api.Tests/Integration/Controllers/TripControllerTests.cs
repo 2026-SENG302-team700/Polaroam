@@ -25,6 +25,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     private IUserService _mockUserService;
     private ICollaborationService _mockCollaborationService;
 
+
     private TripController _controller;
 
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
@@ -455,34 +456,4 @@ public class TripControllerTests : BaseIntegrationTestFixture
         locations.Count.ShouldBe(2);
         locations.ShouldNotContain(l => l.OsmId == 3);
     }
-
-    [Fact]
-    public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
-    {
-        await AddTestUser();
-
-        var trip = new Trip
-        {
-            Title = "Trip!",
-            UserId = 1,
-            Description = "Test",
-            StartDate = DateToDateTimeOffset(2025, 11, 21),
-            EndDate = DateToDateTimeOffset(2025, 12, 21)
-        };
-
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Trips.Add(trip);
-
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
-
-        collaborators.ShouldBeEmpty();
-    }
-
 }
