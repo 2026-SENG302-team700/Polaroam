@@ -137,7 +137,7 @@ public class PostController : ControllerBase
 
         if (post == null) return NotFound();
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId)!) return Unauthorized();
+        if (!await _postService.UserOwnsPost(userId, post.TripId)!) return NotFound();
 
         try
         {
@@ -255,7 +255,7 @@ public class PostController : ControllerBase
 
         if (!await _postService.UserOwnsPost(userId, post.TripId))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         try
@@ -284,7 +284,7 @@ public class PostController : ControllerBase
 
         if (!await _postService.UserOwnsPost(userId, post.TripId))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         // check the photo belongs to the post
