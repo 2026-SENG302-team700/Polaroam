@@ -9,6 +9,7 @@ using NSubstitute.ExceptionExtensions;
 using Xunit.Abstractions;
 using SENG302.Api.Controllers;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using static SENG302.Api.Helpers.DateHelper;
@@ -67,7 +68,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
-        List<CollaboratingUser> mockObject = [
+        List<CollaboratingUserResponse> mockObject = [
             new() {DisplayName = "Name", UserId = 2},
             new() {DisplayName = "Name 2", UserId = 3}
         ];
@@ -109,7 +110,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUserResponse>>();
 
         collaborators.ShouldBeEmpty();
     }
@@ -201,5 +202,72 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task InviteCollaborator_UserNotLoggedIn_ReturnsUnauthorized()
+    {
+        _controller.ControllerContext = new ControllerContext                                                                                                                      
+        {                                                                                                                                                                          
+            HttpContext = new DefaultHttpContext()                                                                                                                                 
+        };   
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test@example.com"};
+       
+        var response = await _controller.InviteUser(1, requestData);
+        
+        response.ShouldBeOfType<UnauthorizedObjectResult>();
+
+        var responseObject = response as UnauthorizedObjectResult;
+
+        responseObject?.Value?.ToString().ShouldBe("Not logged in");
+    }
+
+    [Fact]
+    public async Task InviteCollaborator_UserDoesNotHaveAccessToTrip_ReturnsUnAuthorized()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [3]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.GetAsync("/api/trip/1/collaboration");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User does not have access to collaborate on the trip and view collaboration details");
+    }
+
+    [Fact]
+    public async Task InviteCollaborator_EmailInvalid_ReturnsBadRequest()
+    {
+        
     }
 }

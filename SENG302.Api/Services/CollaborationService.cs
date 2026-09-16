@@ -138,4 +138,5 @@ public class CollaborationService : ICollaborationService
         
         await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.CollaborationInvite, emailDict));
     }
+    
 }
