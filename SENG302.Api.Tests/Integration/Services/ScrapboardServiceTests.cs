@@ -84,4 +84,31 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
         exception.Message.ShouldContain("This trip already has a Scrapboard.");
     }
 
+    [Fact]
+    public async Task GetScrapboardByTrip_TripHasScrapboard_Success()
+    {
+        await SetupUserAndTrip(1,1);
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        context.Scrapboards.Add(new Scrapboard
+        {
+            TripId = 1,
+            OwnerId = 1,
+            FileKey = "empty",
+        });
+        await context.SaveChangesAsync();
+        var scrapboard = await ServiceUnderTest.GetScrapboardByTripAsync(1);
+        scrapboard.ShouldNotBeNull();
+        scrapboard.OwnerId.ShouldBe(1);
+        scrapboard.FileKey.ShouldBe("empty");
+    }
+
+    [Fact]
+    public async Task GetScrapboardByTrip_TripHasNoScrapboard_ReturnsNull()
+    {
+        await SetupUserAndTrip(1,1);
+        var scrapboard = await ServiceUnderTest.GetScrapboardByTripAsync(1);
+        scrapboard.ShouldBeNull();
+    }
+
 }
