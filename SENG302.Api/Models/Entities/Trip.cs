@@ -17,7 +17,6 @@ public class Trip
     [Required]
     public string Title { get; set; } = string.Empty;
 
-    [ForeignKey("Scrapboard")]
     public bool HasScrapboard {get; set;} = false;
     
     [Required]
