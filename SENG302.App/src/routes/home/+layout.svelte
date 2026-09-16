@@ -5,22 +5,10 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
-    import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
     import AppLogo from "$lib/components/app-logo.svelte";
     import NotificationBell from "$lib/components/content/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
-
-    let testNotifications: NotificationData[] = [
-        {
-            text: "Hello, nice to meet you",
-            userDisplayName: "Jake Johnson",
-        } as NotificationData,
-        {
-            text: "Commented: That is a lie!",
-            userDisplayName: "Grima Wormtounge",
-        } as NotificationData,
-    ];
 
     interface Props {
         children?: import("svelte").Snippet;
@@ -84,12 +72,11 @@
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
         <AppLogo />
-        <NavBarMenuButton path="/home" text="My Trips" />
         <div
             class="right"
             style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
         >
-            <NotificationBell notifications={testNotifications} />
+            <NotificationBell />
 
             <div class="vertical-separator"></div>
 

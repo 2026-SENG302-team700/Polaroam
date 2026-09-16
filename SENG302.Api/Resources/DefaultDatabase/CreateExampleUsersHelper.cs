@@ -72,6 +72,7 @@ public static class CreateExampleUsersHelper
                     UserId = user.Id,
                     StartDate = DateTimeOffset.UtcNow,
                     EndDate = DateTimeOffset.UtcNow.AddDays(1),
+                    Collaborators = [1, 3]
                 };
 
                 dbContext.Add(trip);
@@ -81,7 +82,7 @@ public static class CreateExampleUsersHelper
                     TripId = i,
                     PhotoIds = new List<int>()
                 };
-                
+
                 dbContext.Add(album);
 
                 await dbContext.SaveChangesAsync();

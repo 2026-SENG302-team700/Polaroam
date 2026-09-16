@@ -22,7 +22,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     /// <param name="content">What bytes are in the file</param>
     /// <param name="mimeType">The mime type for the mock file</param>
     /// <returns>The mock file</returns>
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
@@ -1179,7 +1179,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             [image]
         );
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
 
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(post.PhotoIds[0]);
@@ -1229,7 +1229,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         await context.SaveChangesAsync();
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
 
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(updatedPost.PhotoIds[0]);

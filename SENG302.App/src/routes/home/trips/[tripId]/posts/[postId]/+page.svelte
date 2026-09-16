@@ -40,29 +40,7 @@
         fetchDisplayName();
     });
 
-    // /**
-    //  * Fetches the location name from the backend for an osmId
-    //  */
-    // async function fetchLocationName() {
-
-    //     try {
-    //         loading = true;
-    //         const response = await fetchWithCsrf(
-    //             resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
-    //             {
-    //                 method: "GET",
-    //                 credentials: "include",
-    //             },
-    //         );
-    //         let location = await response.json();
-    //         locationName = location.name;
-    //     } catch (err) {
-    //         error = "Failed to fetch location name: " + (err as Error).message;
-    //     } finally {
-    //         loading = false;
-    //     }
-    // }
-
+    
     /**
      * Fetch the display name of the user based on the post
      */

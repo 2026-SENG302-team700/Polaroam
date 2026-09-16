@@ -34,13 +34,8 @@ public class SearchController : ControllerBase
         try
         {
             var trips = await _tripService.GetTripsFromQuery(int.Parse(userIdString), query);
+            return Ok(trips);
 
-            if (trips.Count > 0)
-            {
-                return Ok(trips);
-            }
-
-            return NotFound();
         }
         catch
         {
@@ -62,12 +57,7 @@ public class SearchController : ControllerBase
         {
             var tripPhotos = await _imageService.GetPhotosFromQueryAsync(int.Parse(userIdString), query);
 
-            if (tripPhotos.Count > 0)
-            {
-                return Ok(tripPhotos);
-            }
-
-            return NotFound();
+            return Ok(tripPhotos);
         }
         catch
         {

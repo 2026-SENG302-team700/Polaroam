@@ -335,6 +335,11 @@
         font-weight: 700;
     }
 
+    /**
+    AI attribution:
+    Claude was used to help with the CSS design of the map markers, including the marker shape, rotation, shadows
+    and hover styling. The styling was reviewed and then integrated into the project
+    */
     .post-marker {
         position: relative;
         display: grid;
