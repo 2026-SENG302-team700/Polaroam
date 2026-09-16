@@ -102,6 +102,7 @@
      * hides the modal and navigates them to the MyTrips page
      */
     async function leaveCollaboration() {
+        const tripId = page.params.tripId;
         try {
             leaveCollaborationError = "";
             const response = await fetchWithCsrf(
@@ -162,7 +163,6 @@
                             <span>{leaveCollaborationError}</span>
                         </div>
                     {/if}
-                </div>
                 </div>
                 <button class="btn btn-secondary mb-2 ms-4 me-4" onclick={backToTrip}>Back</button>
                 {#if !isOwner}
