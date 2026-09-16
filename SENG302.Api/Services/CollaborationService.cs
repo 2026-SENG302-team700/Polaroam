@@ -78,7 +78,10 @@ public class CollaborationService : ICollaborationService
         var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
         if (trip is null) throw new KeyNotFoundException("The trip could not be found");
         
-        if (!trip.Collaborators.Remove(userId)) throw new KeyNotFoundException("The user could not be removed");
+        if (!trip.Collaborators.Contains(userId))
+            throw new KeyNotFoundException("The user could not be removed");
+    
+        trip.Collaborators = trip.Collaborators.Where(id => id != userId).ToList();
         await context.SaveChangesAsync();
     }
 }
