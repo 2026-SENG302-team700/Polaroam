@@ -163,7 +163,8 @@
                 ) {
                     showConfirmationModal = true;
                 }
-
+                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
+                
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {
                     errors.date = ["Invalid date"];
