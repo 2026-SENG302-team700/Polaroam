@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 
 namespace SENG302.Api.Controllers;
@@ -43,13 +44,36 @@ public class ScrapboardController : ControllerBase
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var scrapboard = await _scrapboardService.GetScrapboardByTripAsync(tripId);
-            if (scrapboard.OwnerId.Contains(userId)) return Unauthorized();
             if (scrapboard == null) return NotFound("Trip has no Scrapboard");
+            if (scrapboard.OwnerId != userId) return Unauthorized();
+            
             return Ok(scrapboard);
         }
         catch (Exception e)
         {  
-            return BadRequest(e);
+            return BadRequest(e.Message);
+        }
+    }
+
+    [Authorize]
+    [HttpPost]
+    public async Task<ActionResult<Scrapboard>> CreateNewScrapboard([FromBody] NewScrapboardRequest request)
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var trip = await _tripService.GetTripByIdAsync(request.TripId);
+            if (trip.UserId != userId)
+            {
+                return Unauthorized();
+            }
+            var scrapboard = _scrapboardService.CreateScrapboardAsync(request.TripId, userId);
+            
+            return Ok(scrapboard);
+        }
+        catch (Exception e)
+        {  
+            return BadRequest(e.Message);
         }
     }
 }

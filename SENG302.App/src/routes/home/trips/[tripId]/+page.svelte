@@ -276,7 +276,7 @@
                     {hoveredPostId}
                     bind:selectedPost
                 />
-                <ScrapboardImage />
+                <ScrapboardImage {tripId}/>
         </div>
             <div class="card-footer text-muted images">
                 <PostSection
