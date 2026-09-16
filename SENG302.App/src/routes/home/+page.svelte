@@ -42,12 +42,12 @@
             });
             const data = await response.json();
             if (!response.ok) {
-                tripsError = "Failed to fetch task lists.";
+                tripsError = "Failed to fetch trips.";
                 return;
             }
             trips = data;
         } catch (err) {
-            tripsError = "Failed to fetch task lists: " + (err as Error).message;
+            tripsError = "Failed to fetch trips"
         } finally {
             loading = false;
         }

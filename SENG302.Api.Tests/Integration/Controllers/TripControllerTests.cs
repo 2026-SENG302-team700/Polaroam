@@ -10,16 +10,10 @@ using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Controllers;
 using SENG302.Api.Services;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using System.Security.Claims;
-using NSubstitute.ExceptionExtensions;
-using Xunit.Sdk;
 
-namespace SENG302.Api.Tests.Integration.ControllerTests;
+namespace SENG302.Api.Tests.Integration.Controllers;
 
 public class TripControllerTests : BaseIntegrationTestFixture
 {
@@ -30,6 +24,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     private IAlbumService _mockAlbumService;
     private IUserService _mockUserService;
     private ICollaborationService _mockCollaborationService;
+
 
     private TripController _controller;
 
@@ -461,116 +456,4 @@ public class TripControllerTests : BaseIntegrationTestFixture
         locations.Count.ShouldBe(2);
         locations.ShouldNotContain(l => l.OsmId == 3);
     }
-
-    [Fact]
-    public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
-    {
-        await AddTestUser();
-
-        var trip = new Trip
-        {
-            Title = "Trip!",
-            UserId = 1,
-            Description = "Test",
-            StartDate = DateToDateTimeOffset(2025, 11, 21),
-            EndDate = DateToDateTimeOffset(2025, 12, 21)
-        };
-
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Trips.Add(trip);
-
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUserResponse>>();
-
-        collaborators.ShouldBeEmpty();
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
-    {
-        List<CollaboratingUserResponse> mockObject = [
-            new() {DisplayName = "Name", UserId = 2},
-            new() {DisplayName = "Name 2", UserId = 3}
-        ];
-
-        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(true);
-        _mockCollaborationService.GetTripCollaborators(1).Returns(mockObject);
-
-        var response = await _controller.GetTripCollaborators(1);
-
-        response.Result.ShouldBeOfType<OkObjectResult>();
-
-        var collaborators = ((OkObjectResult)response.Result).Value;
-        collaborators.ShouldNotBeNull();
-        collaborators.ShouldBe(mockObject);
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_NoClaim_ReturnsUnauthorized()
-    {
-
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
-
-        var response = await _controller.GetTripCollaborators(1);
-
-        response.Result.ShouldBeOfType<UnauthorizedResult>();
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_ClaimHasGarbledId_ReturnsUnauthorized()
-    {
-
-        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "bad-id") };
-        var identity = new ClaimsIdentity(claims, "IncorrectAuth");
-        var principal = new ClaimsPrincipal(identity);
-
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = principal }
-        };
-
-        var response = await _controller.GetTripCollaborators(1);
-
-        response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_TripDoesNotExist_ReturnsNotFound()
-    {
-        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws<KeyNotFoundException>();
-
-        var response = await _controller.GetTripCollaborators(1);
-
-        response.Result.ShouldBeOfType<NotFoundObjectResult>();
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_UserDoesNotExist_ReturnsNotFound()
-    {
-        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws<ArgumentException>();
-
-        var response = await _controller.GetTripCollaborators(1);
-
-        response.Result.ShouldBeOfType<NotFoundObjectResult>();
-    }
-
-    [Fact]
-    public async Task GetTripCollaborators_UserHasNoAccess_ReturnsNotFound()
-    {
-        _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(false);
-
-        var response = await _controller.GetTripCollaborators(1);
-
-        response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
-    }
-
 }

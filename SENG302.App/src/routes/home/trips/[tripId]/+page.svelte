@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { user } from "$lib/stores/user";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -13,19 +14,20 @@
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let loading = $state(false);
     let error = $state("");
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
-    let ownerDisplayName: null | string = $state(null);
+    let tripOwner = $state(null);
     let hoveredPostId: number | null = $state(null);
     let collaborationModalShown: boolean = $state(false);
     let collaboratingUsersError: string = $state("");
 
     let tripObject = $state({
-        id: 0,
+        id: -1,
         title: "No Title",
         description: "No Description",
         startDate: "9998-12-31",
@@ -68,15 +70,19 @@
                     credentials: "include",
                 },
             );
-            const data = await response.json();
-
+            
+            // Check response
             if (!response.ok) {
-                error = data.message || "Failed to fetch trip.";
+                error = "Failed to fetch trip.";
                 return;
             }
+            
+            // Parse response 
+            const data = await response.json();
             tripObject = data;
+            
         } catch (err) {
-            error = "Failed to fetch trip: " + (err as Error).message;
+            error = "Failed to fetch trip"
         } finally {
             loading = false;
         }
@@ -170,10 +176,10 @@
                     credentials: "include",
                 },
             );
-            ownerDisplayName = await response.text();
+            tripOwner = await response.json();
         } catch (err) {
             throw new Error(
-                "Failed to fetch post creator: " + (err as Error).message,
+                "Failed to fetch trip owner"
             );
         }
     }
@@ -216,71 +222,75 @@
     }
 </script>
 
-<div class="container trip-page-content">
-    <div class="button-wrapper">
-        <NavigationButton path="/home" text="Back" />
-        <div class="modify-button-wrapper">
-            <button
-                class="btn btn-secondary bi-people-fill"
-                onclick={() => {
+{#if !loading && tripObject.id !== -1}
+    <div class="container trip-page-content">
+        <div class="button-wrapper">
+            <NavigationButton path="/home" text="Back" />
+            <div class="modify-button-wrapper">
+                <button
+                        class="btn btn-secondary bi-people-fill"
+                        onclick={() => {
                     showCollaborationModal();
                 }}>Collaboration</button
-            >
-            <AlbumButton tripid={params.tripId} />
-            <EditButton path={`/home/trips/${params.tripId}/edit`} />
-            <DeleteButton deleteAction={showConfirmationModal} />
-        </div>
-    </div>
-    <div class="card mb-2 post-wrapper">
-        <div class="card-header">
-            <div
-                class="title-and-date"
-                style="display: flex; flex-direction: row;"
-            >
-                <h1 class="card-subtitle mb-2 h1 user-name">
-                    {tripObject.title}
-                </h1>
-                <div
-                    class="header-content-item"
-                    style="display: flex; align-items: center; flex:1; justify-content: end;"
                 >
-                    <div class="bi-calendar-event"></div>
-                    <h6
-                        class="card-subtitle text-muted"
-                        style="margin-left: 5px;"
-                    >
-                        {formatDate(tripObject.startDate)} - {formatDate(
-                            tripObject.endDate,
-                        )}
-                    </h6>
-                </div>
+                <AlbumButton tripid={params.tripId} />
+                <EditButton path={`/home/trips/${params.tripId}/edit`} />
+                <DeleteButton deleteAction={showConfirmationModal} />
             </div>
-            {#if tripObject.description.length > 0}
-                <span>{tripObject.description}</span>
-            {:else}
-                <p>No description</p>
-            {/if}
-            <ErrorDisplay errors={[error]} />
         </div>
-        <div class="card-body">
-            <Map
-                locations={postLocations}
-                {posts}
-                {hoveredPostId}
-                bind:selectedPost
-            />
-        </div>
-        <div class="card-footer text-muted images">
-            <PostSection
-                {posts}
-                tripId={tripObject.id}
-                onPostHover={(postId: number) => (hoveredPostId = postId)}
-                onPostLeave={() => (hoveredPostId = null)}
-                {selectedPost}
-            />
+        <div class="card mb-2 post-wrapper">
+            <div class="card-header">
+                <div
+                    class="title-and-date"
+                    style="display: flex; flex-direction: row;"
+                >
+                    <h1 class="card-subtitle mb-2 h1 user-name">
+                        {tripObject.title}
+                    </h1>
+                    <div
+                        class="header-content-item"
+                        style="display: flex; align-items: center; flex:1; justify-content: end;"
+                    >
+                        <div class="bi-calendar-event"></div>
+                        <h6
+                            class="card-subtitle text-muted"
+                            style="margin-left: 5px;"
+                        >
+                            {formatDate(tripObject.startDate)} - {formatDate(
+                                tripObject.endDate,
+                            )}
+                        </h6>
+                    </div>
+                </div>
+                {#if tripObject.description.length > 0}
+                    <span>{tripObject.description}</span>
+                {:else}
+                    <p>No description</p>
+                {/if}
+                <ErrorDisplay errors={[error]} />
+            </div>
+            <div class="card-body">
+                <Map
+                    locations={postLocations}
+                    {posts}
+                    {hoveredPostId}
+                    bind:selectedPost
+                />
+            </div>
+            <div class="card-footer text-muted images">
+                <PostSection
+                    {posts}
+                    tripId={tripObject.id}
+                    onPostHover={(postId: number) => (hoveredPostId = postId)}
+                    onPostLeave={() => (hoveredPostId = null)}
+                    {selectedPost}
+                />
+            </div>
         </div>
     </div>
-</div>
+{:else if !loading}
+    <NotFound />
+{/if}
 
 <ConfirmationModal
     bind:show={deletionModalShown}
@@ -293,7 +303,8 @@
 
 <CollaborationModal
     bind:show={collaborationModalShown}
-    tripOwner={ownerDisplayName ?? ""}
+    isOwner={tripOwner?.id === $user.id}
+    tripOwner={tripOwner ? tripOwner.displayName : ""}
     tripCollaborators={collaboratingUsers}
     {error}
 />

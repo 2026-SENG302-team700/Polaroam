@@ -7,11 +7,13 @@
     
     let {
         show = $bindable(false),
+        isOwner = $bindable(false),
         tripOwner = "",
         tripCollaborators = [],
         error = "",
     }: {
         show: boolean;
+        isOwner: boolean;
         tripOwner: string;
         tripCollaborators: CollaboratingUser[];
         error: string;
@@ -161,6 +163,16 @@
                         </div>
                     {/if}
                 </div>
+                </div>
+                <button class="btn btn-secondary mb-2 ms-4 me-4" onclick={backToTrip}>Back</button>
+                {#if !isOwner}
+                    <button class="btn danger mb-2 ms-4 me-4" onclick={showLeaveConfirmationModal}>Leave</button>
+                    {#if leaveCollaborationError !== ""}
+                        <div class="invalid-feedback d-block mb-2 ms-4 me-4">
+                            <div>{leaveCollaborationError}</div>
+                        </div>
+                    {/if}
+                {/if}    
             </div>
         </div>
     </div>
