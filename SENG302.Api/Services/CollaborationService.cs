@@ -13,9 +13,9 @@ namespace SENG302.Api.Services;
 
 public interface ICollaborationService
 {
-    Task<List<CollaboratingUser>> GetTripCollaborators(int tripId);
+    Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
-    Task SendInvite(string userEmail, int inviterId, int tripId);
+    Task SendInviteAsync(string userEmail, int inviterId, int tripId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -40,7 +40,7 @@ public class CollaborationService : ICollaborationService
     /// <param name="tripId">id of the trip</param>
     /// <returns>All the collaborators of a trip</returns>
     /// <exception cref="KeyNotFoundException">If the trip id is invalid and does not correspond to the trip</exception>
-    public async Task<List<CollaboratingUser>> GetTripCollaborators(int tripId)
+    public async Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId)
     {
         var databaseContext = await _dbContextFactory.CreateDbContextAsync();
 
@@ -48,7 +48,7 @@ public class CollaborationService : ICollaborationService
 
 
 
-        var collaboratingUsers = new List<CollaboratingUser>();
+        var collaboratingUsers = new List<CollaboratingUserResponse>();
 
         if (collaborators != null)
         {
@@ -60,7 +60,7 @@ public class CollaborationService : ICollaborationService
                 {
                     throw new KeyNotFoundException("The user could not be found");
                 }
-                collaboratingUsers.Add(new CollaboratingUser(user));
+                collaboratingUsers.Add(new CollaboratingUserResponse(user));
             }
         }
         else
@@ -96,19 +96,44 @@ public class CollaborationService : ICollaborationService
     /// <param name="inviterId">id of the inviter</param>
     /// <param name="tripId">id of the trip</param>
     /// <exception cref="EmailInvalidationException">If email is invalid</exception>
-    public async Task SendInvite(string userEmail, int inviterId, int tripId)
+    public async Task SendInviteAsync(string userEmail, int inviterId, int tripId)
     {
         if (!UserCredentialsValidator.CheckEmailFormat(userEmail))
         {
             throw new EmailInvalidationException("Email was invalid!");
         }
         
+        var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);
         var trip = await _tripService.GetTripByIdAsync(tripId);
-
+        
+        // verify if user is already in trip
+        if (invitedUser is not null)
+        {
+            var tripCollaborators = await GetTripCollaborators(tripId);
+            
+            Console.WriteLine(tripCollaborators.FirstOrDefault(u => u.UserId == invitedUser.Id));
+            
+            if (
+                tripCollaborators.Any(u => u.UserId == invitedUser.Id)
+                || trip.UserId == invitedUser.Id
+                )
+            {
+                throw new UserInTripException("This user is already apart of this trip.");
+            }
+        
+            // user cannot send it to itself
+            if (inviterId == invitedUser.Id)
+            {
+                throw new UserInTripException("You cannot invite yourself to a trip.");
+            }
+        }
+        
+        // email setup and logic
         var emailDict = new Dictionary<string, string>
         {
             { "TRIP_NAME", trip.Title },
-            { "INVITER_NAME", await _userService.GetUserDisplayName(inviterId) }
+            { "INVITER_NAME", await _userService.GetUserDisplayName(inviterId) },
+            { "DISPLAY_NAME", invitedUser is not null? invitedUser.DisplayName : "there"}
         };
         
         await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.CollaborationInvite, emailDict));

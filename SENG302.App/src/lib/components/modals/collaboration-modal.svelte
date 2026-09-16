@@ -1,6 +1,10 @@
 ﻿<script lang="ts">
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
+    import { page } from "$app/state";
+    import { fetchWithCsrf } from "$lib/csrf";
+    import { resolve } from "$app/paths";
+    
     let {
         show = $bindable(false),
         tripOwner = "",
@@ -28,27 +32,42 @@
     function backToTrip() {
         show = false
     }
-    
-    function handleKeydown(e: KeyboardEvent) {
+
+    /**
+     * Makes enter key work for inviting others to collaborate              
+     * @param e
+     */
+    async function handleInviteKeydown(e: KeyboardEvent) {
         if (e.key !== "Enter") {
             return;
         }
         
         e.preventDefault();
-        inviteCollaborators()
+        await inviteCollaborators()
     }
-    
-    function inviteCollaborators() {
+
+    /**
+     * Sends API call to invite collaborators to the trip
+     */
+    async function inviteCollaborators() {
+        const emailInvite = invite;
+        const tripId = page.params.tripId;
         
-        const emailInvite = invite
-        invite = "";
-        
-        console.log("emailInvite: " + emailInvite)
-        console.log(invite)
-        
-        emailMessage = "Completed"
-        
-        
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration` as any), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json", 
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    email: emailInvite
+                })
+            });
+        } catch (e) {
+            console.log("hi");
+            console.error(e);
+        }
     }
 
     /**
@@ -112,7 +131,7 @@
                                     class="form-control"
                                     placeholder="john@example.com"
                                     bind:value={invite}
-                                    onkeydown={handleKeydown}
+                                    onkeydown={handleInviteKeydown}
                             />
                             <button class="btn btn-primary" onclick="{inviteCollaborators}">
                                 <i class="bi bi-envelope-arrow-up" />

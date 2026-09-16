@@ -486,7 +486,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUserResponse>>();
 
         collaborators.ShouldBeEmpty();
     }
@@ -494,7 +494,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
-        List<CollaboratingUser> mockObject = [
+        List<CollaboratingUserResponse> mockObject = [
             new() {DisplayName = "Name", UserId = 2},
             new() {DisplayName = "Name 2", UserId = 3}
         ];

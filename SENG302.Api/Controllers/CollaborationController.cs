@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
@@ -29,7 +30,7 @@ public class CollaborationController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
+    public async Task<ActionResult<IEnumerable<CollaboratingUserResponse>>> GetTripCollaborators(int tripId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -65,7 +66,7 @@ public class CollaborationController : ControllerBase
     }
     
     [Authorize]
-    [HttpPost]
+    [HttpPost("leave")]
     public async Task<ActionResult> LeaveCollaboration(int tripId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -94,7 +95,7 @@ public class CollaborationController : ControllerBase
     /// End point for posting invite to a user to a trip
     /// </summary>
     /// <param name="tripId">The trip Id</param>
-    /// <param name="email">The users email</param>
+    /// <param name="request">The users email</param>
     /// <returns>
     /// OK - If the email is valid and user id is valid, then it returns OK
     /// Bad Request - If the email format is invalid
@@ -102,7 +103,7 @@ public class CollaborationController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult> InviteUser(int tripId, [FromBody] string email)
+    public async Task<ActionResult> InviteUser(int tripId, [FromBody] InviteCollaboratorRequest request)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
@@ -119,9 +120,13 @@ public class CollaborationController : ControllerBase
 
         try
         {
-            _collaborationService.SendInvite(email, userId, tripId);
+            await _collaborationService.SendInviteAsync(request.Email, userId, tripId);
         }
         catch (EmailInvalidationException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (UserInTripException e)
         {
             return BadRequest(e.Message);
         }
