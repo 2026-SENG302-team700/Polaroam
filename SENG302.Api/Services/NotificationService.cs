@@ -48,7 +48,7 @@ public class NotificationService : INotificationService
         var notifications = await context.Notifications
             .Where(n => n.UserId == userId)
             .OrderBy(n => n.ReadStatus)
-            .ThenBy(n => n.Timestamp)
+            .ThenByDescending(n => n.Timestamp)
             .Take(count)
             .ToListAsync();
         return notifications;

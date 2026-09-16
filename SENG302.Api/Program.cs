@@ -80,7 +80,7 @@ public class Program
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         }
-        
+
         builder.Services.AddHttpContextAccessor();
 
         // Register custom services 
@@ -266,6 +266,7 @@ public class Program
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IAlbumService, AlbumService>();
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {

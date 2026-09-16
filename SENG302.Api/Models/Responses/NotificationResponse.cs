@@ -12,6 +12,7 @@ public class NotificationResponse
     [SetsRequiredMembers]
     public NotificationResponse(Notification baseNotification)
     {
+        Id = baseNotification.Id;
         ReadStatus = baseNotification.ReadStatus;
         HeaderText = baseNotification.HeaderText;
         BodyText = baseNotification.BodyText;
@@ -24,7 +25,7 @@ public class NotificationResponse
             TripId = ((TripInvitationNotification)baseNotification).TripId;
         }
     }
-
+    public int Id { get; set; }
     public bool ReadStatus { get; set; }
     public bool Handled { get; set; }
     public required string HeaderText { get; set; }

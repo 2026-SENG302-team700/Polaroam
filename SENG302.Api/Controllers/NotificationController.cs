@@ -77,7 +77,7 @@ public class NotificationController : ControllerBase
         try
         {
             // check if the user owns the notification
-            if (!await _notificationService.UserOwnsNotification(int.Parse(userIdString), id))
+            if (!await _notificationService.UserOwnsNotification(id, int.Parse(userIdString)))
             {
                 throw new UnauthorizedAccessException();
             }

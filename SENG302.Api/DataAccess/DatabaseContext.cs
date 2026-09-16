@@ -19,7 +19,9 @@ public class DatabaseContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Notification>()
-            .HasDiscriminator(n => n.NotificationType);
+            .HasDiscriminator(n => n.NotificationType)
+            .HasValue<Notification>("Notification")
+            .HasValue<TripInvitationNotification>("TripInvitation");
     }
 
 }
