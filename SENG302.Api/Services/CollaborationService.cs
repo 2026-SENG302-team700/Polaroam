@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
+using SENG302.Api.Helpers.Validators;
+using SENG302.Api.Models.Jobs;
+using SENG302.Api.Services.Email;
+using SENG302.Api.Resources;
 
 
 namespace SENG302.Api.Services;
@@ -11,6 +15,7 @@ public interface ICollaborationService
 {
     Task<List<CollaboratingUser>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
+    Task SendInvite(string userEmail, int inviterId, int tripId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -19,12 +24,14 @@ public class CollaborationService : ICollaborationService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly IUserService _userService;
     private readonly ITripService _tripService;
+    private readonly IEmailQueue _emailQueue;
 
-    public CollaborationService(IDbContextFactory<DatabaseContext> dbContextFactory, IUserService userService, ITripService tripService)
+    public CollaborationService(IDbContextFactory<DatabaseContext> dbContextFactory, IUserService userService, ITripService tripService, IEmailQueue emailQueue)
     {
         _dbContextFactory = dbContextFactory;
         _userService = userService;
         _tripService = tripService;
+        _emailQueue = emailQueue;
     }
 
     /// <summary>
@@ -80,5 +87,30 @@ public class CollaborationService : ICollaborationService
         
         if (!trip.Collaborators.Remove(userId)) throw new KeyNotFoundException("The user could not be removed");
         await context.SaveChangesAsync();
+    }
+    
+    /// <summary>
+    /// Send invite to the user
+    /// </summary>
+    /// <param name="userEmail">User Email</param>
+    /// <param name="inviterId">id of the inviter</param>
+    /// <param name="tripId">id of the trip</param>
+    /// <exception cref="EmailInvalidationException">If email is invalid</exception>
+    public async Task SendInvite(string userEmail, int inviterId, int tripId)
+    {
+        if (!UserCredentialsValidator.CheckEmailFormat(userEmail))
+        {
+            throw new EmailInvalidationException("Email was invalid!");
+        }
+        
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+
+        var emailDict = new Dictionary<string, string>
+        {
+            { "TRIP_NAME", trip.Title },
+            { "INVITER_NAME", await _userService.GetUserDisplayName(inviterId) }
+        };
+        
+        await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.CollaborationInvite, emailDict));
     }
 }

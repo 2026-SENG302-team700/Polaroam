@@ -89,4 +89,42 @@ public class CollaborationController : ControllerBase
             return BadRequest("Failed to leave collaboration");
         }
     }
+    
+    /// <summary>
+    /// End point for posting invite to a user to a trip
+    /// </summary>
+    /// <param name="tripId">The trip Id</param>
+    /// <param name="email">The users email</param>
+    /// <returns>
+    /// OK - If the email is valid and user id is valid, then it returns OK
+    /// Bad Request - If the email format is invalid
+    /// Unauthorized - User is not logged in or does not have access
+    /// </returns>
+    [Authorize]
+    [HttpPost]
+    public async Task<ActionResult> InviteUser(int tripId, [FromBody] string email)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("Not logged in");
+        }
+
+        var userId = int.Parse(userIdString);
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
+        {
+            return Unauthorized(
+                "User does not have access to collaborate on the trip and view collaboration details");
+        }
+
+        try
+        {
+            _collaborationService.SendInvite(email, userId, tripId);
+        }
+        catch (EmailInvalidationException e)
+        {
+            return BadRequest(e.Message);
+        }
+        return Ok();
+    }
 }

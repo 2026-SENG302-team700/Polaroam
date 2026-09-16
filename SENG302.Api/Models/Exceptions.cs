@@ -82,3 +82,8 @@ public class TagNotFoundException : Exception
 {
     public TagNotFoundException(string? error) : base(error ?? "Tag not found") {}
 }
+
+public class EmailInvalidationException : Exception
+{
+    public EmailInvalidationException(string? error):  base(error ?? "Email is invalid found") {}
+}
