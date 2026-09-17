@@ -25,13 +25,16 @@ public class CollaborationService : ICollaborationService
     private readonly IUserService _userService;
     private readonly ITripService _tripService;
     private readonly IEmailQueue _emailQueue;
+    private readonly INotificationService _notificationService;
 
-    public CollaborationService(IDbContextFactory<DatabaseContext> dbContextFactory, IUserService userService, ITripService tripService, IEmailQueue emailQueue)
+    public CollaborationService(IDbContextFactory<DatabaseContext> dbContextFactory, IUserService userService, ITripService tripService, IEmailQueue emailQueue, INotificationService notificationService
+    )
     {
         _dbContextFactory = dbContextFactory;
         _userService = userService;
         _tripService = tripService;
         _emailQueue = emailQueue;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -109,6 +112,8 @@ public class CollaborationService : ICollaborationService
         
         var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);
         var trip = await _tripService.GetTripByIdAsync(tripId);
+
+        Notification? inviteNotification = null; 
         
         if (invitedUser is not null)
         {
@@ -127,6 +132,15 @@ public class CollaborationService : ICollaborationService
             {
                 throw new UserInTripException("This user is already apart of this trip.");
             }
+            
+            inviteNotification = new Notification
+            {
+                UserId = invitedUser.Id,
+                HeaderText = "New Invitation Request",
+                BodyText = $"You have been invited to collaborate on the {trip.Title} trip!",
+                Timestamp = DateTimeOffset.UtcNow,
+                NotificationType = "Invite",
+            };
         }
         
         // user cannot send invite to an already invited e-mail
@@ -149,5 +163,11 @@ public class CollaborationService : ICollaborationService
         var context = await _dbContextFactory.CreateDbContextAsync();
         trip.PendingInvites.Add(userEmail);
         await context.SaveChangesAsync();
+
+        if (inviteNotification != null)
+        {
+            await _notificationService.AddNotificationAsync(inviteNotification);
+        }
+        
     }
 }

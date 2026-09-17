@@ -29,11 +29,24 @@
     let emailMessage = $state("")
     let emailMessageStyle = $state("")
     
+
+    /**
+     * Clear fields of input
+     */
+    function clearFields() {
+        invite = "";
+        emailMessage = ""
+        leaveCollaborationError = ""
+        inviteShown = false
+        emailMessageStyle = ""
+    }
+    
     /**
      * Go back to trip
      */
     function backToTrip() {
         show = false
+        clearFields()
     }
 
     /**
@@ -48,6 +61,7 @@
         e.preventDefault();
         await inviteCollaborators()
     }
+    
 
     /**
      * Sends API call to invite collaborators to the trip
