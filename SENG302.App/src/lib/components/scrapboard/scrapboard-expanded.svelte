@@ -12,7 +12,7 @@
      * @property scrapboardImage - Source URL of the image to display.
      */
     let {
-        shown,
+        shown = $bindable(),
         scrapboardImage
     } : {
         shown : boolean

@@ -78,15 +78,13 @@
     }
 </script>
 
-<div class="container"
-    onclick={() => {
-        showExpanded = !showExpanded;
-    }}>
+<div class="container mt-4">
     {#if scrapboardCreated && !loading}
         <img
             src={scrapboardImage}
             alt="scrapboard"
             class="scrapboard-image card"
+            onclick={() => showExpanded = true}
         />
     {:else if !scrapboardCreated && !loading}
         <div class="scrapboard-image-wrapper empty-trip-page-element">
@@ -106,13 +104,15 @@
         </div>
     {/if}
 </div>
-<ScrapboardExpanded 
-        shown={showExpanded} 
+
+<ScrapboardExpanded
+        bind:shown={showExpanded}
         scrapboardImage={scrapboardImage}
 />
 
 <style>
     .scrapboard-image {
         width: 100%;
+        cursor: pointer;
     }
 </style>
