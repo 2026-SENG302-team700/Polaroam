@@ -137,19 +137,22 @@
                         </div>
                     {/each}
                     {#if inviteShown}
-                        <div class="invite-form">
-                            <input 
-                                    type="email"
-                                    class="form-control"
-                                    placeholder="john@example.com"
-                                    bind:value={invite}
-                                    onkeydown={handleInviteKeydown}
-                            />
-                            <button class="btn btn-primary" onclick="{inviteCollaborators}">
-                                <i class="bi bi-envelope-arrow-up" />
-                            </button>
+                        <div class="invite-wrapper">
+                            <span>Invite Collaborators to Trip:</span>
+                            <div class="invite-form">
+                                <input
+                                        type="email"
+                                        class="form-control"
+                                        placeholder="john@example.com"
+                                        bind:value={invite}
+                                        onkeydown={handleInviteKeydown}
+                                />
+                                <button class="btn btn-primary" onclick="{inviteCollaborators}">
+                                    <i class="bi bi-envelope-arrow-up" />
+                                </button>
+                            </div>
+                            <span class={`${emailMessageStyle}`}>{emailMessage}</span>
                         </div>
-                        <span class={`${emailMessageStyle}`}>{emailMessage}</span>
                     {/if}
                     <div class="modal-buttons">
                         <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back</button>
@@ -164,7 +167,6 @@
                         </div>
                     {/if}
                 </div>
-                <button class="btn btn-secondary mb-2 ms-4 me-4" onclick={backToTrip}>Back</button>
                 {#if !isOwner}
                     <button class="btn danger mb-2 ms-4 me-4" onclick={showLeaveConfirmationModal}>Leave</button>
                     {#if leaveCollaborationError !== ""}
@@ -212,13 +214,17 @@
         width: 100%
     }
     
+    .invite-wrapper {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
     .invite-form {
         width: 100%;
         display: flex;
         justify-content: space-between;
         gap: 0.5rem;
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.2rem;
     }
     
     .invite-form input {
