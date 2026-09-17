@@ -7,7 +7,7 @@
         shown : boolean
         scrapboardImage : string
     } = $props();
-    
+
     let scale = $state(1);
     let panX = $state(0);
     let panY = $state(0);
@@ -17,6 +17,9 @@
 
     const minScale = 1;
     const maxScale = 5;
+
+    let containerEl: HTMLDivElement;
+    let imgEl: HTMLImageElement;
 
     // Track active pointers for touch (supports multi-touch pinch)
     let activePointers = new Map<number, { x: number; y: number }>();
@@ -33,7 +36,26 @@
         return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
     }
 
+    // Clamp panX/panY so the scaled image can never leave the container.
+    // transform-origin is center, and translate() moves in unscaled px,
+    // so bounds are just half the overflow on each axis.
+    function clampPan() {
+        if (!containerEl || !imgEl) return;
+
+        const containerWidth = containerEl.clientWidth;
+        const containerHeight = containerEl.clientHeight;
+        const scaledWidth = imgEl.offsetWidth * scale;
+        const scaledHeight = imgEl.offsetHeight * scale;
+
+        const maxX = Math.max(0, (scaledWidth - containerWidth) / 2);
+        const maxY = Math.max(0, (scaledHeight - containerHeight) / 2);
+
+        panX = Math.min(maxX, Math.max(-maxX, panX));
+        panY = Math.min(maxY, Math.max(-maxY, panY));
+    }
+
     function handleMouseDown(e: MouseEvent) {
+        if ((e.target as HTMLElement).closest('.close-control')) return;
         isDragging = true;
         startX = e.clientX - panX;
         startY = e.clientY - panY;
@@ -43,6 +65,7 @@
         if (!isDragging) return;
         panX = e.clientX - startX;
         panY = e.clientY - startY;
+        clampPan();
     }
 
     function handleMouseUp() {
@@ -61,10 +84,13 @@
                 panY = 0;
             }
         }
+        clampPan();
     }
 
     // --- Touch / Pointer support ---
     function handlePointerDown(e: PointerEvent) {
+        if ((e.target as HTMLElement).closest('.close-control')) return;
+
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -102,9 +128,11 @@
                     panY = 0;
                 }
             }
+            clampPan();
         } else if (activePointers.size === 1 && isDragging) {
             panX = e.clientX - startX;
             panY = e.clientY - startY;
+            clampPan();
         }
     }
 
@@ -131,6 +159,7 @@
             <div class="image-content">
                 <div
                         class="viewer-container"
+                        bind:this={containerEl}
                         onmousedown={handleMouseDown}
                         onmousemove={handleMouseMove}
                         onmouseup={handleMouseUp}
@@ -142,6 +171,7 @@
                         onpointercancel={handlePointerUp}
                 >
                     <img
+                            bind:this={imgEl}
                             src={scrapboardImage}
                             alt="Zoomable and pannable"
                             style="transform: translate({panX}px, {panY}px) scale({scale}); cursor: {isDragging ? 'grabbing' : 'grab'};"
@@ -154,7 +184,7 @@
             </div>
         </div>
     </div>
-    
+
 {/if}
 
 <style>
@@ -171,19 +201,21 @@
     }
 
     img {
-        max-width: 100%;
-        max-height: 100%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
         transition: transform 0.05s ease-out;
         transform-origin: center center;
         -webkit-user-drag: none;
     }
-    
-     .click-to-return {
-         width: 100%;
-         height: 100%;
-         position: absolute;
-         z-index: 101;
-     }
+
+    .click-to-return {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        z-index: 101;
+    }
     .image-details {
         display: flex;
         align-items: center;
@@ -232,6 +264,7 @@
         flex-direction: column;
         align-items: center;
         z-index: 102;
+        position: relative;
     }
     .image {
         display: block;
