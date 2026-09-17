@@ -13,6 +13,7 @@ public interface INotificationService
     Task SetNotificationStatusByIdAsync(int notificationId, bool status);
     Task SetNotificationHandledByIdAsync(int notificationId, bool handled);
     Task<bool> UserOwnsNotification(int notificationId, int userId);
+    Task<int> GetUnreadCount(int userId);
 }
 
 public class NotificationService : INotificationService
@@ -86,5 +87,16 @@ public class NotificationService : INotificationService
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();
         return await context.Notifications.Where(n => n.Id == notificationId && n.UserId == userId).AnyAsync();
+    }
+
+    /// <summary>
+    /// Get the number of notifications a user currently has
+    /// </summary>
+    /// <param name="userId">The user we are checking for notification count</param>
+    /// <returns>The number of notifications a user currently has</returns>
+    public async Task<int> GetUnreadCount(int userId)
+    {
+        using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.Notifications.Where(n => n.ReadStatus == false && n.UserId == userId).CountAsync();
     }
 }

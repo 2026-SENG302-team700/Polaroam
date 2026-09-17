@@ -23,3 +23,19 @@ type NotificationData = {
     rightAction?: NotificationActionButton,
     readToggle: () => void,
 }
+
+type NotificationResponse = {
+    id: number,
+    readStatus: boolean,
+    handled: boolean,
+    headerText: string,
+    bodyText: string,
+    timestamp: string,
+    tripId?: number,
+    notificationType: string
+}
+
+type GetAllNotificationsResponse = {
+    notificationResponses: NotificationResponse[],
+    unreadCount: number
+}

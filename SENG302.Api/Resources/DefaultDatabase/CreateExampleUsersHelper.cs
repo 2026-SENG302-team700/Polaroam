@@ -81,7 +81,7 @@ public static class CreateExampleUsersHelper
                     TripId = i,
                     PhotoIds = new List<int>()
                 };
-                
+
                 dbContext.Add(album);
 
                 await dbContext.SaveChangesAsync();
@@ -125,7 +125,29 @@ public static class CreateExampleUsersHelper
             };
             var hasher = new PasswordHasher<User>();
             user.PasswordKey = hasher.HashPassword(user, "P4$$word");
-            dbContext.Users.Add(user);
+            await dbContext.Users.AddAsync(user);
+
+            var notification1 = new Notification
+            {
+                BodyText = "Andrew has posted on your timeline",
+                HeaderText = "New Post!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-5),
+                UserId = 3,
+            };
+            await dbContext.Notifications.AddAsync(notification1);
+
+            var notification2 = new TripInvitationNotification
+            {
+                BodyText = "Andrew has invited you to his trip 'Helinksi'",
+                HeaderText = "You're famous!",
+                ReadStatus = true,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-2),
+                TripId = 1,
+                UserId = 3,
+            };
+            await dbContext.Notifications.AddAsync(notification1);
+
             await dbContext.SaveChangesAsync();
         }
     }
