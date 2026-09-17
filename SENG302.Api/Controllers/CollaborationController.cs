@@ -124,11 +124,27 @@ public class CollaborationController : ControllerBase
         }
         catch (EmailInvalidationException e)
         {
-            return BadRequest(e.Message);
+            return BadRequest(new CollaborationInviteResponse
+            {
+                Type = "error",
+                Message = e.Message
+            });
         }
         catch (UserInTripException e)
         {
-            return BadRequest(e.Message);
+            return BadRequest(new CollaborationInviteResponse
+            {
+                Type = "error",
+                Message = e.Message
+            });
+        }
+        catch (PendingInviteException e)
+        {
+            return BadRequest(new CollaborationInviteResponse
+            {
+                Type = "info",
+                Message = e.Message
+            });
         }
         return Ok();
     }

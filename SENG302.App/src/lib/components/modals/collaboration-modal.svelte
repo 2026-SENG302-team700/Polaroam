@@ -68,9 +68,13 @@
                 })
             });
             
+            const data = await response.json();
+            
+            console.log(data);
+            
             if (!response.ok) {
-                emailMessageStyle = "invite-message-fail"
-                emailMessage = await response.text();
+                emailMessageStyle = `invite-message-${data.type}`;
+                emailMessage = data.message;
             } else {
                 emailMessageStyle = "invite-message-success"
                 emailMessage = await "Invite sent."
@@ -159,7 +163,9 @@
                         <button class="btn btn-primary modal-footer-button"
                                 onclick={() => inviteShown = !inviteShown}
                         >Invite</button>
-                        <button class="btn btn-danger modal-footer-button" onclick={showLeaveConfirmationModal}>Leave</button>
+                        {#if !isOwner}
+                            <button class="btn btn-danger modal-footer-button" onclick={showLeaveConfirmationModal}>Leave</button>
+                        {/if}
                     </div>
                     {#if leaveCollaborationError !== ""}
                         <div class="invalid-feedback d-block">
@@ -167,14 +173,6 @@
                         </div>
                     {/if}
                 </div>
-                {#if !isOwner}
-                    <button class="btn danger mb-2 ms-4 me-4" onclick={showLeaveConfirmationModal}>Leave</button>
-                    {#if leaveCollaborationError !== ""}
-                        <div class="invalid-feedback d-block mb-2 ms-4 me-4">
-                            <div>{leaveCollaborationError}</div>
-                        </div>
-                    {/if}
-                {/if}    
             </div>
         </div>
     </div>
@@ -239,7 +237,11 @@
         color: #0f5323;
     }
     
-    .invite-message-fail {
+    .invite-message-error {
         color: #8e1519;
+    }
+    
+    .invite-message-info {
+        color: #0c7d9d;
     }
 </style>

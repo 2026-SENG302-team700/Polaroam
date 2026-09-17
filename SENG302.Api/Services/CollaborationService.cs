@@ -128,6 +128,12 @@ public class CollaborationService : ICollaborationService
             }
         }
         
+        // user cannot send invite to an already invited e-mail
+        if (trip.PendingInvites.Contains(userEmail))
+        {
+            throw new PendingInviteException("This user has a pending invite to this trip.");
+        }
+        
         // email setup and logic
         var emailDict = new Dictionary<string, string>
         {

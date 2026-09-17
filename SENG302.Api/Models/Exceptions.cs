@@ -98,3 +98,8 @@ public class UserInTripException : Exception
 {
     public UserInTripException(string? error) : base(error ?? "User already exists in trip") {}
 }
+
+public class PendingInviteException : Exception
+{
+    public PendingInviteException(string? error) : base(error ?? "This user already has a pending invite") {}
+}
