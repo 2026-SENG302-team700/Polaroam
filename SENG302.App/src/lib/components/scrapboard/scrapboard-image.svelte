@@ -3,6 +3,7 @@
     import CreationButton from "../buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import ScrapboardPlaceholder from "$lib/assets/images/scrapboard-placeholder.png"
 
     let {tripId = -1} = $props();
 
@@ -77,7 +78,7 @@
 <div class="container">
     {#if scrapboardCreated && !loading}
         <img
-            src="../../../static/scrapboard-placeholder.png"
+            src={ScrapboardPlaceholder}
             alt="scrapboard"
             class="scrapboard-image card"
         />
