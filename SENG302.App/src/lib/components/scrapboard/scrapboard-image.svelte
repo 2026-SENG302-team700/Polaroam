@@ -4,12 +4,15 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
     import ScrapboardPlaceholder from "$lib/assets/images/scrapboard-placeholder.png"
+    import ScrapboardExpanded from "$lib/components/scrapboard/scrapboard-expanded.svelte"
 
     let {tripId = -1} = $props();
 
     let scrapboardCreated: Boolean = $state(false);
     let scrapboard = $state([]); //not used yet
     let loading = $state(true);
+    let showExpanded = $state(false);
+    let scrapboardImage = $state(ScrapboardPlaceholder);
 
     onMount(()=> {fetchScrapboard()});
 
@@ -75,10 +78,13 @@
     }
 </script>
 
-<div class="container">
+<div class="container"
+    onclick={() => {
+        showExpanded = !showExpanded;
+    }}>
     {#if scrapboardCreated && !loading}
         <img
-            src={ScrapboardPlaceholder}
+            src={scrapboardImage}
             alt="scrapboard"
             class="scrapboard-image card"
         />
@@ -100,6 +106,10 @@
         </div>
     {/if}
 </div>
+<ScrapboardExpanded 
+        shown={showExpanded} 
+        scrapboardImage={scrapboardImage}
+/>
 
 <style>
     .scrapboard-image {
