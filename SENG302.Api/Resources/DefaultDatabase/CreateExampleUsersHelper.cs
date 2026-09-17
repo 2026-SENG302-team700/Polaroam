@@ -146,7 +146,7 @@ public static class CreateExampleUsersHelper
                 TripId = 1,
                 UserId = 3,
             };
-            await dbContext.Notifications.AddAsync(notification1);
+            await dbContext.Notifications.AddAsync(notification2);
 
             await dbContext.SaveChangesAsync();
         }

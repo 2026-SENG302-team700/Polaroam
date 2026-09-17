@@ -9,171 +9,6 @@
 
     const NOTIFICATION_SHOWN_CAP = 5;
 
-    // remove once persistance is done
-    let testNotifications: NotificationData[] = [
-        {
-            title: "You've received a new trip invitation!",
-            text: `You've been invited to join the trip "john burger"`,
-            isRead: false,
-            leftAction: {
-                function: () => console.log("Accept"),
-                text: "Accept",
-                colour: "btn-success",
-            },
-            rightAction: {
-                text: "Decline",
-                function: () => console.log("Decline"),
-                colour: "btn-danger",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "You've received a new trip invitation!",
-            text: `You've been invited to join the trip "john burger"`,
-            isRead: false,
-            leftAction: {
-                text: "Accept",
-                function: () => console.log("Accept"),
-                colour: "btn-success",
-            },
-            rightAction: {
-                text: "Decline",
-                function: () => console.log("Decline"),
-                colour: "btn-danger",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-    ];
-    // end of temp block
-
     let notifications: NotificationData[] = $state([]);
     let notificationCount: number = $state(0);
     let notificationsError: string = $state("");
@@ -215,8 +50,6 @@
      * Refresh's the notification list
      */
     async function refreshNotifications() {
-        notifications = [];
-
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/user/notifications` as any),
@@ -232,8 +65,10 @@
 
             var getAllNotificationsResponse =
                 (await response.json()) as GetAllNotificationsResponse;
-
+            
+            notifications = [];
             notificationCount = getAllNotificationsResponse.unreadCount;
+            getAllNotificationsResponse.notificationResponses.forEach(n => notifications.push(createNotificationData(n)));
         } catch (err) {
             notificationsError = (err as Error).message;
         }
@@ -274,11 +109,11 @@
         }}
     >
         <i class="bi bi-bell icon-centered"></i>
-        {#if testNotifications.length > 0}
+        {#if notificationCount > 0}
             <div class="notification-counter">
-                {testNotifications.length > 9
+                {notificationCount > 9
                     ? "9+"
-                    : testNotifications.length.toString()}
+                    : notificationCount.toString()}
             </div>
         {/if}
     </button>
@@ -311,10 +146,10 @@
         </div>
 
         <NotificationList
-            notifications={testNotifications.slice(0, NOTIFICATION_SHOWN_CAP)}
+            notifications={notifications.slice(0, NOTIFICATION_SHOWN_CAP)}
         />
 
-        {#if testNotifications.length > NOTIFICATION_SHOWN_CAP}
+        {#if notifications.length > NOTIFICATION_SHOWN_CAP}
             <span class="see-more">See more...</span>
         {/if}
     </div>

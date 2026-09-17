@@ -28,7 +28,7 @@ public class NotificationController : ControllerBase
     /// <returns>list of notifications</returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<GetAllNotificationsResponse>> GetAllNotifications([FromQuery] int count = 5)
+    public async Task<ActionResult<GetAllNotificationsResponse>> GetAllNotifications([FromQuery] int? count)
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -40,10 +40,10 @@ public class NotificationController : ControllerBase
         try
         {
             var userId = int.Parse(userIdString);
-            var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, count);
+            var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, count ?? 5);
             List<NotificationResponse> notificationResponses = [.. notifications.Select(n => new NotificationResponse(n))];
             var unreadCount = await _notificationService.GetUnreadCount(userId);
-
+            
             return Ok(new GetAllNotificationsResponse() { NotificationResponses = notificationResponses, UnreadCount = unreadCount });
         }
         catch (FormatException)
