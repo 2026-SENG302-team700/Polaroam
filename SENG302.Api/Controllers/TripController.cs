@@ -321,4 +321,23 @@ public class TripController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpPost("{tripId:int}/collaborators")]
+    public async Task<ActionResult> ActionCollaboration(int tripId ,[FromBody] CollaborationRequest collaborationRequest)
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
+                return Unauthorized();
+            return Ok(); //TEMP
+            
+        } catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    } 
+
 }

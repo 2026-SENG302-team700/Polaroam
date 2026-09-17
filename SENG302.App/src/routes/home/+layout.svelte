@@ -6,7 +6,7 @@
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import AppLogo from "$lib/components/app-logo.svelte";
-    import NotificationBell from "$lib/components/content/notification-bell.svelte";
+    import NotificationBell from "$lib/components/notifications/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
 
@@ -24,7 +24,7 @@
      */
     async function retrieveUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(resolve(`/api/user` as any), {
                 method: "GET",
                 credentials: "include",
             });
@@ -39,7 +39,7 @@
 
             if (data.profilePicture !== 0) {
                 const pfpResponse = await fetchWithCsrf(
-                    resolve("/api/user/pfp"),
+                    resolve("/api/user/pfp" as any),
                     {
                         method: "GET",
                         credentials: "include",

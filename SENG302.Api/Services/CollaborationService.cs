@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
@@ -61,5 +60,10 @@ public class CollaborationService : ICollaborationService
         }
 
         return collaboratingUsers;
+    }
+
+    public async Task ActionAcceptAsync()
+    {
+        
     }
 }
