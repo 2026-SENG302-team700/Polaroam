@@ -101,6 +101,7 @@ public class CollaborationService : ICollaborationService
     /// <exception cref="EmailInvalidationException">If email is invalid</exception>
     public async Task SendInviteAsync(string userEmail, int inviterId, int tripId)
     {
+        
         if (!UserCredentialsValidator.CheckEmailFormat(userEmail))
         {
             throw new EmailInvalidationException("Email was invalid!");
@@ -143,6 +144,10 @@ public class CollaborationService : ICollaborationService
         };
         
         await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.CollaborationInvite, emailDict));
+        
+        // Update pending invites for trip
+        var context = await _dbContextFactory.CreateDbContextAsync();
+        trip.PendingInvites.Add(userEmail);
+        await context.SaveChangesAsync();
     }
-    
 }
