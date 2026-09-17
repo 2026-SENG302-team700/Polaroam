@@ -1,5 +1,12 @@
 <script lang="ts">
     import CloseButton from "../buttons/close-button.svelte";
+
+    /**
+     * Props for the fullscreen image viewer.
+     * @property shown - Whether the viewer overlay is visible. Bound so the
+     *   viewer (or its close controls) can dismiss itself.
+     * @property scrapboardImage - Source URL of the image to display.
+     */
     let {
         shown,
         scrapboardImage
@@ -28,17 +35,32 @@
     let pinchStartMidX = 0;
     let pinchStartMidY = 0;
 
+    /**
+     * Computes the Euclidean distance between two points.
+     * @param p1 - First point.
+     * @param p2 - Second point.
+     * @returns The straight-line distance between p1 and p2.
+     */
     function getDistance(p1: { x: number; y: number }, p2: { x: number; y: number }) {
         return Math.hypot(p2.x - p1.x, p2.y - p1.y);
     }
 
+    /**
+     * Computes the midpoint between two points.
+     * @param p1 - First point.
+     * @param p2 - Second point.
+     * @returns The point halfway between p1 and p2.
+     */
     function getMidpoint(p1: { x: number; y: number }, p2: { x: number; y: number }) {
         return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
     }
 
-    // Clamp panX/panY so the scaled image can never leave the container.
-    // transform-origin is center, and translate() moves in unscaled px,
-    // so bounds are just half the overflow on each axis.
+    /**
+     * Clamps `panX`/`panY` so the scaled image can never leave the container.
+     * Since `transform-origin` is center and `translate()` moves in unscaled
+     * pixels, the bounds are just half the overflow on each axis. No-ops if
+     * the container or image elements aren't mounted yet.
+     */
     function clampPan() {
         if (!containerEl || !imgEl) return;
 
@@ -54,6 +76,11 @@
         panY = Math.min(maxY, Math.max(-maxY, panY));
     }
 
+    /**
+     * Begins a mouse-driven drag, unless the press originated on the close
+     * control (to avoid hijacking clicks meant for the close button).
+     * @param e - The originating mousedown event.
+     */
     function handleMouseDown(e: MouseEvent) {
         if ((e.target as HTMLElement).closest('.close-control')) return;
         isDragging = true;
@@ -61,6 +88,11 @@
         startY = e.clientY - panY;
     }
 
+    /**
+     * Updates pan position while a mouse drag is in progress, then re-clamps
+     * it to the container bounds. No-ops if not currently dragging.
+     * @param e - The mousemove event.
+     */
     function handleMouseMove(e: MouseEvent) {
         if (!isDragging) return;
         panX = e.clientX - startX;
@@ -68,10 +100,19 @@
         clampPan();
     }
 
+    /**
+     * Ends the current mouse drag.
+     */
     function handleMouseUp() {
         isDragging = false;
     }
 
+    /**
+     * Zooms in or out in response to a wheel event, clamped between
+     * `minScale` and `maxScale`. Resets pan to center when zoomed all the
+     * way back out.
+     * @param e - The wheel event.
+     */
     function handleWheel(e: WheelEvent) {
         e.preventDefault();
         const zoomFactor = 0.1;
@@ -88,6 +129,14 @@
     }
 
     // --- Touch / Pointer support ---
+
+    /**
+     * Handles the start of a touch/pointer interaction. Captures the
+     * pointer for drag tracking, or begins a pinch gesture when a second
+     * pointer joins. Skips capture entirely if the press originated on the
+     * close control, so it doesn't interfere with tapping it.
+     * @param e - The pointerdown event.
+     */
     function handlePointerDown(e: PointerEvent) {
         if ((e.target as HTMLElement).closest('.close-control')) return;
 
@@ -109,6 +158,11 @@
         }
     }
 
+    /**
+     * Updates scale (during a two-finger pinch) or pan (during a
+     * single-finger drag) as pointers move, then re-clamps pan to bounds.
+     * @param e - The pointermove event.
+     */
     function handlePointerMove(e: PointerEvent) {
         if (!activePointers.has(e.pointerId)) return;
         activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -136,6 +190,13 @@
         }
     }
 
+    /**
+     * Handles the end of a touch/pointer interaction. Removes the lifted
+     * pointer from tracking, and if a pinch collapses back to a single
+     * pointer, seamlessly transitions into a single-finger drag from the
+     * remaining pointer's current position.
+     * @param e - The pointerup or pointercancel event.
+     */
     function handlePointerUp(e: PointerEvent) {
         activePointers.delete(e.pointerId);
 
