@@ -3,12 +3,18 @@
     import { resolve } from "$app/paths";
 
 
-    let { path }: { path: string } = $props();
+    let { 
+        path,
+        class: className = ""
+        }: { 
+        path: string
+        class?: string
+    } = $props();
 </script>
 
 <button
     type="button"
-    class="btn btn-primary bi-pencil"
+    class="btn btn-primary bi-pencil {className}"
     title="Edit"
     aria-label="Edit"
     onclick={() => goto(resolve(path))}
