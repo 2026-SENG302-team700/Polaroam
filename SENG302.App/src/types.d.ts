@@ -18,7 +18,8 @@ type NotificationActionButton = {
 type NotificationData = {
     title: string,
     text: string,
-    isRead: boolean
+    isRead: boolean,
+    id: number,
     leftAction?: NotificationActionButton,
     rightAction?: NotificationActionButton,
     readToggle: () => void,
@@ -37,5 +38,6 @@ type NotificationResponse = {
 
 type GetAllNotificationsResponse = {
     notificationResponses: NotificationResponse[],
-    unreadCount: number
+    unreadCount: number,
+    moreExist: boolean,
 }

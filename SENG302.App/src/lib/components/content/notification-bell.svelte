@@ -3,14 +3,14 @@
     import NotificationList from "./notification-list.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
-    import Notification from "./notification.svelte";
 
     let toggled = $state(false);
 
     const NOTIFICATION_SHOWN_CAP = 5;
 
     let notifications: NotificationData[] = $state([]);
-    let notificationCount: number = $state(0);
+    let notificationUnreadCount: number = $state(0);
+    let moreNotificationsExist: boolean = $state(false);
     let notificationsError: string = $state("");
 
     let notificationListElement: HTMLDivElement | null = $state(null);
@@ -21,6 +21,7 @@
      */
     function createNotificationData(response: NotificationResponse) {
         var data: NotificationData = {
+            id: response.id,
             isRead: response.readStatus,
             title: response.headerText,
             text: response.bodyText,
@@ -47,6 +48,46 @@
     }
 
     /**
+     * Toggles the read status of a notification
+     * @param notificationId the id of the notification to set
+     * @param newStatus the new status for that notification
+     */
+    async function toggleNotificationReadStatus(notificationId: number) {
+        const notification = notifications.find((n) => n.id == notificationId);
+        if (notification == null) {
+            return;
+        }
+
+        const newStatus = !notification.isRead;
+        if (newStatus != notification.isRead) {
+            notificationUnreadCount += newStatus ? -1 : 1;
+        }
+        notification.isRead = newStatus;
+
+        try {
+            const response = await fetchWithCsrf(
+                resolve(
+                    `/api/user/notifications/${notificationId}/status` as any,
+                ),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                },
+            );
+
+            if (!response.ok) {
+                notificationsError = await response.text();
+            }
+        } catch (err) {
+            notificationsError = (err as Error).message;
+        }
+    }
+
+    /**
      * Refresh's the notification list
      */
     async function refreshNotifications() {
@@ -65,10 +106,13 @@
 
             var getAllNotificationsResponse =
                 (await response.json()) as GetAllNotificationsResponse;
-            
+
             notifications = [];
-            notificationCount = getAllNotificationsResponse.unreadCount;
-            getAllNotificationsResponse.notificationResponses.forEach(n => notifications.push(createNotificationData(n)));
+            notificationUnreadCount = getAllNotificationsResponse.unreadCount;
+            moreNotificationsExist = getAllNotificationsResponse.moreExist;
+            getAllNotificationsResponse.notificationResponses.forEach((n) =>
+                notifications.push(createNotificationData(n)),
+            );
         } catch (err) {
             notificationsError = (err as Error).message;
         }
@@ -106,14 +150,15 @@
         bind:this={notificationButtonElement}
         onclick={() => {
             toggled = !toggled;
+            refreshNotifications();
         }}
     >
         <i class="bi bi-bell icon-centered"></i>
-        {#if notificationCount > 0}
+        {#if notificationUnreadCount > 0}
             <div class="notification-counter">
-                {notificationCount > 9
+                {notificationUnreadCount > 9
                     ? "9+"
-                    : notificationCount.toString()}
+                    : notificationUnreadCount.toString()}
             </div>
         {/if}
     </button>
@@ -124,12 +169,15 @@
         bind:this={notificationListElement}
     >
         <div class="notification-topbar">
-            <span class="notification-title">Notifications</span>
+            <div style="display: flex; flex-direction: column;">
+                <span class="notification-title">Notifications</span>
+                <span style="color: red;">{notificationsError}</span>
+            </div>
+
             <div class="notification-topbar-buttons">
                 <button
                     class="btn notification-topbar-button"
                     aria-label="refresh notifications"
-                    onclick={refreshNotifications}
                 >
                     <i class="bi bi-arrow-clockwise" />
                 </button>
@@ -149,7 +197,7 @@
             notifications={notifications.slice(0, NOTIFICATION_SHOWN_CAP)}
         />
 
-        {#if notifications.length > NOTIFICATION_SHOWN_CAP}
+        {#if moreNotificationsExist}
             <span class="see-more">See more...</span>
         {/if}
     </div>

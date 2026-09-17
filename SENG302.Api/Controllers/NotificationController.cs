@@ -43,8 +43,16 @@ public class NotificationController : ControllerBase
             var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, count ?? 5);
             List<NotificationResponse> notificationResponses = [.. notifications.Select(n => new NotificationResponse(n))];
             var unreadCount = await _notificationService.GetUnreadCount(userId);
-            
-            return Ok(new GetAllNotificationsResponse() { NotificationResponses = notificationResponses, UnreadCount = unreadCount });
+            var moreExist = await _notificationService.UserHasMoreThan(userId, count ?? 5);
+
+            return Ok(
+                new GetAllNotificationsResponse()
+                {
+                    NotificationResponses = notificationResponses,
+                    UnreadCount = unreadCount,
+                    MoreExist = moreExist
+                }
+            );
         }
         catch (FormatException)
         {
@@ -67,8 +75,8 @@ public class NotificationController : ControllerBase
     /// <param name="status">new status of notification</param>
     /// <returns></returns>
     [Authorize]
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult> SetReadStatus([FromRoute] int id, [FromBody] bool status)
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult> SetReadStatus([FromRoute] int id, [FromBody] SetReadStatusRequest readStatusRequest)
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -85,7 +93,7 @@ public class NotificationController : ControllerBase
                 throw new UnauthorizedAccessException();
             }
 
-            await _notificationService.SetNotificationStatusByIdAsync(id, status);
+            await _notificationService.SetNotificationStatusByIdAsync(id, readStatusRequest.Status);
             return Ok();
         }
         catch (FormatException)
