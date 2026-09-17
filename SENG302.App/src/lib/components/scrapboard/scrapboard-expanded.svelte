@@ -247,7 +247,7 @@
                             draggable="false"
                     />
                     <div class="close-control">
-                        <EditButton path={`/home/trips/${tripId}/scrapboard/edit`} class="btn-sm" />
+                        <EditButton path={`/home/trips/${tripId}/scrapboard`} class="btn-sm" />
                         <CloseButton bind:close={shown} class="btn-sm" />
                     </div>
                 </div>
