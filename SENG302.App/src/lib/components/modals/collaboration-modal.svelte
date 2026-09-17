@@ -26,7 +26,7 @@
     // Invite Collaboraters
     let inviteShown = $state(false);
     let invite = $state("");
-    let emailMessage = $state("Completed")
+    let emailMessage = $state("")
     let emailMessageStyle = $state("")
     
     /**
