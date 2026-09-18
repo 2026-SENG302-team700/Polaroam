@@ -10,7 +10,7 @@
 
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
-    let error = $state("");
+    let loadError = $state("");
 
     
     function dataURLtoFile(dataURL, filename, mimeType) {
@@ -58,8 +58,12 @@
         scrollToContent: true,
     };
     // end of init data block
-    
-    
+
+    /**
+     * Gets the elements, appstate, and files from the scene
+     * and saves them to be reloaded later. Also creates a thumbnail
+     * of the scrapboard to be used later
+     */
     async function saveScrapboard() {
         const elements = excalidrawAPI!.getSceneElements();
         const appState = excalidrawAPI!.getAppState();
@@ -73,14 +77,9 @@
             exportPadding: 10,
         });
         
-        console.log("trip id", page.params.tripId);
-        console.log("elements", elements);
-        console.log("Files", files ? files : []);
-        console.log("thumbnail", blob)
-        
         const form = new FormData();
         form.append("TripId", page.params.tripId);
-        form.append("Elements", elements);
+        form.append("Elements", JSON.stringify(elements));
         form.append("Thumbnail", blob);
 
         Object.entries(files).forEach(([fileId, fileData]) => {
@@ -89,20 +88,35 @@
             form.append("Files", file);
         });
         
-        
         const response = await fetchWithCsrf(resolve(`/api/scrapboard/save` as any), {
             method: "PUT",
             body: form,
             credentials: "include",
         });
-        
-        console.log(response.ok);
     }
     
     async function loadScrapboard() {
-        
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/scrapboard/${page.params.tripId}` as any), {
+                method: "GET",
+                credentials: "include",
+            });
+            
+            if (!response.ok) {
+                loadError = "Failed to load scrapboard";
+            }
+            
+            const scrapboard = await response.json();
+            const elements = JSON.parse(scrapboard.elements);
+            excalidrawAPI.updateScene({elements})
+        } catch (error) {
+            loadError = "Failed to load scrapboard";
+        }
     }
     
+    onMount(() => {
+        loadScrapboard();
+    })
 </script>
 <div>
     <CreationButton
