@@ -105,7 +105,7 @@ public class PostController : ControllerBase
 
             var post = await _postService.GetPostAsync(id);
 
-            if (post == null || !await _postService.UserOwnsPost(userId, post.TripId)) return NotFound();
+            if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)) return NotFound();
             return Ok(post);
         }
         catch (Exception e)
@@ -137,7 +137,7 @@ public class PostController : ControllerBase
 
         if (post == null) return NotFound();
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId)!) return NotFound();
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)!) return NotFound();
 
         try
         {
@@ -176,7 +176,7 @@ public class PostController : ControllerBase
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
-        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
+        if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
             return NotFound("Post not found");
         }
@@ -211,7 +211,7 @@ public class PostController : ControllerBase
 
         var post = await _postService.GetPostAsync(postId);
 
-        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
+        if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
             return NotFound("Post not found!");
         }
@@ -282,7 +282,7 @@ public class PostController : ControllerBase
             return NotFound("Post does not exist");
         }
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
             return NotFound();
         }

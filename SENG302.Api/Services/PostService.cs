@@ -65,7 +65,7 @@ public class PostService : IPostService
         // get all the posts
         var posts = await context.Set<Post>()
             .Where(post => context.Set<Trip>()
-                .Any(trip => trip.Id == post.TripId && trip.UserId == userId))
+                .Any(trip => trip.Id == post.TripId && (trip.UserId == userId || trip.Collaborators.Contains(userId))))
             .ToListAsync();
 
         return posts.OrderBy(post => post.Date);
@@ -74,7 +74,7 @@ public class PostService : IPostService
     /// <summary>
     /// Determines if an image is suitable for AI tagging.
     /// </summary>
-    /// <param name="image"></param>
+    /// <param name="image"></param>|| trip.Collaborators.Contains(userId))
     /// <returns></returns>
     private static bool IsAiTaggable(IFormFile image)
     {
@@ -168,7 +168,7 @@ public class PostService : IPostService
                 {
                     file.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
                     context.CustomFiles.Update(file);
-                    await context.SaveChangesAsync(); 
+                    await context.SaveChangesAsync();
                 }
             }
 
