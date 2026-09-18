@@ -3,10 +3,12 @@
 
     let {
         src,
-        index
+        selectedPhotoId = $bindable(null),
+        imagePhotoId = null
     } : {
         src: string,
-        index: number
+        selectedPhotoId: number | null,
+        imagePhotoId: number | null,
     } = $props()
 
     let image = $state<File | null>(null);
@@ -26,6 +28,10 @@
     
 
     $effect(() => {
+        if (selectedPhotoId !== imagePhotoId) {
+            imageSelected = false;
+        }
+        
         if (image instanceof File) {
             const url = URL.createObjectURL(image);
             objectUrl = url;
@@ -82,6 +88,7 @@
     
     async function clicked() {
         imageSelected = !imageSelected;
+        selectedPhotoId = imagePhotoId
     }
     
 </script>

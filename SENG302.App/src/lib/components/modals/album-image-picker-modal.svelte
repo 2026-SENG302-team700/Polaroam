@@ -77,7 +77,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <ScrapBoardImagePickerDisplay tripId={tripId} imageMetadata={imageMetadata}/>
+                    <ScrapBoardImagePickerDisplay tripId={tripId} imageMetadata={imageMetadata} bind:selectedPhotoId={selectedPhotoId}/>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary select-button" onclick={getImage} disabled={loading && !metadataLoaded}>Select</button>
