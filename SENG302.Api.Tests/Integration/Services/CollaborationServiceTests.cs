@@ -4,6 +4,7 @@ using NSubstitute;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
+using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.Services;
@@ -11,11 +12,13 @@ namespace SENG302.Api.Tests.Integration.Services;
 public class CollaborationServiceTests : BaseIntegrationTestFixture
 {
     private ICollaborationService ServiceUnderTest => ServiceProvider.GetRequiredService<ICollaborationService>();
-    private IUserService _mockUserService;
+    private readonly IUserService _mockUserService;
+    private ITestOutputHelper _output;
 
-    public CollaborationServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
+    public CollaborationServiceTests(WebApplicationFactory<Program> webAppFactory, ITestOutputHelper output) : base(webAppFactory)
     {
         _mockUserService = Substitute.For<IUserService>();
+        _output = output;
     }
     
     
@@ -33,7 +36,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "Test Country"
         };
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Users.Add(testUser);
         await context.SaveChangesAsync();
 
@@ -54,7 +57,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21)
         };
 
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
 
         context.Trips.Add(trip);
 
@@ -70,7 +73,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
     {
         await AddTestUser();
         
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
 
         User user2 = new()
         {
@@ -121,7 +124,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
     {
         await AddTestUser();
         
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         
         var trip = new Trip
         {
@@ -148,7 +151,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
     {
         await AddTestUser();
         
-        await using var context = DbContextFactory.CreateDbContext();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         
         var trip = new Trip
         {
@@ -170,4 +173,58 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
         );
     }
 
+    [Fact]
+    public async Task LeaveCollaboration_ValidRequest_RemovesUser()
+    {
+        // Setup
+        var trip = new Trip
+        {
+            Id = 1,
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2, 3]
+        };
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Add(trip);
+        await context.SaveChangesAsync();
+
+        // Leave
+        await ServiceUnderTest.LeaveCollaboration(2, 1);
+
+        // Check
+        await context.Entry(trip).ReloadAsync();
+        trip.Collaborators.Count.ShouldBe(1);
+        trip.Collaborators.ShouldNotContain(2);
+    }
+
+    [Fact]
+    public async Task LeaveCollaboration_NotCollaborator_ThrowsKeyNotFoundException()
+    {
+        // Setup
+        var trip = new Trip
+        {
+            Id = 1,
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [3]
+        };
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.Add(trip);
+        await context.SaveChangesAsync();
+
+        // Check
+        await ServiceUnderTest.LeaveCollaboration(2, 1).ShouldThrowAsync<KeyNotFoundException>();
+    }
+    
+    [Fact]
+    public async Task LeaveCollaboration_NoTrip_ThrowsKeyNotFoundException()
+    {
+        await ServiceUnderTest.LeaveCollaboration(2, 1).ShouldThrowAsync<KeyNotFoundException>();
+    }
 }
