@@ -25,7 +25,9 @@
             isRead: response.readStatus,
             title: response.headerText,
             text: response.bodyText,
-            readToggle: () => {}, // change notification read or not
+            readToggle: () => {
+                toggleNotificationReadStatus(response.id);
+            },
         };
 
         if (!response.handled) {
@@ -178,17 +180,19 @@
                 <button
                     class="btn notification-topbar-button"
                     aria-label="refresh notifications"
+                    onclick={() => refreshNotifications()}
                 >
-                    <i class="bi bi-arrow-clockwise" />
+                    <i class="bi bi-arrow-clockwise"></i>
                 </button>
                 <button
                     class="btn notification-topbar-button"
                     aria-label="exit"
                     onclick={() => {
                         toggled = false;
+                        refreshNotifications();
                     }}
                 >
-                    <i class="bi bi-x" />
+                    <i class="bi bi-x"></i>
                 </button>
             </div>
         </div>
