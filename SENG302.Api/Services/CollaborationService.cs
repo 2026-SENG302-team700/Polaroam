@@ -15,8 +15,10 @@ public interface ICollaborationService
     Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
     Task SendInviteAsync(string userEmail, int inviterId, int tripId);
-    Task<bool> ActionRejectAsync(int tripId, int userId);
+    Task ActionRejectAsync(int tripId, int userId);
+    Task ActionAcceptAsync(int tripId, int userId);
 }
+
 
 public class CollaborationService : ICollaborationService
 {
@@ -120,7 +122,7 @@ public class CollaborationService : ICollaborationService
             // user cannot send it to itself
             if (inviterId == invitedUser.Id)
             {
-                throw new UserInTripException("You cannot invite yourself to a trip.");
+                throw new UserInTripException("You can not invite yourself to a trip.");
             }
             
             // verify if user is already in trip
@@ -171,14 +173,58 @@ public class CollaborationService : ICollaborationService
         
     }
 
-    public async Task<bool> ActionAcceptAsync(int tripId, int userId)
-    {
-        
-    }
-    public async Task<bool> ActionRejectAsync(int tripId, int userId)
+    
+    /// <summary>
+    /// If the given user is labelled as a pending collaborator on the given task, then 
+    /// this method will remove them from the pending column and will add them to the collaborators column.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task ActionAcceptAsync(int tripId, int userId)
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
         var trip  = await _tripService.GetTripByIdAsync(tripId);
-        trip.Collaborators.Remove(userId);
+        var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User does not exist!");
+        }
+        if (trip.PendingInvites.Remove(user.Email))
+        {
+            trip.Collaborators.Add(userId);
+            await context.SaveChangesAsync();
+        } else 
+        {
+            throw new ArgumentException("User has no pending invite on this task");
+        }
+    }
+
+    /// <summary>
+    /// If the given user is labelled as a pending collaborator on the given task, then 
+    /// this method will remove them from the pending column.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task ActionRejectAsync(int tripId, int userId)
+    {
+        var context = await _dbContextFactory.CreateDbContextAsync();
+        var trip  = await _tripService.GetTripByIdAsync(tripId);
+        var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            throw new ArgumentException("User does not exist!");
+        }
+        if (trip.PendingInvites.Remove(user.Email))
+        {
+            await context.SaveChangesAsync();
+        } else 
+        {
+            throw new ArgumentException("User has no pending invite on this task");
+        }
+        
     }
 }

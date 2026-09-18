@@ -288,23 +288,32 @@ public class TripController : ControllerBase
     }
     
 
+    /// <summary>
+    /// If a user has been invited to the given trip, then the action provided in collaborationRequest
+    /// will be passed to the backend to have their action performed.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="collaborationRequest"></param>
+    /// <returns></returns>
     [Authorize]
     [HttpPost("{tripId:int}/collaborators")]
-    public async Task<ActionResult> ActionCollaboration(int tripId ,[FromBody] CollaborationRequest collaborationRequest)
+    public async Task<ActionResult> ActionCollaboration(int tripId, [FromBody] CollaborationRequest collaborationRequest)
     {
         try
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId)) //does not work properly yet
                 return Unauthorized();
             if (collaborationRequest.Action== 0) // reject
             {
-                
+                await _collaborationService.ActionRejectAsync(tripId, userId);
+                return Ok("successfully rejected");
             } else if (collaborationRequest.Action == 1) //accept
             {
-                await _collaborationService.ActionRejectAsync(tripId, userId);
+                await _collaborationService.ActionAcceptAsync(tripId, userId);
+                return Ok("successfully accepted");
             } else //invalid action
             {
                 return BadRequest("Not a valid collaboration action!");
