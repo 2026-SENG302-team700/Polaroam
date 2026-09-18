@@ -1,5 +1,6 @@
 <script lang="ts">
     import TripForm from "$lib/components/forms/trip-form.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
@@ -60,14 +61,14 @@
                     credentials: "include",
                 },
             );
-
-            const data = await response.json();
+            
             if (!response.ok) {
                 errors.generic =
-                    `Failed to fetch trip: ${data}` || "Failed to fetch trip.";
+                    "Failed to fetch trip.";
                 return;
             }
-
+            
+            const data = await response.json();
             tripTitle = data.title;
             tripDescription = data.description;
 
@@ -75,7 +76,7 @@
             endDate = new Date(data.endDate);
         } catch (err) {
             errors.generic =
-                `Failed to fetch trip: ${err}` || "Failed to fetch trip.";
+                "Failed to fetch trip.";
         } finally {
             loading = false;
         }
@@ -147,17 +148,21 @@
     }
 </script>
 
-<TripForm
-    bind:title={tripTitle}
-    bind:description={tripDescription}
-    bind:startDate
-    bind:endDate
-    bind:startDateState
-    bind:endDateState
-    heading="Edit Trip"
-    submitText="Update Trip"
-    cancelPath={`/home/trips/${params.tripId}`}
-    {errors}
-    {loading}
-    onSubmit={updateTrip}
-/>
+{#if !loading && tripTitle !== ""}
+    <TripForm
+            bind:title={tripTitle}
+            bind:description={tripDescription}
+            bind:startDate
+            bind:endDate
+            bind:startDateState
+            bind:endDateState
+            heading="Edit Trip"
+            submitText="Update Trip"
+            cancelPath={`/home/trips/${params.tripId}`}
+            {errors}
+            {loading}
+            onSubmit={updateTrip}
+    />
+{:else if !loading}
+    <NotFound />
+{/if}

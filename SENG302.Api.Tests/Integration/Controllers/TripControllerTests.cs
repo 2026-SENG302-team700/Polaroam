@@ -10,16 +10,43 @@ using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
+using SENG302.Api.Controllers;
+using SENG302.Api.Services;
 
-namespace SENG302.Api.Tests.Integration.ControllerTests;
+namespace SENG302.Api.Tests.Integration.Controllers;
 
 public class TripControllerTests : BaseIntegrationTestFixture
 {
     private ITestOutputHelper _output;
 
+    private ITripService _mockTripService;
+    private IPostService _mockPostService;
+    private IAlbumService _mockAlbumService;
+    private IUserService _mockUserService;
+    private ICollaborationService _mockCollaborationService;
+
+
+    private TripController _controller;
+
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
         base(webApplicationFactory)
     {
+        _mockTripService = Substitute.For<ITripService>();
+        _mockPostService = Substitute.For<IPostService>();
+        _mockAlbumService = Substitute.For<IAlbumService>();
+        _mockUserService = Substitute.For<IUserService>();
+        _mockCollaborationService = Substitute.For<ICollaborationService>();
+
+        _controller = new TripController(
+            _mockTripService,
+            _mockPostService,
+            _mockAlbumService,
+            _mockUserService,
+            _mockCollaborationService
+        );
+
+        AddTestPrincipalToController(_controller);
+
         _output = output;
     }
 
@@ -28,16 +55,20 @@ public class TripControllerTests : BaseIntegrationTestFixture
     /// </summary>
     private async Task AddTestUser()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
+
+        User testUser = new()
         {
             Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country"
-        });
+        };
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(testUser);
         await context.SaveChangesAsync();
+
+        _mockUserService.GetUserByIdAsync(testUser.Id).Returns(Task.FromResult((User?)testUser));
     }
 
     /// <summary>
@@ -253,7 +284,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeleteTrip_DifferentUser_Unauthorized()
+    public async Task DeleteTrip_DifferentUser_NotFound()
     {
         var tripId = 10;
 
@@ -271,7 +302,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{tripId}");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, deleteResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, deleteResponse.StatusCode);
     }
 
     [Fact]

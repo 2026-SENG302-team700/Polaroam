@@ -16,6 +16,7 @@ public class DatabaseContext : DbContext
     public DbSet<Location> Locations { get; set; }
     public DbSet<Album> Albums { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Scrapboard> Scrapboards { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,5 +29,4 @@ public class DatabaseContext : DbContext
             .Property("Timestamp")
             .HasConversion(new DateTimeOffsetToBinaryConverter());
     }
-
 }

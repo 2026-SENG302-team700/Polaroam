@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
-using SENG302.Api.Helpers;
 using SENG302.Api.Models.Interfaces;
 namespace SENG302.Api.Models.Entities;
 

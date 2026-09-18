@@ -41,3 +41,8 @@ type GetAllNotificationsResponse = {
     unreadCount: number,
     moreExist: boolean,
 }
+
+type CollaboratingUser = {
+    userId: number,
+    displayName: string,
+}

@@ -451,7 +451,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         int userId = 100;
         Trip trip = await CreateTestTripWithUserId(userId);
 
-        Assert.True(await _tripService.UserHasModifyAccessToTrip(userId, trip.Id));
+        Assert.True(await _tripService.UserHasCollaborationAccessToTrip(userId, trip.Id));
     }
 
     [Fact]
@@ -460,7 +460,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         int userId = 100;
         Trip trip = await CreateTestTripWithUserId(userId);
 
-        Assert.False(await _tripService.UserHasModifyAccessToTrip(userId + 1, trip.Id));
+        Assert.False(await _tripService.UserHasCollaborationAccessToTrip(userId + 1, trip.Id));
     }
 
     [Fact]
@@ -717,6 +717,28 @@ public class TripServiceTests : BaseIntegrationTestFixture
         var numberOfTripsAfter = await context2.Set<Trip>().CountAsync();
 
         numberOfTripsAfter.ShouldBe(numberOfTripsBefore);
+    }
+
+    [Fact] 
+    public async Task UpdateScrapboardReference_TripHasNoScrapboard_BooleanUpdated()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        trip.HasScrapboard.ShouldBeFalse();
+        await ServiceUnderTest.UpdateScrapboardReferenceAsync(trip.Id);
+        var newTrip = await ServiceUnderTest.GetTripByIdAsync(trip.Id);
+        newTrip.HasScrapboard.ShouldBeTrue();
+    }
+
+    [Fact] 
+    public async Task UpdateScrapboardReference_TripHasScrapboard_ThrowArgumentException()
+    {
+        var trip = await CreateTestTripWithUserId(1);
+        trip.HasScrapboard.ShouldBeFalse();
+        await ServiceUnderTest.UpdateScrapboardReferenceAsync(trip.Id);
+        await Should.ThrowAsync<ArgumentException>(
+            () => _tripService.UpdateScrapboardReferenceAsync(trip.Id)
+        );
+
     }
 
 }
