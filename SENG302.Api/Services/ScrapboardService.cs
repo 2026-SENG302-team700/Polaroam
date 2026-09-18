@@ -10,6 +10,7 @@ public interface IScrapboardService
     public Task<Scrapboard?> GetScrapboardByTripAsync(int tripId);
     public Task<Scrapboard> CreateScrapboardAsync(int tripId);
     public Task SaveScrapboardAsync(int id, string elements, List<IFormFile> files, IFormFile thumbnail);
+    public Task<CustomFile> GetScrapboardThumbnailAsync(int tripId);
 }
 
 public class ScrapboardService : IScrapboardService
@@ -67,7 +68,6 @@ public class ScrapboardService : IScrapboardService
 
         var scrapboard = await context.Scrapboards.FirstOrDefaultAsync(t => t.TripId == tripId);
         return scrapboard;
-
     }
 
     /// <summary>
@@ -115,5 +115,26 @@ public class ScrapboardService : IScrapboardService
         
         context.Scrapboards.Update(scrapboard);
         await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Gets the thumbnail of a scrapboard
+    /// </summary>
+    /// <param name="tripId">ID of the trip associated with the scrapboard</param>
+    /// <returns>Bytestream of the thumbnail</returns>
+    /// <exception cref="KeyNotFoundException">Scrapboard not found</exception>
+    public async Task<CustomFile> GetScrapboardThumbnailAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        Scrapboard? scrapboard = await GetScrapboardByTripAsync(tripId);
+        if (scrapboard == null)
+        {
+            throw new KeyNotFoundException("Scrapboard not found.");
+        }
+
+        var thumbnailFile = await _fileService.GetFileByIdAsync(scrapboard.Thumbnail);
+
+        return thumbnailFile;
     }
 }

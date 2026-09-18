@@ -91,7 +91,7 @@
         
         
         const response = await fetchWithCsrf(resolve(`/api/scrapboard/save` as any), {
-            method: "POST",
+            method: "PUT",
             body: form,
             credentials: "include",
         });
