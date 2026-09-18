@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
     import ImageGallery from "../images/image-gallery.svelte";
+    import ScrapBoardImagePickerDisplay from "$lib/components/images/scrapboard-image-picker-display.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import {onMount} from "svelte";
     import {resolve} from "$app/paths";
@@ -55,7 +56,7 @@
     <div class="modal d-block" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
-                <ImageGallery tripId={tripId} imageMetadata={imageMetadata}/>
+                <ScrapBoardImagePickerDisplay tripId={tripId} imageMetadata={imageMetadata}/>
             </div>
         </div>
     </div>
