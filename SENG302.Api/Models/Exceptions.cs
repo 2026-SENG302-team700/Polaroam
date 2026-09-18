@@ -82,3 +82,19 @@ public class TagNotFoundException : Exception
 {
     public TagNotFoundException(string? error) : base(error ?? "Tag not found") {}
 }
+
+/// <summary>
+/// Exception to throw when file size is exceeded.
+/// </summary>
+public class FileSizeExceededException : Exception
+{
+    public FileSizeExceededException(string? error) : base(error ?? "File size exceeded") {}
+}
+
+/// <summary>
+/// Exception to throw when file mime is invalid
+/// </summary>
+public class FileMimeTypeInvalidException : Exception
+{
+    public FileMimeTypeInvalidException(string? error) : base(error ?? "File size exceeded") {}
+}

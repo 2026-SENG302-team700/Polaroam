@@ -14,18 +14,12 @@ namespace SENG302.Api.Controllers;
 [Route("api/scrapboard")]
 public class ScrapboardController : ControllerBase
 {
-    private readonly IAlbumService _albumService;
-    private readonly IUserService _userService;
     private readonly ITripService _tripService;
-    private readonly IFileService _fileService;
     private readonly IScrapboardService _scrapboardService;
 
-    public ScrapboardController(IScrapboardService scrapboardService, IAlbumService albumService, IUserService userService, ITripService tripService, IFileService fileService)
+    public ScrapboardController(IScrapboardService scrapboardService, ITripService tripService)
     {
-        _albumService = albumService;
-        _userService = userService;
         _tripService = tripService;
-        _fileService = fileService;
         _scrapboardService = scrapboardService;
     }
 
@@ -102,6 +96,7 @@ public class ScrapboardController : ControllerBase
     }
     
     [HttpPost("save")]
+    [RequestSizeLimit(200_000_000)]
     public async Task<ActionResult> SaveScrapboard([FromForm] SaveScrapboardRequest request)
     {
         try
@@ -119,11 +114,26 @@ public class ScrapboardController : ControllerBase
                 return Unauthorized();
             }
 
+            await _scrapboardService.SaveScrapboardAsync(
+                request.TripId,
+                request.Elements,
+                request.Files,
+                request.Thumbnail
+            );
+            
             return Ok();
         }
-        catch
+        catch (FileSizeExceededException e)
         {
-            return BadRequest();
+            return BadRequest(e.Message);
+        }
+        catch (FileMimeTypeInvalidException e)
+        {
+            return BadRequest(e.Message);
+        }
+        catch (KeyNotFoundException e)
+        {
+            return BadRequest(e.Message);
         }
     }
 }

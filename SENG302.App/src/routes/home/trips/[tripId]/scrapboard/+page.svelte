@@ -1,6 +1,7 @@
 <script lang="ts">
     import Excalidraw from "svelte-excalidraw";
     import {type ExcalidrawImperativeAPI} from "@excalidraw/excalidraw/types";
+    import { exportToCanvas } from "@excalidraw/excalidraw";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import {onMount} from "svelte";
@@ -49,8 +50,36 @@
     
     
     async function saveScrapboard() {
-        console.log("scene elements:")
-        console.log(excalidrawAPI!.getSceneElements());
+
+        var canvas = await exportToCanvas({
+            element: excalidrawAPI.getSceneElements(),
+            appState: excalidrawAPI!.getAppState(),
+            files: excalidrawAPI!.getFiles(),
+        })
+        
+        console.log("trip id", page.params.tripId);
+        console.log("elements", excalidrawAPI!.getSceneElements());
+        console.log("Files", excalidrawAPI!.getFiles());
+        console.log("thumbnail", canvas)
+        
+        
+
+        
+        console.log(canvas);
+        
+        //const form = new FormData();
+        //form.append("TripId", page.params.tripId);
+        //form.append("Elements", excalidrawAPI!.getSceneElements());
+        //form.append("Files", excalidrawAPI!.getFiles());
+        //form.append("Thumbnail", canvas);
+        
+        //const response = await fetchWithCsrf(resolve(`/api/scrapboard/save` as any), {
+        //    method: "POST",
+        //    body: form,
+        //    credentials: "include",
+        //});
+        
+        //console.log(response.ok);
     }
     
     async function loadScrapboard() {
