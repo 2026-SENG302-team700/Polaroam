@@ -14,6 +14,15 @@ public class DatabaseContext : DbContext
     public DbSet<Post> Posts { get; set; }
     public DbSet<Location> Locations { get; set; }
     public DbSet<Album> Albums { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Notification>()
+            .HasDiscriminator(n => n.NotificationType)
+            .HasValue<Notification>("Notification")
+            .HasValue<TripInvitationNotification>("TripInvitation");
+    }
     public DbSet<Scrapboard> Scrapboards { get; set; }
 
 }
