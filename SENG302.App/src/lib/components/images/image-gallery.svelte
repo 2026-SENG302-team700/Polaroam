@@ -23,7 +23,7 @@
         tripId: number;
         errors?: string[];
         errorsBesidePicker?: boolean;
-        children: Snippet;
+        children?: Snippet;
     } = $props();
 
     let photoIds = $derived(imageMetadata?.map((m) => m.photoId) ?? []);

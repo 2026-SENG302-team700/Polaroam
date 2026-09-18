@@ -6,10 +6,13 @@
     import {onMount} from "svelte";
     import {resolve} from "$app/paths";
     import {page} from "$app/state";
+    import AlbumImagePickerModal from "$lib/components/modals/album-image-picker-modal.svelte";
 
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let error = $state("");
+    let showPickerModal = $state(false)
+    let tripId = Number(page.params.tripId);
 
     // to be removed once proper implementation with backend is created
     const initialData = {
@@ -51,6 +54,10 @@
         console.log("scene elements:")
         console.log(excalidrawAPI!.getSceneElements());
     }
+
+    async function showImagePickerModal() {
+        showPickerModal = true;
+    }
     
 </script>
 <div>
@@ -59,6 +66,7 @@
             onClick={onClick}
             loading={saving}
     />
+    <button class="btn btn-primary bi-image" onclick={showImagePickerModal}/>
 
     <div class="scrapboard-wrapper">
         <Excalidraw
@@ -70,9 +78,17 @@
                 zenModeEnabled={false}
                 gridModeEnabled={false}
                 autoFocus={true}
+                UIOptions={{
+                    tools: {
+                        image: false,
+                    }
+                }}
         />
     </div>
 </div>
+
+<AlbumImagePickerModal tripId={tripId} bind:show={showPickerModal}/>
+
 <style>
     .scrapboard-wrapper {
         height: 70vh;
