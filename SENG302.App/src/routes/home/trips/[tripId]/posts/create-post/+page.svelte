@@ -139,8 +139,7 @@
 
                 const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
-                errors.date =
-                    data.errors?.date ?? data.errors?.Date ?? [];
+                errors.date = data.errors?.date ?? data.errors?.Date ?? [];
                 errors.content =
                     data.errors?.content ?? data.errors?.Content ?? [];
                 errors.location =
@@ -163,15 +162,19 @@
                 ) {
                     showConfirmationModal = true;
                 }
-                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
-                
+                errors.content = errors.content.filter(
+                    (e) =>
+                        e !==
+                        "Post contains no content, are you sure you want to create post?",
+                );
+
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {
                     errors.date = ["Invalid date"];
                 } else if (dateState === "empty") {
                     errors.date = ["Date is required"];
                 }
-                
+
                 return;
             }
 
@@ -200,7 +203,12 @@
 
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
-    <DatePicker bind:value={date} bind:inputState={dateState} bind:error={errors.date} disabled={loading} />
+    <DatePicker
+        bind:value={date}
+        bind:inputState={dateState}
+        bind:error={errors.date}
+        disabled={loading}
+    />
 
     <LocationForm
         bind:searchQuery
@@ -226,6 +234,7 @@
 
     <ImageDisplay
         bind:images={files}
+        {tripId}
         letDelete={true}
         errors={[...errors.photos, ...fileErrors]}
     >

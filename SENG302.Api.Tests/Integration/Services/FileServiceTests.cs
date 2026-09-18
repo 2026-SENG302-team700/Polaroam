@@ -23,20 +23,20 @@ public class FileServiceTests : BaseIntegrationTestFixture
             ContentType = mimeType
         };
     }
-    
+
     [Fact]
     public async Task SaveFileEntity_Success_ReturnsCustomFileEntity()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
 
-        
+
         await ServiceUnderTest.SaveFileAsync(mockFile, 0);
 
         var singleItemInDb = context.CustomFiles.ShouldHaveSingleItem();
@@ -48,21 +48,21 @@ public class FileServiceTests : BaseIntegrationTestFixture
         var readFile = File.ReadAllBytes(Path.Combine(FakeTestDirectory, singleItemInDb.FileKey));
         readFile.ShouldBe(mockFileContent);
     }
-    
+
     [Fact]
     public async Task GetFileEntity_Success_ReturnsCustomFileEntity()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-        
+
         var getFileEntity = await ServiceUnderTest.GetFileByIdAsync(fileEntity.Id);
         getFileEntity.ShouldBeEquivalentTo(fileEntity);
     }
@@ -71,14 +71,14 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task GenerateFileKey_FileInput_FileNameDifferFileKey()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var fileKey = ServiceUnderTest.GenerateFileKey(mockFile);
         fileKey.ShouldNotBe(mockFile.FileName);
     }
@@ -87,16 +87,16 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task GetFileContent_Valid_ReturnsFileContentyBytes()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-        
+
         var newFile = await ServiceUnderTest.GetFileContentAsync(fileEntity.FileKey);
         newFile.ShouldBe(mockFileContent);
     }
@@ -116,18 +116,18 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task DeleteFile_Valid_DeleteFileFromDiskDb()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-        
+
         await ServiceUnderTest.DeleteFileAsync(fileEntity.FileKey);
-        
+
         await Should.ThrowAsync<KeyNotFoundException>(async () =>
         {
             await ServiceUnderTest.GetFileByIdAsync(fileEntity.Id);
@@ -138,17 +138,17 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task CheckFileOwnership_OwnerOwns_ReturnTrue()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-        
-        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,0);
+
+        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id, 0);
         owns.ShouldBeTrue();
     }
 
@@ -157,27 +157,27 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task CheckFileOwnership_OwnerDoesntOwn_ReturnFalse()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-        
+
         var mockFile = GetMockFile(
             "mocka",
             mockFileContent,
             "image/webp");
-        
+
         var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-        
-        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id,1);
+
+        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id, 1);
         owns.ShouldBeFalse();
     }
-    
+
     [Fact]
     public async Task RemoveTagAsync_HasTags_ReturnsOk()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         List<string> insertTags = new List<string>(["ich bin gut", "germanic", "ich bin sprechen ze deutsch", "remove"]);
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -188,7 +188,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             FileSize = 100,
             Tags = insertTags
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -205,7 +205,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         List<string> insertTags = new List<string>(["tag1", "tag2"]);
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -216,7 +216,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             FileSize = 100,
             Tags = insertTags
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -234,7 +234,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         List<string> insertTags = new List<string>(["tag1", "tag2"]);
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -245,7 +245,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             FileSize = 100,
             Tags = insertTags
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -262,7 +262,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         List<string> insertTags = new List<string>(["tag1", "tag2"]);
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -273,7 +273,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             FileSize = 100,
             Tags = insertTags
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -290,7 +290,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         List<string> insertTags = new List<string>(["ich bin gut", "germanic", "ich bin sprechen ze deutsch"]);
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -301,20 +301,20 @@ public class FileServiceTests : BaseIntegrationTestFixture
             FileSize = 100,
             Tags = insertTags
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
-        
+
         var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
         tags.ShouldNotBeNull();
         tags.ShouldBeEquivalentTo(file.Tags);
     }
-    
+
     [Fact]
     public async Task GetTagsAsync_HasNoTags_ReturnsFalse()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -324,14 +324,14 @@ public class FileServiceTests : BaseIntegrationTestFixture
             MimeType = "image/png",
             FileSize = 100,
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
-        
+
         var tags = await ServiceUnderTest.GetTagsAsync(file.Id);
         tags.ShouldBeNull();
     }
-    
+
     [Fact]
     public async Task GetTagsAsync_ImageDoesntExist_ThrowsKeyNotFoundException()
     {
@@ -345,7 +345,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task SetTagQueueStatus_validId_SetInTagQueueTrue()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -355,7 +355,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             MimeType = "image/png",
             FileSize = 100,
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -364,13 +364,13 @@ public class FileServiceTests : BaseIntegrationTestFixture
         var newFile = await newContext.CustomFiles.FirstOrDefaultAsync(f => f.Id == file.Id);
         newFile.ShouldNotBeNull();
         newFile.InTagQueue.ShouldBeTrue();
-    }   
+    }
 
     [Fact]
     public async Task SetTagQueueStatus_invalidId_throwsKeyNotFound()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -380,7 +380,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             MimeType = "image/png",
             FileSize = 100,
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -395,7 +395,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task GetTagQueueStatus_ValidIdNotInQueue_ReturnsFalse()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -405,7 +405,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             MimeType = "image/png",
             FileSize = 100,
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 
@@ -417,7 +417,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
     public async Task GetTagQueueStatus_ValidIdInQueue_ReturnsTrue()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        
+
         CustomFile file = new CustomFile
         {
             Id = 1,
@@ -427,7 +427,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             MimeType = "image/png",
             FileSize = 100,
         };
-        
+
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
 

@@ -118,7 +118,7 @@
             files = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/image/${meta.photoId}` as any),
+                        resolve(`/api/${tripId}/images/${meta.photoId}` as any),
                         {
                             method: "GET",
                             credentials: "include",
@@ -277,7 +277,11 @@
                 ) {
                     confirmationModalShown = true;
                 }
-                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
+                errors.content = errors.content.filter(
+                    (e) =>
+                        e !==
+                        "Post contains no content, are you sure you want to create post?",
+                );
 
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {

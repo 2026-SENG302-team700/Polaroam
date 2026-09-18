@@ -181,7 +181,7 @@ public class U70011ClipImageTagging
     [When("I view the image in enlarged view")]
     public async Task WhenIViewTheImageInEnlargedView()
     {
-        _lastResponse = await _fixture.HttpClient.GetAsync("/api/image/1/tags");
+        _lastResponse = await _fixture.HttpClient.GetAsync("/api/trips/1/images/1/tags");
     }
 
     [Then("I see an icon with tool-tip letting me know the image has been tagged with AI And I can click a button to retry tagging")]

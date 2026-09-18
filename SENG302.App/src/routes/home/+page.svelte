@@ -105,7 +105,7 @@
                             group.photos.map(async (meta) => {
                                 const res = await fetchWithCsrf(
                                     resolve(
-                                        `/api/image/${meta.photoId}` as any,
+                                        `/api/trips/${group.tripId}/image/${meta.photoId}` as any,
                                     ),
                                     {
                                         method: "GET",

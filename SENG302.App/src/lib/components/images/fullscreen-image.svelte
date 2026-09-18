@@ -25,6 +25,7 @@
         photoId,
         photoIds,
         viewContext,
+        tripId,
     }: {
         image: ImageSource;
         enlarged: boolean;
@@ -33,6 +34,7 @@
         photoId?: number;
         photoIds?: number[];
         viewContext: ImageViewContext;
+        tripId: number;
     } = $props();
 
     let tags: string[] = $state([]);
@@ -133,7 +135,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/context` as any),
+                resolve(`/api/trips/${tripId}/images/${id}/context` as any),
                 { method: "GET", credentials: "include" },
             );
             if (!response.ok) {
@@ -153,7 +155,7 @@
         try {
             const response = await fetchWithCsrf(
                 resolve(
-                    `/api/image/${id}/tags/${encodeURIComponent(tag)}` as any,
+                    `/api/trips/${tripId}/images/${id}/tags/${encodeURIComponent(tag)}` as any,
                 ),
                 { method: "DELETE", credentials: "include" },
             );
@@ -194,7 +196,7 @@
             loading = true;
             tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/tags` as any),
+                resolve(`/api/trips/${tripId}/images/${id}/tags` as any),
                 { method: "GET", credentials: "include" },
             );
 
@@ -240,7 +242,7 @@
         try {
             tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/tags` as any),
+                resolve(`/api/trips/${tripId}/images/${id}/tags` as any),
                 { method: "PATCH", credentials: "include" },
             );
             if (!response.ok) {
@@ -267,8 +269,8 @@
 />
 
 <div class="fullscreen-image-wrapper">
-    <a class="click-to-return" onclick={()=>enlarged = false}/>
-    <div class="image-container" >
+    <a class="click-to-return" onclick={() => (enlarged = false)} />
+    <div class="image-container">
         <div class="image-content">
             <div class="image-frame">
                 {#if displaySrc}
@@ -397,7 +399,6 @@
 </div>
 
 <style>
-
     .click-to-return {
         width: 100%;
         height: 100%;

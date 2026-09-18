@@ -89,7 +89,9 @@
             photos = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/image/${meta.photoId}` as any),
+                        resolve(
+                            `/api/trips/${postObject.tripId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
                             credentials: "include",

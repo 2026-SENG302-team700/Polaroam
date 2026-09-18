@@ -49,7 +49,9 @@
         deleteError = "";
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${image.photoId}/context` as any),
+                resolve(
+                    `/api/trips/${tripId}/image/${image.photoId}/context` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
 

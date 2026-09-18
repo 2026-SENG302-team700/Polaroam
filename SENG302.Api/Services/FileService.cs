@@ -13,6 +13,7 @@ public interface IFileService
     Task<byte[]> GetFileContentAsync(string fileKey);
     string GenerateFileKey(IFormFile file);
     Task<bool> CheckFileOwnership(int fileId, int userId);
+    Task<bool> UserHasAccessToFileFromTrip(int userId, int tripId, int fileId);
     Task<List<string>?> GetTagsAsync(int id);
     Task RemoveTagAsync(int id, string tag);
     Task SetTagQueueStatus(int id);
@@ -110,7 +111,7 @@ public class FileService : IFileService
         var file = await GetFileByIdAsync(fileId);
         return file.OwnerId == userId;
     }
-        
+
     /// <summary>
     /// Takes an incoming file and follows the following steps
     /// >> Validate Information (needs to be implemented -- see u7-image-validation)
@@ -171,11 +172,11 @@ public class FileService : IFileService
     {
         var path = Path.Combine(_basePath, fileKey);
         File.Delete(path);
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         await context.CustomFiles.Where(f => f.FileKey == fileKey).ExecuteDeleteAsync();
     }
-    
+
     /// <summary>
     /// Returns a files tags.
     /// </summary>
@@ -224,7 +225,7 @@ public class FileService : IFileService
         {
             throw new KeyNotFoundException("File not found.");
         }
-        
+
         file.InTagQueue = true;
         context.CustomFiles.Update(file);
         await context.SaveChangesAsync();
@@ -249,7 +250,7 @@ public class FileService : IFileService
         var file = await GetFileByIdAsync(id);
         return file.TagError;
     }
-    
+
     /// <summary>
     /// gets custom file entities for provided ids.
     /// </summary>
@@ -259,5 +260,32 @@ public class FileService : IFileService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         return await context.CustomFiles.Where(f => ids.Contains(f.Id)).ToListAsync();
+    }
+
+    /// <summary>
+    /// Checks if a user has access to a file through a trip
+    /// It checks if the file is contained within a post, or within the trip's algum
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="tripId">The id of the trip</param>
+    /// <param name="fileId">The id of the file</param>
+    /// <returns>Whether the user has access to the file from the trip</returns>
+    public async Task<bool> UserHasAccessToFileFromTrip(int userId, int tripId, int fileId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        // If the user cannot access the trip then say no
+        var userCanAccessTrip = await context.Trips.Where(t => t.Id == tripId && t.Collaborators.Contains(userId)).AnyAsync();
+        if (!userCanAccessTrip) return false;
+
+        // If the file is in the trip album then say yes
+        var fileIsInAlbum = await context.Albums.Where(a => a.TripId == tripId && a.PhotoIds.Contains(fileId)).AnyAsync();
+        if (fileIsInAlbum) return true;
+
+        // If the file is in a post of the trip then say yes
+        var fileIsInPost = await context.Posts.Where(p => p.TripId == tripId && p.PhotoIds.Contains(fileId)).AnyAsync();
+        if (fileIsInPost) return true;
+
+        return false;
     }
 }

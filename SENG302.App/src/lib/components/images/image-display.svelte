@@ -16,6 +16,7 @@
         pickerFirst = false,
         viewContext = "none",
         children,
+        tripId,
     }: {
         images?: File[] | null;
         photoIds?: number[];
@@ -25,6 +26,7 @@
         pickerFirst?: boolean;
         viewContext?: ImageViewContext;
         children?: Snippet;
+        tripId: number;
     } = $props();
 
     let confirmationModalShown = $state(false);
@@ -80,6 +82,7 @@
                     photoId={photoIds[index]}
                     {photoIds}
                     {viewContext}
+                    {tripId}
                 />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">
