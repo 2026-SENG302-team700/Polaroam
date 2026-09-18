@@ -249,7 +249,11 @@ public class ImageController : ControllerBase
     {
         try
         {
+            // verify that the user logged in is the owner of the images
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
+            if (file == null || !await _fileService.CheckFileOwnership(file.Id, userId)) return NotFound();
+
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
 
             return File(bytes, file.MimeType, file.OriginalFileName ?? $"photo-{photoId}");

@@ -131,6 +131,26 @@ namespace SENG302.Api.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Scrapboard", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.Property<string>("FileKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Scrapboards");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Trip", b =>
                 {
                     b.Property<int>("Id")
@@ -149,6 +169,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<DateTimeOffset>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HasScrapboard")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");

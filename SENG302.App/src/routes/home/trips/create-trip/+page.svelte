@@ -2,7 +2,7 @@
     import TripForm from "$lib/components/forms/trip-form.svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "../../../../lib/csrf";
+    import { fetchWithCsrf } from "$lib/csrf";
 
     let loading = $state(false);
     let tripTitle = $state("");
@@ -60,7 +60,7 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/trip`), {
+            const response = await fetchWithCsrf(resolve(`/api/trip` as any), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

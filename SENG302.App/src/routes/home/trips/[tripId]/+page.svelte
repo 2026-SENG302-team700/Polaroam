@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { user } from "$lib/stores/user";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -15,6 +16,7 @@
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
     import { user } from "$lib/stores/user";
     import NotFound from "$lib/components/content/not-found.svelte";
+    import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -227,6 +229,7 @@
                     {hoveredPostId}
                     bind:selectedPost
                 />
+                <ScrapboardImage {tripId} />
             </div>
             <div class="card-footer text-muted images">
                 <PostSection
@@ -255,6 +258,7 @@
 <CollaborationModal
     bind:show={collaborationModalShown}
     tripOwner={tripObject.ownerName ?? ""}
+    isOwner={tripObject.userId == $user.id}
     tripCollaborators={tripObject.collaborators}
     {error}
 />

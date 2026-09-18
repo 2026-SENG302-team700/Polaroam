@@ -140,7 +140,7 @@
                 const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
                 errors.date =
-                    data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
+                    data.errors?.date ?? data.errors?.Date ?? [];
                 errors.content =
                     data.errors?.content ?? data.errors?.Content ?? [];
                 errors.location =
@@ -157,13 +157,14 @@
                     errors.title.length === 0 &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     !errors.generic &&
                     !errors.location
                 ) {
                     showConfirmationModal = true;
                 }
-
+                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
+                
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {
                     errors.date = ["Invalid date"];

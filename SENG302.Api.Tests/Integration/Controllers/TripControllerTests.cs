@@ -10,16 +10,10 @@ using NSubstitute;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
 using static SENG302.Api.Helpers.DateHelper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Controllers;
 using SENG302.Api.Services;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using System.Security.Claims;
-using NSubstitute.ExceptionExtensions;
-using Xunit.Sdk;
 
-namespace SENG302.Api.Tests.Integration.ControllerTests;
+namespace SENG302.Api.Tests.Integration.Controllers;
 
 public class TripControllerTests : BaseIntegrationTestFixture
 {
@@ -263,7 +257,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeleteTrip_DifferentUser_Unauthorized()
+    public async Task DeleteTrip_DifferentUser_NotFound()
     {
         var tripId = 10;
 
@@ -281,7 +275,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{tripId}");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, deleteResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, deleteResponse.StatusCode);
     }
 
     [Fact]
