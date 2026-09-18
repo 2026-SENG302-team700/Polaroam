@@ -1,7 +1,7 @@
 <script lang="ts">
     import Excalidraw from "svelte-excalidraw";
     import {type ExcalidrawImperativeAPI} from "@excalidraw/excalidraw/types";
-    import { exportToCanvas } from "@excalidraw/excalidraw";
+    import { exportToBlob } from "@excalidraw/excalidraw";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import {onMount} from "svelte";
@@ -12,6 +12,17 @@
     let saving = $state(false);
     let error = $state("");
 
+    
+    function dataURLtoFile(dataURL, filename, mimeType) {
+        const arr = dataURL.split(",");
+        const byteString = atob(arr[1]);
+        const bytes = new Uint8Array(byteString.length);
+        for (let i = 0; i < byteString.length; i++) {
+            bytes[i] = byteString.charCodeAt(i);
+        }
+        return new File([bytes], filename, { type: mimeType });
+    }
+    
     // to be removed once proper implementation with backend is created
     const initialData = {
         elements: [
@@ -50,36 +61,42 @@
     
     
     async function saveScrapboard() {
-
-        var canvas = await exportToCanvas({
-            element: excalidrawAPI.getSceneElements(),
-            appState: excalidrawAPI!.getAppState(),
-            files: excalidrawAPI!.getFiles(),
-        })
+        const elements = excalidrawAPI!.getSceneElements();
+        const appState = excalidrawAPI!.getAppState();
+        const files = excalidrawAPI!.getFiles();
+        
+        const blob = await exportToBlob({
+            elements,
+            appState,
+            files,
+            mimeType: "image/png",
+            exportPadding: 10,
+        });
         
         console.log("trip id", page.params.tripId);
-        console.log("elements", excalidrawAPI!.getSceneElements());
-        console.log("Files", excalidrawAPI!.getFiles());
-        console.log("thumbnail", canvas)
+        console.log("elements", elements);
+        console.log("Files", files ? files : []);
+        console.log("thumbnail", blob)
         
-        
+        const form = new FormData();
+        form.append("TripId", page.params.tripId);
+        form.append("Elements", elements);
+        form.append("Thumbnail", blob);
 
+        Object.entries(files).forEach(([fileId, fileData]) => {
+            const extension = fileData.mimeType.split("/")[1] ?? "bin";
+            const file = dataURLtoFile(fileData.dataURL, `${fileId}.${extension}`, fileData.mimeType);
+            form.append("Files", file);
+        });
         
-        console.log(canvas);
         
-        //const form = new FormData();
-        //form.append("TripId", page.params.tripId);
-        //form.append("Elements", excalidrawAPI!.getSceneElements());
-        //form.append("Files", excalidrawAPI!.getFiles());
-        //form.append("Thumbnail", canvas);
+        const response = await fetchWithCsrf(resolve(`/api/scrapboard/save` as any), {
+            method: "POST",
+            body: form,
+            credentials: "include",
+        });
         
-        //const response = await fetchWithCsrf(resolve(`/api/scrapboard/save` as any), {
-        //    method: "POST",
-        //    body: form,
-        //    credentials: "include",
-        //});
-        
-        //console.log(response.ok);
+        console.log(response.ok);
     }
     
     async function loadScrapboard() {
