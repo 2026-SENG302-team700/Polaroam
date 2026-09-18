@@ -1,6 +1,5 @@
 ﻿<script lang="ts">
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-    import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import { page } from "$app/state";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";

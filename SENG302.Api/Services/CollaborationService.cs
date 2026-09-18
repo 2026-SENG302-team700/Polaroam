@@ -113,7 +113,7 @@ public class CollaborationService : ICollaborationService
         var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);
         var trip = await _tripService.GetTripByIdAsync(tripId);
 
-        Notification? inviteNotification = null; 
+        TripInvitationNotification? inviteNotification = null; 
         
         if (invitedUser is not null)
         {
@@ -133,13 +133,14 @@ public class CollaborationService : ICollaborationService
                 throw new UserInTripException("This user is already apart of this trip.");
             }
             
-            inviteNotification = new Notification
+            inviteNotification = new TripInvitationNotification()
             {
                 UserId = invitedUser.Id,
                 HeaderText = "New Invitation Request",
                 BodyText = $"You have been invited to collaborate on the {trip.Title} trip!",
                 Timestamp = DateTimeOffset.UtcNow,
-                NotificationType = "Invite",
+                NotificationType = "TripInvitation",
+                TripId = tripId,
             };
         }
         

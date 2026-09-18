@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Reqnroll.Assist;
@@ -478,6 +479,90 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
 
         await Should.NotThrowAsync(async () => await ServiceUnderTest.SendInviteAsync("bob@bob.com", 1, 1));
     }
-    
 
+    [Fact]
+    public async Task SendInviteAsync_InvitedUserAlreadyHasInvitePending_PendingInviteExceptionThrown()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = ["test2@example.com",]
+        };
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        await Should.ThrowAsync<PendingInviteException>(async () => await ServiceUnderTest.SendInviteAsync("test2@example.com", 1, 1));
+    }
+
+    
+    [Fact]
+    public async Task SendInviteAsync_InviteSentToUser_NotificationCreatedForUser()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        _mockEmailQueue
+            .QueueEmailAsync(new EmailJob("test2@example.com", EmailTemplate.CollaborationInvite,
+                new Dictionary<string, string>())).Returns(new ValueTask());
+
+        await Should.NotThrowAsync(async () => await ServiceUnderTest.SendInviteAsync("test2@example.com", 1, 1));
+
+        var notification = await context.Notifications.Where(x => x.UserId == 2).FirstOrDefaultAsync();
+
+        notification.ShouldNotBeNull();
+        notification.HeaderText.ShouldBe("New Invitation Request");
+    }
 }

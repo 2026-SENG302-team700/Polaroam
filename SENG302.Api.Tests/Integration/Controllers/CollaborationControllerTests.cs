@@ -380,4 +380,46 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task InviteCollaborator_UserAlreadySentInvite_ReturnsBadRequest()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = ["test2@example.com"]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
 }
