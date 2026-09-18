@@ -1,11 +1,12 @@
 ﻿<script lang="ts">
     
-    import ClickableImage from "$lib/components/images/clickable-image.svelte";
 
     let {
-        src
+        src,
+        index
     } : {
-        src: string
+        src: string,
+        index: number
     } = $props()
 
     let image = $state<File | null>(null);
@@ -17,6 +18,8 @@
     
     let loading = $state(false);
     let failed = $state(false);
+    
+    let imageSelected = $state(false);
 
     let rootMargin = "200px"
     
@@ -78,7 +81,7 @@
     }
     
     async function clicked() {
-        console.log("clicked")
+        imageSelected = !imageSelected;
     }
     
 </script>
@@ -89,7 +92,7 @@
                 src={displaySrc}
                 onclick={clicked}
                 alt="Image"
-                class="img-thumbnail clickable-image"
+                class="img-thumbnail clickable-image {imageSelected ? 'rectangular-glow' : ''}"
         />
     {:else if failed}
         <div
@@ -113,4 +116,10 @@
         aspect-ratio: 1;
         object-fit: cover;
     }
+
+    .rectangular-glow {
+        box-shadow: 0px 0px 5px 5px rgba(0, 150, 255, 0.7);
+        border-radius: 8px;
+    }
+    
 </style>

@@ -1,13 +1,7 @@
 ﻿<script lang="ts">
-    import type { Snippet } from "svelte";
-    import DeleteButton from "$lib/components/buttons/delete-button.svelte";
-    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import ExpandableErrorDisplay from "$lib/components/forms/expandable-error-display.svelte";
-    import LazyClickableImage from "$lib/components/images/lazy-clickable-image.svelte";
     import ScrapboardImagePickerView from "$lib/components/images/scrapboard-image-picker-view.svelte";
     import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "$lib/csrf.js";
-    import { goto } from "$app/navigation";
 
     type ImageMetadata = {
         photoId: number;
@@ -24,8 +18,6 @@
         errors?: string[];
         errorsBesidePicker?: boolean;
     } = $props();
-
-    let photoIds = $derived(imageMetadata?.map((m) => m.photoId) ?? []);
     
     
     
@@ -47,8 +39,9 @@
                 <div class="position-relative">
                     <ScrapboardImagePickerView
                             src={resolve(
-                            `/api/album/${tripId}/images/${image.photoId}`,
-                        )}
+                            `/api/album/${tripId}/images/${image.photoId}`
+                        )},
+                            index={index}
                     />
                 </div>
             </div>
