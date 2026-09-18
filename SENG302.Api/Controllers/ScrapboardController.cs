@@ -75,7 +75,7 @@ public class ScrapboardController : ControllerBase
             {
                 return Unauthorized();
             }
-            var scrapboard = _scrapboardService.CreateScrapboardAsync(request.TripId, userId);
+            var scrapboard = await _scrapboardService.CreateScrapboardAsync(request.TripId, userId);
             
             return Ok(scrapboard);
         }

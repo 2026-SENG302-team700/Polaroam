@@ -3,12 +3,16 @@
     import CreationButton from "../buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import ScrapboardPlaceholder from "$lib/assets/images/scrapboard-placeholder.png"
+    import ScrapboardExpanded from "$lib/components/scrapboard/scrapboard-expanded.svelte"
 
     let {tripId = -1} = $props();
 
     let scrapboardCreated: Boolean = $state(false);
     let scrapboard = $state([]); //not used yet
     let loading = $state(true);
+    let showExpanded = $state(false);
+    let scrapboardImage = $state(ScrapboardPlaceholder);
 
     onMount(()=> {fetchScrapboard()});
 
@@ -74,12 +78,13 @@
     }
 </script>
 
-<div class="container">
+<div class="container mt-4">
     {#if scrapboardCreated && !loading}
         <img
-            src="../../../static/scrapboard-placeholder.png"
+            src={scrapboardImage}
             alt="scrapboard"
             class="scrapboard-image card"
+            onclick={() => showExpanded = true}
         />
     {:else if !scrapboardCreated && !loading}
         <div class="scrapboard-image-wrapper empty-trip-page-element">
@@ -100,8 +105,14 @@
     {/if}
 </div>
 
+<ScrapboardExpanded
+        bind:shown={showExpanded}
+        scrapboardImage={scrapboardImage}
+/>
+
 <style>
     .scrapboard-image {
         width: 100%;
+        cursor: pointer;
     }
 </style>
