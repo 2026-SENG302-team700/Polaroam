@@ -140,7 +140,7 @@
                 const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
                 errors.date =
-                    data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
+                    data.errors?.date ?? data.errors?.Date ?? [];
                 errors.content =
                     data.errors?.content ?? data.errors?.Content ?? [];
                 errors.location =
@@ -157,7 +157,7 @@
                     errors.title.length === 0 &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     !errors.generic &&
                     !errors.location
                 ) {

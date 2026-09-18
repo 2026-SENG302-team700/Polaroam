@@ -18,6 +18,7 @@ public interface ITripService
     Task<List<Location>> GetTripLocations(int tripId);
     Task<List<Trip>> GetTripsFromQuery(int userId, string query);
     Task<bool> UserIsOwnerOfTrip(int userId, int tripId);
+    Task<Trip> UpdateScrapboardReferenceAsync(int tripId);
 }
 
 public class TripService : ITripService
@@ -131,6 +132,32 @@ public class TripService : ITripService
         {
             throw new ArgumentException("Trip with the provided ID does not exist.");
         }
+
+        return trip;
+    }
+
+    /// <summary>
+    /// gets the trip wit the provided id, checks if it exists and whether it already has a scrapboard.
+    /// if it has a scrapboard, update it's boolean value to reflect this.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<Trip> UpdateScrapboardReferenceAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new ArgumentException("Trip with the provided ID does not exist.");
+        }
+        if (trip.HasScrapboard == true)
+        {
+            throw new ArgumentException("Trip already has a scrapboard.");
+        }
+        trip.HasScrapboard = true;
+        await context.SaveChangesAsync();
 
         return trip;
     }

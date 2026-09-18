@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260911020344_AddCollaboratorsToTrip")]
-    partial class AddCollaboratorsToTrip
+    [Migration("20260916042441_AddScrapboards")]
+    partial class AddScrapboards
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -134,6 +134,26 @@ namespace SENG302.Api.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Scrapboard", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.Property<string>("FileKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Scrapboards");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Trip", b =>
                 {
                     b.Property<int>("Id")
@@ -152,6 +172,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<DateTimeOffset>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HasScrapboard")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -200,6 +223,9 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("EmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ForgotIsResettingPassword")
                         .HasColumnType("boolean");
 
                     b.Property<string>("OneTimeCode")
