@@ -58,8 +58,6 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 1,
-            OwnerId = 1,
-            FileKey = "empty",
         });
         await context.SaveChangesAsync();
 
@@ -104,8 +102,6 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = tripId+1,
-            OwnerId = tripId+1,
-            FileKey = "empty",
         });
         await context.SaveChangesAsync();
 
@@ -140,8 +136,6 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 2,
-            OwnerId = 1,
-            FileKey = "empty",
         });
 
         context.Trips.Add(new Trip
@@ -185,8 +179,6 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = tripId+1,
-            OwnerId = tripId+1,
-            FileKey = "empty",
         });
         await context.SaveChangesAsync();
         var newBoard = new NewScrapboardRequest

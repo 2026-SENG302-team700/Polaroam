@@ -47,16 +47,21 @@
     };
     // end of init data block
     
-    async function onClick() {
+    
+    async function saveScrapboard() {
         console.log("scene elements:")
         console.log(excalidrawAPI!.getSceneElements());
+    }
+    
+    async function loadScrapboard() {
+        
     }
     
 </script>
 <div>
     <CreationButton
-            text="scrapboard elements"
-            onClick={onClick}
+            text="save"
+            onClick={saveScrapboard}
             loading={saving}
     />
 

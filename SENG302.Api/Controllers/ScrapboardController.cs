@@ -42,10 +42,20 @@ public class ScrapboardController : ControllerBase
     {
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized("Not logged in");
+            }
+            var userId = int.Parse(userIdString);
+            
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
+            {
+                return Unauthorized();
+            }
+            
             var scrapboard = await _scrapboardService.GetScrapboardByTripAsync(tripId);
             if (scrapboard == null) return NotFound("Trip has no Scrapboard");
-            if (scrapboard.OwnerId != userId) return Unauthorized();
             
             return Ok(scrapboard);
         }
@@ -69,19 +79,51 @@ public class ScrapboardController : ControllerBase
     {
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var trip = await _tripService.GetTripByIdAsync(request.TripId);
-            if (trip.UserId != userId)
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized("Not logged in");
+            }
+            var userId = int.Parse(userIdString);
+            
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, request.TripId))
             {
                 return Unauthorized();
             }
-            var scrapboard = await _scrapboardService.CreateScrapboardAsync(request.TripId, userId);
+            
+            var scrapboard = await _scrapboardService.CreateScrapboardAsync(request.TripId);
             
             return Ok(scrapboard);
         }
         catch (Exception e)
         {  
             return BadRequest(e.Message);
+        }
+    }
+    
+    [HttpPost("save")]
+    public async Task<ActionResult> SaveScrapboard([FromForm] SaveScrapboardRequest request)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized("Not logged in");
+            }
+
+            var userId = int.Parse(userIdString);
+
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, request.TripId))
+            {
+                return Unauthorized();
+            }
+
+            return Ok();
+        }
+        catch
+        {
+            return BadRequest();
         }
     }
 }

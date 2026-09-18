@@ -58,13 +58,12 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
     {
         await SetupUserAndTrip(1,1);
         await using var context = DbContextFactory.CreateDbContext();
-        var scrapboard = ServiceUnderTest.CreateScrapboardAsync(1,1);
+        var scrapboard = ServiceUnderTest.CreateScrapboardAsync(1);
         var newScrapboard = await context.Scrapboards.FirstOrDefaultAsync(s => s.TripId == 1);
         var trip = await _tripService.GetTripByIdAsync(1);
         await context.SaveChangesAsync();
         trip.HasScrapboard.ShouldBeTrue();
         newScrapboard.ShouldNotBeNull();
-        newScrapboard.OwnerId.Equals(1);
         newScrapboard.TripId.Equals(1);
         scrapboard.Equals(newScrapboard);
     }
@@ -74,12 +73,12 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
     {
         await SetupUserAndTrip(1,1);
         await using var context = DbContextFactory.CreateDbContext();
-        var scrapboard = ServiceUnderTest.CreateScrapboardAsync(1,1);
+        var scrapboard = ServiceUnderTest.CreateScrapboardAsync(1);
         var trip = await _tripService.GetTripByIdAsync(1);
         trip.HasScrapboard.ShouldBeTrue();
         var exception =
             await Should.ThrowAsync<ArgumentException>(
-                () => ServiceUnderTest.CreateScrapboardAsync(1, 1)
+                () => ServiceUnderTest.CreateScrapboardAsync(1)
             );
         exception.Message.ShouldContain("This trip already has a Scrapboard.");
     }
@@ -93,14 +92,10 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 1,
-            OwnerId = 1,
-            FileKey = "empty",
         });
         await context.SaveChangesAsync();
         var scrapboard = await ServiceUnderTest.GetScrapboardByTripAsync(1);
         scrapboard.ShouldNotBeNull();
-        scrapboard.OwnerId.ShouldBe(1);
-        scrapboard.FileKey.ShouldBe("empty");
     }
 
     [Fact]

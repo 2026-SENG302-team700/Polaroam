@@ -7,7 +7,7 @@ namespace SENG302.Api.Services;
 public interface IScrapboardService
 {
     public Task<Scrapboard?> GetScrapboardByTripAsync(int tripId);
-    public Task<Scrapboard> CreateScrapboardAsync(int tripId, int UserId);
+    public Task<Scrapboard> CreateScrapboardAsync(int tripId);
 }
 
 public class ScrapboardService : IScrapboardService
@@ -28,10 +28,9 @@ public class ScrapboardService : IScrapboardService
     /// must have a scrapboard attached to it.
     /// </summary>
     /// <param name="tripId"></param>
-    /// <param name="UserId"></param>
     /// <returns>the newly created scrapboard</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Scrapboard> CreateScrapboardAsync(int tripId, int UserId)
+    public async Task<Scrapboard> CreateScrapboardAsync(int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var trip = await _tripService.GetTripByIdAsync(tripId);
@@ -42,9 +41,7 @@ public class ScrapboardService : IScrapboardService
         }
         var newScrapboard = new Scrapboard()
         {
-            OwnerId = UserId,
-            TripId = tripId,
-            FileKey = "temporary-key", //<- **TEMPORARY. PLEASE ADD FILE FUNCTIONALITY**
+            TripId = tripId
         };
         await _tripService.UpdateScrapboardReferenceAsync(tripId);
         context.Set<Scrapboard>().Add(newScrapboard);
