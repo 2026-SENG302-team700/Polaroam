@@ -332,7 +332,16 @@ public class TripController : ControllerBase
             if (user == null ||
                 !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
-            return Ok(); //TEMP
+            if (collaborationRequest.Action== 0) // reject
+            {
+                
+            } else if (collaborationRequest.Action == 1) //accept
+            {
+                await _collaborationService.ActionRejectAsync(tripId, userId);
+            } else //invalid action
+            {
+                return BadRequest("Not a valid collaboration action!");
+            }
             
         } catch (Exception e)
         {

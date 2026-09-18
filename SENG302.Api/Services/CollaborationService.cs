@@ -9,6 +9,7 @@ namespace SENG302.Api.Services;
 public interface ICollaborationService
 {
     Task<List<CollaboratingUser>> GetTripCollaborators(int tripId);
+    Task<bool> ActionRejectAsync(int tripId, int userId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -62,8 +63,14 @@ public class CollaborationService : ICollaborationService
         return collaboratingUsers;
     }
 
-    public async Task ActionAcceptAsync()
+    public async Task<bool> ActionAcceptAsync(int tripId, int userId)
     {
         
+    }
+    public async Task<bool> ActionRejectAsync(int tripId, int userId)
+    {
+        var context = await _dbContextFactory.CreateDbContextAsync();
+        var trip  = await _tripService.GetTripByIdAsync(tripId);
+        trip.Collaborators.Remove(userId);
     }
 }
