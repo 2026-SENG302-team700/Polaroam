@@ -89,7 +89,7 @@ public class TripController : ControllerBase
             return NotFound();
         }
 
-        var response = new GetUserResponse
+        var response = new UserResponse
         {
             Id = ownerUser.Id,
             Email = ownerUser.Email,

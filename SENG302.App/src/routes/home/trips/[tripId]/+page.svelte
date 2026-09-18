@@ -14,7 +14,6 @@
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
-    import { user } from "$lib/stores/user";
     import NotFound from "$lib/components/content/not-found.svelte";
     import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
 
