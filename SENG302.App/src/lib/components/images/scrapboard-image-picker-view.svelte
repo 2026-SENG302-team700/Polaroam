@@ -1,22 +1,25 @@
 ﻿<script lang="ts">
-    type ImageSource = File | string;
     
+    import ClickableImage from "$lib/components/images/clickable-image.svelte";
+
     let {
-        src,
-        image
+        src
     } : {
-        src: string,
-        image: ImageSource,
+        src: string
     } = $props()
+
+    let image = $state<File | null>(null);
     
     let objectUrl = $state<string | null>(null);
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
-    
-    let image = $state<File | null>(null);
 
-    let file = $state<File | null>(null);
+    let containerEl: HTMLDivElement | undefined = $state();
+    
     let loading = $state(false);
     let failed = $state(false);
+
+    let rootMargin = "200px"
+    
     
 
     $effect(() => {
@@ -25,6 +28,24 @@
             objectUrl = url;
             return () => URL.revokeObjectURL(url);
         }
+
+        if (!containerEl) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        loadFile();
+                        observer.disconnect();
+                    }
+                }
+            },
+            { rootMargin },
+        );
+
+        observer.observe(containerEl);
+
+        return () => observer.disconnect();
 
         objectUrl = null;
     });
@@ -39,7 +60,7 @@
     }
 
     async function loadFile() {
-        if (file || loading) return;
+        if (image || loading) return;
         loading = true;
         failed = false;
         try {
@@ -47,7 +68,7 @@
             if (!res.ok)
                 throw new Error(`Failed to fetch image: ${res.status}`);
             const blob = await res.blob();
-            file = new File([blob], filenameFromSrc(src), { type: blob.type });
+            image = new File([blob], filenameFromSrc(src), { type: blob.type });
         } catch (e) {
             console.error(e);
             failed = true;
@@ -62,12 +83,28 @@
     
 </script>
 
-<img
-        src={displaySrc}
-        onclick={clicked}
-        alt="Image"
-        class="img-thumbnail clickable-image"
-/>
+<div bind:this={containerEl} class="lazy-image-wrapper">
+    {#if image}
+        <img
+                src={displaySrc}
+                onclick={clicked}
+                alt="Image"
+                class="img-thumbnail clickable-image"
+        />
+    {:else if failed}
+        <div
+                class="img-thumbnail lazy-placeholder lazy-error"
+                onclick={loadFile}
+                role="button"
+                tabindex="0"
+        >
+            Failed to load — click to retry
+        </div>
+    {:else}
+        <div class="img-thumbnail lazy-placeholder" class:loading></div>
+    {/if}
+</div>
+
 
 <style>
     .img-thumbnail {

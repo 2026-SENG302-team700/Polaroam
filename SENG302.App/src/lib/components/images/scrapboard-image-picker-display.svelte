@@ -26,7 +26,7 @@
     } = $props();
 
     let photoIds = $derived(imageMetadata?.map((m) => m.photoId) ?? []);
-
+    
     
     
 </script>
@@ -49,7 +49,6 @@
                             src={resolve(
                             `/api/album/${tripId}/images/${image.photoId}`,
                         )}
-                            photoId={image.photoId}
                     />
                 </div>
             </div>
