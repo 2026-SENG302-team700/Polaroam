@@ -104,6 +104,7 @@
 
             if (!response.ok) {
                 notificationsError = await response.text();
+                return
             }
 
             var getAllNotificationsResponse =
