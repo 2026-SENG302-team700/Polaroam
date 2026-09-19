@@ -62,10 +62,6 @@ public class NotificationController : ControllerBase
         {
             return Unauthorized("Invalid User Id");
         }
-        catch (Exception)
-        {
-            return Problem();
-        }
     }
 
     /// <summary>
@@ -107,10 +103,6 @@ public class NotificationController : ControllerBase
         catch (OverflowException)
         {
             return Unauthorized("Invalid User Id");
-        }
-        catch (Exception)
-        {
-            return Problem();
         }
     }
 }
