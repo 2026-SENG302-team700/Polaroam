@@ -275,7 +275,7 @@ public class FileService : IFileService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         // If the user cannot access the trip then say no
-        var userCanAccessTrip = await context.Trips.Where(t => t.Id == tripId && t.Collaborators.Contains(userId)).AnyAsync();
+        var userCanAccessTrip = await context.Trips.Where(t => t.Id == tripId && (t.Collaborators.Contains(userId) || t.UserId == userId)).AnyAsync();
         if (!userCanAccessTrip) return false;
 
         // If the file is in the trip album then say yes

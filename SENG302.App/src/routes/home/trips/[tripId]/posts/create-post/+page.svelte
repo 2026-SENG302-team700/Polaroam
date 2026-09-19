@@ -234,7 +234,6 @@
 
     <ImageDisplay
         bind:images={files}
-        {tripId}
         letDelete={true}
         errors={[...errors.photos, ...fileErrors]}
     >

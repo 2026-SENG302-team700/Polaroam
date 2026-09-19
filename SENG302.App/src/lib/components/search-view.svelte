@@ -49,7 +49,14 @@
                     <div class="photo-trip-body">
                         <ImageDisplay
                             images={photoTrip.photos}
-                            photoIds={photoTrip.photoIds}
+                            photosData={photoTrip.map(
+                                (/** @type {TripIdAndPhoto} */ photoTrip) => {
+                                    return {
+                                        photoId: photoTrip.photoId,
+                                        tripId: photoTrip.tripId,
+                                    };
+                                },
+                            )}
                             viewContext="search"
                         />
                     </div>

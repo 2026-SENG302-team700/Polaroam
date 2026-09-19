@@ -21,7 +21,7 @@
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
-    let photoIds = $state([]);
+    let photosData = $state([]);
     let photoIdFileMap = new WeakMap();
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -118,7 +118,9 @@
             files = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/${tripId}/images/${meta.photoId}` as any),
+                        resolve(
+                            `/api/trips/${tripId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
                             credentials: "include",
@@ -179,7 +181,12 @@
             date = new Date(data.date);
             location.osmId = data.osmId;
             location.osmType = data.osmType;
-            photoIds = data.photoIds;
+            photosData = data.photoIds.map((id: number) => {
+                return {
+                    tripId: Number.parseInt(tripId as any),
+                    photoId: id,
+                } as TripIdAndPhoto;
+            });
             searchQuery = data.locationName;
 
             return true;
@@ -273,7 +280,7 @@
                     errors.date.length === 0 &&
                     errors.generic.length === 0 &&
                     errors.location.length === 0 &&
-                    photoIds.length === 0
+                    photosData.length === 0
                 ) {
                     confirmationModalShown = true;
                 }
@@ -332,7 +339,9 @@
                 return;
             }
 
-            photoIds = photoIds.filter((id) => id !== photoId);
+            photosData = photosData.filter(
+                (data: TripIdAndPhoto) => data.photoId !== photoId,
+            );
         } catch (err) {
             errors.photos.push(
                 "Failed to delete image: " + (err as Error).message,
@@ -355,7 +364,7 @@
 
     <ImageDisplay
         bind:images={files}
-        {photoIds}
+        {photosData}
         errors={[...errors.photos, ...fileErrors]}
         letDelete={true}
         ondelete={removePhoto}

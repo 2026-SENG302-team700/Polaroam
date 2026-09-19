@@ -7,18 +7,16 @@
         image,
         index,
         images,
-        photoId,
-        photoIds,
+        photoData,
+        photosData,
         viewContext,
-        tripId,
     }: {
         image: ImageSource;
         index: number;
         images: ImageSource[] | null;
-        photoId?: number;
-        photoIds?: number[];
+        photoData?: TripIdAndPhoto;
+        photosData?: TripIdAndPhoto[];
         viewContext: ImageViewContext;
-        tripId: number;
     } = $props();
     let enlarged = $state(false);
     let objectUrl = $state<string | null>(null);
@@ -53,10 +51,9 @@
         {image}
         {index}
         {images}
-        {photoId}
-        {photoIds}
+        {photoData}
+        {photosData}
         {viewContext}
-        {tripId}
         bind:enlarged
     />
 {/if}

@@ -46,3 +46,8 @@ type TripPhotoGroup = {
     photos: File[],
     photoIds: number[],
 }
+
+type TripIdAndPhoto = {
+    tripId: number,
+    photoId: number,
+}

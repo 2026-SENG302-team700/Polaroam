@@ -22,19 +22,17 @@
         enlarged = $bindable(false),
         index = $bindable(0),
         images,
-        photoId,
-        photoIds,
+        photoData,
+        photosData,
         viewContext,
-        tripId,
     }: {
         image: ImageSource;
         enlarged: boolean;
         index: number;
         images: ImageSource[] | null;
-        photoId?: number;
-        photoIds?: number[];
+        photoData?: TripIdAndPhoto;
+        photosData?: TripIdAndPhoto[];
         viewContext: ImageViewContext;
-        tripId: number;
     } = $props();
 
     let tags: string[] = $state([]);
@@ -54,7 +52,7 @@
 
     let isTagInformation = $derived(informationalTagMessages.includes(error));
 
-    let currentPhotoId = $derived(photoIds?.[index] ?? photoId);
+    let currentPhotoData = $derived(photosData?.[index] ?? photoData);
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
     let showTripAlbumButton = $derived(
         imageContext !== null &&
@@ -77,19 +75,19 @@
     });
 
     $effect(() => {
-        const id = currentPhotoId;
+        const data = currentPhotoData;
 
         resetMessages();
         tags = [];
         showRetryTagging = false;
 
-        if (id === undefined || viewContext === "none") {
+        if (data === undefined || viewContext === "none") {
             imageContext = null;
             return;
         }
 
-        fetchImageContext(id);
-        loadImageTags(id);
+        fetchImageContext(data);
+        loadImageTags(data);
     });
 
     function resetMessages() {
@@ -98,10 +96,10 @@
         tagColour = "secondary";
     }
 
-    async function loadImageTags(id: number) {
+    async function loadImageTags(data: TripIdAndPhoto) {
         await getUserPreferences();
         if (aiTaggingPreference === "true") {
-            await fetchImageTags(id);
+            await fetchImageTags(data);
         }
     }
 
@@ -130,12 +128,14 @@
         }
     }
 
-    async function fetchImageContext(id: number) {
+    async function fetchImageContext(data: TripIdAndPhoto) {
         imageContext = null;
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trips/${tripId}/images/${id}/context` as any),
+                resolve(
+                    `/api/trips/${data.tripId}/images/${data.photoId}/context` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
             if (!response.ok) {
@@ -151,11 +151,11 @@
         }
     }
 
-    async function deleteImageTag(id: number, tag: string) {
+    async function deleteImageTag(data: TripIdAndPhoto, tag: string) {
         try {
             const response = await fetchWithCsrf(
                 resolve(
-                    `/api/trips/${tripId}/images/${id}/tags/${encodeURIComponent(tag)}` as any,
+                    `/api/trips/${data.tripId}/images/${data.photoId}/tags/${encodeURIComponent(tag)}` as any,
                 ),
                 { method: "DELETE", credentials: "include" },
             );
@@ -191,12 +191,14 @@
         }
     }
 
-    async function fetchImageTags(id: number) {
+    async function fetchImageTags(data: TripIdAndPhoto) {
         try {
             loading = true;
             tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/trips/${tripId}/images/${id}/tags` as any),
+                resolve(
+                    `/api/trips/${data.tripId}/images/${data.photoId}/tags` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
 
@@ -236,13 +238,15 @@
         }
     }
 
-    async function retryImageTagging(id: number) {
+    async function retryImageTagging(data: TripIdAndPhoto) {
         loading = true;
         error = "";
         try {
             tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/trips/${tripId}/images/${id}/tags` as any),
+                resolve(
+                    `/api/trips/${data.tripId}/images/${data.photoId}/tags` as any,
+                ),
                 { method: "PATCH", credentials: "include" },
             );
             if (!response.ok) {
@@ -369,9 +373,9 @@
                                 {tag}
                                 isRealTag
                                 deleteFunc={() =>
-                                    currentPhotoId === undefined
+                                    currentPhotoData === undefined
                                         ? "Photo not found"
-                                        : deleteImageTag(currentPhotoId, tag)}
+                                        : deleteImageTag(currentPhotoData, tag)}
                             />
                         {/each}
                     {:else if tagStatus}
@@ -382,13 +386,13 @@
                         />
                     {/if}
                 </div>
-                {#if showRetryTagging && currentPhotoId !== undefined}
+                {#if showRetryTagging && currentPhotoData !== undefined}
                     <div class="tags-wrapper">
                         <button
                             class="btn btn-primary"
                             onclick={() => {
                                 showRetryTagging = false;
-                                retryImageTagging(currentPhotoId);
+                                retryImageTagging(currentPhotoData);
                             }}>Retry Tagging</button
                         >
                     </div>

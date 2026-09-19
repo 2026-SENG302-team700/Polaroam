@@ -9,24 +9,22 @@
 
     let {
         images = $bindable([]),
-        photoIds = [],
+        photosData = [],
         letDelete = false,
         ondelete,
         errors = [],
         pickerFirst = false,
         viewContext = "none",
         children,
-        tripId,
     }: {
         images?: File[] | null;
-        photoIds?: number[];
+        photosData?: TripIdAndPhoto[];
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
         pickerFirst?: boolean;
         viewContext?: ImageViewContext;
         children?: Snippet;
-        tripId: number;
     } = $props();
 
     let confirmationModalShown = $state(false);
@@ -79,10 +77,9 @@
                     {image}
                     {index}
                     {images}
-                    photoId={photoIds[index]}
-                    {photoIds}
+                    photoData={photosData[index]}
+                    {photosData}
                     {viewContext}
-                    {tripId}
                 />
                 {#if letDelete}
                     <div class="position-absolute top-0 end-0 m-1">

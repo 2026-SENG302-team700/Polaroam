@@ -35,7 +35,7 @@
     });
 
     let photos: File[] = $state([]);
-    let photoIds: number[] = $state([]);
+    let photosData: TripIdAndPhoto[] = $state([]);
 
     onMount(() => {
         fetchPost();
@@ -103,7 +103,12 @@
                     });
                 }),
             );
-            photoIds = metadata.map((meta) => meta.photoId);
+            photosData = metadata.map((meta) => {
+                return {
+                    photoId: meta.photoId,
+                    tripId: postObject.tripId,
+                } as TripIdAndPhoto;
+            });
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -205,7 +210,7 @@
                 post={postObject}
                 userName={displayName}
                 {photos}
-                {photoIds}
+                {photosData}
             />
         </div>
     </div>
