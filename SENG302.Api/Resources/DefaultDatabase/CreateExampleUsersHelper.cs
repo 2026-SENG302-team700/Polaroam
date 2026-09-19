@@ -63,7 +63,7 @@ public static class CreateExampleUsersHelper
             dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync();
 
-            for (int i = 0; i < 20; i++)
+            for (int i = 20; i < 40; i++)
             {
                 var trip = new Trip
                 {
