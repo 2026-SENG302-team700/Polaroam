@@ -250,7 +250,7 @@ public class Program
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error occured: ", e);
+            Console.WriteLine("Error occured: " + e);
             throw;
         }
 

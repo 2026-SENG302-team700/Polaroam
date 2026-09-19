@@ -28,7 +28,7 @@ public class NotificationController : ControllerBase
     /// <returns>list of notifications</returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<NotificationResponse>>> GetAllNotifications([FromQuery] int count = 5)
+    public async Task<ActionResult<GetAllNotificationsResponse>> GetAllNotifications([FromQuery] int? count)
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -39,9 +39,20 @@ public class NotificationController : ControllerBase
 
         try
         {
-            var notifications = await _notificationService.GetNotificationsByUserIdAsync(int.Parse(userIdString), count);
+            var userId = int.Parse(userIdString);
+            var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, count ?? 5);
             List<NotificationResponse> notificationResponses = [.. notifications.Select(n => new NotificationResponse(n))];
-            return Ok(notificationResponses);
+            var unreadCount = await _notificationService.GetUnreadCount(userId);
+            var moreExist = await _notificationService.UserHasMoreThan(userId, count ?? 5);
+
+            return Ok(
+                new GetAllNotificationsResponse()
+                {
+                    NotificationResponses = notificationResponses,
+                    UnreadCount = unreadCount,
+                    MoreExist = moreExist
+                }
+            );
         }
         catch (FormatException)
         {
@@ -50,10 +61,6 @@ public class NotificationController : ControllerBase
         catch (OverflowException)
         {
             return Unauthorized("Invalid User Id");
-        }
-        catch (Exception)
-        {
-            return Problem();
         }
     }
 
@@ -64,8 +71,8 @@ public class NotificationController : ControllerBase
     /// <param name="status">new status of notification</param>
     /// <returns></returns>
     [Authorize]
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult> SetReadStatus([FromRoute] int id, [FromBody] bool status)
+    [HttpPut("{id:int}/status")]
+    public async Task<ActionResult> SetReadStatus([FromRoute] int id, [FromBody] SetReadStatusRequest readStatusRequest)
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -82,7 +89,7 @@ public class NotificationController : ControllerBase
                 throw new UnauthorizedAccessException();
             }
 
-            await _notificationService.SetNotificationStatusByIdAsync(id, status);
+            await _notificationService.SetNotificationStatusByIdAsync(id, readStatusRequest.Status);
             return Ok();
         }
         catch (FormatException)
@@ -96,10 +103,6 @@ public class NotificationController : ControllerBase
         catch (OverflowException)
         {
             return Unauthorized("Invalid User Id");
-        }
-        catch (Exception)
-        {
-            return Problem();
         }
     }
 }

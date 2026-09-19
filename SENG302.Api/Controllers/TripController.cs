@@ -73,27 +73,27 @@ public class TripController : ControllerBase
     [HttpGet("{tripId:int}/user")]
     public async Task<ActionResult<GetUserResponse>> GetTripOwnerName(int tripId)
     {
+        // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        var trip = await _tripService.GetTripByIdAsync(tripId);
-
-        var user = await _userService.GetUserByIdAsync(trip.UserId);
-
-        if (user == null)
+        if (string.IsNullOrEmpty(userIdString))
         {
-            return NotFound();
+            return Unauthorized("Not logged in!");
         }
-        if (!await _tripService.UserHasCollaborationAccessToTrip(int.Parse(userIdString!), tripId))
+        var userId = int.Parse(userIdString);
+        
+        var trip = await _tripService.GetTripByIdAsync(tripId);
+        var ownerUser = await _userService.GetUserByIdAsync(trip.UserId);
+        if (ownerUser == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, trip.Id))
         {
             return NotFound();
         }
 
         var response = new GetUserResponse
         {
-            Id = user.Id,
-            Email = user.Email,
-            DisplayName = user.DisplayName,
-            Country = user.Country
+            Id = ownerUser.Id,
+            Email = ownerUser.Email,
+            DisplayName = ownerUser.DisplayName,
+            Country = ownerUser.Country
         };
         return Ok(response);
     }

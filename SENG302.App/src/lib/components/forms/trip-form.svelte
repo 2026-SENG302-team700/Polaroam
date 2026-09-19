@@ -23,6 +23,7 @@
         endDateState = $bindable<DateInputState>("empty"),
         heading,
         submitText,
+        cancelPath = `/home`,
         errors = {
             title: [],
             description: [],
@@ -104,7 +105,7 @@
 {/snippet}
 {#snippet footer()}
     <div class="post-form-actions">
-        <CancelButton path={`/home`} />
+        <CancelButton path={cancelPath} />
         <CreationButton onClick={onSubmit} text={submitText} {loading} />
     </div>
 {/snippet}
