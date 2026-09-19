@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1.Crmf;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Responses;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
