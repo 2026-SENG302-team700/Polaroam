@@ -29,6 +29,4 @@ public class DatabaseContext : DbContext
             .Property("Timestamp")
             .HasConversion(new DateTimeOffsetToBinaryConverter());
     }
-    public DbSet<Scrapboard> Scrapboards { get; set; }
-
 }
