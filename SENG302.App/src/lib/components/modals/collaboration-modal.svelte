@@ -81,16 +81,14 @@
                 })
             });
             
-            const data = await response.json();
-            
-            console.log(data);
             
             if (!response.ok) {
+                const data = await response.json();
                 emailMessageStyle = `invite-message-${data.type}`;
                 emailMessage = data.message;
             } else {
                 emailMessageStyle = "invite-message-success"
-                emailMessage = await "Invite sent."
+                emailMessage = "Invite sent."
             }
 
         } catch (e) {

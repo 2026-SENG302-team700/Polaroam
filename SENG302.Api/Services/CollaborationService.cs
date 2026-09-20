@@ -162,13 +162,13 @@ public class CollaborationService : ICollaborationService
         
         // Update pending invites for trip
         var context = await _dbContextFactory.CreateDbContextAsync();
-        trip.PendingInvites.Add(userEmail);
+        var trackedTrip = await context.Trips.Where(t => t.Id == trip.Id).FirstOrDefaultAsync();
+        trackedTrip?.PendingInvites.Add(userEmail);
         await context.SaveChangesAsync();
 
         if (inviteNotification != null)
         {
             await _notificationService.AddNotificationAsync(inviteNotification);
         }
-        
     }
 }
