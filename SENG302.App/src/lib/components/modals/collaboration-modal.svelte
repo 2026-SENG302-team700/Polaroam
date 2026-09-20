@@ -69,6 +69,7 @@
     async function inviteCollaborators() {
         const emailInvite = invite;
         const tripId = page.params.tripId;
+        emailMessage = "";
         
         try {
             const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration` as any), {
@@ -82,16 +83,13 @@
                 })
             });
             
-            const data = await response.json();
-            
-            console.log(data);
-            
             if (!response.ok) {
+                const data = await response.json();
                 emailMessageStyle = `invite-message-${data.type}`;
                 emailMessage = data.message;
             } else {
                 emailMessageStyle = "invite-message-success"
-                emailMessage = await "Invite sent."
+                emailMessage = "Invite sent."
             }
 
         } catch (e) {

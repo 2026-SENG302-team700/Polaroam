@@ -189,7 +189,7 @@ public class TripService : ITripService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var trip = await GetTripByIdAsync(tripId);
-
+        
         return trip.UserId == userId;
     }
 
