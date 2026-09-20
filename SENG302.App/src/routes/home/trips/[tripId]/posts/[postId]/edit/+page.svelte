@@ -16,6 +16,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
     import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let title = $state("");
     let content = $state("");
@@ -24,6 +25,7 @@
     let photoIdFileMap = new WeakMap();
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
+    let postNotFound = $state(false);
 
     let dateState: "valid" | "invalid" | "empty" = $state("valid");
 
@@ -78,11 +80,13 @@
     let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
-        await Promise.all([
-            loadAiTaggingPreference(),
-            fetchPost(),
-            fetchImages(),
-        ]);
+        await loadAiTaggingPreference();
+
+        const postLoaded = await fetchPost();
+
+        if (postLoaded) {
+            await fetchImages();
+        }
     });
 
     /**
@@ -159,12 +163,16 @@
                     credentials: "include",
                 },
             );
+            if (response.status == 404) {
+                postNotFound = true;
+                return false;
+            }
 
             const data = await response.json();
             if (!response.ok) {
                 errors.generic =
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
-                return;
+                return false;
             }
             title = data.title;
             content = data.content;
@@ -173,9 +181,12 @@
             location.osmType = data.osmType;
             photoIds = data.photoIds;
             searchQuery = data.locationName;
+
+            return true;
         } catch (err) {
             errors.generic =
                 `Failed to fetch post: ${err}` || "Failed to fetch post.";
+            return false;
         } finally {
             loading = false;
         }
@@ -203,13 +214,6 @@
     async function updatePost() {
         try {
             loading = true;
-
-            if (
-                content.length > 0 ||
-                (files !== undefined && files !== null && files?.length > 0)
-            ) {
-                noContentAllowed = true;
-            }
 
             const form = new FormData();
             form.append("Id", parseInt(page.params.postId));
@@ -266,14 +270,14 @@
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
                     errors.title.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     errors.generic.length === 0 &&
                     errors.location.length === 0 &&
-                    photoIds.length === 0 &&
-                    files?.length === 0
+                    photoIds.length === 0
                 ) {
                     confirmationModalShown = true;
                 }
+                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
 
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {
@@ -386,7 +390,12 @@
 
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
-    <DatePicker bind:value={date} bind:inputState={dateState} bind:error={errors.date} disabled={loading} />
+    <DatePicker
+        bind:value={date}
+        bind:inputState={dateState}
+        bind:error={errors.date}
+        disabled={loading}
+    />
 
     <LocationForm
         bind:searchQuery
@@ -404,20 +413,24 @@
     />
 {/snippet}
 
-<FormWrapper {header} {footer} {body} />
+{#if postNotFound}
+    <NotFound />
+{:else}
+    <FormWrapper {header} {footer} {body} />
 
-<ConfirmationModal
-    bind:show={confirmationModalShown}
-    message="Post would contain no content or images, are you sure you want to update this post?"
-    option1Text="Update anyway"
-    option2Text="Cancel"
-    onOption1={() => {
-        noContentAllowed = true;
-        confirmationModalShown = false;
-        updatePost();
-    }}
-    onOption2={() => (confirmationModalShown = false)}
-/>
+    <ConfirmationModal
+        bind:show={confirmationModalShown}
+        message="Post would contain no content or images, are you sure you want to update this post?"
+        option1Text="Update anyway"
+        option2Text="Cancel"
+        onOption1={() => {
+            noContentAllowed = true;
+            confirmationModalShown = false;
+            updatePost();
+        }}
+        onOption2={() => (confirmationModalShown = false)}
+    />
+{/if}
 
 <style>
     .section-heading {

@@ -284,7 +284,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeleteTrip_DifferentUser_Unauthorized()
+    public async Task DeleteTrip_DifferentUser_NotFound()
     {
         var tripId = 10;
 
@@ -302,7 +302,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         var deleteResponse = await HttpClient.DeleteAsync($"/api/trip/{tripId}");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, deleteResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, deleteResponse.StatusCode);
     }
 
     [Fact]
