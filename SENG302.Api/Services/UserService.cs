@@ -26,7 +26,9 @@ public interface IUserService
     Task<bool> UserAiTaggingCheckAsync(int userId);
     Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible);
     Task<bool> GetPreferenceMapVisibleAsync(int userId);
-    Task<String> GetUserDisplayName(int userId);
+    Task<string> GetUserDisplayName(int userId);
+    Task<PendingUser?> GetPendingUser(string email);
+    Task CreateUpdatePendingUser(string email, int tripId);
 }
 
 public enum UserVerificationResult
@@ -599,9 +601,43 @@ public class UserService : IUserService
         return user.DisplayName;
     }
 
-    public async Task<PendingUser
-    public async Task CreatePendingUser(string email, int tripId)
+    /// <summary>
+    /// gets a pending user given their email address.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns>the pending user</returns>
+    public async Task<PendingUser?> GetPendingUser(string email)
     {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == email);
+        return user;
+    }
 
+    /// <summary>
+    /// given an email and a trip id, adds a new pendingUser to the database using their email and tripId.
+    /// if the user already exists, then update them by appending the trip id to the end of their 
+    /// pending list. If the trip id is already in the list, do nothing.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    public async Task CreateUpdatePendingUser(string email, int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await GetPendingUser(email);
+        if (user == null)
+        {
+            var newPendingUser = new PendingUser()
+            {
+                Email = email,
+                TripInvites = [tripId]
+            };
+            context.PendingUsers.Add(newPendingUser);
+        }
+        else if (!user.TripInvites.Contains(tripId))
+        {
+            user.TripInvites.Add(tripId);
+        }
+        await context.SaveChangesAsync();
     }
 }
