@@ -5,7 +5,6 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers.Validators;
 using SENG302.Api.Models.Jobs;
 using SENG302.Api.Services.Email;
-using SENG302.Api.Resources;
 
 
 namespace SENG302.Api.Services;
@@ -15,8 +14,8 @@ public interface ICollaborationService
     Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
     Task SendInviteAsync(string userEmail, int inviterId, int tripId);
-    Task ActionRejectAsync(int tripId, int userId);
-    Task ActionAcceptAsync(int tripId, int userId);
+    Task ActionRejectAsync(int tripId, User user);
+    Task ActionAcceptAsync(int tripId, User user);
 }
 
 
@@ -75,7 +74,7 @@ public class CollaborationService : ICollaborationService
 
         return collaboratingUsers;
     }
-    
+
     /// <summary>
     /// Takes a user and trio ID and attempt to remove the user as a collaborator
     /// </summary>
@@ -86,17 +85,17 @@ public class CollaborationService : ICollaborationService
     public async Task LeaveCollaboration(int userId, int tripId)
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
         if (trip is null) throw new KeyNotFoundException("The trip could not be found");
-        
+
         if (!trip.Collaborators.Contains(userId))
             throw new KeyNotFoundException("The user could not be removed");
-    
+
         trip.Collaborators = trip.Collaborators.Where(id => id != userId).ToList();
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Send invite to the user
     /// </summary>
@@ -106,17 +105,17 @@ public class CollaborationService : ICollaborationService
     /// <exception cref="EmailInvalidationException">If email is invalid</exception>
     public async Task SendInviteAsync(string userEmail, int inviterId, int tripId)
     {
-        
+
         if (!UserCredentialsValidator.CheckEmailFormat(userEmail))
         {
             throw new EmailInvalidationException("Email was invalid!");
         }
-        
+
         var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);
         var trip = await _tripService.GetTripByIdAsync(tripId);
 
-        Notification? inviteNotification = null; 
-        
+        Notification? inviteNotification = null;
+
         if (invitedUser is not null)
         {
             // user cannot send it to itself
@@ -124,7 +123,7 @@ public class CollaborationService : ICollaborationService
             {
                 throw new UserInTripException("You can not invite yourself to a trip.");
             }
-            
+
             // verify if user is already in trip
             var tripCollaborators = await GetTripCollaborators(tripId);
             if (
@@ -134,7 +133,7 @@ public class CollaborationService : ICollaborationService
             {
                 throw new UserInTripException("This user is already apart of this trip.");
             }
-            
+
             inviteNotification = new Notification
             {
                 UserId = invitedUser.Id,
@@ -144,13 +143,13 @@ public class CollaborationService : ICollaborationService
                 NotificationType = "Invite",
             };
         }
-        
+
         // user cannot send invite to an already invited e-mail
         if (trip.PendingInvites.Contains(userEmail))
         {
             throw new PendingInviteException("This user has a pending invite to this trip.");
         }
-        
+
         // email setup and logic
         var emailDict = new Dictionary<string, string>
         {
@@ -158,22 +157,26 @@ public class CollaborationService : ICollaborationService
             { "INVITER_NAME", await _userService.GetUserDisplayName(inviterId) },
             { "DISPLAY_NAME", invitedUser is not null? invitedUser.DisplayName : "there"}
         };
-        
+
         await _emailQueue.QueueEmailAsync(new EmailJob(userEmail, EmailTemplate.CollaborationInvite, emailDict));
-        
+
         // Update pending invites for trip
         var context = await _dbContextFactory.CreateDbContextAsync();
         trip.PendingInvites.Add(userEmail);
+        if (invitedUser is null)
+        {
+
+        }
         await context.SaveChangesAsync();
 
         if (inviteNotification != null)
         {
             await _notificationService.AddNotificationAsync(inviteNotification);
         }
-        
+
     }
 
-    
+
     /// <summary>
     /// If the given user is labelled as a pending collaborator on the given task, then 
     /// this method will remove them from the pending column and will add them to the collaborators column.
@@ -182,20 +185,24 @@ public class CollaborationService : ICollaborationService
     /// <param name="userId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task ActionAcceptAsync(int tripId, int userId)
+    public async Task ActionAcceptAsync(int tripId, User user)
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
-        var trip  = await _tripService.GetTripByIdAsync(tripId);
-        var user = await _userService.GetUserByIdAsync(userId);
-        if (user == null)
-        {
-            throw new ArgumentException("User does not exist!");
-        }
+        var trip = await _tripService.GetTripByIdAsync(tripId);
         if (trip.PendingInvites.Remove(user.Email))
         {
-            trip.Collaborators.Add(userId);
+            trip.Collaborators.Add(user.Id);
             await context.SaveChangesAsync();
-        } else 
+            var acceptNotificationForOwner = new Notification()
+            {
+                UserId = trip.UserId, // send to owner
+                HeaderText = "Collaboration accepted!",
+                BodyText = $"{user.DisplayName} has accepted your collaboration request for your {trip.Title} trip!",
+                Timestamp = DateTimeOffset.Now,
+            };
+            await _notificationService.AddNotificationAsync(acceptNotificationForOwner);
+        }
+        else
         {
             throw new ArgumentException("User has no pending invite on this task");
         }
@@ -209,22 +216,26 @@ public class CollaborationService : ICollaborationService
     /// <param name="userId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task ActionRejectAsync(int tripId, int userId)
+    public async Task ActionRejectAsync(int tripId, User user)
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
-        var trip  = await _tripService.GetTripByIdAsync(tripId);
-        var user = await _userService.GetUserByIdAsync(userId);
-        if (user == null)
-        {
-            throw new ArgumentException("User does not exist!");
-        }
+        var trip = await _tripService.GetTripByIdAsync(tripId);
         if (trip.PendingInvites.Remove(user.Email))
         {
             await context.SaveChangesAsync();
-        } else 
+            var rejectNotificationForOwner = new Notification()
+            {
+                UserId = trip.UserId, // send to owner
+                HeaderText = "Collaboration rejected.",
+                BodyText = $"{user.DisplayName} has rejected your collaboration request for your {trip.Title} trip.",
+                Timestamp = DateTimeOffset.Now,
+            };
+            await _notificationService.AddNotificationAsync(rejectNotificationForOwner);
+        }
+        else
         {
             throw new ArgumentException("User has no pending invite on this task");
         }
-        
+
     }
 }

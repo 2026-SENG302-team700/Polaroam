@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
@@ -29,7 +27,7 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Add a new notification to the database
     /// </summary>
-    /// <param name="notification">the noitification to add to database</param>
+    /// <param name="notification">the notification to add to database</param>
     public async Task AddNotificationAsync(Notification notification)
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();

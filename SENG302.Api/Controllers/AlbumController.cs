@@ -246,4 +246,6 @@ public class AlbumController : ControllerBase
             return BadRequest("Failed to delete image");
         }
     }
+
+
 }

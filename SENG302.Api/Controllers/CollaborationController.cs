@@ -5,6 +5,7 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
+using SENG302.Api.Models.Entities;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -16,13 +17,14 @@ public class CollaborationController : ControllerBase
     private readonly ITripService _tripService;
     private readonly ICollaborationService _collaborationService;
 
-
-    public CollaborationController(ITripService tripService, ICollaborationService collaborationService)
+    private readonly IUserService _userService;
+    public CollaborationController(ITripService tripService, ICollaborationService collaborationService, IUserService userService)
     {
         _tripService = tripService;
         _collaborationService = collaborationService;
+        _userService = userService;
     }
-    
+
     /// <summary>
     /// Returns all collaborates 
     /// </summary>
@@ -64,7 +66,7 @@ public class CollaborationController : ControllerBase
             return NotFound("This trip does not exist");
         }
     }
-    
+
     [Authorize]
     [HttpPost("leave")]
     public async Task<ActionResult> LeaveCollaboration(int tripId)
@@ -80,7 +82,7 @@ public class CollaborationController : ControllerBase
             {
                 return Unauthorized("Not a collaborator on the trip");
             }
-            
+
             // Leave collaboration
             await _collaborationService.LeaveCollaboration(userId, tripId);
             return NoContent();
@@ -90,7 +92,7 @@ public class CollaborationController : ControllerBase
             return BadRequest("Failed to leave collaboration");
         }
     }
-    
+
     /// <summary>
     /// End point for posting invite to a user to a trip
     /// </summary>
@@ -147,5 +149,45 @@ public class CollaborationController : ControllerBase
             });
         }
         return Ok();
+    }
+
+    /// <summary>
+    /// If a user has been invited to the given trip, then the action provided in collaborationRequest
+    /// will be passed to the backend to have their action performed.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="collaborationRequest"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpPost("action")]
+    public async Task<ActionResult> ActionCollaboration(int tripId, [FromBody] CollaborationRequest collaborationRequest)
+    {
+        try
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            User? user = await _userService.GetUserByIdAsync(userId);
+            if (user == null ||
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId)) //does not work properly yet
+                return Unauthorized();
+            if (collaborationRequest.Action == 0) // reject
+            {
+                await _collaborationService.ActionRejectAsync(tripId, user);
+                return Ok("successfully rejected");
+            }
+            else if (collaborationRequest.Action == 1) //accept
+            {
+                await _collaborationService.ActionAcceptAsync(tripId, user);
+                return Ok("successfully accepted");
+            }
+            else //invalid action
+            {
+                return BadRequest("Not a valid collaboration action!");
+            }
+
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 }

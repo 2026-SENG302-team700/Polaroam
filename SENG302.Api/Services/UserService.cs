@@ -488,13 +488,13 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        
+
         user!.AcceptedAiPrivacyPolicy = true;
-        
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Checks to see whether or not a user has accepted the AI privacy policy.
     /// </summary>
@@ -506,7 +506,7 @@ public class UserService : IUserService
     public async Task<bool> PrivacyPolicyCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);
-        
+
         // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
         if (user == null)
         {
@@ -515,7 +515,7 @@ public class UserService : IUserService
 
         return user.AcceptedAiPrivacyPolicy;
     }
-    
+
     /// <summary>
     /// Switches the state of the "AiTaggingEnabled" field in a user.
     /// </summary>
@@ -549,7 +549,7 @@ public class UserService : IUserService
     public async Task<bool> UserAiTaggingCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);
-        
+
         // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
         if (user == null)
         {
@@ -583,19 +583,25 @@ public class UserService : IUserService
     public async Task<bool> GetPreferenceMapVisibleAsync(int userId)
     {
         User user = await GetUserByIdAsync(userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
-        
+
         return user.PreferenceMapVisible;
     }
-    
+
     /// <summary>
     /// Get the user display name
     /// </summary>
     /// <param name="userId">User Id</param>
     /// <returns>User display name</returns>
-    public async Task<String> GetUserDisplayName(int userId)
+    public async Task<string> GetUserDisplayName(int userId)
     {
         User user = await GetUserByIdAsync(userId);
 
         return user.DisplayName;
+    }
+
+    public async Task<PendingUser
+    public async Task CreatePendingUser(string email, int tripId)
+    {
+
     }
 }

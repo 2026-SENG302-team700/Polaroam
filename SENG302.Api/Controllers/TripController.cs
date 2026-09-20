@@ -80,7 +80,7 @@ public class TripController : ControllerBase
             return Unauthorized("Not logged in!");
         }
         var userId = int.Parse(userIdString);
-        
+
         var trip = await _tripService.GetTripByIdAsync(tripId);
         var ownerUser = await _userService.GetUserByIdAsync(trip.UserId);
         if (ownerUser == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, trip.Id))
@@ -286,43 +286,5 @@ public class TripController : ControllerBase
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
     }
-    
-
-    /// <summary>
-    /// If a user has been invited to the given trip, then the action provided in collaborationRequest
-    /// will be passed to the backend to have their action performed.
-    /// </summary>
-    /// <param name="tripId"></param>
-    /// <param name="collaborationRequest"></param>
-    /// <returns></returns>
-    [Authorize]
-    [HttpPost("{tripId:int}/collaborators")]
-    public async Task<ActionResult> ActionCollaboration(int tripId, [FromBody] CollaborationRequest collaborationRequest)
-    {
-        try
-        {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            User? user = await _userService.GetUserByIdAsync(userId);
-            if (user == null ||
-                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId)) //does not work properly yet
-                return Unauthorized();
-            if (collaborationRequest.Action== 0) // reject
-            {
-                await _collaborationService.ActionRejectAsync(tripId, userId);
-                return Ok("successfully rejected");
-            } else if (collaborationRequest.Action == 1) //accept
-            {
-                await _collaborationService.ActionAcceptAsync(tripId, userId);
-                return Ok("successfully accepted");
-            } else //invalid action
-            {
-                return BadRequest("Not a valid collaboration action!");
-            }
-            
-        } catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-    } 
 
 }
