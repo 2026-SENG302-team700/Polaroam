@@ -29,6 +29,7 @@ public interface IUserService
     Task<string> GetUserDisplayName(int userId);
     Task<PendingUser?> GetPendingUser(string email);
     Task CreateUpdatePendingUser(string email, int tripId);
+    Task RemovePendingUser(string email);
 }
 
 public enum UserVerificationResult
@@ -639,5 +640,22 @@ public class UserService : IUserService
             user.TripInvites.Add(tripId);
         }
         await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// given an email, remove that user from the database if they exist.
+    /// do nothing otherwise.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public async Task RemovePendingUser(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await GetPendingUser(email);
+        if (user != null)
+        {
+            context.PendingUsers.Remove(user);
+            await context.SaveChangesAsync();
+        }
     }
 }
