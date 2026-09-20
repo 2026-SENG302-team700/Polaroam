@@ -110,21 +110,14 @@ public class CollaborationController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized(new CollaborationInviteResponse
-            {
-                Type = "error",
-                Message = "Not logged in"
-            });
+            return Unauthorized("Not logged in");
         }
 
         var userId = int.Parse(userIdString);
         if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
         {
-            return Unauthorized(new CollaborationInviteResponse
-            {
-                Type = "error",
-                Message = "User does not have access to collaborate on the trip and view collaboration details"
-            });
+            return Unauthorized(
+                "User does not have access to collaborate on the trip and view collaboration details");
         }
 
         try
