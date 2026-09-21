@@ -15,6 +15,8 @@ namespace SENG302.Api.Migrations
                 table: "Posts",
                 type: "integer",
                 nullable: true);
+
+            migrationBuilder.Sql("UPDATE posts JOIN trips ON posts.tripid = trips.id SET posts.creatorid = trips.userid");
         }
 
         /// <inheritdoc />
