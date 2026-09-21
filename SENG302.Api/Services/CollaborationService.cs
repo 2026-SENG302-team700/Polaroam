@@ -247,6 +247,5 @@ public class CollaborationService : ICollaborationService
         {
             throw new ArgumentException("User has no pending invite on this task");
         }
-
     }
 }

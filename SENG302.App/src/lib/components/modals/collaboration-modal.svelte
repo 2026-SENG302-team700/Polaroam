@@ -1,6 +1,5 @@
 ﻿<script lang="ts">
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
-    import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import { page } from "$app/state";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
@@ -82,16 +81,14 @@
                 })
             });
             
-            const data = await response.json();
-            
-            console.log(data);
             
             if (!response.ok) {
+                const data = await response.json();
                 emailMessageStyle = `invite-message-${data.type}`;
                 emailMessage = data.message;
             } else {
                 emailMessageStyle = "invite-message-success"
-                emailMessage = await "Invite sent."
+                emailMessage = "Invite sent."
             }
 
         } catch (e) {

@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit.Abstractions;
@@ -220,7 +221,11 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         var responseObject = response as UnauthorizedObjectResult;
 
-        responseObject?.Value?.ToString().ShouldBe("Not logged in");
+        var CollaborationResponse = responseObject?.Value as CollaborationInviteResponse;
+        
+        CollaborationResponse?.Message.ShouldBe("Not logged in");
+
+        // responseObject?.Value?.ToString().ShouldBe("Not logged in");
     }
 
     [Fact]
@@ -292,8 +297,9 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        var message = await response.Content.ReadAsStringAsync();
-        message.ShouldBe("Email was invalid!");
+        
+        var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
+        colabResponse?.Message.ShouldBe("Email was invalid!");
     }
     
     [Fact]
@@ -336,8 +342,9 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        var message = await response.Content.ReadAsStringAsync();
-        message.ShouldBe("This user is already apart of this trip.");
+        var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
+        colabResponse?.Message.ShouldBe("This user is already apart of this trip.");
+        
     }
 
     [Fact]
@@ -379,5 +386,93 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task InviteCollaborator_UserAlreadySentInvite_ReturnsBadRequest()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = ["test2@example.com"]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task InviteCollaborator_UserNotInTrip_UserRecievesNotification()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+        var notification = await context.Notifications.Where(n => n.UserId == 2 && n.NotificationType == "TripInvitation").FirstOrDefaultAsync();
+        notification.ShouldNotBeNull();
+        notification.HeaderText.ShouldBe("New Invitation Request");
+        notification.BodyText.ShouldBe("You have been invited to collaborate on the Trip! trip!");
     }
 }

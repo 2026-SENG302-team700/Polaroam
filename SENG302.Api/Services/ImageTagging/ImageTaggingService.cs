@@ -63,12 +63,8 @@ public class ImageTaggingService : IImageTaggingService
             await SetTagErrors(imageId, "Tag cannot be generated");
             return;
         }
-        
-        Console.WriteLine("\n\n\n Does it reach the Generate Tags function? \n\n\n");
 
         var request = await GenerateRequest(image, cancellationToken);
-        
-        Console.WriteLine("\n\n\n Does it generate the request properly \n\n\n");
 
         try
         {
@@ -174,13 +170,10 @@ public class ImageTaggingService : IImageTaggingService
     /// <exception cref="HttpRequestException">Thrown if received a non-success response code</exception>
     private async Task<string?> ProcessRequest(HttpRequestMessage request, CancellationToken cancellationToken, int imageId)
     {
-        Console.WriteLine("\n\n\n Just before it sends properly \n\n\n");
         using var response = await _httpClient.SendAsync(
             request,
             cancellationToken
         );
-        
-        Console.WriteLine("\n\n\n Has AI been processed? \n\n\n");
         
         if (!response.IsSuccessStatusCode)
         {
