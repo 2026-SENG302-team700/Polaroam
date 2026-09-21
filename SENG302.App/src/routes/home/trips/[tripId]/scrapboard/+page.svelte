@@ -17,7 +17,14 @@
     let loadError = $state("");
     let showModal = $state(false);
     let lastSaveState = $state("");
-    
+
+    /**
+     * Helper function to convert the Excalidraw files into a
+     * standard file type
+     * @param dataURL
+     * @param filename
+     * @param mimeType
+     */
     function dataURLtoFile(dataURL, filename, mimeType) {
         const arr = dataURL.split(",");
         const byteString = atob(arr[1]);
@@ -65,7 +72,11 @@
         lastSaveState = JSON.stringify(elements);
         addToast("Scrapboard saved", "success");
     }
-    
+
+    /**
+     * Gets the trips scrapboard from the backend, adds the files then updates the 
+     * scene elements
+     */
     async function loadScrapboard() {
         try {
             const response = await fetchWithCsrf(resolve(`/api/scrapboard/${page.params.tripId}` as any), {
@@ -94,6 +105,11 @@
         }
     }
 
+    /**
+     * Checks whether the scrapboard has been updated,
+     * opens modal if changes have been made or returns to
+     * trip page otherwise
+     */
     function handleBackButton() {
         const currentState = JSON.stringify(excalidrawAPI!.getSceneElements());
         if (currentState !== lastSaveState) {
@@ -107,6 +123,9 @@
         loadScrapboard();
     })
 
+    /**
+     * Builds a custom hamburger menu to remove unneeded items
+     */
     function buildMainMenu(mod: typeof import("@excalidraw/excalidraw")) {
         const { MainMenu } = mod;
         const Def = MainMenu.DefaultItems;
@@ -115,6 +134,10 @@
             React.createElement(Def.ChangeCanvasBackground, { key: "changeCanvasBackground" }),
         ]);
     }
+
+    /**
+     * Calls other builder functions to build custom menu's
+     */
     function buildChildren(mod: typeof import("@excalidraw/excalidraw")) {
         return React.createElement(React.Fragment, null, [
             buildMainMenu(mod),
