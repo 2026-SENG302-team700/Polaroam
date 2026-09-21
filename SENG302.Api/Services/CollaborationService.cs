@@ -155,7 +155,7 @@ public class CollaborationService : ICollaborationService
         //create a pending user so that references can be updated accordingly when they create an account
         if (invitedUser == null)
         {
-            var pendingUser = _userService.CreateUpdatePendingUserAsync(userEmail, trip.Id);
+            await _userService.CreateUpdatePendingUserAsync(userEmail, trip.Id);
         }
         else
         {

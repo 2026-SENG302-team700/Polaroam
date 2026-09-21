@@ -126,7 +126,7 @@ public class NotificationService : INotificationService
             HeaderText = "New Invitation Request",
             BodyText = $"You have been invited to collaborate on the {title} trip!",
             Timestamp = DateTimeOffset.UtcNow,
-            NotificationType = "Invite",
+            NotificationType = "TripInvitation",
         };
         await AddNotificationAsync(inviteNotification);
     }

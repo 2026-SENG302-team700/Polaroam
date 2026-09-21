@@ -559,7 +559,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
 
         await Should.NotThrowAsync(async () => await ServiceUnderTest.SendInviteAsync("test2@example.com", 1, 1));
 
-        var notification = await context.Notifications.Where(x => x.UserId == 2).FirstOrDefaultAsync();
+        var notification = await context.Notifications.FirstOrDefaultAsync(x => x.UserId == 2);
 
         notification.ShouldNotBeNull();
         notification.HeaderText.ShouldBe("New Invitation Request");
