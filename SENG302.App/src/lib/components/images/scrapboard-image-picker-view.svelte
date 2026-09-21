@@ -100,6 +100,7 @@
                 onclick={clicked}
                 alt="Image"
                 class="img-thumbnail clickable-image {imageSelected ? 'rectangular-glow' : ''}"
+                tabindex="0"
         />
     {:else if failed}
         <div
@@ -125,6 +126,12 @@
     }
 
     .rectangular-glow {
+        box-shadow: 0px 0px 5px 5px rgba(0, 150, 255, 0.7);
+        border-radius: 8px;
+    }
+
+    img:focus {
+        transform: none;
         box-shadow: 0px 0px 5px 5px rgba(0, 150, 255, 0.7);
         border-radius: 8px;
     }
