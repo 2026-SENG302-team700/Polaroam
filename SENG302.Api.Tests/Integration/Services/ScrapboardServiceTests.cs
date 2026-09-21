@@ -181,8 +181,9 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
 
         await ServiceUnderTest.SaveScrapboardAsync(1, "[]", files, thumbnail);
 
-        var updatedScrapboard = await context.Scrapboards.FirstOrDefaultAsync(s => s.TripId == 1);
-        updatedScrapboard.Elements.ShouldBe("[]");
+        await using var assertContext = await DbContextFactory.CreateDbContextAsync();
+        var updatedScrapboard = await assertContext.Scrapboards.FirstOrDefaultAsync(s => s.TripId == 1);
+        updatedScrapboard!.Elements.ShouldBe("[]");
         updatedScrapboard.Files.ShouldHaveSingleItem();
         updatedScrapboard.Thumbnail.ShouldNotBe(-1);
     }
