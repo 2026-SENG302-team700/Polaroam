@@ -9,6 +9,7 @@
     import {page} from "$app/state";
     import { goto } from "$app/navigation";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import { addToast } from "$lib/toast/toast";
     
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
@@ -61,6 +62,7 @@
             credentials: "include",
         });
         lastSaveState = JSON.stringify(elements);
+        addToast("Scrapboard saved", "success");
     }
     
     async function loadScrapboard() {
