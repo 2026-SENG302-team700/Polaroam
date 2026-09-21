@@ -14,6 +14,7 @@
     let saving = $state(false);
     let loadError = $state("");
     let showModal = $state(false);
+    let lastSaveState = $state("");
     
     function dataURLtoFile(dataURL, filename, mimeType) {
         const arr = dataURL.split(",");
@@ -59,6 +60,7 @@
             body: form,
             credentials: "include",
         });
+        lastSaveState = JSON.stringify(elements);
     }
     
     async function loadScrapboard() {
@@ -73,6 +75,7 @@
             }
             
             const scrapboard = await response.json();
+            lastSaveState = scrapboard.elements;
             const elements = JSON.parse(scrapboard.elements);
             excalidrawAPI.updateScene({elements})
         } catch (error) {
@@ -81,10 +84,8 @@
     }
 
     function handleBackButton() {
-        // implement check to for changes to excalidraw
-        const scrapboardChanged = true;
-        
-        if (scrapboardChanged) {
+        const currentState = JSON.stringify(excalidrawAPI!.getSceneElements());
+        if (currentState !== lastSaveState) {
             showModal = true;
         } else {
             goto(resolve(`/home/trips/${page.params.tripId}`))
