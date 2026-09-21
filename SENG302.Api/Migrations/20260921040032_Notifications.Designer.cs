@@ -13,7 +13,7 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260916092809_Notifications")]
+    [Migration("20260921040032_Notifications")]
     partial class Notifications
     {
         /// <inheritdoc />
@@ -116,8 +116,8 @@ namespace SENG302.Api.Migrations
                     b.Property<bool>("ReadStatus")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTimeOffset>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<long>("Timestamp")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -176,6 +176,26 @@ namespace SENG302.Api.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Scrapboard", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.Property<string>("FileKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Scrapboards");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Trip", b =>
                 {
                     b.Property<int>("Id")
@@ -184,12 +204,19 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.PrimitiveCollection<List<int>>("Collaborators")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HasScrapboard")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");
