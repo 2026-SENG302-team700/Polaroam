@@ -239,7 +239,8 @@ public class Program
         {
             if (isDevelopment)
             {
-                dbContext.Database.EnsureCreated();
+                await dbContext.Database.EnsureCreatedAsync();
+                await dbContext.Database.MigrateAsync();
             }
             else
             {

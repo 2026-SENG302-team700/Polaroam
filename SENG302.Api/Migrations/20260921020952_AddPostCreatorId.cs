@@ -5,7 +5,7 @@
 namespace SENG302.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class PostCreatorid : Migration
+    public partial class AddPostCreatorId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,10 +14,7 @@ namespace SENG302.Api.Migrations
                 name: "CreatorId",
                 table: "Posts",
                 type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.Sql()
+                nullable: true);
         }
 
         /// <inheritdoc />
