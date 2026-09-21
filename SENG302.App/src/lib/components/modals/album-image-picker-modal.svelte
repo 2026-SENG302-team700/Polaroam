@@ -2,8 +2,9 @@
     import ScrapBoardImagePickerDisplay from "$lib/components/images/scrapboard-image-picker-display.svelte";
     import {onMount} from "svelte";
     import {resolve} from "$app/paths";
-    import Excalidraw from "svelte-excalidraw";
     import {type ExcalidrawImperativeAPI} from "@excalidraw/excalidraw/types";
+    import type { FileId } from "@excalidraw/excalidraw/element/types";
+    import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 
     let {
         tripId,
@@ -22,7 +23,7 @@
     let metadataLoaded = $state(false);
     let image = $state<File | null>(null);
     let dataUrl = $state<string | ArrayBuffer | null | undefined>(null);
-    let uniqueId = $state(crypto.randomUUID());
+    let uniqueId = $state<FileId>();
 
 
     let selectedPhotoId = $state<number | null>(null);
@@ -76,40 +77,45 @@
         getImageMetadata();
     });
 
-    function appendImage() {
+    async function appendImage() {
         if (!image) return;
         const reader = new FileReader();
         reader.onload = (event) => {
             dataUrl = event.target?.result as string;
         };
-        reader.readAsDataURL(image);
+        await reader.readAsDataURL(image);
 
-        uniqueId = crypto.randomUUID();
+        uniqueId = crypto.randomUUID() as FileId;
         // create element
-        const imageElement = {
-            type: "image",
-            id: `image_${Date.now()}`,
-            fileId: uniqueId,
-            x: 200,
-            y: 150,
-            width: 200,
-            height: 200,
-            status: "pending",
-            scale: [1, 1],
-        };
-
-        excalidrawAPI?.updateScene({
-            elements: [...excalidrawAPI!.getSceneElements(), imageElement],
-            files: {
-                [uniqueId]: {
+        try {
+            const [imageElement] = convertToExcalidrawElements([
+            {
+                type: "image",
+                id: `image_${Date.now()}`,
+                fileId: uniqueId,
+                x: 200,
+                y: 150,
+                width: 200,
+                height: 200,
+                status: "saved",
+                scale: [1, 1],
+            },
+            ]);
+            excalidrawAPI?.addFiles([{
                     id: uniqueId,
-                    mimeType: image.type,
-                    dataUrl: dataUrl,
+                    dataURL: dataUrl as any,
+                    mimeType: image.type as any,
                     created: Date.now(),
-                }
-            }
-        })
-        
+                }])
+
+            excalidrawAPI?.updateScene({
+                elements: [...excalidrawAPI!.getSceneElements(), imageElement],
+            })
+        } catch (err) {
+            imageError = "An unexpected error occurred: ";
+        } finally {
+            loading = false;
+        }
     }
 
 </script>
