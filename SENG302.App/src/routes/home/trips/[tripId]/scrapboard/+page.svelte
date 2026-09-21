@@ -7,11 +7,11 @@
     import {onMount} from "svelte";
     import {resolve} from "$app/paths";
     import {page} from "$app/state";
+    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let loadError = $state("");
-
     
     function dataURLtoFile(dataURL, filename, mimeType) {
         const arr = dataURL.split(",");
@@ -118,13 +118,15 @@
         loadScrapboard();
     })
 </script>
-<div>
-    <CreationButton
-            text="save"
-            onClick={saveScrapboard}
-            loading={saving}
-    />
-
+<div class="page-wrapper">
+    <div class="scrapboard-buttons">
+        <NavigationButton path="/home" text="Back to Trip" />
+        <CreationButton
+                text="Update Scrapboard"
+                onClick={saveScrapboard}
+                loading={saving}
+        />
+    </div>
     <div class="scrapboard-wrapper">
         <Excalidraw
                 bind:excalidrawAPI
@@ -144,5 +146,11 @@
         border: 3px solid black;
         border-radius: 5px;
         box-shadow: 8px 8px black;
+    }
+    
+    .scrapboard-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
     }
 </style>
