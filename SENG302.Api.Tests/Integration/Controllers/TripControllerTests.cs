@@ -23,9 +23,6 @@ public class TripControllerTests : BaseIntegrationTestFixture
     private IPostService _mockPostService;
     private IAlbumService _mockAlbumService;
     private IUserService _mockUserService;
-    private ICollaborationService _mockCollaborationService;
-
-
     private TripController _controller;
 
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
@@ -35,14 +32,12 @@ public class TripControllerTests : BaseIntegrationTestFixture
         _mockPostService = Substitute.For<IPostService>();
         _mockAlbumService = Substitute.For<IAlbumService>();
         _mockUserService = Substitute.For<IUserService>();
-        _mockCollaborationService = Substitute.For<ICollaborationService>();
 
         _controller = new TripController(
             _mockTripService,
             _mockPostService,
             _mockAlbumService,
-            _mockUserService,
-            _mockCollaborationService
+            _mockUserService
         );
 
         AddTestPrincipalToController(_controller);
