@@ -87,7 +87,7 @@
     </div>
 </div>
 
-<AlbumImagePickerModal tripId={tripId} bind:show={showPickerModal}/>
+<AlbumImagePickerModal tripId={tripId} bind:show={showPickerModal} excalidrawAPI={excalidrawAPI}/>
 
 <style>
     .scrapboard-wrapper {

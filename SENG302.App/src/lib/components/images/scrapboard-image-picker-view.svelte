@@ -1,21 +1,19 @@
 ﻿<script lang="ts">
-    
-
     let {
         src,
         selectedPhotoId = $bindable(null),
-        imagePhotoId = null
+        imagePhotoId = null,
+        image = $bindable(null)
     } : {
         src: string,
         selectedPhotoId: number | null,
         imagePhotoId: number | null,
+        image: File | null
     } = $props()
 
-    let image = $state<File | null>(null);
-    
     let objectUrl = $state<string | null>(null);
-    let displaySrc = $derived(image instanceof File ? objectUrl : image);
-
+    let imageFile = $state<File | null>(null);
+    let displaySrc = $derived(imageFile instanceof File ? objectUrl : imageFile);
     let containerEl: HTMLDivElement | undefined = $state();
     
     let loading = $state(false);
@@ -32,8 +30,8 @@
             imageSelected = false;
         }
         
-        if (image instanceof File) {
-            const url = URL.createObjectURL(image);
+        if (imageFile instanceof File) {
+            const url = URL.createObjectURL(imageFile);
             objectUrl = url;
             return () => URL.revokeObjectURL(url);
         }
@@ -77,7 +75,7 @@
             if (!res.ok)
                 throw new Error(`Failed to fetch image: ${res.status}`);
             const blob = await res.blob();
-            image = new File([blob], filenameFromSrc(src), { type: blob.type });
+            imageFile = new File([blob], filenameFromSrc(src), { type: blob.type });
         } catch (e) {
             console.error(e);
             failed = true;
@@ -89,12 +87,16 @@
     async function clicked() {
         imageSelected = !imageSelected;
         selectedPhotoId = imagePhotoId
+
+        if (imageSelected) {
+            image = imageFile;
+        }
     }
     
 </script>
 
 <div bind:this={containerEl} class="lazy-image-wrapper">
-    {#if image}
+    {#if imageFile}
         <img
                 src={displaySrc}
                 onclick={clicked}

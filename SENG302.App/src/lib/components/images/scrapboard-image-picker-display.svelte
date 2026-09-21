@@ -13,12 +13,14 @@
         errors = [],
         errorsBesidePicker = false,
         selectedPhotoId = $bindable(null),
+        image = $bindable(null)
     }: {
         imageMetadata?: ImageMetadata[] | null;
         tripId: number;
         errors?: string[];
         errorsBesidePicker?: boolean;
         selectedPhotoId: number | null;
+        image: File | null;
     } = $props();
     
     
@@ -36,13 +38,14 @@
                 </div>
             </div>
         {/if}
-        {#each imageMetadata ?? [] as image, index (image.photoId)}
+        {#each imageMetadata ?? [] as img, index (img.photoId)}
             <div class="col">
                 <div class="position-relative">
                     <ScrapboardImagePickerView
-                            src={resolve(`/api/album/${tripId}/images/${image.photoId}`)} 
+                            src={resolve(`/api/album/${tripId}/images/${img.photoId}`)} 
                             bind:selectedPhotoId={selectedPhotoId}
-                            imagePhotoId={image.photoId}
+                            bind:image={image}
+                            imagePhotoId={img.photoId}
                     />
                 </div>
             </div>

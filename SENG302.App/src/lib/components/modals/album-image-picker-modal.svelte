@@ -2,13 +2,17 @@
     import ScrapBoardImagePickerDisplay from "$lib/components/images/scrapboard-image-picker-display.svelte";
     import {onMount} from "svelte";
     import {resolve} from "$app/paths";
+    import Excalidraw from "svelte-excalidraw";
+    import {type ExcalidrawImperativeAPI} from "@excalidraw/excalidraw/types";
 
     let {
         tripId,
         show = $bindable(false),
+        excalidrawAPI = $bindable(undefined)
     }: {
         tripId: number;
         show: boolean;
+        excalidrawAPI: ExcalidrawImperativeAPI | undefined;
     } = $props();
 
     let dialog: HTMLDialogElement;
@@ -16,6 +20,10 @@
     let loading = $state(false);
     let imageError = $state("");
     let metadataLoaded = $state(false);
+    let image = $state<File | null>(null);
+    let dataUrl = $state<string | ArrayBuffer | null | undefined>(null);
+    let uniqueId = $state(crypto.randomUUID());
+
 
     let selectedPhotoId = $state<number | null>(null);
     
@@ -68,18 +76,42 @@
         getImageMetadata();
     });
 
-    /**
-     * Get image to drag to the scrapboard
-     */
-    async function getImage() {
-        console.log(`Selected photo Id: ${selectedPhotoId}`)
-        if (selectedPhotoId == null) {
-            imageError = "Image has not been selected. Click on image to select a image"
-        } else {
-            const response = await fetch(resolve(`/api/album/${tripId}/images/${selectedPhotoId}` as any));
-            console.log(JSON.stringify(response))
-        }
+    function appendImage() {
+        if (!image) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            dataUrl = event.target?.result as string;
+        };
+        reader.readAsDataURL(image);
+
+        uniqueId = crypto.randomUUID();
+        // create element
+        const imageElement = {
+            type: "image",
+            id: `image_${Date.now()}`,
+            fileId: uniqueId,
+            x: 200,
+            y: 150,
+            width: 200,
+            height: 200,
+            status: "pending",
+            scale: [1, 1],
+        };
+
+        excalidrawAPI?.updateScene({
+            elements: [...excalidrawAPI!.getSceneElements(), imageElement],
+            files: {
+                [uniqueId]: {
+                    id: uniqueId,
+                    mimeType: image.type,
+                    dataUrl: dataUrl,
+                    created: Date.now(),
+                }
+            }
+        })
+        
     }
+
 </script>
 {#if show}
     <dialog bind:this={dialog} class="modal-dialog-container">
@@ -97,10 +129,10 @@
                 </button>
             </div>
             <div class="modal-body">
-                <ScrapBoardImagePickerDisplay tripId={tripId} imageMetadata={imageMetadata} bind:selectedPhotoId={selectedPhotoId}/>
+                <ScrapBoardImagePickerDisplay tripId={tripId} imageMetadata={imageMetadata} bind:selectedPhotoId={selectedPhotoId} bind:image={image}/>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary select-button" onclick={getImage} disabled={loading && !metadataLoaded}>Select</button>
+                <button class="btn btn-secondary select-button" onclick={appendImage} disabled={loading && !metadataLoaded}>Select</button>
                 {#if imageError !== ""}
                     <span class="danger">{imageError}</span>
                 {/if}
