@@ -113,8 +113,8 @@ namespace SENG302.Api.Migrations
                     b.Property<bool>("ReadStatus")
                         .HasColumnType("boolean");
 
-                    b.Property<long>("Timestamp")
-                        .HasColumnType("bigint");
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
