@@ -48,14 +48,13 @@ public class CollaborationController : ControllerBase
                     return Unauthorized(
                         "User does not have access to collaborate on the trip and view collaboration details");
                 }
+                var collaborators = await _collaborationService.GetTripCollaborators(tripId);
+                return Ok(collaborators);
             }
             else
             {
                 return Unauthorized("User Id does not exist");
             }
-
-            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
-            return Ok(collaborators);
         }
         catch (KeyNotFoundException e)
         {

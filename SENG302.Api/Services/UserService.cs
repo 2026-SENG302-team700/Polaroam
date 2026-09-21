@@ -53,14 +53,14 @@ public class UserService : IUserService
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
     private readonly ITripService _tripService;
-    private readonly ICollaborationService _collaborationService;
+    private readonly INotificationService _notificationService;
 
-    public UserService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, ITripService tripService, ICollaborationService collaborationService)
+    public UserService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, ITripService tripService, INotificationService notificationService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
         _tripService = tripService;
-        _collaborationService = collaborationService;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public class UserService : IUserService
             foreach (var tripId in pendingUser.TripInvites)
             {
                 var trip = await _tripService.GetTripByIdAsync(tripId);
-                await _collaborationService.SendInviteNotificationAsync(trip.Title, user.Id, trip.Id);
+                await _notificationService.SendInviteNotificationAsync(trip.Title, user.Id, trip.Id);
             }
             await RemovePendingUserAsync(user.Email);
         }

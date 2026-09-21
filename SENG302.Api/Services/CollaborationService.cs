@@ -16,7 +16,6 @@ public interface ICollaborationService
     Task SendInviteAsync(string userEmail, int inviterId, int tripId);
     Task ActionRejectAsync(int tripId, User user);
     Task ActionAcceptAsync(int tripId, User user);
-    Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId);
 }
 
 
@@ -154,37 +153,19 @@ public class CollaborationService : ICollaborationService
         var context = await _dbContextFactory.CreateDbContextAsync();
         trip.PendingInvites.Add(userEmail);
         //create a pending user so that references can be updated accordingly when they create an account
-        if (invitedUser is null)
+        if (invitedUser == null)
         {
             var pendingUser = _userService.CreateUpdatePendingUserAsync(userEmail, trip.Id);
         }
         else
         {
-            await SendInviteNotificationAsync(trip.Title, invitedUser.Id, trip.Id);
+            await _notificationService.SendInviteNotificationAsync(trip.Title, invitedUser.Id, trip.Id);
         }
+
         await context.SaveChangesAsync();
 
     }
 
-    /// <summary>
-    /// creates an invitation notification for a trip invite and stores it with the given user.
-    /// </summary>
-    /// <param name="title"></param>
-    /// <param name="invitedUserId"></param>
-    /// <returns></returns>
-    public async Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId)
-    {
-        var inviteNotification = new TripInvitationNotification
-        {
-            TripId = tripId,
-            UserId = invitedUserId,
-            HeaderText = "New Invitation Request",
-            BodyText = $"You have been invited to collaborate on the {title} trip!",
-            Timestamp = DateTimeOffset.UtcNow,
-            NotificationType = "Invite",
-        };
-        await _notificationService.AddNotificationAsync(inviteNotification);
-    }
 
 
 

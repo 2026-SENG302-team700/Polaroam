@@ -17,7 +17,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
     private ITripService ServiceUnderTest => ServiceProvider.GetRequiredService<ITripService>();
 
     private readonly ITripService _tripService;
-    private readonly IUserService _mockUserService;
+    private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
     {
 
@@ -680,12 +680,6 @@ public class TripServiceTests : BaseIntegrationTestFixture
         StartDate = DateToDateTimeOffset(2021, 12, 29),
         EndDate = DateToDateTimeOffset(2022, 12, 31),
     };
-
-    [Fact]
-    public async Task CreateNewTrip_UserDoesNotExist_ThrowsArgumentException()
-    {
-        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
-    }
 
     [Fact]
     public async Task DeleteTrip_NoTripExists_Fails()

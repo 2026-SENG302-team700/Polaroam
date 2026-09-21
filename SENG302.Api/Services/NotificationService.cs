@@ -13,6 +13,7 @@ public interface INotificationService
     Task<bool> UserOwnsNotification(int notificationId, int userId);
     Task<int> GetUnreadCount(int userId);
     Task<bool> UserHasMoreThan(int userId, int count);
+    Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId);
 }
 
 public class NotificationService : INotificationService
@@ -30,7 +31,7 @@ public class NotificationService : INotificationService
     /// <param name="notification">the notification to add to database</param>
     public async Task AddNotificationAsync(Notification notification)
     {
-        using var context = await _dbContextFactory.CreateDbContextAsync();
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
         await context.Notifications.AddAsync(notification);
         await context.SaveChangesAsync();
     }
@@ -109,5 +110,24 @@ public class NotificationService : INotificationService
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();
         return await context.Notifications.Where(n => n.UserId == userId).Skip(count).AnyAsync();
+    }
+
+    /// <summary>
+    /// creates an invitation notification for a trip invite and stores it with the given user.
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="invitedUserId"></param>
+    /// <returns></returns>
+    public async Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId)
+    {
+        var inviteNotification = new Notification
+        {
+            UserId = invitedUserId,
+            HeaderText = "New Invitation Request",
+            BodyText = $"You have been invited to collaborate on the {title} trip!",
+            Timestamp = DateTimeOffset.UtcNow,
+            NotificationType = "Invite",
+        };
+        await AddNotificationAsync(inviteNotification);
     }
 }
