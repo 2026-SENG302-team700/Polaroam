@@ -1,6 +1,7 @@
 <script lang="ts">
     import Excalidraw from "svelte-excalidraw";
     import {type ExcalidrawImperativeAPI} from "@excalidraw/excalidraw/types";
+    import React from "react";
     import { exportToBlob } from "@excalidraw/excalidraw";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -105,6 +106,22 @@
     onMount(() => {
         loadScrapboard();
     })
+
+    function buildMainMenu(mod: typeof import("@excalidraw/excalidraw")) {
+        const { MainMenu } = mod;
+        const Def = MainMenu.DefaultItems;
+        return React.createElement(MainMenu, { key: "main-menu" }, [
+            React.createElement(Def.ClearCanvas, { key: "clearCanvas" }),
+            React.createElement(Def.ChangeCanvasBackground, { key: "changeCanvasBackground" }),
+        ]);
+    }
+    function buildChildren(mod: typeof import("@excalidraw/excalidraw")) {
+        return React.createElement(React.Fragment, null, [
+            buildMainMenu(mod),
+        ]);
+    }
+    
+    
 </script>
 <div class="page-wrapper">
     <div class="scrapboard-buttons">
@@ -123,6 +140,7 @@
     </div>
     <div class="scrapboard-wrapper">
         <Excalidraw
+                childrenBuilder={buildChildren}
                 bind:excalidrawAPI
                 theme="light"
                 name="Basic Test"
