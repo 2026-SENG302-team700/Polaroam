@@ -7,11 +7,13 @@
     import {onMount} from "svelte";
     import {resolve} from "$app/paths";
     import {page} from "$app/state";
-    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
-
+    import { goto } from "$app/navigation";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let loadError = $state("");
+    let showModal = $state(false);
     
     function dataURLtoFile(dataURL, filename, mimeType) {
         const arr = dataURL.split(",");
@@ -22,42 +24,6 @@
         }
         return new File([bytes], filename, { type: mimeType });
     }
-    
-    // to be removed once proper implementation with backend is created
-    const initialData = {
-        elements: [
-            {
-                type: "rectangle",
-                version: 141,
-                versionNonce: 361174001,
-                isDeleted: false,
-                id: "rect-1",
-                fillStyle: "hachure",
-                strokeWidth: 1,
-                strokeStyle: "solid",
-                roughness: 1,
-                opacity: 100,
-                angle: 0,
-                x: 100,
-                y: 100,
-                strokeColor: "#000000",
-                backgroundColor: "#868dfb",
-                width: 300,
-                height: 200,
-                seed: 196841035,
-                groupIds: [],
-                roundness: null,
-                boundElements: null,
-                updated: 1,
-            },
-        ],
-        appState: {
-            viewBackgroundColor: "#ffffff",
-            gridSize: null,
-        },
-        scrollToContent: true,
-    };
-    // end of init data block
 
     /**
      * Gets the elements, appstate, and files from the scene
@@ -113,6 +79,17 @@
             loadError = "Failed to load scrapboard";
         }
     }
+
+    function handleBackButton() {
+        // implement check to for changes to excalidraw
+        const scrapboardChanged = true;
+        
+        if (scrapboardChanged) {
+            showModal = true;
+        } else {
+            goto(resolve(`/home/trips/${page.params.tripId}`))
+        }
+    }
     
     onMount(() => {
         loadScrapboard();
@@ -120,7 +97,13 @@
 </script>
 <div class="page-wrapper">
     <div class="scrapboard-buttons">
-        <NavigationButton path="/home" text="Back to Trip" />
+        <button
+            class="btn btn-primary"
+            onclick={handleBackButton}
+        >
+            Back to Trips
+        </button>
+        
         <CreationButton
                 text="Update Scrapboard"
                 onClick={saveScrapboard}
@@ -130,7 +113,6 @@
     <div class="scrapboard-wrapper">
         <Excalidraw
                 bind:excalidrawAPI
-                {initialData}
                 theme="light"
                 name="Basic Test"
                 viewModeEnabled={false}
@@ -140,6 +122,22 @@
         />
     </div>
 </div>
+<ConfirmationModal
+    message="You have unsaved changes."
+    option1Text="Cancel"
+    option2Text="Discard"
+    option3Text="Save"
+    option2Style="danger"
+    option3Style="primary"
+    onOption1={() => {}}
+    onOption2={() => goto(resolve(`/home/trips/${page.params.tripId}`))}
+    onOption3={async () => {
+        await saveScrapboard();
+        goto(resolve(`/home/trips/${page.params.tripId}`));
+    }}
+    bind:show={showModal}
+/>
+    
 <style>
     .scrapboard-wrapper {
         height: 70vh;
