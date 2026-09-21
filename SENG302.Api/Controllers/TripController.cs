@@ -133,11 +133,15 @@ public class TripController : ControllerBase
             // Check user is logged in
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier); ;
 
-            if (string.IsNullOrEmpty(userIdString) || await _userService.GetUserByIdAsync(int.Parse(userIdString)) == null)
+            if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized("Not logged in!");
-
+            var userId = int.Parse(userIdString);
+            if (await _userService.GetUserByIdAsync(userId) == null)
+            {
+                return BadRequest("User with the provided id does not exist.");
+            }
             // Create trip belonging to the logged in user
-            var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
+            var trip = await _tripService.CreateNewTripAsync(tripRequest, userId);
             await _albumService.CreateNewAlbumAsync(trip.Id);
 
             return Ok(trip);
