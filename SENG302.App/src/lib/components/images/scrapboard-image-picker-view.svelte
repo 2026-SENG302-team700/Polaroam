@@ -67,7 +67,7 @@
     }
 
     async function loadFile() {
-        if (image || loading) return;
+        if (imageFile || loading) return;
         loading = true;
         failed = false;
         try {
@@ -96,7 +96,7 @@
 </script>
 
 <div bind:this={containerEl} class="lazy-image-wrapper">
-    {#if imageFile}
+    {#if imageFile && objectUrl}
         <img
                 src={displaySrc}
                 onclick={clicked}

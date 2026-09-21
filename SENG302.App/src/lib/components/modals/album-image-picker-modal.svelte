@@ -77,13 +77,43 @@
         getImageMetadata();
     });
 
+    interface ImageDimensions {
+        width: number;
+        height: number;
+    }
+
+    async function getImageDimensions(file: File): Promise<ImageDimensions> {
+        const bitmap = await createImageBitmap(file);
+        const { width, height } = bitmap;
+        bitmap.close(); 
+
+        return { width, height };
+    }
+
+    function readFileAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result == "string") {
+                    resolve(reader.result);
+                } else {
+                    reject(new Error("Could not read image"))
+                }
+            };
+
+            reader.onerror = () => {
+                reject(reader.error)
+            };
+            reader.readAsDataURL(file);
+        })
+    }
+
     async function appendImage() {
         if (!image) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            dataUrl = event.target?.result as string;
-        };
-        await reader.readAsDataURL(image);
+
+        dataUrl = await readFileAsDataUrl(image);
+
+        let dimensions = getImageDimensions(image);
 
         uniqueId = crypto.randomUUID() as FileId;
         // create element
@@ -95,10 +125,10 @@
                 fileId: uniqueId,
                 x: 200,
                 y: 150,
-                width: 200,
-                height: 200,
                 status: "saved",
                 scale: [1, 1],
+                width: (await dimensions).width,
+                height: (await dimensions).height
             },
             ]);
             excalidrawAPI?.addFiles([{
@@ -115,6 +145,7 @@
             imageError = "An unexpected error occurred: ";
         } finally {
             loading = false;
+            closeModal();
         }
     }
 
