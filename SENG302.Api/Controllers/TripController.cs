@@ -18,16 +18,14 @@ public class TripController : ControllerBase
     private readonly IPostService _postService;
     private readonly IAlbumService _albumService;
     private readonly IUserService _userService;
-    private readonly ICollaborationService _collaborationService;
 
 
-    public TripController(ITripService tripService, IPostService postService, IAlbumService albumService, IUserService userService, ICollaborationService collaborationService)
+    public TripController(ITripService tripService, IPostService postService, IAlbumService albumService, IUserService userService)
     {
         _tripService = tripService;
         _postService = postService;
         _albumService = albumService;
         _userService = userService;
-        _collaborationService = collaborationService;
     }
 
     /// <summary>
