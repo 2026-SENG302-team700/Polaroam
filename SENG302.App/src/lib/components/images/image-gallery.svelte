@@ -50,7 +50,7 @@
         try {
             const response = await fetchWithCsrf(
                 resolve(
-                    `/api/trips/${tripId}/image/${image.photoId}/context` as any,
+                    `/api/trips/${tripId}/images/${image.photoId}/context` as any,
                 ),
                 { method: "GET", credentials: "include" },
             );

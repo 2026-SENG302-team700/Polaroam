@@ -41,4 +41,5 @@ public class Post
             field = value.ToUniversalTime();
         }
     }
+    public int CreatorId { get; set; }
 }

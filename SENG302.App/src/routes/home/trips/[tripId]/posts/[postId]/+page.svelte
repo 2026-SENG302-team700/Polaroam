@@ -10,6 +10,7 @@
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostDisplayCard from "$lib/components/trip-components/post-display-card.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
+    import { user } from "$lib/stores/user.js";
 
     let loading = $state(false);
     let error = $state("");
@@ -203,7 +204,9 @@
             <EditButton
                 path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
             />
+            <!-- {#if postObject.userId == $user.id} -->
             <DeleteButton deleteAction={showConfirmationModal} />
+            <!-- {/if} -->
             <ErrorDisplay errors={[error]} />
 
             <PostDisplayCard

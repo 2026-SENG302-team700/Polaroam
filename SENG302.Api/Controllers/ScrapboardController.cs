@@ -46,11 +46,11 @@ public class ScrapboardController : ControllerBase
             var scrapboard = await _scrapboardService.GetScrapboardByTripAsync(tripId);
             if (scrapboard == null) return NotFound("Trip has no Scrapboard");
             if (scrapboard.OwnerId != userId) return Unauthorized();
-            
+
             return Ok(scrapboard);
         }
         catch (Exception e)
-        {  
+        {
             return BadRequest(e.Message);
         }
     }
@@ -71,16 +71,16 @@ public class ScrapboardController : ControllerBase
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var trip = await _tripService.GetTripByIdAsync(request.TripId);
-            if (trip.UserId != userId)
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, trip.Id))
             {
                 return Unauthorized();
             }
             var scrapboard = await _scrapboardService.CreateScrapboardAsync(request.TripId, userId);
-            
+
             return Ok(scrapboard);
         }
         catch (Exception e)
-        {  
+        {
             return BadRequest(e.Message);
         }
     }
