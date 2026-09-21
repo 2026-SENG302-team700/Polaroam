@@ -108,6 +108,7 @@
 <ScrapboardExpanded
         bind:shown={showExpanded}
         scrapboardImage={scrapboardImage}
+        {tripId}
 />
 
 <style>

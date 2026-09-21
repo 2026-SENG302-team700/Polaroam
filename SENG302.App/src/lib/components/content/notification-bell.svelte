@@ -1,185 +1,124 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import NotificationList from "./notification-list.svelte";
+    import { fetchWithCsrf } from "$lib/csrf";
+    import { resolve } from "$app/paths";
 
     let toggled = $state(false);
 
     const NOTIFICATION_SHOWN_CAP = 5;
 
-    // remove once persistance is done
-    let testNotifications: NotificationData[] = [
-        {
-            title: "You've received a new trip invitation!",
-            text: `You've been invited to join the trip "john burger"`,
-            isRead: false,
-            leftAction: {
-                function: () => console.log("Accept"),
-                text: "Accept",
-                colour: "btn-success",
-            },
-            rightAction: {
-                text: "Decline",
-                function: () => console.log("Decline"),
-                colour: "btn-danger",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "You've received a new trip invitation!",
-            text: `You've been invited to join the trip "john burger"`,
-            isRead: false,
-            leftAction: {
-                text: "Accept",
-                function: () => console.log("Accept"),
-                colour: "btn-success",
-            },
-            rightAction: {
-                text: "Decline",
-                function: () => console.log("Decline"),
-                colour: "btn-danger",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: false,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-        {
-            title: "Grima Wormtounge",
-            text: "Commented: That is a lie!",
-            isRead: true,
-            leftAction: {
-                text: "Reply",
-                function: () => console.log("Reply"),
-                colour: "btn-primary",
-            },
-            rightAction: {
-                text: "View",
-                function: () => console.log("View"),
-                colour: "btn-secondary",
-            },
-            readToggle: () => console.log("toggle read"),
-        } as NotificationData,
-    ];
-    // end of temp blockk
+    let notifications: NotificationData[] = $state([]);
+    let notificationUnreadCount: number = $state(0);
+    let moreNotificationsExist: boolean = $state(false);
+    let notificationsError: string = $state("");
 
     let notificationListElement: HTMLDivElement | null = $state(null);
     let notificationButtonElement: HTMLButtonElement | null = $state(null);
 
     /**
+     * Create a notification data based on a notification response
+     */
+    function createNotificationData(response: NotificationResponse) {
+        var data: NotificationData = {
+            id: response.id,
+            isRead: response.readStatus,
+            title: response.headerText,
+            text: response.bodyText,
+            readToggle: () => {
+                toggleNotificationReadStatus(response.id);
+            },
+        };
+
+        if (!response.handled) {
+            if (response.notificationType == "TripInvitation") {
+                data.leftAction = {
+                    function: () => console.log("Accept"),
+                    text: "Accept",
+                    colour: "btn-success",
+                };
+
+                data.rightAction = {
+                    text: "Decline",
+                    function: () => console.log("Decline"),
+                    colour: "btn-danger",
+                };
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Toggles the read status of a notification
+     * @param notificationId the id of the notification to set
+     * @param newStatus the new status for that notification
+     */
+    async function toggleNotificationReadStatus(notificationId: number) {
+        const notification = notifications.find((n) => n.id == notificationId);
+        if (notification == null) {
+            return;
+        }
+
+        const newStatus = !notification.isRead;
+        if (newStatus != notification.isRead) {
+            notificationUnreadCount += newStatus ? -1 : 1;
+        }
+        notification.isRead = newStatus;
+
+        try {
+            const response = await fetchWithCsrf(
+                resolve(
+                    `/api/user/notifications/${notificationId}/status` as any,
+                ),
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                },
+            );
+
+            if (!response.ok) {
+                notificationsError = await response.text();
+            }
+        } catch (err) {
+            notificationsError = (err as Error).message;
+        }
+    }
+
+    /**
      * Refresh's the notification list
      */
-    function refreshNotifications() {
-        // to be implemented
-        return;
+    async function refreshNotifications() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/notifications` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+
+            if (!response.ok) {
+                notificationsError = await response.text();
+                return;
+            }
+
+            var getAllNotificationsResponse =
+                (await response.json()) as GetAllNotificationsResponse;
+
+            notifications = [];
+            notificationUnreadCount = getAllNotificationsResponse.unreadCount;
+            moreNotificationsExist = getAllNotificationsResponse.moreExist;
+            getAllNotificationsResponse.notificationResponses.forEach((n) =>
+                notifications.push(createNotificationData(n)),
+            );
+        } catch (err) {
+            notificationsError = (err as Error).message;
+        }
     }
 
     onMount(() => {
@@ -202,6 +141,8 @@
                 toggled = false;
             }
         });
+
+        refreshNotifications();
     });
 </script>
 
@@ -212,14 +153,15 @@
         bind:this={notificationButtonElement}
         onclick={() => {
             toggled = !toggled;
+            refreshNotifications();
         }}
     >
         <i class="bi bi-bell icon-centered"></i>
-        {#if testNotifications.length > 0}
+        {#if notificationUnreadCount > 0}
             <div class="notification-counter">
-                {testNotifications.length > 9
+                {notificationUnreadCount > 9
                     ? "9+"
-                    : testNotifications.length.toString()}
+                    : notificationUnreadCount.toString()}
             </div>
         {/if}
     </button>
@@ -230,32 +172,37 @@
         bind:this={notificationListElement}
     >
         <div class="notification-topbar">
-            <span class="notification-title">Notifications</span>
+            <div style="display: flex; flex-direction: column;">
+                <span class="notification-title">Notifications</span>
+                <span style="color: red;">{notificationsError}</span>
+            </div>
+
             <div class="notification-topbar-buttons">
                 <button
                     class="btn notification-topbar-button"
                     aria-label="refresh notifications"
-                    onclick={refreshNotifications}
+                    onclick={() => refreshNotifications()}
                 >
-                    <i class="bi bi-arrow-clockwise" />
+                    <i class="bi bi-arrow-clockwise"></i>
                 </button>
                 <button
                     class="btn notification-topbar-button"
                     aria-label="exit"
                     onclick={() => {
                         toggled = false;
+                        refreshNotifications();
                     }}
                 >
-                    <i class="bi bi-x" />
+                    <i class="bi bi-x"></i>
                 </button>
             </div>
         </div>
 
         <NotificationList
-            notifications={testNotifications.slice(0, NOTIFICATION_SHOWN_CAP)}
+            notifications={notifications.slice(0, NOTIFICATION_SHOWN_CAP)}
         />
 
-        {#if testNotifications.length > NOTIFICATION_SHOWN_CAP}
+        {#if moreNotificationsExist}
             <span class="see-more">See more...</span>
         {/if}
     </div>

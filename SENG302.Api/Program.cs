@@ -251,7 +251,7 @@ public class Program
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error occured: ", e);
+            Console.WriteLine("Error occured: " + e);
             throw;
         }
 
@@ -267,6 +267,7 @@ public class Program
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IAlbumService, AlbumService>();
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IScrapboardService, ScrapboardService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
         services.AddScoped<ICollaborationService, CollaborationService>();
