@@ -27,9 +27,9 @@ public interface IUserService
     Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible);
     Task<bool> GetPreferenceMapVisibleAsync(int userId);
     Task<string> GetUserDisplayName(int userId);
-    Task<PendingUser?> GetPendingUser(string email);
-    Task CreateUpdatePendingUser(string email, int tripId);
-    Task RemovePendingUser(string email);
+    Task<PendingUser?> GetPendingUserAsync(string email);
+    Task CreateUpdatePendingUserAsync(string email, int tripId);
+    Task RemovePendingUserAsync(string email);
 }
 
 public enum UserVerificationResult
@@ -52,11 +52,15 @@ public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly ITripService _tripService;
+    private readonly ICollaborationService _collaborationService;
 
-    public UserService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public UserService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, ITripService tripService, ICollaborationService collaborationService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        _tripService = tripService;
+        _collaborationService = collaborationService;
     }
 
     /// <summary>
@@ -155,6 +159,17 @@ public class UserService : IUserService
 
         context.Users.Add(user);
 
+        //if the user is pending, then send them invite notifications tied to the pending user object
+        var pendingUser = await GetPendingUserAsync(user.Email);
+        if (pendingUser != null)
+        {
+            foreach (var tripId in pendingUser.TripInvites)
+            {
+                var trip = await _tripService.GetTripByIdAsync(tripId);
+                await _collaborationService.SendInviteNotificationAsync(trip.Title, user.Id, trip.Id);
+            }
+            await RemovePendingUserAsync(user.Email);
+        }
         await context.SaveChangesAsync();
     }
 
@@ -607,7 +622,7 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="email"></param>
     /// <returns>the pending user</returns>
-    public async Task<PendingUser?> GetPendingUser(string email)
+    public async Task<PendingUser?> GetPendingUserAsync(string email)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var user = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == email);
@@ -622,10 +637,10 @@ public class UserService : IUserService
     /// <param name="email"></param>
     /// <param name="tripId"></param>
     /// <returns></returns>
-    public async Task CreateUpdatePendingUser(string email, int tripId)
+    public async Task CreateUpdatePendingUserAsync(string email, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var user = await GetPendingUser(email);
+        var user = await GetPendingUserAsync(email);
         if (user == null)
         {
             var newPendingUser = new PendingUser()
@@ -648,10 +663,10 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="email"></param>
     /// <returns></returns>
-    public async Task RemovePendingUser(string email)
+    public async Task RemovePendingUserAsync(string email)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var user = await GetPendingUser(email);
+        var user = await GetPendingUserAsync(email);
         if (user != null)
         {
             context.PendingUsers.Remove(user);
