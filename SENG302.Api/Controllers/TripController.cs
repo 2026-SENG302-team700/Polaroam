@@ -133,8 +133,9 @@ public class TripController : ControllerBase
         try
         {
             // Check user is logged in
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString))
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier); ;
+
+            if (string.IsNullOrEmpty(userIdString) || await _userService.GetUserByIdAsync(int.Parse(userIdString)) == null)
                 return Unauthorized("Not logged in!");
 
             // Create trip belonging to the logged in user

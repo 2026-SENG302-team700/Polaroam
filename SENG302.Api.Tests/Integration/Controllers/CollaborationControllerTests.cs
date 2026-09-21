@@ -34,17 +34,18 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         _mockTripService = Substitute.For<ITripService>();
         _mockCollaborationService = Substitute.For<ICollaborationService>();
         _mockUserService = Substitute.For<IUserService>();
-    
+
         _controller = new CollaborationController(
             _mockTripService,
-            _mockCollaborationService
+            _mockCollaborationService,
+            _mockUserService
         );
-    
+
         AddTestPrincipalToController(_controller);
-    
+
         _output = output;
     }
-    
+
     /// <summary>
     /// Creates and adds to the database a test user for these tests
     /// </summary>
@@ -65,7 +66,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         _mockUserService.GetUserByIdAsync(testUser.Id).Returns(Task.FromResult((User?)testUser));
     }
-    
+
     [Fact]
     public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
@@ -85,7 +86,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         collaborators.ShouldNotBeNull();
         collaborators.ShouldBe(mockObject);
     }
-    
+
     [Fact]
     public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
     {
@@ -182,25 +183,25 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
     public async Task LeaveCollaboration_ValidRequest_ReturnsNoContent()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(true);
-        
+
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<NoContentResult>();
     }
-    
+
     [Fact]
     public async Task LeaveCollaboration_NotCollaborator_ReturnsUnauthorized()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(false);
-        
+
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<UnauthorizedObjectResult>();
     }
-    
+
     [Fact]
     public async Task LeaveCollaboration_ErrorOccurs_ReturnsBadRequest()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws(new Exception());
-        
+
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<BadRequestObjectResult>();
     }
@@ -208,21 +209,21 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task InviteCollaborator_UserNotLoggedIn_ReturnsUnauthorized()
     {
-        _controller.ControllerContext = new ControllerContext                                                                                                                      
-        {                                                                                                                                                                          
-            HttpContext = new DefaultHttpContext()                                                                                                                                 
-        };   
-        
-        var requestData = new InviteCollaboratorRequest { Email = "test@example.com"};
-       
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        var requestData = new InviteCollaboratorRequest { Email = "test@example.com" };
+
         var response = await _controller.InviteUser(1, requestData);
-        
+
         response.ShouldBeOfType<UnauthorizedObjectResult>();
 
         var responseObject = response as UnauthorizedObjectResult;
 
         var CollaborationResponse = responseObject?.Value as CollaborationInviteResponse;
-        
+
         CollaborationResponse?.Message.ShouldBe("Not logged in");
 
         // responseObject?.Value?.ToString().ShouldBe("Not logged in");
@@ -234,20 +235,20 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         await AddTestUser();
 
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         User user2 = new()
         {
-            
+
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-            
+
         };
-        
+
         context.Users.Add(user2);
-        
+
         var trip = new Trip
         {
             Title = "Trip!",
@@ -257,7 +258,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [3]
         };
-        
+
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
@@ -276,7 +277,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         await AddTestUser();
 
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         var trip = new Trip
         {
             Title = "Trip!",
@@ -286,22 +287,22 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [3]
         };
-        
+
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-        
-        var requestData = new InviteCollaboratorRequest { Email = "test@@example.com"};
+
+        var requestData = new InviteCollaboratorRequest { Email = "test@@example.com" };
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        
-        var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
+
+        var colabResponse = await response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
         colabResponse?.Message.ShouldBe("Email was invalid!");
     }
-    
+
     [Fact]
     public async Task InviteCollaborator_UserInTrip_ReturnsBadRequest()
     {
@@ -311,17 +312,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-            
+
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-            
+
         };
-        
+
         context.Users.Add(user2);
-        
+
         var trip = new Trip
         {
             Title = "Trip!",
@@ -331,20 +332,20 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [2]
         };
-        
+
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-        
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
+        var colabResponse = await response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
         colabResponse?.Message.ShouldBe("This user is already apart of this trip.");
-        
+
     }
 
     [Fact]
@@ -356,17 +357,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-            
+
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-            
+
         };
-        
+
         context.Users.Add(user2);
-        
+
         var trip = new Trip
         {
             Title = "Trip!",
@@ -376,12 +377,12 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = []
         };
-        
+
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-        
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
@@ -397,17 +398,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-            
+
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-            
+
         };
-        
+
         context.Users.Add(user2);
-        
+
         var trip = new Trip
         {
             Title = "Trip!",
@@ -418,12 +419,12 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             Collaborators = [],
             PendingInvites = ["test2@example.com"]
         };
-        
+
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-        
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
@@ -439,17 +440,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-            
+
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-            
+
         };
-        
+
         context.Users.Add(user2);
-        
+
         var trip = new Trip
         {
             Title = "Trip!",
@@ -459,17 +460,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = []
         };
-        
+
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-        
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
+
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
+
         var notification = await context.Notifications.Where(n => n.UserId == 2 && n.NotificationType == "TripInvitation").FirstOrDefaultAsync();
         notification.ShouldNotBeNull();
         notification.HeaderText.ShouldBe("New Invitation Request");

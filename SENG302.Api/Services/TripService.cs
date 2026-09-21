@@ -24,13 +24,11 @@ public interface ITripService
 public class TripService : ITripService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    private readonly IUserService _userService;
 
 
-    public TripService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IUserService userService)
+    public TripService(IDbContextFactory<DatabaseContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
-        _userService = userService;
 
     }
 
@@ -94,12 +92,6 @@ public class TripService : ITripService
         if (errors.Any(e => e.Value.Count > 0))
         {
             throw new MultipleValidationListException(errors);
-        }
-
-        var user = await _userService.GetUserByIdAsync(userId);
-        if (user == null)
-        {
-            throw new ArgumentException("User with the provided id does not exist.");
         }
 
         // Create the new trip
@@ -310,7 +302,7 @@ public class TripService : ITripService
     public async Task<List<Trip>> GetTripsFromQuery(int userId, string query)
     {
         query = query.Trim().ToLower();
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var trips = await context.Trips

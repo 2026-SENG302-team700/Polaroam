@@ -15,21 +15,19 @@ namespace SENG302.Api.Tests.Integration.Services;
 public class TripServiceTests : BaseIntegrationTestFixture
 {
     private ITripService ServiceUnderTest => ServiceProvider.GetRequiredService<ITripService>();
-    
+
     private readonly ITripService _tripService;
-    private readonly FakeTimeProvider _fakeTimeProvider;
     private readonly IUserService _mockUserService;
     public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
     {
-        _mockUserService = Substitute.For<IUserService>();
-        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
-        _tripService = new TripService(DbContextFactory, _fakeTimeProvider, _mockUserService);
+
+        _tripService = new TripService(DbContextFactory);
     }
-    
+
     private async Task<Trip> CreateTestTripWithUserId(int userId)
     {
         _mockUserService.GetUserByIdAsync(userId).Returns(Substitute.For<User>());
-        
+
         NewTripRequest testTripRequest = new NewTripRequest
         {
             Title = "test trip",
@@ -44,7 +42,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
 
         return creation;
     }
-    
+
     [Fact]
     public async Task CreateNewTrip_TripExists_Success()
     {
@@ -86,7 +84,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         };
 
         // Use the TripService function to create a new trip with the name and user email
-        
+
         var trip = await ServiceUnderTest.CreateNewTripAsync(tripRequest, userId);
 
         trip.ShouldNotBeNull();
@@ -444,7 +442,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
             () => ServiceUnderTest.UpdateTripAsync(request, 1)
         );
     }
-    
+
     [Fact]
     public async Task UserModifyAccessCheck_Valid_Success()
     {
@@ -589,7 +587,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         savedTrip.StartDate.ShouldBe(originalStartDate);
         savedTrip.EndDate.ShouldBe(DateToDateTimeOffset(2023, 10, 10));
     }
-    
+
     [Fact]
     public async Task UpdateTrip_EndDateBeforeStartDate_ThrowsValidationException()
     {
@@ -675,7 +673,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await Should.ThrowAsync<ArgumentException>(async () => await _tripService.GetTripByIdAsync(trip.Id));
     }
 
-        private readonly NewTripRequest testTripRequest = new NewTripRequest
+    private readonly NewTripRequest testTripRequest = new NewTripRequest
     {
         Title = "test trip",
         Description = "Description",
@@ -719,7 +717,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         numberOfTripsAfter.ShouldBe(numberOfTripsBefore);
     }
 
-    [Fact] 
+    [Fact]
     public async Task UpdateScrapboardReference_TripHasNoScrapboard_BooleanUpdated()
     {
         var trip = await CreateTestTripWithUserId(1);
@@ -729,7 +727,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
         newTrip.HasScrapboard.ShouldBeTrue();
     }
 
-    [Fact] 
+    [Fact]
     public async Task UpdateScrapboardReference_TripHasScrapboard_ThrowArgumentException()
     {
         var trip = await CreateTestTripWithUserId(1);
