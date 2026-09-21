@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 
 namespace SENG302.Api.Controllers;
@@ -52,8 +53,19 @@ public class ScrapboardController : ControllerBase
             
             var scrapboard = await _scrapboardService.GetScrapboardByTripAsync(tripId);
             if (scrapboard == null) return NotFound("Trip has no Scrapboard");
+
+            var files = new List<ScrapboardFileDto>();
+            foreach (var fileId in scrapboard.Files)
+            {
+                var customFile = await _fileService.GetFileByIdAsync(fileId);
+                var mimeType = await _fileService.GetMimeTypeAsync(fileId);
+                var content = await _fileService.GetFileContentAsync(customFile.FileKey);
+
+                var excalidrawId = Path.GetFileNameWithoutExtension(customFile.OriginalFileName);
+                files.Add(new ScrapboardFileDto(excalidrawId, mimeType, content));
+            }
             
-            return Ok(scrapboard);
+            return Ok(new ScrapboardDto(scrapboard.Elements, files));
         }
         catch (Exception e)
         {  

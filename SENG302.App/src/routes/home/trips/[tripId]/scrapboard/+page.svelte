@@ -78,6 +78,14 @@
             
             const scrapboard = await response.json();
             lastSaveState = scrapboard.elements;
+
+            const files: BinaryFileData[] = scrapboard.files.map((f: ScrapboardFileDto) => ({
+                id: f.id,
+                mimeType: f.mimeType,
+                dataURL: `data:${f.mimeType};base64,${f.blob}`,
+                created: Date.now(),
+            }));
+            excalidrawAPI!.addFiles(files);
             const elements = JSON.parse(scrapboard.elements);
             excalidrawAPI.updateScene({elements})
         } catch (error) {
