@@ -132,9 +132,13 @@ public class ScrapboardService : IScrapboardService
         {
             throw new KeyNotFoundException("Scrapboard not found.");
         }
+        if (scrapboard.Thumbnail == -1)
+        {
+            throw new FileNotFoundException("Scrapboard has no thumbnail");
+        }
 
         var thumbnailFile = await _fileService.GetFileByIdAsync(scrapboard.Thumbnail);
-
+        
         return thumbnailFile;
     }
 }

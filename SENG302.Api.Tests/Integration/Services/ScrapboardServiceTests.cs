@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,6 +53,15 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType
+        };
+    }
 
     [Fact]
     public async Task CreateScrapboard_TripHasNoScrapboard_Success()
@@ -106,4 +116,122 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
         scrapboard.ShouldBeNull();
     }
 
+    [Fact]
+    public async Task GetScrapboardThumbnail_HasThumbnail_ReturnsFile()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        var mockFile = GetMockFile("thumb.webp", mockFileContent, "image/webp");
+        var savedFile = await fileService.SaveFileAsync(mockFile, 1);
+
+        context.Scrapboards.Add(new Scrapboard
+        {
+            TripId = 1,
+            Thumbnail = savedFile.Id
+        });
+        await context.SaveChangesAsync();
+
+        var thumbnail = await ServiceUnderTest.GetScrapboardThumbnailAsync(1);
+
+        thumbnail.Id.ShouldBe(savedFile.Id); 
+    }
+
+    [Fact]
+    public async Task GetScrapboardThumbnail_NoScrapboard_KeyNotFoundException()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        await Should.ThrowAsync<KeyNotFoundException>(() =>
+        {
+            return ServiceUnderTest.GetScrapboardThumbnailAsync(1);
+        });
+    }
+
+    [Fact]
+    public async Task GetScrapboardThumbnail_NoThumbnail_FileNotFoundException()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Scrapboards.Add(new Scrapboard
+        {
+            TripId = 1
+        });
+        await context.SaveChangesAsync();
+
+        await Should.ThrowAsync<FileNotFoundException>(() =>
+        {
+            return ServiceUnderTest.GetScrapboardThumbnailAsync(1);
+        });
+    }
+
+    [Fact]
+    public async Task SaveScrapboard_Valid_UpdatesScrapboard()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Scrapboards.Add(new Scrapboard { TripId = 1 });
+        await context.SaveChangesAsync();
+
+        var fileContent = File.ReadAllBytes("resources/panda.webp");
+        var files = new List<IFormFile> { GetMockFile("element1.webp", fileContent, "image/webp") };
+        var thumbnail = GetMockFile("thumb.webp", fileContent, "image/webp");
+
+        await ServiceUnderTest.SaveScrapboardAsync(1, "[]", files, thumbnail);
+
+        var updatedScrapboard = await context.Scrapboards.FirstOrDefaultAsync(s => s.TripId == 1);
+        updatedScrapboard.Elements.ShouldBe("[]");
+        updatedScrapboard.Files.ShouldHaveSingleItem();
+        updatedScrapboard.Thumbnail.ShouldNotBe(-1);
+    }
+
+    [Fact]
+    public async Task SaveScrapboard_NoScrapboard_KeyNotFoundException()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        var fileContent = File.ReadAllBytes("resources/panda.webp");
+        var thumbnail = GetMockFile("thumb.webp", fileContent, "image/webp");
+
+        await Should.ThrowAsync<KeyNotFoundException>(() =>
+        {
+            return ServiceUnderTest.SaveScrapboardAsync(1, "[]", new List<IFormFile>(), thumbnail);
+        });
+    }
+
+    [Fact]
+    public async Task SaveScrapboard_ThumbnailTooLarge_FileSizeExceededException()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Scrapboards.Add(new Scrapboard { TripId = 1 });
+        await context.SaveChangesAsync();
+
+        var thumbnail = GetMockFile("thumb.webp", new byte[10_000_001], "image/webp");
+
+        await Should.ThrowAsync<FileSizeExceededException>(
+            () =>
+            {
+                return ServiceUnderTest.SaveScrapboardAsync(1, "[]", new List<IFormFile>(), thumbnail);
+            });
+    }
+
+    [Fact]
+    public async Task SaveScrapboard_ThumbnailInvalidMimeType_FileMimeTypeInvalidException()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Scrapboards.Add(new Scrapboard { TripId = 1 });
+        await context.SaveChangesAsync();
+
+        var thumbnail = GetMockFile("thumb.txt", [0, 0, 0, 1], "image/webp");
+
+        await Should.ThrowAsync<FileMimeTypeInvalidException>(
+            () =>
+            {
+                return ServiceUnderTest.SaveScrapboardAsync(1, "[]", new List<IFormFile>(), thumbnail);
+            });
+    }
 }

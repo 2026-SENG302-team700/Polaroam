@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
     import CreationButton from "../buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
@@ -9,7 +10,7 @@
     let {tripId = -1} = $props();
 
     let scrapboardCreated: Boolean = $state(false);
-    let scrapboard = $state([]); //not used yet
+    let scrapboard = $state([]);
     let loading = $state(true);
     let showExpanded = $state(false);
     let scrapboardImage = $state('');
@@ -32,14 +33,18 @@
             );
 
             if (response.status == 404) {
-                scrapboardCreated = false;
+                scrapboardCreated = true;
+                scrapboardImage = ScrapboardPlaceholder;
                 loading = false;
             } else if (response.ok) {
                 scrapboardCreated = true;
                 loading = false;
                 const scrapboardBlob = await response.blob();
                 scrapboardImage = URL.createObjectURL(scrapboardBlob);
-                console.log(scrapboardImage);
+            } else {
+                // e.g. 400 - trip has no scrapboard at all
+                scrapboardCreated = false;
+                loading = false;
             }
         } finally {
             loading = false;
@@ -63,7 +68,9 @@
                 }),
                 credentials: "include",
             });
-            readScrapboard(response);
+            if (response.ok) {
+                await goto(resolve(`/home/trips/${tripId}/scrapboard` as any));
+            }
         } finally {
             loading = false;
         }

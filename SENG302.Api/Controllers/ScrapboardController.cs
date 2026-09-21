@@ -91,12 +91,16 @@ public class ScrapboardController : ControllerBase
             var thumbnail = await _scrapboardService.GetScrapboardThumbnailAsync(tripId);
             var thumbnailContent = await _fileService.GetFileContentAsync(thumbnail.FileKey);
             var thumbnailMime = await _fileService.GetMimeTypeAsync(thumbnail.Id);
-            
+
             return File(thumbnailContent, thumbnailMime);
         }
         catch (KeyNotFoundException e)
         {
             return BadRequest(e.Message);
+        }
+        catch (FileNotFoundException e)
+        {
+            return NotFound(e.Message);
         }
     }
     
