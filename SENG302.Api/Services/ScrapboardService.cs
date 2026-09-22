@@ -11,6 +11,7 @@ public interface IScrapboardService
     public Task<Scrapboard> CreateScrapboardAsync(int tripId);
     public Task SaveScrapboardAsync(int id, string elements, List<IFormFile> files, IFormFile thumbnail);
     public Task<CustomFile> GetScrapboardThumbnailAsync(int tripId);
+    public Task DeleteScrapboardAsync(int tripId);
 }
 
 public class ScrapboardService : IScrapboardService
@@ -71,7 +72,8 @@ public class ScrapboardService : IScrapboardService
     }
 
     /// <summary>
-    /// Saves the scrapboard elements to the scrapboard entity
+    /// Saves the scrapboard elements to the scrapboard entity, and creates files for image uploads and scrapboard
+    /// thumbnail. Also deletes old files and thumbnail if available
     /// </summary>
     /// <param name="id">The scrapboard id</param>
     /// <param name="elements">string representation of elements json array from excalidraw</param>
@@ -109,9 +111,23 @@ public class ScrapboardService : IScrapboardService
             throw new KeyNotFoundException("Scrapboard not found.");
         }
         
+        // collects old scrapboard files and thumbnail id's to be deleted
+        List<int> oldScrapboardFiles = scrapboard.Files;
+        if (scrapboard.Thumbnail != -1)
+        {
+            oldScrapboardFiles.Add(scrapboard.Thumbnail);
+        }
+        
         scrapboard.Elements = elements;
         scrapboard.Files = fileIdList;
         scrapboard.Thumbnail = thumbnailFile.Id;
+
+        // deletes old images related to scrapboard.
+        foreach (var fileId in oldScrapboardFiles)
+        {
+            CustomFile file = await _fileService.GetFileByIdAsync(fileId);
+            await _fileService.DeleteFileAsync(file.FileKey);
+        }
         
         context.Scrapboards.Update(scrapboard);
         await context.SaveChangesAsync();
@@ -138,7 +154,42 @@ public class ScrapboardService : IScrapboardService
         }
 
         var thumbnailFile = await _fileService.GetFileByIdAsync(scrapboard.Thumbnail);
-        
         return thumbnailFile;
+    }
+    
+    /// <summary>
+    /// Deletes a scrapboard and its files
+    /// </summary>
+    /// <param name="tripId">The trip id of the scrapboard to be deleted.</param>
+    /// <exception cref="KeyNotFoundException">Scrapboard not found.</exception>
+    public async Task DeleteScrapboardAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        Scrapboard? scrapboard = await context.Scrapboards.FirstOrDefaultAsync(t => t.TripId == tripId);
+        if (scrapboard == null)
+        {
+            throw new KeyNotFoundException("Scrapboard not found.");
+        }
+        
+        List<int> oldScrapboardFiles = scrapboard.Files;
+        if (scrapboard.Thumbnail != -1)
+        {
+            oldScrapboardFiles.Add(scrapboard.Thumbnail);
+        }
+        
+        foreach (var fileId in oldScrapboardFiles)
+        {
+            CustomFile file = await _fileService.GetFileByIdAsync(fileId);
+            await _fileService.DeleteFileAsync(file.FileKey);
+        }
+
+        Trip? trip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+        if (trip != null)
+        {
+            trip.HasScrapboard = false;
+            await context.SaveChangesAsync();
+        }
+        
+        await context.Scrapboards.Where(s => s.TripId == tripId).ExecuteDeleteAsync();
     }
 }

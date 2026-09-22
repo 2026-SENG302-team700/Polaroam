@@ -448,4 +448,63 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         var message = await HttpClient.PutAsync("/api/scrapboard/save", form);
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task DeleteScrapboard_ValidData_NoContent()
+    {
+        await SetupUserAndTrip(1,1);
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Scrapboards.Add(new Scrapboard
+        {
+            TripId = 1,
+            Elements = "fake elements",
+            Files = [],
+            Thumbnail = -1 
+        });
+
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.DeleteAsync("api/scrapboard/1");
+        message.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task DeleteScrapboard_NoScrapboard_BadRequest()
+    {
+        await SetupUserAndTrip(1, 1);
+        
+        var message = await HttpClient.DeleteAsync("/api/scrapboard/1");
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task DeleteScrapboard_WrongUserTrip_Unauthorized()
+    {
+        await SetupUserAndTrip(1, 1);
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Trips.Add(new Trip
+        {
+            Id = 2,
+            Title = "new trip",
+            HasScrapboard = true,
+            UserId = 2,
+            Description = "",
+            StartDate = DateToDateTimeOffset(2017, 10, 08),
+            EndDate = DateToDateTimeOffset(2017, 10, 21)
+        });
+        context.Scrapboards.Add(new Scrapboard
+        {
+            TripId = 2,
+            Elements = "fake elements",
+            Files = [],
+            Thumbnail = -1,
+        });
+
+        await context.SaveChangesAsync();
+        
+        var message = await HttpClient.DeleteAsync("/api/scrapboard/2");
+        message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
 }
