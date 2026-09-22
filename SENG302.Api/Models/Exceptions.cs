@@ -98,3 +98,27 @@ public class FileMimeTypeInvalidException : Exception
 {
     public FileMimeTypeInvalidException(string? error) : base(error ?? "File size exceeded") {}
 }
+
+/// <summary>
+/// Exception to throw e-mail validation fails
+/// </summary>
+public class EmailInvalidationException : Exception
+{
+    public EmailInvalidationException(string? error):  base(error ?? "Email is invalid found") {}
+}
+
+/// <summary>
+/// Exception to throw when a user is already part of a trip.
+/// </summary>
+public class UserInTripException : Exception
+{
+    public UserInTripException(string? error) : base(error ?? "User already exists in trip") {}
+}
+
+/// <summary>
+/// Exception to throw when the user already has a pending invite
+/// </summary>
+public class PendingInviteException : Exception
+{
+    public PendingInviteException(string? error) : base(error ?? "This user already has a pending invite") {}
+}
