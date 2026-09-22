@@ -11,12 +11,14 @@
     import { goto } from "$app/navigation";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { addToast } from "$lib/toast/toast";
+    import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let loadError = $state("");
-    let showModal = $state(false);
+    let showBackModal = $state(false);
     let lastSaveState = $state("");
+    let showDeleteModal = $state(false);
 
     /**
      * Helper function to convert the Excalidraw files into a
@@ -119,7 +121,7 @@
     function handleBackButton() {
         const currentState = JSON.stringify(excalidrawAPI!.getSceneElements());
         if (currentState !== lastSaveState) {
-            showModal = true;
+            showBackModal = true;
         } else {
             goto(resolve(`/home/trips/${page.params.tripId}`))
         }
@@ -149,23 +151,47 @@
             buildMainMenu(mod),
         ]);
     }
-    
+
+    /**
+     * Calls the backend and deletes the scrapboard.
+     * If deletion successful, the user gets redirected back to the homepage.
+     */
+    async function deleteScrapboard() {
+        console.log("deleteScrapboard");
+
+        const response = await fetchWithCsrf(resolve(`/api/scrapboard/${page.params.tripId}` as any), {
+            method: "DELETE",
+            credentials: "include",
+        });
+        
+        if (response.ok) {
+            addToast("Scrapboard deleted successfully", "success");
+            goto(resolve(`/home/trips/${page.params.tripId}`));
+        } else {
+            addToast("Failed to delete scrapboard.", "error");
+        }
+    }
     
 </script>
 <div class="page-wrapper">
     <div class="scrapboard-buttons">
         <button
-            class="btn btn-primary"
+            class="btn btn-primary back-button"
             onclick={handleBackButton}
         >
             Back to Trips
         </button>
         
-        <CreationButton
-                text="Update Scrapboard"
-                onClick={saveScrapboard}
-                loading={saving}
-        />
+        <div class="scrapboard-buttons-right">
+            <DeleteButton
+                    deleteAction={() => showDeleteModal = true}
+            />
+            <CreationButton
+                    text="Update Scrapboard"
+                    onClick={saveScrapboard}
+                    loading={saving}
+            />  
+        </div>
     </div>
     <div class="scrapboard-wrapper">
         <Excalidraw
@@ -180,6 +206,8 @@
         />
     </div>
 </div>
+
+<!-- Back Modal -->
 <ConfirmationModal
     message="You have unsaved changes."
     option1Text="Cancel"
@@ -193,8 +221,22 @@
         await saveScrapboard();
         goto(resolve(`/home/trips/${page.params.tripId}`));
     }}
-    bind:show={showModal}
+    bind:show={showBackModal}
 />
+
+<!-- Delete Modal -->
+<ConfirmationModal 
+    message="Are you sure you want to delete this scrapboard?"
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={() => {}}
+    onOption2={async () => {
+        await deleteScrapboard();
+    }}
+    bind:show={showDeleteModal}
+/>
+    
     
 <style>
     .scrapboard-wrapper {
@@ -208,5 +250,14 @@
         display: flex;
         justify-content: space-between;
         margin-bottom: 5px;
+    }
+    
+    .scrapboard-buttons-right {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .back-button {
+        margin-right: 5px;
     }
 </style>

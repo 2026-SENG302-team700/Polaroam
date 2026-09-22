@@ -48,14 +48,14 @@
                 <div class="modal-footer d-flex gap-2">
                     <button
                             type="button"
-                            class="btn btn-{option1Style} flex-fill"
+                            class="btn btn-{option1Style} action-button"
                             onclick={() => handleOption(onOption1)}
                     >
                         {option1Text}
                     </button>
                     <button
                             type="button"
-                            class="btn btn-{option2Style} flex-fill"
+                            class="btn btn-{option2Style} action-button"
                             onclick={() => handleOption(onOption2)}
                     >
                         {option2Text}
@@ -63,7 +63,7 @@
                     {#if option3Text && onOption3}
                         <button
                                 type="button"
-                                class="btn btn-{option3Style} flex-fill"
+                                class="btn btn-{option3Style} action-button"
                                 onclick={() => handleOption(onOption3)}
                         >
                             {option3Text}
@@ -74,3 +74,9 @@
         </div>
     </div>
 {/if}
+
+<style>
+    .action-button {
+        flex: 1 1 0;
+    }
+</style>
