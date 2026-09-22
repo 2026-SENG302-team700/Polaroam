@@ -28,6 +28,10 @@
     let emailMessage = $state("")
     let emailMessageStyle = $state("")
     
+    let kickUserConfirmationModalShown = $state(false)
+    let kickUserMessage = $state("")
+    let UserIdOfKicked = $state<number | null>(null)
+    
 
     /**
      * Clear fields of input
@@ -112,6 +116,31 @@
     }
 
     /**
+     * Closes the Kick user confirmation modal
+     * @param collaboratorName
+     * @param collaboratorId
+     */
+    function showKickUserConfirmationModal(collaboratorName: string, collaboratorId: number) {
+        kickUserConfirmationModalShown = true
+        kickUserMessage =  `Are you sure you want to kick ${collaboratorName}?`
+        UserIdOfKicked = collaboratorId
+    }
+
+    /**
+     * Hide the kick user confirmation modal
+     */
+    function hideKickUserConfirmationModal() {
+        kickUserConfirmationModalShown = false
+    }
+
+    /**
+     * Kick the user
+     */
+    async function kickUser() {
+        
+    }
+
+    /**
      * Calls backend to remove the user as a collaborator on the trip.
      * If successful the user will no longer have access to the trip so 
      * hides the modal and navigates them to the MyTrips page
@@ -145,10 +174,12 @@
                     {#if error !== ""}
                         Error: {error}
                     {/if}
-                    <h1 class="card-subtitle mb-2 h5 user-name">Owner: {tripOwner}</h1>
+                    <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner}</h1>
                     {#each tripCollaborators as collaborator}
-                        <div>
-                            <p>Collaborator: {collaborator.displayName} ({collaborator.userId})</p>
+                        <div class="collaborators-list">
+                            <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
+                            <button class="btn btn-secondary" 
+                                    onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>Kick</button>
                         </div>
                     {/each}
                     {#if inviteShown}
@@ -196,6 +227,18 @@
         option2Text="Cancel"
         onOption1={leaveCollaboration}
         onOption2={hideLeaveConfirmationModal}
+/>
+
+<ConfirmationModal
+        message={kickUserMessage}
+        option1Text="Cancel"
+        option2Text="Confirm to kick user"
+        option2Style="danger"
+        onOption1={hideKickUserConfirmationModal}
+        onOption2={async () => {
+        await kickUser();
+    }}
+        bind:show={kickUserConfirmationModalShown}
 />
 
 
@@ -253,5 +296,19 @@
     
     .invite-message-info {
         color: #0c7d9d;
+    }
+    
+    .collaborator-info {
+        font-size: 18px;
+        font-weight: 500;
+    }
+    
+    .collaborators-list {
+        display: flex;
+        gap: 5px;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        margin-top: 4px;
+        flex-wrap: wrap;
     }
 </style>
