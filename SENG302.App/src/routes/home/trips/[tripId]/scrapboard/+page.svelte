@@ -141,15 +141,17 @@
             );
 
             excalidrawAPI!.addFiles(files);
-            const elements = JSON.parse(scrapboard.elements);
-            excalidrawAPI!.updateScene({ elements });
-            excalidrawAPI!.scrollToContent(elements, {
-                fitToContent: true,
-                animate: true,
-                duration: 300,
-            });
+            if (scrapboard.elements != "") {
+                const elements = JSON.parse(scrapboard.elements);
+                excalidrawAPI!.updateScene({ elements });
+                excalidrawAPI!.scrollToContent(elements, {
+                    fitToContent: true,
+                    animate: true,
+                    duration: 300,
+                });
+            }
         } catch (error) {
-            loadError = "Failed to load scrapboard";
+            loadError = `Failed to load scrapboarddddddddddd ${error}`;
         }
     }
 
