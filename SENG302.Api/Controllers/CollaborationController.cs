@@ -170,26 +170,34 @@ public class CollaborationController : ControllerBase
     {
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            User? user = await _userService.GetUserByIdAsync(userId);
-            if (user == null ||
-                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId)) //does not work properly yet
-                return Unauthorized();
-            if (collaborationRequest.Action == 0) // reject
+            // Check logged in
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Not logged in");
+            
+            // Get user and trip
+            var user = await _userService.GetUserByIdAsync(int.Parse(userIdString));
+            if (user == null) return Unauthorized("User not found");
+            var trip = await _tripService.GetTripByIdAsync(tripId);
+            
+            // Check for pending invite
+            if (!trip.PendingInvites.Contains(user.Email)) return BadRequest("No pending invites");
+            
+            // Reject
+            if (collaborationRequest.Action == 0)
             {
                 await _collaborationService.ActionRejectAsync(tripId, user);
                 return Ok("successfully rejected");
-            }
-            else if (collaborationRequest.Action == 1) //accept
+            } 
+            
+            // Accept
+            if (collaborationRequest.Action == 1)
             {
                 await _collaborationService.ActionAcceptAsync(tripId, user);
                 return Ok("successfully accepted");
             }
-            else //invalid action
-            {
-                return BadRequest("Not a valid collaboration action!");
-            }
-
+            
+            // Invalid action (not 0 or 1)
+            return BadRequest("Not a valid collaboration action!");
         }
         catch (Exception e)
         {
