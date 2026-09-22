@@ -231,7 +231,7 @@ public class ScrapboardController : ControllerBase
 
             await _scrapboardService.DeleteScrapboardAsync(tripId);
 
-            return Ok();
+            return NoContent();
         }
         catch (KeyNotFoundException e)
         {
