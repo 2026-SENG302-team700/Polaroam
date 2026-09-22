@@ -15,47 +15,6 @@
     let showPickerModal = $state(false);
     let tripId = Number(page.params.tripId);
 
-    // to be removed once proper implementation with backend is created
-    const initialData = {
-        elements: [
-            {
-                type: "rectangle",
-                version: 141,
-                versionNonce: 361174001,
-                isDeleted: false,
-                id: "rect-1",
-                fillStyle: "hachure",
-                strokeWidth: 1,
-                strokeStyle: "solid",
-                roughness: 1,
-                opacity: 100,
-                angle: 0,
-                x: 100,
-                y: 100,
-                strokeColor: "#000000",
-                backgroundColor: "#868dfb",
-                width: 300,
-                height: 200,
-                seed: 196841035,
-                groupIds: [],
-                roundness: null,
-                boundElements: null,
-                updated: 1,
-            },
-        ],
-        appState: {
-            viewBackgroundColor: "#ffffff",
-            gridSize: null,
-        },
-        scrollToContent: true,
-    };
-    // end of init data block
-
-    async function onClick() {
-        console.log("scene elements:");
-        console.log(excalidrawAPI!.getSceneElements());
-    }
-
     async function showImagePickerModal() {
         showPickerModal = true;
     }
@@ -64,7 +23,7 @@
 <div>
     <div class="scrapboard-toolbar">
         <NavigationButton path="/home/trips/{tripId}" text="Back" />
-        <CreationButton text="scrapboard elements" {onClick} loading={saving} />
+        <CreationButton text="scrapboard elements" loading={saving} />
         <button
             class="btn btn-secondary bi-images image-picker-button"
             onclick={showImagePickerModal}
@@ -74,7 +33,6 @@
     <div class="scrapboard-wrapper">
         <Excalidraw
             bind:excalidrawAPI
-            {initialData}
             theme="light"
             name="Basic Test"
             viewModeEnabled={false}

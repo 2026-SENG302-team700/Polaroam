@@ -53,17 +53,26 @@
         }
     }
 
+    /**
+     * Open the file picker modal
+     */
     function openModal() {
         if (!dialog.open) {
             dialog.showModal();
         }
     }
 
+    /**
+     * Close the file picker modal
+     */
     function closeModal() {
         dialog.close();
         show = false;
     }
 
+    /**
+     * Effect to open the modal when the show prop is set to true, and close it when it is set to false
+     */
     $effect(() => {
         if (show) {
             openModal();
@@ -72,6 +81,9 @@
         }
     });
 
+    /**
+     * On mount that gets all required image metdata for the image picker modal
+     */
     onMount(async () => {
         getImageMetadata();
     });
@@ -81,6 +93,11 @@
         height: number;
     }
 
+    /**
+     * Gets the dimensions of an image file
+     * @param file - the image file
+     * @returns the dimensions of the image file
+     */
     async function getImageDimensions(file: File): Promise<ImageDimensions> {
         const bitmap = await createImageBitmap(file);
         const { width, height } = bitmap;
@@ -89,6 +106,11 @@
         return { width, height };
     }
 
+    /**
+     * Reads a file as a data URL
+     * @param file the file to read
+     * @returns a promise resolving to the data URL
+     */
     function readFileAsDataUrl(file: File): Promise<string> {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -107,6 +129,9 @@
         });
     }
 
+    /**
+     * Appends the selected image to the excalidraw canvas
+     */
     async function appendImage() {
         if (!image) return;
 
