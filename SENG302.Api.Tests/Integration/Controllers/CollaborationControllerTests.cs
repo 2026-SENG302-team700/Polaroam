@@ -476,4 +476,192 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         notification.HeaderText.ShouldBe("New Invitation Request");
         notification.BodyText.ShouldBe("You have been invited to collaborate on the Trip! trip!");
     }
+    
+    [Fact] 
+    public async Task ActionCollaborator_AcceptInvite_ReturnsOK()
+    {
+        // Setup
+        await AddTestUser(); // Id 1, Email: test@example.com
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new User
+        {
+
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = ["test@example.com"]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+    
+        // Accept Invite
+        CollaborationRequest request = new CollaborationRequest
+        {
+            Action = 1
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration/action", request);
+        
+        // Validate response
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("successfully accepted");
+    }
+    
+    [Fact] 
+    public async Task ActionCollaborator_RejectInvite_ReturnsOK()
+    {
+        // Setup
+        await AddTestUser(); // Id 1, Email: test@example.com
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new User
+        {
+
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = ["test@example.com"]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+    
+        // Reject Invite
+        CollaborationRequest request = new CollaborationRequest
+        {
+            Action = 0
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration/action", request);
+        
+        // Validate response
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("successfully rejected");
+    }
+    
+    [Fact] 
+    public async Task ActionCollaborator_UserNotFound_ReturnsUnauthorized()
+    {
+        // Accept Invite
+        CollaborationRequest request = new CollaborationRequest
+        {
+            Action = 0
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration/action", request);
+        
+        // Validate response
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User not found");
+    }
+    
+    [Fact] 
+    public async Task ActionCollaborator_NoInvite_ReturnsBadRequest()
+    {
+        // Setup
+        await AddTestUser(); // Id 1, Email: test@example.com
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new User
+        {
+
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = []
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+    
+        // Accept Invite
+        CollaborationRequest request = new CollaborationRequest
+        {
+            Action = 1
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration/action", request);
+        
+        // Validate response
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("No pending invites");
+    }
+    
+    [Fact] 
+    public async Task ActionCollaborator_InvalidAction_ReturnsBadRequest()
+    {
+        // Setup
+        await AddTestUser(); // Id 1, Email: test@example.com
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new User
+        {
+
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [],
+            PendingInvites = ["test@example.com"]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+    
+        // Invalid Action
+        CollaborationRequest request = new CollaborationRequest
+        {
+            Action = 2
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration/action", request);
+        
+        // Validate response
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("Not a valid collaboration action!");
+    }
 }
