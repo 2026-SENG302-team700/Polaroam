@@ -400,15 +400,13 @@ public class PostService : IPostService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         int? tripOwnerId = (await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && (t.UserId == userId || t.Collaborators.Contains(userId))))?.UserId;
-        var isOwnerOfTrip = tripOwnerId == userId;
         var isPartOfTrip = tripOwnerId != null;
 
         var ownsPost = await context.Posts
             .Where(
                 p => p.PostId == postId &&
                 p.TripId == tripId &&
-                ((isOwnerOfTrip && p.CreatorId == tripOwnerId) ||
-                (isPartOfTrip && p.CreatorId == userId)))
+                isPartOfTrip && p.CreatorId == userId)
             .AnyAsync();
 
         return ownsPost;
