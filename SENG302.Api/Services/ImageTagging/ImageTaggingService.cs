@@ -64,7 +64,6 @@ public class ImageTaggingService : IImageTaggingService
             return;
         }
 
-
         var request = await GenerateRequest(image, cancellationToken);
 
         try
@@ -175,7 +174,7 @@ public class ImageTaggingService : IImageTaggingService
             request,
             cancellationToken
         );
-
+        
         if (!response.IsSuccessStatusCode)
         {
 

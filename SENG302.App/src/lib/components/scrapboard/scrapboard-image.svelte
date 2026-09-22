@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
     import CreationButton from "../buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
@@ -9,31 +10,12 @@
     let {tripId = -1} = $props();
 
     let scrapboardCreated: Boolean = $state(false);
-    let scrapboard = $state([]); //not used yet
     let loading = $state(true);
     let showExpanded = $state(false);
-    let scrapboardImage = $state(ScrapboardPlaceholder);
+    let scrapboardImage = $state('');
 
     onMount(()=> {fetchScrapboard()});
-
-    /**
-     * reads the response of the scrapboard, and populates all of 
-     * the required files with the scrapboard and booleans where
-     * appropriate
-     * @async
-     * @param response
-     */
-    async function readScrapboard(response:Response) {
-        if (response.status == 404) {
-            scrapboardCreated = false;
-            loading = false;
-        } else if (response.ok) {
-            scrapboardCreated = true;
-            loading = false;
-            scrapboard = await response.json();
-        }
-    }
-
+    
     /**
      * uses the tripId to fetch the scrapboard for the trip.
      * @async
@@ -42,13 +24,27 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/scrapboard/${tripId}` as any),
+                resolve(`/api/scrapboard/${tripId}/thumbnail` as any),
                 {
                     method: "Get",
                     credentials: "include",
                 },
             );
-            readScrapboard(response);
+
+            if (response.status == 404) {
+                scrapboardCreated = true;
+                scrapboardImage = ScrapboardPlaceholder;
+                loading = false;
+            } else if (response.ok) {
+                scrapboardCreated = true;
+                loading = false;
+                const scrapboardBlob = await response.blob();
+                scrapboardImage = URL.createObjectURL(scrapboardBlob);
+            } else {
+                // e.g. 400 - trip has no scrapboard at all
+                scrapboardCreated = false;
+                loading = false;
+            }
         } finally {
             loading = false;
         }
@@ -71,10 +67,18 @@
                 }),
                 credentials: "include",
             });
-            readScrapboard(response);
+            if (response.ok) {
+                await goto(resolve(`/home/trips/${tripId}/scrapboard` as any));
+            }
         } finally {
             loading = false;
         }
+    }
+    
+    function onDeleteScrapboard() {
+        scrapboardCreated = false;
+        loading = false;
+        scrapboardImage = '';
     }
 </script>
 
@@ -109,6 +113,7 @@
         bind:shown={showExpanded}
         scrapboardImage={scrapboardImage}
         {tripId}
+        onDelete={onDeleteScrapboard}
 />
 
 <style>
