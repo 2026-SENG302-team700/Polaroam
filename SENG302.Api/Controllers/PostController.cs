@@ -67,11 +67,11 @@ public class PostController : ControllerBase
     /// </summary>
     /// <param name="postRequest"></param>
     /// <param name="files"></param>
-    /// <returns></returns>
+    /// <returns>Returns the id of the new post</returns>
     [Authorize]
     [HttpPost]
     [RequestSizeLimit(200000000)]
-    public async Task<ActionResult> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
+    public async Task<ActionResult<int>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
     {
 
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -83,7 +83,7 @@ public class PostController : ControllerBase
             if (!await _tripService.UserHasCollaborationAccessToTrip(userId, postRequest.TripId)) return NotFound();
 
             var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload);
-            return Ok();
+            return Ok(response.PostId);
         }
         catch (MultipleValidationListException e)
         {
@@ -132,13 +132,13 @@ public class PostController : ControllerBase
     /// </summary>
     /// <param name="postUpdates">updated values for a post</param>
     /// <returns>
-    /// The updated post if ok
+    /// The id of the updated post if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
     [RequestSizeLimit(200_000_000)]
-    public async Task<ActionResult> UpdatePost(
+    public async Task<ActionResult<int>> UpdatePost(
         [FromForm] UpdatePostRequest postUpdates,
         [FromForm] List<IFormFile>? files,
         [FromForm] bool aiTaggingForUpload = true)
@@ -154,7 +154,7 @@ public class PostController : ControllerBase
         try
         {
             post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
-            return Ok();
+            return Ok(post?.PostId);
         }
         catch (MultipleValidationListException e)
         {

@@ -299,8 +299,8 @@
                 return;
             }
 
-            const data = await response.json();
-            goto(resolve(`/home/trips/${data.tripId}`));
+            const postId = await response.text();
+            goto(resolve(`/home/trips/${tripId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";

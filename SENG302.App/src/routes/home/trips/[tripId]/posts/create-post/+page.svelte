@@ -178,8 +178,8 @@
                 return;
             }
 
-            const data = await response.json();
-            goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
+            const postId = await response.text();
+            goto(resolve(`/home/trips/${tripId}/posts/${postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;
