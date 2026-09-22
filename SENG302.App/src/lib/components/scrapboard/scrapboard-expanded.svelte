@@ -35,6 +35,17 @@
 
     let containerEl: HTMLDivElement;
     let imgEl: HTMLImageElement;
+    let aspectRatio = $state(1);
+
+    /**
+     * Get's image aspect ratio and clamps pan to new frame dimensions
+     */
+    function handleImageLoad() {
+        if (imgEl?.naturalWidth && imgEl?.naturalHeight) {
+            aspectRatio = imgEl.naturalWidth / imgEl.naturalHeight;
+        }
+        clampPan();
+    }
 
     // Track active pointers for touch (supports multi-touch pinch)
     let activePointers = new Map<number, { x: number; y: number }>();
@@ -239,16 +250,19 @@
                         onpointerup={handlePointerUp}
                         onpointercancel={handlePointerUp}
                 >
-                    <img
-                            bind:this={imgEl}
-                            src={scrapboardImage}
-                            alt="Zoomable and pannable"
-                            style="transform: translate({panX}px, {panY}px) scale({scale}); cursor: {isDragging ? 'grabbing' : 'grab'};"
-                            draggable="false"
-                    />
-                    <div class="close-control">
-                        <EditButton path={`/home/trips/${tripId}/scrapboard`} class="btn-sm" />
-                        <CloseButton bind:close={shown} class="btn-sm" />
+                    <div class="image-wrapper" style:--aspectRatio={aspectRatio}>
+                        <img
+                                bind:this={imgEl}
+                                src={scrapboardImage}
+                                alt="Zoomable and pannable"
+                                style="transform: translate({panX}px, {panY}px) scale({scale}); cursor: {isDragging ? 'grabbing' : 'grab'};"
+                                draggable="false"
+                                onload={handleImageLoad}
+                        />
+                        <div class="close-control">
+                            <EditButton path={`/home/trips/${tripId}/scrapboard`} class="btn-sm" />
+                            <CloseButton bind:close={shown} class="btn-sm" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -268,13 +282,20 @@
         justify-content: center;
         user-select: none;
         touch-action: none;
+        container-type: size;
+    }
+
+    .image-wrapper {
+        position: relative;
+        overflow: hidden;
+        width: min(100cqw, 100cqh * var(--aspectRatio, 1));
+        height: min(100cqh, 100cqw / var(--aspectRatio, 1));
     }
 
     img {
-        min-width: 100%;
-        min-height: 100%;
-        width: auto;
-        height: auto;
+        display: block;
+        width: 100%;
+        height: 100%;
         transition: transform 0.05s ease-out;
         transform-origin: center center;
         -webkit-user-drag: none;

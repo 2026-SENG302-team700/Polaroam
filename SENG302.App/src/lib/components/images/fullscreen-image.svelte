@@ -44,6 +44,17 @@
     let tagColour = $state("secondary");
     let imageContext = $state<ImageContext | null>(null);
     let objectUrl = $state<string | null>(null);
+    let aspectRatio = $state(1);
+
+    /**
+     * Get's image aspect ratio
+     */
+    function handleImageLoad(e: Event) {
+        const img = e.currentTarget as HTMLImageElement;
+        if (img.naturalWidth && img.naturalHeight) {
+            aspectRatio = img.naturalWidth / img.naturalHeight;
+        }
+    }
 
     const informationalTagMessages = [
         "Tags not available. AI tagging was disabled when image was uploaded",
@@ -268,11 +279,11 @@
 
 <div class="fullscreen-image-wrapper">
     <a class="click-to-return" onclick={()=>enlarged = false}/>
-    <div class="image-container" >
+    <div class="image-container">
         <div class="image-content">
-            <div class="image-frame">
+            <div class="image-frame" style:--aspectRatio={aspectRatio}>
                 {#if displaySrc}
-                    <img src={displaySrc} alt="Image" class="image" />
+                    <img src={displaySrc} alt="Image" class="image" onload={handleImageLoad} />
                 {/if}
 
                 <div class="image-toolbar">
@@ -344,55 +355,55 @@
                     </div>
                 {/if}
             </div>
-
-            {#if aiTaggingPreference === "true"}
-                {#if error.length > 0}
-                    <div class="error-wrapper">
-                        <button
-                            type="button"
-                            class="tag-error-button bi fs-2"
-                            class:bi-info-square-fill={isTagInformation}
-                            class:text-white={isTagInformation}
-                            class:bi-exclamation-triangle-fill={!isTagInformation}
-                            class:text-warning={!isTagInformation}
-                            use:queuetooltip={error}
-                            aria-label={`Image tagging ${isTagInformation ? "information" : "error"}: ${error}`}
-                        ></button>
-                    </div>
-                {/if}
-                <div class="tags-wrapper">
-                    {#if tags.length > 0}
-                        {#each tags as tag}
-                            <TagPill
-                                {tag}
-                                isRealTag
-                                deleteFunc={() =>
-                                    currentPhotoId === undefined
-                                        ? "Photo not found"
-                                        : deleteImageTag(currentPhotoId, tag)}
-                            />
-                        {/each}
-                    {:else if tagStatus}
-                        <TagPill
-                            {tagColour}
-                            tag={tagStatus}
-                            isRealTag={false}
-                        />
-                    {/if}
-                </div>
-                {#if showRetryTagging && currentPhotoId !== undefined}
-                    <div class="tags-wrapper">
-                        <button
-                            class="btn btn-primary"
-                            onclick={() => {
-                                showRetryTagging = false;
-                                retryImageTagging(currentPhotoId);
-                            }}>Retry Tagging</button
-                        >
-                    </div>
-                {/if}
-            {/if}
         </div>
+
+        {#if aiTaggingPreference === "true"}
+            {#if error.length > 0}
+                <div class="error-wrapper">
+                    <button
+                        type="button"
+                        class="tag-error-button bi fs-2"
+                        class:bi-info-square-fill={isTagInformation}
+                        class:text-white={isTagInformation}
+                        class:bi-exclamation-triangle-fill={!isTagInformation}
+                        class:text-warning={!isTagInformation}
+                        use:queuetooltip={error}
+                        aria-label={`Image tagging ${isTagInformation ? "information" : "error"}: ${error}`}
+                    ></button>
+                </div>
+            {/if}
+            <div class="tags-wrapper">
+                {#if tags.length > 0}
+                    {#each tags as tag}
+                        <TagPill
+                            {tag}
+                            isRealTag
+                            deleteFunc={() =>
+                                currentPhotoId === undefined
+                                    ? "Photo not found"
+                                    : deleteImageTag(currentPhotoId, tag)}
+                        />
+                    {/each}
+                {:else if tagStatus}
+                    <TagPill
+                        {tagColour}
+                        tag={tagStatus}
+                        isRealTag={false}
+                    />
+                {/if}
+            </div>
+            {#if showRetryTagging && currentPhotoId !== undefined}
+                <div class="tags-wrapper">
+                    <button
+                        class="btn btn-primary"
+                        onclick={() => {
+                            showRetryTagging = false;
+                            retryImageTagging(currentPhotoId);
+                        }}>Retry Tagging</button
+                    >
+                </div>
+            {/if}
+        {/if}
     </div>
 </div>
 
@@ -459,37 +470,39 @@
         left: 0;
         height: 100vh;
         width: 100vw;
-    }
-    .image-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
     }
-    .image-content {
+    .image-container {
+        position: relative;
         display: flex;
-        max-width: 90vw;
-        max-height: 90vh;
+        width: 90vw;
+        height: 90vh;
         flex-direction: column;
         align-items: center;
         z-index: 102;
     }
+    .image-content {
+        position: relative;
+        width: 100%;
+        height: 85vh;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        container-type: size;
+    }
     .image-frame {
         position: relative;
-        display: inline-block;
-        max-width: 90vw;
-        max-height: 80vh;
-        line-height: 0;
+        width: min(100cqw, 100cqh * var(--aspectRatio, 1));
+        height: min(100cqh, 100cqw / var(--aspectRatio, 1));
     }
     .image {
         display: block;
         border-radius: 5px;
-        width: auto;
-        height: auto;
-        max-width: 90vw;
-        max-height: 80vh;
+        width: 100%;
+        height: 100%;
     }
     .close-control {
         position: absolute;
