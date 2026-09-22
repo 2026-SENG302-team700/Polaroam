@@ -155,4 +155,42 @@ public class CollaborationController : ControllerBase
         }
         return Ok();
     }
+
+    /// <summary>
+    /// Kick the user from a given trip
+    /// </summary>
+    /// <param name="tripId">The trip id of the trip to remove user as collaborator from</param>
+    /// <param name="kickedUserId">The id of the user that is going to be kicked</param>
+    /// <returns>
+    /// Ok - If the trip and user id are valid and the user can be kicked
+    /// Bad Request - If the trip and user id do not correspond to real trip or user
+    /// Unauthorized - The user is unauthorized and cannot be added to the trip
+    /// </returns>
+    [Authorize]
+    [HttpDelete("kick/${kickedUserId:int}")]
+    public async Task<ActionResult> KickUser(int tripId, int kickedUserId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("Not logged in");
+        }
+
+        var userId = int.Parse(userIdString);
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
+        {
+            return Unauthorized("User does not have access to collaborate on the trip and kick users");
+        }
+
+        try
+        {
+            await _collaborationService.KickUserAsync(tripId, kickedUserId);
+        }
+        catch (KeyNotFoundException e)
+        {
+            return BadRequest(e.Message);
+        }
+
+        return Ok();
+    }
 }

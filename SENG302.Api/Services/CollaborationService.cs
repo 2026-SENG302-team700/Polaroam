@@ -16,6 +16,7 @@ public interface ICollaborationService
     Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
     Task SendInviteAsync(string userEmail, int inviterId, int tripId);
+    Task KickUserAsync(int tripId, int kickedUserId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -170,5 +171,34 @@ public class CollaborationService : ICollaborationService
         {
             await _notificationService.AddNotificationAsync(inviteNotification);
         }
+    }
+    
+    /// <summary>
+    /// Kick a user from a specified trip
+    /// </summary>
+    /// <param name="tripId">Trip user is removed from as collaborator</param>
+    /// <param name="kickedUserId">The user id of the user being kicked</param>
+    /// <exception cref="KeyNotFoundException">If trip or user with given id does not exist, throw an exception</exception>
+    public async Task KickUserAsync(int tripId, int kickedUserId)
+    {
+        User? kickedUser = await _userService.GetUserByIdAsync(kickedUserId);
+
+        if (kickedUser == null)
+        {
+            throw new KeyNotFoundException("User does not exist");
+        }
+
+        var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        Trip? trip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+
+        if (trip == null)
+        {
+            throw new KeyNotFoundException("Trip does not exist");
+        }
+
+        trip.Collaborators.Remove(kickedUserId);
+        
+        await context.SaveChangesAsync();
     }
 }
