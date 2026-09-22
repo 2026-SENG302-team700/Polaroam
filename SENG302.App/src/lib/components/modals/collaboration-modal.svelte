@@ -170,10 +170,10 @@
                         </div>
                     {/if}
                     <div class="modal-buttons">
-                        <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back</button>
+                        <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back to trip</button>
                         <button class="btn btn-primary modal-footer-button"
                                 onclick={() => inviteShown = !inviteShown}
-                        >Invite</button>
+                        >{inviteShown ? "Close Invite field": "Invite"}</button>
                         {#if !isOwner}
                             <button class="btn btn-danger modal-footer-button" onclick={showLeaveConfirmationModal}>Leave</button>
                         {/if}
