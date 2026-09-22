@@ -68,30 +68,26 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Create a default user and trip
+    /// </summary>
+    /// <param name="userId">The id of the user</param>
+    /// <param name="tripId">The id of the trip</param>
+    private async Task SetupUserAndTrip(int userId, int tripId)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        SetupGeoMock();
+        context.Users.Add(new User { Id = userId, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
+        context.Trips.Add(new Trip { Id = tripId, Title = "My trip", UserId = tripId, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
+        context.Albums.Add(new Album { TripId = tripId, PhotoIds = [] });
+        await context.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task CreatePost_ValidData_Ok()
     {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
+        await SetupUserAndTrip(1, 1);
 
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
-
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent("1"), "TripId");
         content.Add(new StringContent("name"), "Title");
@@ -142,6 +138,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task GetPost_UserDoesNotOwnPost_ReturnsNotFound()
     {
         SetupUserContext("1");
+        await SetupUserAndTrip(30, 20);
 
         var post = new Post
         {
@@ -156,14 +153,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(post.PostId).Returns(post);
-        _mockPostService.UserOwnsPost(1, post.TripId, post.PostId).Returns(false);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, post.TripId).Returns(false);
 
         var result = await _controller.GetPost(post.PostId);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
         await _mockPostService.Received(1).GetPostAsync(post.PostId);
-        await _mockPostService.Received(1).UserOwnsPost(1, post.TripId, post.PostId);
+        await _mockTripService.Received(1).UserHasCollaborationAccessToTrip(1, post.TripId);
     }
 
     [Fact]
@@ -298,27 +295,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_NoContentAndNotAllowed_Ok()
     {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
+        await SetupUserAndTrip(1, 1);
 
-        // Add user to DB
-        context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent("1"), "TripId");
         content.Add(new StringContent("name"), "Title");
@@ -334,27 +312,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_NoContentAndAllowed_Ok()
     {
-        // Create DB
-        await using var context = DbContextFactory.CreateDbContext();
+        await SetupUserAndTrip(1, 1);
 
-        // Add user to DB
-        context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
-        context.Users.Add(new User
-        {
-            Id = 1,
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent("1"), "TripId");
         content.Add(new StringContent("name"), "Title");
@@ -370,34 +329,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_InvalidTitleLength_ReturnsBadRequestAndDoesNotPersist()
     {
-        await using (var context = DbContextFactory.CreateDbContext())
-        {
-            context.Users.Add(new User
-            {
-                Id = 1,
-                Email = "test@example.com",
-                DisplayName = "Test User",
-                PasswordKey = "password",
-                Country = "NZ"
-            });
-            context.Albums.Add(new Album
-            {
-                TripId = 1,
-                PhotoIds = [],
-            });
-
-            context.Trips.Add(new Trip
-            {
-                Id = 1,
-                Title = "Test trip",
-                Description = "Test description",
-                UserId = 1,
-                StartDate = DateToDateTimeOffset(2026, 7, 1),
-                EndDate = DateToDateTimeOffset(2026, 7, 10)
-            });
-
-            await context.SaveChangesAsync();
-        }
+        await SetupUserAndTrip(1, 1);
 
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent("1"), "TripId");
@@ -425,33 +357,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_ContentTooLong_ReturnsBadRequestAndDoesNotPersist()
     {
-        await using (var context = DbContextFactory.CreateDbContext())
-        {
-            context.Users.Add(new User
-            {
-                Id = 1,
-                Email = "test@example.com",
-                DisplayName = "Test User",
-                PasswordKey = "password",
-                Country = "NZ"
-            });
-            context.Albums.Add(new Album
-            {
-                TripId = 1,
-                PhotoIds = [],
-            });
-            context.Trips.Add(new Trip
-            {
-                Id = 1,
-                Title = "Test trip",
-                Description = "Test description",
-                UserId = 1,
-                StartDate = DateToDateTimeOffset(2026, 7, 1),
-                EndDate = DateToDateTimeOffset(2026, 7, 10)
-            });
-
-            await context.SaveChangesAsync();
-        }
+        await SetupUserAndTrip(1, 1);
 
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent("1"), "TripId");
@@ -515,16 +421,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_ValidPhotos_Ok()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
-        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
+        await SetupUserAndTrip(1, 1);
 
         var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         using var content = BuildPostForm(photos: [(pandaBytes, "panda.webp", "image/webp")]);
@@ -539,16 +436,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_MultipleValidPhotos_Ok()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
-        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
+        await SetupUserAndTrip(1, 1);
 
         var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         var pngBytes = new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
@@ -574,16 +462,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_NoPhotos_Ok()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Albums.Add(new Album
-        {
-            TripId = 1,
-            PhotoIds = [],
-        });
-        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
+        await SetupUserAndTrip(1, 1);
 
         using var content = BuildPostForm();
 
@@ -597,13 +476,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_OneInvalidPhotoOthersOk_BadRequestPostNotCreated()
     {
-        await using (var context = DbContextFactory.CreateDbContext())
-        {
-            context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
-            await context.SaveChangesAsync();
-        }
-
-        SetupGeoMock();
+        await SetupUserAndTrip(1, 1);
 
         var pandaBytes = await File.ReadAllBytesAsync("resources/panda.webp");
         var invalidBytes = new byte[] { 0x00, 0x01, 0x02, 0x03 };
@@ -627,11 +500,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_Over10MBPhoto_BadRequest()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
+        await SetupUserAndTrip(1, 1);
 
         var oversizedBytes = new byte[10000001];
 
@@ -644,11 +513,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreatePost_MultipleInvalidPhotos_BadRequestAllBadFilesListed()
     {
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User { Id = 1, Email = "vlad@nistor.com", DisplayName = "Vlad Nistor", PasswordKey = "P4$$word", Country = "NZ" });
-        await context.SaveChangesAsync();
-
-        SetupGeoMock();
+        await SetupUserAndTrip(1, 1);
 
         var invalidBytesOne = new byte[] { 0x00, 0x01, 0x02, 0x03 };
         var invalidBytesTwo = new byte[] { 0xde, 0xad, 0xbe, 0xef };
@@ -1308,7 +1173,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-
+        _mockTripService.UserHasCollaborationAccessToTrip(1, request.TripId).Returns(true);
         _mockPostService.CreateNewPostAsync(request, 1, null).Returns(Task.FromException<Post>(new MultipleValidationListException(errors)));
 
         var result = await _controller.CreatePost(request, null);
@@ -1337,7 +1202,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var request = CreateNewPostRequest();
 
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-
+        _mockTripService.UserHasCollaborationAccessToTrip(1, request.TripId).Returns(true);
         _mockPostService.CreateNewPostAsync(request, 1, null).Returns(Task.FromException<Post>(new Exception("Unable to create post")));
 
         var result = await _controller.CreatePost(request, null);
@@ -1381,7 +1246,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, post.TripId, 10).Returns(true);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, post.TripId).Returns(true);
 
         var result = await _controller.GetPost(10);
 
@@ -1422,7 +1287,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId, request.Id).Returns(true);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
@@ -1492,7 +1357,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UpdatePost_UserDoesNotOwnPost_ReturnsNotFound()
+    public async Task UpdatePost_UserDoesNotHaveTripAccess_ReturnsNotFound()
     {
         SetupUserContext("1");
 
@@ -1522,7 +1387,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId, request.Id).Returns(false);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, existingPost.TripId).Returns(false);
 
         var result = await _controller.UpdatePost(request, null);
 
@@ -1534,7 +1399,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UpdatePost_UserOwnsPost_ReturnsUpdatedPost()
+    public async Task UpdatePost_UserHasTripAccess_ReturnsUpdatedPost()
     {
         SetupUserContext("1");
 
@@ -1577,7 +1442,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId, existingPost.PostId).Returns(true);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>()).Returns(updatedPost);
 
@@ -1627,7 +1492,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId, existingPost.PostId).Returns(true);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>())
             .Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
@@ -1727,7 +1592,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeletePhotoFromPost_UserOwnsPost_DeletesPostAndReturnsNoContent()
+    public async Task DeletePhotoFromPost_UserHasTripAccess_DeletesPostAndReturnsNoContent()
     {
         SetupUserContext("1");
 
@@ -1744,7 +1609,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, 20, 10).Returns(true);
+        _mockTripService.UserHasCollaborationAccessToTrip(1, post.TripId).Returns(true);
 
         var result = await _controller.DeletePhotoFromPost(10, 15);
 
