@@ -16,7 +16,7 @@ public interface ICollaborationService
     Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
     Task SendInviteAsync(string userEmail, int inviterId, int tripId);
-    Task<List<int>> KickUserAsync(int tripId, int kickedUserId);
+    Task KickUserAsync(int tripId, int kickedUserId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -179,7 +179,7 @@ public class CollaborationService : ICollaborationService
     /// <param name="tripId">Trip user is removed from as collaborator</param>
     /// <param name="kickedUserId">The user id of the user being kicked</param>
     /// <exception cref="KeyNotFoundException">If trip or user with given id does not exist, throw an exception</exception>
-    public async Task<List<int>> KickUserAsync(int tripId, int kickedUserId)
+    public async Task KickUserAsync(int tripId, int kickedUserId)
     {
         User? kickedUser = await _userService.GetUserByIdAsync(kickedUserId);
 
@@ -200,7 +200,6 @@ public class CollaborationService : ICollaborationService
         trip.Collaborators.Remove(kickedUserId);
         
         await context.SaveChangesAsync();
-
-        return trip.Collaborators;
+        
     }
 }

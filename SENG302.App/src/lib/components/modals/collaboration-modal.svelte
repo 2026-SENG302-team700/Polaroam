@@ -149,12 +149,11 @@
             if (!response.ok) {
                 kickUserError = await response.text() 
             } else {
-                emailMessageStyle = "invite-message-success"
-                emailMessage = "Invite sent."
+                tripCollaborators = await response.json()
             }
 
-        } catch (e) {
-            console.error(e);
+        } catch (e: any) {
+            kickUserError = e.message;
         } finally {
             hideKickUserConfirmationModal()
         }

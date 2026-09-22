@@ -182,15 +182,19 @@ public class CollaborationController : ControllerBase
             return Unauthorized("User does not have access to collaborate on the trip and kick users");
         }
 
+        List<CollaboratingUserResponse> remainingCollaborators = [];
+        
         try
         {
-            List<int> remainingCollaborators = await _collaborationService.KickUserAsync(tripId, kickedUserId);
+            await _collaborationService.KickUserAsync(tripId, kickedUserId);
+
+            remainingCollaborators = await _collaborationService.GetTripCollaborators(tripId);
         }
         catch (KeyNotFoundException e)
         {
             return BadRequest(e.Message);
         }
 
-        return Ok();
+        return Ok(remainingCollaborators);
     }
 }
