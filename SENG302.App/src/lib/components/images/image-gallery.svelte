@@ -172,22 +172,23 @@
 <ConfirmationModal
     bind:show={confirmDeleteModal}
     message="Are you sure you want to delete this image?"
-    option1Text="Delete"
-    option2Text="Do not delete"
-    onOption1={() => ConfirmDelete()}
-    onOption2={() => (confirmDeleteModal = false)}
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={() => (confirmDeleteModal = false)}
+    onOption2={() => ConfirmDelete()}
 />
 
 <ConfirmationModal
     bind:show={goToPostModal}
     message="Selected image belongs to a post, delete the image from the post to remove the image."
-    option1Text="Go to post"
-    option2Text="Cancel"
-    option1Style="primary"
-    onOption1={() => {
+    option1Text="Cancel"
+    option2Text="Go to post"
+    option2Style="primary"
+    onOption1={() => (goToPostModal = false)}
+    onOption2={() => {
         goto(resolve(`/home/trips/${tripId}/posts/${linkedPostId}`));
     }}
-    onOption2={() => (goToPostModal = false)}
 />
 
 <style>

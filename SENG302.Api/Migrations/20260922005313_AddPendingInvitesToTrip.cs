@@ -16,8 +16,23 @@ namespace SENG302.Api.Migrations
                 name: "PendingInvites",
                 table: "Trips",
                 type: "text[]",
-                nullable: false);
-
+                nullable: true);
+            
+            migrationBuilder.Sql(
+                """
+                   UPDATE "Trips"
+                   SET "PendingInvites" = ARRAY[]::text[]
+                   WHERE "PendingInvites" IS NULL
+                """
+            );
+            
+            migrationBuilder.AlterColumn<List<int>>(
+                name: "PendingInvites",
+                table: "Trips",
+                type: "text[]",
+                nullable: false,
+                oldNullable: true);
+            
             migrationBuilder.AlterColumn<long>(
                 name: "Timestamp",
                 table: "Notifications",

@@ -184,11 +184,15 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
 
-                    b.Property<string>("FileKey")
+                    b.Property<string>("Elements")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("OwnerId")
+                    b.PrimitiveCollection<List<int>>("Files")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int>("Thumbnail")
                         .HasColumnType("integer");
 
                     b.HasKey("TripId");

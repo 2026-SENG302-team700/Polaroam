@@ -434,14 +434,15 @@
     <ConfirmationModal
         bind:show={confirmationModalShown}
         message="Post would contain no content or images, are you sure you want to update this post?"
-        option1Text="Update anyway"
-        option2Text="Cancel"
-        onOption1={() => {
+        option1Text="Cancel"
+        option2Text="Update anyway"
+        option2Style="primary"
+        onOption1={() => (confirmationModalShown = false)}
+        onOption2={() => {
             noContentAllowed = true;
             confirmationModalShown = false;
             updatePost();
         }}
-        onOption2={() => (confirmationModalShown = false)}
     />
 {/if}
 

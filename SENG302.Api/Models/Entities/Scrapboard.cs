@@ -8,11 +8,12 @@ namespace SENG302.Api.Models.Entities;
 /// </summary>
 public class Scrapboard
 { 
-    [ForeignKey("User")]
-    public required int OwnerId { get; set; }
-
-    [Key]
+    [Key, ForeignKey("Trip")]
     public required int TripId {get;set;}
 
-    public required string FileKey {get; set;}
+    public string Elements { get; set; } = "";
+
+    public List<int> Files { get; set; } = [];
+    
+    public int Thumbnail { get; set; } = - 1;
 }

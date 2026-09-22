@@ -266,12 +266,13 @@
 <ConfirmationModal
     bind:show={showConfirmationModal}
     message="Post contains no content, are you sure you want to create post?"
-    option1Text="Create anyway"
-    option2Text="Cancel"
-    onOption1={() => {
+    option1Text="Cancel"
+    option2Text="Create anyway"
+    option2Style="primary"
+    onOption1={() => (showConfirmationModal = false)}
+    onOption2={() => {
         noContentAllowed = true;
         showConfirmationModal = false;
         createPost();
     }}
-    onOption2={() => (showConfirmationModal = false)}
 />
