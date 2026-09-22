@@ -65,6 +65,15 @@ public class CollaborationController : ControllerBase
         }
     }
     
+    /// <summary>
+    /// Leave the collaboration modal
+    /// </summary>
+    /// <param name="tripId">The trip that user wants to leave</param>
+    /// <returns>
+    /// Unauthorized - If User is not logged in or is not a collaborator on the trip
+    /// Bad Request - If the backend failed to remove user from the trip
+    /// No content 204 - If the user is able to leave successfully
+    /// </returns>
     [Authorize]
     [HttpPost("leave")]
     public async Task<ActionResult> LeaveCollaboration(int tripId)
@@ -167,8 +176,8 @@ public class CollaborationController : ControllerBase
     /// Unauthorized - The user is unauthorized and cannot be added to the trip
     /// </returns>
     [Authorize]
-    [HttpDelete("kick/${kickedUserId:int}")]
-    public async Task<ActionResult> KickUser(int tripId, int kickedUserId)
+    [HttpDelete("kick/{kickedUserId:int}")]
+    public async Task<ActionResult<IEnumerable<CollaboratingUserResponse>>> KickUser(int tripId, int kickedUserId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
