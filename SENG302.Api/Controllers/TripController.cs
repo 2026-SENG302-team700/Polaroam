@@ -254,7 +254,7 @@ public class TripController : ControllerBase
     /// <returns>The list of tasks</returns>
     [Authorize]
     [HttpGet("post/{tripId:int}")]
-    public async Task<ActionResult<IEnumerable<Post>>> GetPostsFromTrip(int tripId = -1)
+    public async Task<ActionResult<IEnumerable<PostResponse>>> GetPostsFromTrip(int tripId = -1)
     {
         // Check tripId has been provided
         if (tripId < 0)
@@ -275,7 +275,14 @@ public class TripController : ControllerBase
 
         // Get list of posts
         var posts = await _postService.GetPostsByTripAsync(tripId);
-        return Ok(posts);
+        var postResponses = new List<PostResponse>();
+
+        foreach (Post post in posts)
+        {
+            postResponses.Add(new PostResponse(post, await _userService.GetUserDisplayName(post.CreatorId)));
+        }
+
+        return Ok(postResponses);
     }
 
     /// <summary>

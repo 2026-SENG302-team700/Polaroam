@@ -41,11 +41,17 @@
 
     <div class="post-details">
         <h3>{post.title}</h3>
+
+        <div>
+            <i class="bi bi-person-fill"></i>
+            <p class="location">{post.creatorDisplayName}</p>
+        </div>
         {#if post.locationName}
             <p class="location">
                 <i class="bi bi-geo-alt-fill"></i>{post.locationName}
             </p>
         {/if}
+
         <p class="content" class:empty={!post.content}>
             {post.content || "No description"}
         </p>

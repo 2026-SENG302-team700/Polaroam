@@ -37,7 +37,7 @@
     });
 
     let postLocations = $state([]);
-    let posts = $state([]);
+    let posts: Post[] = $state([]);
     let selectedPost = $state(null);
 
     onMount(() => {

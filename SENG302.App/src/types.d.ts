@@ -69,3 +69,18 @@ type TripIdAndPhoto = {
     tripId: number,
     photoId: number,
 }
+
+type Post = {
+    postId: number,
+    tripId: number,
+    title: string,
+    content: string,
+    date: string,
+    osmId: number,
+    osmType: string,
+    locationName: string,
+    photoIds: number[],
+    creationTime: string,
+    creatorId: number,
+    creatorDisplayName: string,
+}
