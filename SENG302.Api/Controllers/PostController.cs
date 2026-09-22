@@ -217,11 +217,8 @@ public class PostController : ControllerBase
         {
             return NotFound("Post not found!");
         }
-        var tripId = post.TripId;
 
-        var trip = await _tripService.GetTripByIdAsync(tripId);
-
-        var user = await _userService.GetUserByIdAsync(trip.UserId);
+        var user = await _userService.GetUserByIdAsync(post.CreatorId);
 
         if (user == null)
         {

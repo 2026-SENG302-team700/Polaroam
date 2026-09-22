@@ -308,7 +308,7 @@ public class TripController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpGet("{tripId:int}/collaborators")]
-    public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
+    public async Task<ActionResult<IEnumerable<CollaboratingUserResponse>>> GetTripCollaborators(int tripId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
