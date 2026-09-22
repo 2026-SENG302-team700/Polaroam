@@ -15,7 +15,7 @@
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let loadError = $state("");
-    let showModal = $state(false);
+    let showBackModal = $state(false);
     let lastSaveState = $state("");
 
     /**
@@ -70,7 +70,12 @@
             credentials: "include",
         });
         lastSaveState = JSON.stringify(elements);
-        addToast("Scrapboard saved", "success");
+        
+        if (response.ok) {
+            addToast("Scrapboard saved", "success");
+        } else {
+            addToast("Failed to save scrapboard", "error");
+        }
     }
 
     /**
@@ -119,7 +124,7 @@
     function handleBackButton() {
         const currentState = JSON.stringify(excalidrawAPI!.getSceneElements());
         if (currentState !== lastSaveState) {
-            showModal = true;
+            showBackModal = true;
         } else {
             goto(resolve(`/home/trips/${page.params.tripId}`))
         }
@@ -150,22 +155,23 @@
         ]);
     }
     
-    
 </script>
 <div class="page-wrapper">
     <div class="scrapboard-buttons">
         <button
-            class="btn btn-primary"
+            class="btn btn-primary back-button"
             onclick={handleBackButton}
         >
             Back to Trips
         </button>
         
-        <CreationButton
-                text="Update Scrapboard"
-                onClick={saveScrapboard}
-                loading={saving}
-        />
+        <div class="scrapboard-buttons-right">
+            <CreationButton
+                    text="Update Scrapboard"
+                    onClick={saveScrapboard}
+                    loading={saving}
+            />  
+        </div>
     </div>
     <div class="scrapboard-wrapper">
         <Excalidraw
@@ -180,6 +186,8 @@
         />
     </div>
 </div>
+
+<!-- Back Modal -->
 <ConfirmationModal
     message="You have unsaved changes."
     option1Text="Cancel"
@@ -193,9 +201,9 @@
         await saveScrapboard();
         goto(resolve(`/home/trips/${page.params.tripId}`));
     }}
-    bind:show={showModal}
+    bind:show={showBackModal}
 />
-    
+
 <style>
     .scrapboard-wrapper {
         height: 70vh;
@@ -208,5 +216,14 @@
         display: flex;
         justify-content: space-between;
         margin-bottom: 5px;
+    }
+    
+    .scrapboard-buttons-right {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .back-button {
+        margin-right: 5px;
     }
 </style>

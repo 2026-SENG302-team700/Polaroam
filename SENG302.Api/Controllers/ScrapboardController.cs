@@ -201,5 +201,42 @@ public class ScrapboardController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+
+    /// <summary>
+    /// Deletes a scrapboard and its associated files.
+    /// </summary>
+    /// <param name="tripId">tripId of the scrapboard to be deleted</param>
+    /// <returns>
+    /// Unauthorzied - User is not logged in or is not part of the trip.
+    /// Bad Request - Scrapboard does not exist
+    /// OK - Scrapboard was deleted successfully.
+    /// </returns>
+    [HttpDelete("{tripId:int}")]
+    public async Task<ActionResult> DeleteScrapboard(int tripId)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized("Not logged in");
+            }
+
+            var userId = int.Parse(userIdString);
+
+            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            {
+                return Unauthorized();
+            }
+
+            await _scrapboardService.DeleteScrapboardAsync(tripId);
+
+            return NoContent();
+        }
+        catch (KeyNotFoundException e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 }
 
