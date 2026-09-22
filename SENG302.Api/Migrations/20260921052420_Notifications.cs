@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -22,7 +21,7 @@ namespace SENG302.Api.Migrations
                     ReadStatus = table.Column<bool>(type: "boolean", nullable: false),
                     HeaderText = table.Column<string>(type: "text", nullable: false),
                     BodyText = table.Column<string>(type: "text", nullable: false),
-                    Timestamp = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Timestamp = table.Column<long>(type: "bigint", nullable: false),
                     NotificationType = table.Column<string>(type: "character varying(21)", maxLength: 21, nullable: false),
                     Handled = table.Column<bool>(type: "boolean", nullable: false),
                     TripId = table.Column<int>(type: "integer", nullable: true)

@@ -108,7 +108,7 @@ public class CollaborationService : ICollaborationService
 
         if (!UserCredentialsValidator.CheckEmailFormat(userEmail))
         {
-            throw new EmailInvalidationException("Email was invalid!");
+            throw new EmailInvalidationException("Invalid email address. Email must be in the format 'jane@doe.nz'");
         }
 
         var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);
@@ -129,7 +129,7 @@ public class CollaborationService : ICollaborationService
                 || trip.UserId == invitedUser.Id
                 )
             {
-                throw new UserInTripException("This user is already apart of this trip.");
+                throw new UserInTripException("This user is already a part of this trip.");
             }
         }
 

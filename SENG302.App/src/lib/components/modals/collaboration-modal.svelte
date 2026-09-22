@@ -154,7 +154,7 @@
                     {#if inviteShown}
                         <div class="invite-wrapper">
                             <span>Invite Collaborators to Trip:</span>
-                            <div class="invite-form">
+                            <div class="invite-form input-group d-flex flex-nowrap">
                                 <input
                                         type="email"
                                         class="form-control"
@@ -170,10 +170,10 @@
                         </div>
                     {/if}
                     <div class="modal-buttons">
-                        <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back</button>
+                        <button class="btn btn-secondary modal-footer-button" onclick={backToTrip}>Back to trip</button>
                         <button class="btn btn-primary modal-footer-button"
                                 onclick={() => inviteShown = !inviteShown}
-                        >Invite</button>
+                        >{inviteShown ? "Close Invite field": "Invite"}</button>
                         {#if !isOwner}
                             <button class="btn btn-danger modal-footer-button" onclick={showLeaveConfirmationModal}>Leave</button>
                         {/if}
@@ -232,7 +232,6 @@
         width: 100%;
         display: flex;
         justify-content: space-between;
-        gap: 0.5rem;
         margin-bottom: 0.2rem;
     }
     

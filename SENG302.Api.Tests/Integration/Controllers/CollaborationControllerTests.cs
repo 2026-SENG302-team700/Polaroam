@@ -300,7 +300,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
 
         var colabResponse = await response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
-        colabResponse?.Message.ShouldBe("Email was invalid!");
+        colabResponse?.Message.ShouldBe("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
 
     [Fact]
@@ -344,7 +344,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var colabResponse = await response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
-        colabResponse?.Message.ShouldBe("This user is already apart of this trip.");
+        colabResponse?.Message.ShouldBe("This user is already a part of this trip.");
 
     }
 
