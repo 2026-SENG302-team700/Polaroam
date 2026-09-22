@@ -1,29 +1,38 @@
 <script lang="ts">
     let {
         message,
-        option1Text = "Confirm",
-        option2Text = "Cancel",
-        option1Style = "danger",
+        option1Text = "Cancel",
+        option2Text = "Confirm",
+        option3Text,
+        option1Style = "outline-secondary",
+        option2Style = "",
+        option3Style = "",
         onOption1,
         onOption2,
+        onOption3,
         show = $bindable(false),
     }: {
         message: string;
         option1Text?: string;
         option2Text?: string;
-        option1Style?: "danger" | "primary";
+        option3Text?: string;
+        option1Style?: "danger" | "primary" | "outline-secondary";
+        option2Style?: "danger" | "primary" | "";
+        option3Style?: "danger" | "primary" | "";
         onOption1: () => void;
         onOption2: () => void;
+        onOption3?: () => void;
         show: boolean;
     } = $props();
 
-    function handleOption1() {
-        onOption1();
-        show = false;
-    }
-
-    function handleOption2() {
-        onOption2();
+    /**
+     * Calls the function passed in than closes the modal
+     * @param optionFunc The function to be called
+     */
+    function handleOption(
+        optionFunc: () => void
+    ) {
+        optionFunc();
         show = false;
     }
 </script>
@@ -39,18 +48,27 @@
                 <div class="modal-footer d-flex gap-2">
                     <button
                             type="button"
-                            class="btn btn-outline-secondary flex-fill"
-                            onclick={handleOption2}
-                    >
-                        {option2Text}
-                    </button>
-                    <button
-                            type="button"
                             class="btn btn-{option1Style} flex-fill"
-                            onclick={handleOption1}
+                            onclick={() => handleOption(onOption1)}
                     >
                         {option1Text}
                     </button>
+                    <button
+                            type="button"
+                            class="btn btn-{option2Style} flex-fill"
+                            onclick={() => handleOption(onOption2)}
+                    >
+                        {option2Text}
+                    </button>
+                    {#if option3Text && onOption3}
+                        <button
+                                type="button"
+                                class="btn btn-{option3Style} flex-fill"
+                                onclick={() => handleOption(onOption3)}
+                        >
+                            {option3Text}
+                        </button>
+                    {/if}
                 </div>
             </div>
         </div>

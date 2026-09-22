@@ -19,6 +19,7 @@ public interface IFileService
     Task<bool> GetTagQueueStatus(int id);
     public Task<string?> GetTagErrors(int id);
     Task<List<CustomFile>> GetFilesByIdsAsync(List<int> ids);
+    public Task<string> GetMimeTypeAsync(int fileId);
 }
 
 public class FileService : IFileService
@@ -259,5 +260,16 @@ public class FileService : IFileService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         return await context.CustomFiles.Where(f => ids.Contains(f.Id)).ToListAsync();
+    }
+
+    /// <summary>
+    /// gets the mime type of a custom file
+    /// </summary>
+    /// <param name="fileId">the custom file</param>
+    /// <returns>the mime type of the custom file</returns>
+    public async Task<string> GetMimeTypeAsync(int fileId)
+    {
+        var file = await GetFileByIdAsync(fileId);
+        return file.MimeType;
     }
 }

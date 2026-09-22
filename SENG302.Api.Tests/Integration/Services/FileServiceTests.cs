@@ -436,4 +436,25 @@ public class FileServiceTests : BaseIntegrationTestFixture
         var status = await ServiceUnderTest.GetTagQueueStatus(1);
         status.ShouldBeTrue();
     }
+    
+    [Fact]
+    public async Task GetMimeTypeAsync_ValidId_ReturnsString()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        CustomFile file = new CustomFile
+        {
+            Id = 1,
+            OwnerId = 1,
+            FileKey = "mocka",
+            OriginalFileName = "du bist gut genug.png",
+            MimeType = "image/png",
+            FileSize = 100,
+        };
+        context.CustomFiles.Add(file);
+        await context.SaveChangesAsync();
+        
+        var type = await ServiceUnderTest.GetMimeTypeAsync(file.Id);
+        type.ShouldNotBeNull();
+        type.ShouldBe("image/png");
+    }
 }
