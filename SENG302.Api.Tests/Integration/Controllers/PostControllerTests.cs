@@ -129,7 +129,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.GetAsync("/api/post");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
+        var posts = await response.Content.ReadFromJsonAsync<List<PostResponse>>();
         posts!.Count.ShouldBe(1);
         posts.First().Title.ShouldBe("My post");
     }
@@ -179,7 +179,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.GetAsync("/api/post");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
+        var posts = await response.Content.ReadFromJsonAsync<List<PostResponse>>();
         posts!.ShouldBeEmpty();
     }
 
@@ -210,7 +210,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/trip/post/1");
-        var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
+        var posts = await response.Content.ReadFromJsonAsync<List<PostResponse>>();
 
         posts.ShouldNotBeNull();
         posts.Count.ShouldBe(1);
@@ -392,8 +392,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PutAsync("/api/post/1", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await response.Content.ReadFromJsonAsync<Post>();
-        post!.PhotoIds.ShouldBe([1]);
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        retrievedPost!.PhotoIds.ShouldBe([1]);
     }
 
     private MultipartFormDataContent BuildPostForm(
@@ -429,8 +429,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await response.Content.ReadFromJsonAsync<Post>();
-        post!.PhotoIds!.Count.ShouldBe(1);
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        retrievedPost!.PhotoIds.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -450,13 +450,13 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await response.Content.ReadFromJsonAsync<Post>();
-        post!.PhotoIds!.Count.ShouldBe(2);
-        post.PhotoIds.ShouldBeUnique();
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        retrievedPost!.PhotoIds.Count.ShouldBe(2);
+        retrievedPost!.PhotoIds.ShouldBeUnique();
 
         await using var verificationContext = DbContextFactory.CreateDbContext();
         var album = await verificationContext.Albums.SingleAsync(album => album.TripId == 1);
-        album.PhotoIds.ShouldBe(post.PhotoIds, ignoreOrder: true);
+        album.PhotoIds.ShouldBe(retrievedPost.PhotoIds, ignoreOrder: true);
     }
 
     [Fact]
@@ -469,7 +469,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await response.Content.ReadFromJsonAsync<Post>();
+        var postId = await response.Content.ReadAsStringAsync();
+
+        postId.ShouldNotBeNull();
+
+        var post = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
         post!.PhotoIds.ShouldBeEmpty();
     }
 
@@ -549,40 +553,6 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var response = await HttpClient.PutAsync("/api/post/1", content);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task GetUserNameByPostId_ValidRequest_ReturnsDisplayName()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/post/1/user");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var message = await response.Content.ReadAsStringAsync();
-        message.ShouldContain("Test user");
-    }
-
-    [Fact]
-    public async Task GetUserNameByPostId_InvalidPostId_ReturnsNotFoundError()
-    {
-        await using var context = DbContextFactory.CreateDbContext();
-
-        context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
-        context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
-        await context.SaveChangesAsync();
-
-        var response = await HttpClient.GetAsync("/api/post/2/user");
-
-        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
-        var message = await response.Content.ReadAsStringAsync();
-        message.ShouldContain("Post not found");
     }
 
     [Fact]
@@ -1251,7 +1221,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var result = await _controller.GetPost(10);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        okResult.Value.ShouldBe(post);
+        okResult.Value.ShouldNotBeNull();
+        var postResponse = (PostResponse)okResult.Value;
+
+        postResponse.PostId.ShouldBe(post.PostId);
+        postResponse.TripId.ShouldBe(post.TripId);
+        postResponse.CreatorId.ShouldBe(post.CreatorId);
+        postResponse.Title.ShouldBe(post.Title);
+        postResponse.Content.ShouldBe(post.Content);
+        postResponse.OsmId.ShouldBe(post.OsmId);
+        postResponse.LocationName.ShouldBe(post.LocationName);
+        postResponse.PhotoIds.ShouldBe(post.PhotoIds);
 
         await _mockPostService.Received(1).GetPostAsync(10);
     }
@@ -1449,7 +1429,17 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var result = await _controller.UpdatePost(request, null);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        okResult.Value.ShouldBe(updatedPost);
+        okResult.Value.ShouldNotBeNull();
+        var postResponse = (PostResponse)okResult.Value;
+
+        postResponse.PostId.ShouldBe(updatedPost.PostId);
+        postResponse.TripId.ShouldBe(updatedPost.TripId);
+        postResponse.CreatorId.ShouldBe(updatedPost.CreatorId);
+        postResponse.Title.ShouldBe(updatedPost.Title);
+        postResponse.Content.ShouldBe(updatedPost.Content);
+        postResponse.OsmId.ShouldBe(updatedPost.OsmId);
+        postResponse.LocationName.ShouldBe(updatedPost.LocationName);
+        postResponse.PhotoIds.ShouldBe(updatedPost.PhotoIds);
 
         await _mockPostService.Received(1).UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>());
     }

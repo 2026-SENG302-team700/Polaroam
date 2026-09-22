@@ -103,9 +103,15 @@ public class U70011ClipImageTagging
 
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        _post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
-        _post.ShouldNotBeNull();
-        _post.PhotoIds.ShouldHaveSingleItem();
+        var postId = await _lastResponse.Content.ReadAsStringAsync();
+
+        postId.ShouldNotBeNull();
+
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+
+        retrievedPost.ShouldNotBeNull();
+        retrievedPost.PostId.ShouldBe(int.Parse(postId));
+        retrievedPost.PhotoIds.ShouldHaveSingleItem();
     }
 
     private async Task SetupUserTripAndPost()

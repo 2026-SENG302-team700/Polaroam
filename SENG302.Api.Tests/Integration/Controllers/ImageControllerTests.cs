@@ -250,7 +250,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         var response = await HttpClient.PutAsync($"/api/post/{postId}", form);
         response.EnsureSuccessStatusCode();
 
-        var updatedPost = await response.Content.ReadFromJsonAsync<Post>();
+        var updatedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
         return updatedPost!.PhotoIds.Single();
     }
 
