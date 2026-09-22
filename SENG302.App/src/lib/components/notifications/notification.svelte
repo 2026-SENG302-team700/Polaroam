@@ -1,5 +1,11 @@
 <script lang="ts">
     let { notification }: { notification: NotificationData } = $props();
+    let handled = $state(false);
+
+    let handler = (func:()=>void) => {
+        func();
+        handled = true;
+    }
 </script>
 
 <div
@@ -8,18 +14,18 @@
     <span class="notification-title">{notification.title}</span>
     <span class="notification-description">{notification.text}</span>
     <div class="notification-actions">
-        {#if notification.leftAction}
+        {#if notification.leftAction && !handled}
             <button
                 class={`btn action-buttons ${notification.leftAction.colour}`}
-                onclick={notification.leftAction.function}
+                onclick={() => handler(notification.leftAction.function)}
             >
                 {notification.leftAction.text}
             </button>
         {/if}
-        {#if notification.rightAction}
+        {#if notification.rightAction && !handled}
             <button
                 class={`btn action-buttons ${notification.rightAction.colour}`}
-                onclick={notification.rightAction.function}
+                onclick={() => handler(notification.rightAction.function)}
             >
                 {notification.rightAction.text}
             </button>
