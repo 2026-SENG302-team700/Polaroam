@@ -286,4 +286,6 @@ public class TripController : ControllerBase
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
     }
+    
+
 }
