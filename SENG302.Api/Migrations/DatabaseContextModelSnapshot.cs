@@ -218,6 +218,10 @@ namespace SENG302.Api.Migrations
                     b.Property<bool>("HasScrapboard")
                         .HasColumnType("boolean");
 
+                    b.PrimitiveCollection<List<string>>("PendingInvites")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");
 

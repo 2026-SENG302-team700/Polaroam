@@ -26,6 +26,7 @@ public interface IUserService
     Task<bool> UserAiTaggingCheckAsync(int userId);
     Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible);
     Task<bool> GetPreferenceMapVisibleAsync(int userId);
+    Task<String> GetUserDisplayName(int userId);
 }
 
 public enum UserVerificationResult
@@ -584,5 +585,17 @@ public class UserService : IUserService
         User user = await GetUserByIdAsync(userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
 
         return user.PreferenceMapVisible;
+    }
+    
+    /// <summary>
+    /// Get the user display name
+    /// </summary>
+    /// <param name="userId">User Id</param>
+    /// <returns>User display name</returns>
+    public async Task<String> GetUserDisplayName(int userId)
+    {
+        User user = await GetUserByIdAsync(userId);
+
+        return user.DisplayName;
     }
 }

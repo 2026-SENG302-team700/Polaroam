@@ -4,16 +4,16 @@ using SENG302.Api.Models.Entities;
 
 namespace SENG302.Api.Models.Responses;
 
-public class CollaboratingUser
+public class CollaboratingUserResponse
 {
 
     public int UserId { get; set; }
     public required string DisplayName { get; set; }
 
-    public CollaboratingUser() {}
+    public CollaboratingUserResponse() {}
 
     [SetsRequiredMembers]
-    public CollaboratingUser(User user)
+    public CollaboratingUserResponse(User user)
     {
         UserId = user.Id;
         DisplayName = user.DisplayName;
