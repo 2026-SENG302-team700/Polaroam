@@ -12,7 +12,8 @@ using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.Services;
 
-public class ScrapboardServiceTests : BaseIntegrationTestFixture
+public class
+    ScrapboardServiceTests : BaseIntegrationTestFixture
 {
     private IScrapboardService ServiceUnderTest => ServiceProvider.GetRequiredService<IScrapboardService>();
     private readonly ITripService _tripService;
@@ -234,5 +235,132 @@ public class ScrapboardServiceTests : BaseIntegrationTestFixture
             {
                 return ServiceUnderTest.SaveScrapboardAsync(1, "[]", new List<IFormFile>(), thumbnail);
             });
+    }
+
+    [Fact]
+    public async Task DeleteScrapboard_ValidDataWithFiles_ScrapboardAndFilesDeleted()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        var mockFile = GetMockFile("thumb.webp", mockFileContent, "image/webp");
+        var file1 = await fileService.SaveFileAsync(mockFile, 1);
+        var file2 = await fileService.SaveFileAsync(mockFile, 1);
+        var file3 = await fileService.SaveFileAsync(mockFile, 1);
+        
+        Scrapboard scrapboard = new Scrapboard
+        {
+            TripId = 1,
+            Elements = "fake elements",
+            Files = [file1.Id, file2.Id],
+            Thumbnail = file3.Id
+        };
+        
+        context.Scrapboards.Add(scrapboard);
+        
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.DeleteScrapboardAsync(1);
+        
+        await using var newContext = DbContextFactory.CreateDbContext();
+        newContext.Scrapboards.ShouldBeEmpty();
+        newContext.CustomFiles.ShouldBeEmpty();
+    }
+    
+    [Fact]
+    public async Task DeleteScrapboard_ValidDataNoFilesWithThumbnail_ScrapboardDeleted()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        var mockFile = GetMockFile("thumb.webp", mockFileContent, "image/webp");
+        var file3 = await fileService.SaveFileAsync(mockFile, 1);
+        
+        Scrapboard scrapboard = new Scrapboard
+        {
+            TripId = 1,
+            Elements = "fake elements",
+            Files = [],
+            Thumbnail = file3.Id
+        };
+        
+        context.Scrapboards.Add(scrapboard);
+        
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.DeleteScrapboardAsync(1);
+        
+        await using var newContext = DbContextFactory.CreateDbContext();
+        newContext.Scrapboards.ShouldBeEmpty();
+        newContext.CustomFiles.ShouldBeEmpty();
+    }
+    
+    [Fact]
+    public async Task DeleteScrapboard_ValidDataNoFilesNoThumbnail_ScrapboardDeleted()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        Scrapboard scrapboard = new Scrapboard
+        {
+            TripId = 1,
+            Elements = "fake elements",
+            Files = [],
+            Thumbnail = -1
+        };
+        
+        context.Scrapboards.Add(scrapboard);
+        
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.DeleteScrapboardAsync(1);
+        
+        await using var newContext = DbContextFactory.CreateDbContext();
+        newContext.Scrapboards.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteScrapboard_ValidDataWithFilesNoThumbnail_ScrapboardDeleted()
+    {
+        await SetupUserAndTrip(1, 1);
+        await using var context = DbContextFactory.CreateDbContext();
+
+        var fileService = ServiceProvider.GetRequiredService<IFileService>();
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        var mockFile = GetMockFile("thumb.webp", mockFileContent, "image/webp");
+        var file1 = await fileService.SaveFileAsync(mockFile, 1);
+        var file2 = await fileService.SaveFileAsync(mockFile, 1);
+        
+        Scrapboard scrapboard = new Scrapboard
+        {
+            TripId = 1,
+            Elements = "fake elements",
+            Files = [file1.Id, file2.Id],
+            Thumbnail = -1
+        };
+        
+        context.Scrapboards.Add(scrapboard);
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.DeleteScrapboardAsync(1);
+        
+        await using var newContext = DbContextFactory.CreateDbContext();
+        newContext.Scrapboards.ShouldBeEmpty();
+        newContext.CustomFiles.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteScrapboard_ScrapboardDoesntExist_KeyNotFoundException()
+    {
+        await SetupUserAndTrip(1, 1);
+
+        await Should.ThrowAsync<KeyNotFoundException>(() =>
+        {
+            return ServiceUnderTest.DeleteScrapboardAsync(1);
+        });
     }
 }
