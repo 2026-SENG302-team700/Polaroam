@@ -1488,5 +1488,186 @@ public class PostServiceTests : BaseIntegrationTestFixture
         );
     }
 
+    /// <summary>
+    /// Make a mock trip, album, user, and post
+    /// </summary>
+    /// <param name="tripId">The id of the trip</param>
+    /// <param name="ownerId">The id of the owner of the trip</param>
+    /// <param name="collaborators">The collaborators on the trip</param>
+    /// <param name="postId">The id of the post</param>
+    /// <param name="postOwnerId">The id of the poster of the post</param>
+    private async Task MakeTripAndPost(int tripId, int ownerId, List<int> collaborators, int postId, int postOwnerId)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
 
+        context.Trips.Add(
+            new Trip()
+            {
+                Id = tripId,
+                Collaborators = collaborators,
+                Title = "title",
+                StartDate = FakeTimeProvider.GetUtcNow().AddDays(-1),
+                EndDate = FakeTimeProvider.GetUtcNow(),
+                UserId = ownerId
+            }
+        );
+
+        context.Albums.Add(
+            new Album()
+            {
+                TripId = tripId,
+                PhotoIds = []
+            }
+        );
+
+        context.Users.Add(
+            new User()
+            {
+                Id = ownerId,
+                Email = $"example{ownerId}@example.com",
+                DisplayName = "John Example",
+                Country = "US"
+            }
+        );
+
+        context.Posts.Add(
+            new Post()
+            {
+                PostId = postId,
+                TripId = tripId,
+                Title = "Title",
+                Date = FakeTimeProvider.GetUtcNow(),
+                OsmId = 1,
+                OsmType = "node",
+                LocationName = "Mars",
+                PhotoIds = [],
+                CreatorId = postOwnerId,
+                CreationTime = FakeTimeProvider.GetUtcNow()
+            }
+        );
+
+        await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsCreatorAndTripOwner_ReturnsTrue()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = userId;
+        int postId = 40;
+        int postOwnerId = userId;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [], postId, postOwnerId);
+
+        Assert.True(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsCreatorAndTripCollaborator_ReturnsTrue()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = 30;
+        int postId = 40;
+        int postOwnerId = userId;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [userId], postId, postOwnerId);
+
+        Assert.True(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsNotCreatorButIsTripOwner_ReturnsFalse()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = userId;
+        int postId = 40;
+        int postOwnerId = 50;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [], postId, postOwnerId);
+
+        Assert.False(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsNotCreatorButIsTripCollaborator_ReturnsFalse()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = 30;
+        int postId = 40;
+        int postOwnerId = 50;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [userId], postId, postOwnerId);
+
+        Assert.False(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsNotCreatorAndIsNotInTrip_ReturnsFalse()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = 30;
+        int postId = 40;
+        int postOwnerId = 50;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [], postId, postOwnerId);
+
+        Assert.False(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsCreatorButNotInTrip_ReturnsFalse()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = 30;
+        int postId = 40;
+        int postOwnerId = userId;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [], postId, postOwnerId);
+
+        Assert.False(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsCreatorButPostNotInTrip_ReturnsFalse()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = userId;
+        int postId = 40;
+        int postOwnerId = userId;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [], 3, 4);
+        await MakeTripAndPost(1, 2, [], postId, postOwnerId);
+
+        Assert.False(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
+
+    [Fact]
+    public async Task PostOwnershipCheck_IsNotCreatorAndPostNotInTrip_ReturnsFalse()
+    {
+        int userId = 10;
+
+        int tripId = 20;
+        int tripOwnerId = userId;
+        int postId = 40;
+        int postOwnerId = 50;
+
+        await MakeTripAndPost(tripId, tripOwnerId, [], 3, 4);
+        await MakeTripAndPost(1, 2, [], postId, postOwnerId);
+
+        Assert.False(await ServiceUnderTest.UserOwnsPost(userId, tripId, postId));
+    }
 }

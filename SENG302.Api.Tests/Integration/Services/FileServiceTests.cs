@@ -135,43 +135,6 @@ public class FileServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task CheckFileOwnership_OwnerOwns_ReturnTrue()
-    {
-        await using var context = await DbContextFactory.CreateDbContextAsync();
-
-        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-
-        var mockFile = GetMockFile(
-            "mocka",
-            mockFileContent,
-            "image/webp");
-
-        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-
-        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id, 0);
-        owns.ShouldBeTrue();
-    }
-
-
-    [Fact]
-    public async Task CheckFileOwnership_OwnerDoesntOwn_ReturnFalse()
-    {
-        await using var context = await DbContextFactory.CreateDbContextAsync();
-
-        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
-
-        var mockFile = GetMockFile(
-            "mocka",
-            mockFileContent,
-            "image/webp");
-
-        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
-
-        var owns = await ServiceUnderTest.CheckFileOwnership(fileEntity.Id, 1);
-        owns.ShouldBeFalse();
-    }
-
-    [Fact]
     public async Task RemoveTagAsync_HasTags_ReturnsOk()
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
@@ -436,7 +399,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
         var status = await ServiceUnderTest.GetTagQueueStatus(1);
         status.ShouldBeTrue();
     }
-    
+
     [Fact]
     public async Task GetMimeTypeAsync_ValidId_ReturnsString()
     {
@@ -452,9 +415,255 @@ public class FileServiceTests : BaseIntegrationTestFixture
         };
         context.CustomFiles.Add(file);
         await context.SaveChangesAsync();
-        
+
         var type = await ServiceUnderTest.GetMimeTypeAsync(file.Id);
         type.ShouldNotBeNull();
         type.ShouldBe("image/png");
+    }
+
+    /// <summary>
+    /// Make a mock trip, album and user
+    /// </summary>
+    /// <param name="tripId">The id of the trip</param>
+    /// <param name="ownerId">The id of the owner of the trip</param>
+    /// <param name="collaborators">The collaborators on the trip</param>
+    /// <param name="albumPhotoIds">The ids of the photos in the trip album</param>
+    private async Task MakeTrip(int tripId, int ownerId, List<int> collaborators, List<int> albumPhotoIds)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Trips.Add(
+            new Trip()
+            {
+                Id = tripId,
+                Collaborators = collaborators,
+                Title = "title",
+                StartDate = FakeTimeProvider.GetUtcNow().AddDays(-1),
+                EndDate = FakeTimeProvider.GetUtcNow(),
+                UserId = ownerId
+            }
+        );
+
+        context.Albums.Add(
+            new Album()
+            {
+                TripId = tripId,
+                PhotoIds = albumPhotoIds
+            }
+        );
+
+        context.Users.Add(
+            new User()
+            {
+                Id = ownerId,
+                Email = $"example{ownerId}@example.com",
+                DisplayName = "John Example",
+                Country = "US"
+            }
+        );
+
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Make a mock trip, album, user, and post
+    /// </summary>
+    /// <param name="tripId">The id of the trip</param>
+    /// <param name="ownerId">The id of the owner of the trip</param>
+    /// <param name="collaborators">The collaborators on the trip</param>
+    /// <param name="postId">The id of the post</param>
+    /// <param name="postOwnerId">The id of the poster of the post</param>
+    /// <param name="postPhotoIds">The ids of the photos in the post</param>
+    private async Task MakeTripAndPost(int tripId, int ownerId, List<int> collaborators, int postId, int postOwnerId, List<int> postPhotoIds)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        context.Trips.Add(
+            new Trip()
+            {
+                Id = tripId,
+                Collaborators = collaborators,
+                Title = "title",
+                StartDate = FakeTimeProvider.GetUtcNow().AddDays(-1),
+                EndDate = FakeTimeProvider.GetUtcNow(),
+                UserId = ownerId
+            }
+        );
+
+        context.Albums.Add(
+            new Album()
+            {
+                TripId = tripId,
+                PhotoIds = []
+            }
+        );
+
+        context.Users.Add(
+            new User()
+            {
+                Id = ownerId,
+                Email = $"example{ownerId}@example.com",
+                DisplayName = "John Example",
+                Country = "US"
+            }
+        );
+
+        context.Posts.Add(
+            new Post()
+            {
+                PostId = postId,
+                TripId = tripId,
+                Title = "Title",
+                Date = FakeTimeProvider.GetUtcNow(),
+                OsmId = 1,
+                OsmType = "node",
+                LocationName = "Mars",
+                PhotoIds = postPhotoIds,
+                CreatorId = postOwnerId,
+                CreationTime = FakeTimeProvider.GetUtcNow()
+            }
+        );
+
+        await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_IsTripOwnerAndPhotoInAlbum_ReturnTrue()
+    {
+        int tripId = 100;
+        int userId = 200;
+        int photoId = 300;
+        await MakeTrip(tripId, userId, [], [photoId]);
+
+        Assert.True(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_NotOwnerOrCollaboratorAndPhotoInAlbum_ReturnFalse()
+    {
+        int tripId = 100;
+        int userId = 200;
+        int ownerId = 300;
+        int photoId = 400;
+        await MakeTrip(tripId, ownerId, [], [photoId]);
+
+        Assert.False(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_IsCollaboratorAndPhotoInAlbum_ReturnTrue()
+    {
+        int tripId = 100;
+        int userId = 200;
+        int ownerId = 300;
+        int photoId = 400;
+        await MakeTrip(tripId, ownerId, [userId], [photoId]);
+
+        Assert.True(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_IsPostOwnerAndPhotoInPost_ReturnTrue()
+    {
+        int tripId = 100;
+        int postId = 200;
+        int postOwnerId = 300;
+        int tripOwnerId = 400;
+        int userId = postOwnerId;
+        int photoId = 600;
+        await MakeTripAndPost(tripId, tripOwnerId, [userId], postId, postOwnerId, [photoId]);
+
+        Assert.True(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_IsTripOwnerAndPhotoInPost_ReturnTrue()
+    {
+        int tripId = 100;
+        int postId = 200;
+        int postOwnerId = 300;
+        int tripOwnerId = 400;
+        int userId = tripOwnerId;
+        int photoId = 600;
+        await MakeTripAndPost(tripId, tripOwnerId, [], postId, postOwnerId, [photoId]);
+
+        Assert.True(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_IsTripCollaboratorAndPhotoInPost_ReturnTrue()
+    {
+        int tripId = 100;
+        int postId = 200;
+        int postOwnerId = 300;
+        int tripOwnerId = 400;
+        int userId = 500;
+        int photoId = 600;
+        await MakeTripAndPost(tripId, tripOwnerId, [userId], postId, postOwnerId, [photoId]);
+
+        Assert.True(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_PhotoInAlbumOfOtherTrip_ReturnFalse()
+    {
+        int photoId = 100;
+
+        int otherTripId = 10;
+        int otherTripOwnerId = 20;
+        await MakeTrip(otherTripId, otherTripOwnerId, [], [photoId]);
+
+        int tripId = 200;
+        int tripOwnerId = 300;
+        int userId = tripOwnerId;
+        await MakeTrip(tripId, userId, [], []);
+
+        Assert.False(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_PhotoInPostOfOtherTrip_ReturnFalse()
+    {
+        int photoId = 100;
+
+        int otherTripId = 10;
+        int otherTripOwnerId = 20;
+        int otherPostId = 30;
+        int otherPostOwnerId = 40;
+        await MakeTripAndPost(otherTripId, otherTripOwnerId, [], otherPostId, otherPostOwnerId, [photoId]);
+
+        int tripId = 200;
+        int tripOwnerId = 300;
+        int userId = tripOwnerId;
+        await MakeTrip(tripId, userId, [], []);
+
+        Assert.False(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_PhotoIsInPostAndWePostedThatPostButForSomeReasonWeWereKickedFromThatTripSomeTimeAgo_ReturnFalse()
+    {
+        int userId = 100;
+        int photoId = 200;
+
+        int tripId = 10;
+        int tripOwnerId = 20;
+        int postId = 30;
+        int postOwnerId = userId;
+        await MakeTripAndPost(tripId, tripOwnerId, [], postId, postOwnerId, [photoId]);
+
+        Assert.False(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
+    }
+
+    [Fact]
+    public async Task FileAccessCheck_PhotoIdNowhere_ReturnFalse()
+    {
+        int tripId = 100;
+        int userId = 200;
+        int ownerId = 300;
+        int photoId = 400;
+        await MakeTrip(tripId, ownerId, [], []);
+
+        Assert.False(await ServiceUnderTest.UserHasAccessToFileFromTrip(userId, tripId, photoId));
     }
 }

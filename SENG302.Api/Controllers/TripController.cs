@@ -226,7 +226,7 @@ public class TripController : ControllerBase
             var userId = int.Parse(userIdString);
             if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripRequest.Id))
                 return Unauthorized("You do not have permission to edit this trip!");
-            var trip = await _tripService.UpdateTripAsync(tripRequest, int.Parse(userIdString));
+            var trip = await _tripService.UpdateTripAsync(tripRequest);
             if (trip == null)
             {
                 return NotFound();
