@@ -10,7 +10,6 @@
     let {tripId = -1} = $props();
 
     let scrapboardCreated: Boolean = $state(false);
-    let scrapboard = $state([]);
     let loading = $state(true);
     let showExpanded = $state(false);
     let scrapboardImage = $state('');
@@ -75,6 +74,12 @@
             loading = false;
         }
     }
+    
+    function onDeleteScrapboard() {
+        scrapboardCreated = false;
+        loading = false;
+        scrapboardImage = '';
+    }
 </script>
 
 <div class="container mt-4">
@@ -108,6 +113,7 @@
         bind:shown={showExpanded}
         scrapboardImage={scrapboardImage}
         {tripId}
+        onDelete={onDeleteScrapboard}
 />
 
 <style>

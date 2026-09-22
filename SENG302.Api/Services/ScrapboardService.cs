@@ -182,6 +182,13 @@ public class ScrapboardService : IScrapboardService
             CustomFile file = await _fileService.GetFileByIdAsync(fileId);
             await _fileService.DeleteFileAsync(file.FileKey);
         }
+
+        Trip? trip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+        if (trip != null)
+        {
+            trip.HasScrapboard = false;
+            await context.SaveChangesAsync();
+        }
         
         await context.Scrapboards.Where(s => s.TripId == tripId).ExecuteDeleteAsync();
     }

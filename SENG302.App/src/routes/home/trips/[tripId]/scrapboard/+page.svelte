@@ -11,14 +11,12 @@
     import { goto } from "$app/navigation";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { addToast } from "$lib/toast/toast";
-    import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let loadError = $state("");
     let showBackModal = $state(false);
     let lastSaveState = $state("");
-    let showDeleteModal = $state(false);
 
     /**
      * Helper function to convert the Excalidraw files into a
@@ -72,7 +70,12 @@
             credentials: "include",
         });
         lastSaveState = JSON.stringify(elements);
-        addToast("Scrapboard saved", "success");
+        
+        if (response.ok) {
+            addToast("Scrapboard saved", "success");
+        } else {
+            addToast("Failed to save scrapboard", "error");
+        }
     }
 
     /**
@@ -151,26 +154,6 @@
             buildMainMenu(mod),
         ]);
     }
-
-    /**
-     * Calls the backend and deletes the scrapboard.
-     * If deletion successful, the user gets redirected back to the homepage.
-     */
-    async function deleteScrapboard() {
-        console.log("deleteScrapboard");
-
-        const response = await fetchWithCsrf(resolve(`/api/scrapboard/${page.params.tripId}` as any), {
-            method: "DELETE",
-            credentials: "include",
-        });
-        
-        if (response.ok) {
-            addToast("Scrapboard deleted successfully", "success");
-            goto(resolve(`/home/trips/${page.params.tripId}`));
-        } else {
-            addToast("Failed to delete scrapboard.", "error");
-        }
-    }
     
 </script>
 <div class="page-wrapper">
@@ -183,9 +166,6 @@
         </button>
         
         <div class="scrapboard-buttons-right">
-            <DeleteButton
-                    deleteAction={() => showDeleteModal = true}
-            />
             <CreationButton
                     text="Update Scrapboard"
                     onClick={saveScrapboard}
@@ -224,20 +204,6 @@
     bind:show={showBackModal}
 />
 
-<!-- Delete Modal -->
-<ConfirmationModal 
-    message="Are you sure you want to delete this scrapboard?"
-    option1Text="Do not delete"
-    option2Text="Delete"
-    option2Style="danger"
-    onOption1={() => {}}
-    onOption2={async () => {
-        await deleteScrapboard();
-    }}
-    bind:show={showDeleteModal}
-/>
-    
-    
 <style>
     .scrapboard-wrapper {
         height: 70vh;
