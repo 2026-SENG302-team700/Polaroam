@@ -1,5 +1,6 @@
 import { resolve } from "$app/paths";
 import { fetchWithCsrf } from "$lib/csrf";
+import { goto } from "$app/navigation";
 
 /**
  * Sends a request to the backend to accept collaboration with the trip whose Id
@@ -18,10 +19,9 @@ export async function acceptInvite(tripId:number, handled:boolean) {
             }),
             credentials: "include",
         });
-        const data = await response.json();
         handled = true;
+        console.log(tripId);
         goto(resolve(`/home/trips/${tripId}`))
-
     } catch (err) {
 
     }
