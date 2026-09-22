@@ -213,6 +213,13 @@ public class CollaborationService : ICollaborationService
         
         await _notificationService.AddNotificationAsync(kickedNotification);
         
+        // email setup and logic
+        var emailDict = new Dictionary<string, string>
+        {
+            { "TRIP_NAME", trip.Title },
+            { "DISPLAY_NAME", kickedUser.DisplayName}
+        };
         
+        await _emailQueue.QueueEmailAsync(new EmailJob(kickedUser.Email, EmailTemplate.KickedFromTripEmailTemplate, emailDict));
     }
 }

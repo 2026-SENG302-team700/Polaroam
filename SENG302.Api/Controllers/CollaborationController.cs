@@ -171,7 +171,7 @@ public class CollaborationController : ControllerBase
     /// <param name="tripId">The trip id of the trip to remove user as collaborator from</param>
     /// <param name="kickedUserId">The id of the user that is going to be kicked</param>
     /// <returns>
-    /// Ok - If the trip and user id are valid and the user can be kicked
+    /// Ok - If the trip and user id are valid and the user can be kicked. Returns the list of remaining collaborators
     /// Bad Request - If the trip and user id do not correspond to real trip or user
     /// Unauthorized - The user is unauthorized and cannot be added to the trip
     /// </returns>
