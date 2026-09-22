@@ -47,9 +47,9 @@ public class TripControllerUnitTests
     /// <summary>
     /// Returns a basic list of collaborating users for mocking purposes
     /// </summary>
-    private List<CollaboratingUser> GetCollaboratingUsersMock()
+    private List<CollaboratingUserResponse> GetCollaboratingUsersMock()
     {
-        return new List<CollaboratingUser> {
+        return new List<CollaboratingUserResponse> {
             new() {DisplayName = "Name", UserId = 2},
             new() {DisplayName = "Name 2", UserId = 3}
         };

@@ -454,7 +454,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUser>>();
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUserResponse>>();
 
         collaborators.ShouldBeEmpty();
     }

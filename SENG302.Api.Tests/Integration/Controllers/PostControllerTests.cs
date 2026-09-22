@@ -1393,7 +1393,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
-        await _mockPostService.Received(1).UserOwnsPost(1, request.TripId, request.Id);
+        await _mockTripService.Received(1).UserHasCollaborationAccessToTrip(1, existingPost.TripId);
 
         await _mockPostService.DidNotReceive().UpdatePostAsync(Arg.Any<UpdatePostRequest>(), 1, Arg.Any<List<IFormFile>>());
     }

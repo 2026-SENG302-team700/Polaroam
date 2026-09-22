@@ -46,7 +46,7 @@ public class ImageController : ControllerBase
         User? user = await _userService.GetUserByIdAsync(userId);
         if (user == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         try
@@ -97,7 +97,7 @@ public class ImageController : ControllerBase
         {
             if (!await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
             await _fileService.RemoveTagAsync(photoId, tag);
@@ -202,7 +202,7 @@ public class ImageController : ControllerBase
         User? user = await _userService.GetUserByIdAsync(userId);
         if (user == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
@@ -282,7 +282,7 @@ public class ImageController : ControllerBase
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
             var imageContext = await _imageService.GetImageContextAsync(photoId);
