@@ -113,9 +113,7 @@
      * Gets the trip's scrapboard from the backend, adds the files, then updates
      * the scene elements.
      */
-    async function loadScrapboard() {
-        if (!excalidrawAPI) return;
-
+    async function loadScrapboard() {        
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/scrapboard/${tripId}` as any),
@@ -142,10 +140,10 @@
                 }),
             );
 
-            excalidrawAPI.addFiles(files);
+            excalidrawAPI!.addFiles(files);
             const elements = JSON.parse(scrapboard.elements);
-            excalidrawAPI.updateScene({ elements });
-            excalidrawAPI.scrollToContent(elements, {
+            excalidrawAPI!.updateScene({ elements });
+            excalidrawAPI!.scrollToContent(elements, {
                 fitToContent: true,
                 animate: true,
                 duration: 300,
@@ -159,9 +157,7 @@
      * Opens a warning before leaving when the scrapboard has unsaved changes.
      */
     function handleBackButton() {
-        if (!excalidrawAPI) return;
-
-        const currentState = JSON.stringify(excalidrawAPI.getSceneElements());
+        const currentState = JSON.stringify(excalidrawAPI!.getSceneElements());
         if (currentState !== lastSaveState) {
             showBackModal = true;
         } else {
