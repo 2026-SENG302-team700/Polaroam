@@ -154,7 +154,7 @@
                     {#if inviteShown}
                         <div class="invite-wrapper">
                             <span>Invite Collaborators to Trip:</span>
-                            <div class="invite-form">
+                            <div class="invite-form input-group d-flex flex-nowrap">
                                 <input
                                         type="email"
                                         class="form-control"
@@ -232,7 +232,6 @@
         width: 100%;
         display: flex;
         justify-content: space-between;
-        gap: 0.5rem;
         margin-bottom: 0.2rem;
     }
     
