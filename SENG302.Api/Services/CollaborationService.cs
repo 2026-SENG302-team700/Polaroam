@@ -107,7 +107,7 @@ public class CollaborationService : ICollaborationService
         
         if (!UserCredentialsValidator.CheckEmailFormat(userEmail))
         {
-            throw new EmailInvalidationException("Email was invalid!");
+            throw new EmailInvalidationException("Invalid email address. Email must be in the format 'jane@doe.nz'");
         }
         
         var invitedUser = await _userService.GetUserFromEmailAsync(userEmail);

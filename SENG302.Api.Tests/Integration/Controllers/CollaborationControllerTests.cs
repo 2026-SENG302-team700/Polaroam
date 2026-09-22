@@ -299,7 +299,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         
         var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
-        colabResponse?.Message.ShouldBe("Email was invalid!");
+        colabResponse?.Message.ShouldBe("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
     
     [Fact]
