@@ -343,7 +343,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
-        colabResponse?.Message.ShouldBe("This user is already apart of this trip.");
+        colabResponse?.Message.ShouldBe("This user is already a part of this trip.");
         
     }
 

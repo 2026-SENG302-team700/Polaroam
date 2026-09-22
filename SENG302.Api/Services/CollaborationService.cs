@@ -130,7 +130,7 @@ public class CollaborationService : ICollaborationService
                 || trip.UserId == invitedUser.Id
                 )
             {
-                throw new UserInTripException("This user is already apart of this trip.");
+                throw new UserInTripException("This user is already a part of this trip.");
             }
             
             inviteNotification = new TripInvitationNotification()

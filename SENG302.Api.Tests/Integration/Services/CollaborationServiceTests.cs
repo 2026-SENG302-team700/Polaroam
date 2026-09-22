@@ -360,7 +360,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
             async () => await ServiceUnderTest.SendInviteAsync("test2@example.com", 1, 1)
         );
         
-        err.Message.ShouldBe("This user is already apart of this trip.");
+        err.Message.ShouldBe("This user is already a part of this trip.");
     }
 
     [Fact]
@@ -406,7 +406,7 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
             async () => await ServiceUnderTest.SendInviteAsync("test2@example.com", 1, 1)
         );
 
-        err.Message.ShouldBe("This user is already apart of this trip.");
+        err.Message.ShouldBe("This user is already a part of this trip.");
     }
 
     [Fact]
