@@ -6,9 +6,9 @@ import { fetchWithCsrf } from "$lib/csrf";
  * matches the Id in the parameter of this function
  * @param tripId 
  */
-export async function acceptInvite(tripId:number) {
+export async function acceptInvite(tripId:number, handled:boolean) {
     try {
-        const response = await fetchWithCsrf(resolve(`/home/trips/${tripId}/collaborators`), {
+        const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration/action` as any), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -19,9 +19,8 @@ export async function acceptInvite(tripId:number) {
             credentials: "include",
         });
         const data = await response.json();
-        if (response.status == 401) {
-            console
-        }
+        handled = true;
+
     } catch (err) {
 
     }
@@ -32,9 +31,9 @@ export async function acceptInvite(tripId:number) {
  * matches the Id in the parameter of this function
  * @param tripId 
  */
-export async function rejectInvite(tripId:number) {
+export async function rejectInvite(tripId:number, handled:boolean) {
     try {
-        const response = await fetchWithCsrf(resolve(`/home/trips/${tripId}/collaborators`), {
+        const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration/action` as any), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -45,9 +44,8 @@ export async function rejectInvite(tripId:number) {
             credentials: "include",
         });
         const data = await response.json();
-        if (response.status == 401) {
-            console
-        }
+        handled = true;
+
     } catch (err) {
 
     }

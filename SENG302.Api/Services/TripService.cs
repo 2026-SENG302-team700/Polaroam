@@ -212,7 +212,7 @@ public class TripService : ITripService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var trip = await context.Set<Trip>().Where(t => t.Id == tripRequest.Id).FirstOrDefaultAsync();
+        var trip = await context.Trips.Where(t => t.Id == tripRequest.Id).FirstOrDefaultAsync();
         if (trip == null)
         {
             throw new ArgumentException("trip with the provided ID does not exist.");

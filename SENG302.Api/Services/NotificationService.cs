@@ -120,8 +120,9 @@ public class NotificationService : INotificationService
     /// <returns></returns>
     public async Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId)
     {
-        var inviteNotification = new Notification
+        var inviteNotification = new TripInvitationNotification
         {
+            TripId = tripId,
             UserId = invitedUserId,
             HeaderText = "New Invitation Request",
             BodyText = $"You have been invited to collaborate on the {title} trip!",

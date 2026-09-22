@@ -151,7 +151,8 @@ public class CollaborationService : ICollaborationService
 
         // Update pending invites for trip
         var context = await _dbContextFactory.CreateDbContextAsync();
-        trip.PendingInvites.Add(userEmail);
+        var modifyTrip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+        modifyTrip.PendingInvites.Add(userEmail);
         //create a pending user so that references can be updated accordingly when they create an account
         if (invitedUser == null)
         {
@@ -180,9 +181,14 @@ public class CollaborationService : ICollaborationService
     public async Task ActionAcceptAsync(int tripId, User user)
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
-        var trip = await _tripService.GetTripByIdAsync(tripId);
+        var trip = await context.Trips.Where(t => t.Id == tripId).FirstOrDefaultAsync();
         if (trip.PendingInvites.Remove(user.Email))
         {
+            var notifications = context.Notifications.OfType<TripInvitationNotification>().Where(n => n.UserId == user.Id && n.TripId == tripId).ToList();
+            foreach (var notification in notifications)
+            {
+                notification.Handled = true;
+            }
             trip.Collaborators.Add(user.Id);
             await context.SaveChangesAsync();
             var acceptNotificationForOwner = new Notification()
@@ -211,7 +217,7 @@ public class CollaborationService : ICollaborationService
     public async Task ActionRejectAsync(int tripId, User user)
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
-        var trip = await _tripService.GetTripByIdAsync(tripId);
+        var trip = await context.Trips.Where(t => t.Id == tripId).FirstOrDefaultAsync();
         if (trip.PendingInvites.Remove(user.Email))
         {
             await context.SaveChangesAsync();

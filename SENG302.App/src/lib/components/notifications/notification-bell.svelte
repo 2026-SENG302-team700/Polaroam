@@ -3,6 +3,7 @@
     import NotificationList from "./notification-list.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import { acceptInvite, rejectInvite } from "./invite-actions";
 
     let toggled = $state(false);
 
@@ -21,6 +22,7 @@
      */
     function createNotificationData(response: NotificationResponse) {
         var data: NotificationData = {
+            tripId: response.tripId,
             id: response.id,
             isRead: response.readStatus,
             title: response.headerText,
@@ -31,16 +33,17 @@
         };
 
         if (!response.handled) {
-            if (response.notificationType == "TripInvitation") {
+            if (response.notificationType == "TripInvitation" && data.tripId !=undefined) {
+
                 data.leftAction = {
-                    function: () => console.log("Accept"),
+                    function: () => acceptInvite(data.tripId, response.handled),
                     text: "Accept",
                     colour: "btn-success",
                 };
 
                 data.rightAction = {
                     text: "Decline",
-                    function: () => console.log("Decline"),
+                    function: () => rejectInvite(data.tripId, response.handled),
                     colour: "btn-danger",
                 };
             }

@@ -158,19 +158,20 @@ public class UserService : IUserService
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
+        await context.SaveChangesAsync();
 
         //if the user is pending, then send them invite notifications tied to the pending user object
         var pendingUser = await GetPendingUserAsync(user.Email);
         if (pendingUser != null)
         {
+            var registeredUser = await GetUserFromEmailAsync(user.Email);
             foreach (var tripId in pendingUser.TripInvites)
             {
                 var trip = await _tripService.GetTripByIdAsync(tripId);
-                await _notificationService.SendInviteNotificationAsync(trip.Title, user.Id, trip.Id);
+                await _notificationService.SendInviteNotificationAsync(trip.Title, registeredUser.Id, trip.Id);
             }
             await RemovePendingUserAsync(user.Email);
         }
-        await context.SaveChangesAsync();
     }
 
     /// <summary>

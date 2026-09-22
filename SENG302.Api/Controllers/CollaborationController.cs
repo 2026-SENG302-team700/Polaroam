@@ -5,7 +5,6 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Entities;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -173,29 +172,29 @@ public class CollaborationController : ControllerBase
             // Check logged in
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Not logged in");
-            
+
             // Get user and trip
             var user = await _userService.GetUserByIdAsync(int.Parse(userIdString));
             if (user == null) return Unauthorized("User not found");
             var trip = await _tripService.GetTripByIdAsync(tripId);
-            
+
             // Check for pending invite
             if (!trip.PendingInvites.Contains(user.Email)) return BadRequest("No pending invites");
-            
+
             // Reject
             if (collaborationRequest.Action == 0)
             {
                 await _collaborationService.ActionRejectAsync(tripId, user);
                 return Ok("successfully rejected");
-            } 
-            
+            }
+
             // Accept
             if (collaborationRequest.Action == 1)
             {
                 await _collaborationService.ActionAcceptAsync(tripId, user);
                 return Ok("successfully accepted");
             }
-            
+
             // Invalid action (not 0 or 1)
             return BadRequest("Not a valid collaboration action!");
         }

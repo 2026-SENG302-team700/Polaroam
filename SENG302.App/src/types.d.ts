@@ -16,6 +16,7 @@ type NotificationActionButton = {
 }
 
 type NotificationData = {
+    tripId?:number,
     title: string,
     text: string,
     isRead: boolean,
