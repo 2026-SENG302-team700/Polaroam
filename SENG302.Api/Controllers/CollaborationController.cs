@@ -184,7 +184,7 @@ public class CollaborationController : ControllerBase
 
         try
         {
-            await _collaborationService.KickUserAsync(tripId, kickedUserId);
+            List<int> remainingCollaborators = await _collaborationService.KickUserAsync(tripId, kickedUserId);
         }
         catch (KeyNotFoundException e)
         {

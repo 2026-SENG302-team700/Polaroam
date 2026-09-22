@@ -31,6 +31,7 @@
     let kickUserConfirmationModalShown = $state(false)
     let kickUserMessage = $state("")
     let UserIdOfKicked = $state<number | null>(null)
+    let kickUserError = $state("")
     
 
     /**
@@ -137,7 +138,26 @@
      * Kick the user
      */
     async function kickUser() {
+        const tripId = page.params.tripId;
         
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration/kick/${UserIdOfKicked}` as any), {
+                method: "DELETE",
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                kickUserError = await response.text() 
+            } else {
+                emailMessageStyle = "invite-message-success"
+                emailMessage = "Invite sent."
+            }
+
+        } catch (e) {
+            console.error(e);
+        } finally {
+            hideKickUserConfirmationModal()
+        }
     }
 
     /**
