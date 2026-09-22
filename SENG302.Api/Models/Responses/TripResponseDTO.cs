@@ -23,5 +23,5 @@ public class TripResponse
 
     public required DateTimeOffset? EndDate { get; set; }
 
-    public required List<CollaboratingUser> Collaborators { get; set; } = [];
+    public required List<CollaboratingUserResponse> Collaborators { get; set; } = [];
 }
