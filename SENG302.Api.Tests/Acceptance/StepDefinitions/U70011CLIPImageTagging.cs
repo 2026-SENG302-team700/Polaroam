@@ -19,7 +19,7 @@ public class U70011ClipImageTagging
 {
     private readonly AcceptanceTestFixture _fixture;
     private HttpResponseMessage? _lastResponse;
-    private Post? _post;
+    private PostResponse? _post;
     private int _userId = 1;
 
     public U70011ClipImageTagging(AcceptanceTestFixture fixture)
@@ -107,11 +107,11 @@ public class U70011ClipImageTagging
 
         postId.ShouldNotBeNull();
 
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+        _post = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
 
-        retrievedPost.ShouldNotBeNull();
-        retrievedPost.PostId.ShouldBe(int.Parse(postId));
-        retrievedPost.PhotoIds.ShouldHaveSingleItem();
+        _post.ShouldNotBeNull();
+        _post.PostId.ShouldBe(int.Parse(postId));
+        _post.PhotoIds.ShouldHaveSingleItem();
     }
 
     private async Task SetupUserTripAndPost()

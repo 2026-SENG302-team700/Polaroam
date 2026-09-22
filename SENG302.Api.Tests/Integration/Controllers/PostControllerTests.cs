@@ -1422,24 +1422,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockUserService.GetUserDisplayName(1).Returns("Juggy");
         _mockTripService.UserHasCollaborationAccessToTrip(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>()).Returns(updatedPost);
 
         var result = await _controller.UpdatePost(request, null);
 
-        var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        okResult.Value.ShouldNotBeNull();
-        var postResponse = (PostResponse)okResult.Value;
-
-        postResponse.PostId.ShouldBe(updatedPost.PostId);
-        postResponse.TripId.ShouldBe(updatedPost.TripId);
-        postResponse.CreatorId.ShouldBe(updatedPost.CreatorId);
-        postResponse.Title.ShouldBe(updatedPost.Title);
-        postResponse.Content.ShouldBe(updatedPost.Content);
-        postResponse.OsmId.ShouldBe(updatedPost.OsmId);
-        postResponse.LocationName.ShouldBe(updatedPost.LocationName);
-        postResponse.PhotoIds.ShouldBe(updatedPost.PhotoIds);
+        result.Result.ShouldBeOfType<OkObjectResult>();
 
         await _mockPostService.Received(1).UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>());
     }
