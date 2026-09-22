@@ -20,6 +20,7 @@ export async function acceptInvite(tripId:number, handled:boolean) {
         });
         const data = await response.json();
         handled = true;
+        goto(resolve(`/home/trips/${tripId}`))
 
     } catch (err) {
 
