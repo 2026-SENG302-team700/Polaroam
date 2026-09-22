@@ -1,17 +1,18 @@
 <script lang="ts">
     import Excalidraw from "svelte-excalidraw";
-    import {type ExcalidrawImperativeAPI} from "@excalidraw/excalidraw/types";
+    import { type ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
-    import {onMount} from "svelte";
-    import {resolve} from "$app/paths";
-    import {page} from "$app/state";
+    import { onMount } from "svelte";
+    import { resolve } from "$app/paths";
+    import { page } from "$app/state";
     import AlbumImagePickerModal from "$lib/components/modals/album-image-picker-modal.svelte";
+    import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
 
     let excalidrawAPI: ExcalidrawImperativeAPI | undefined = $state();
     let saving = $state(false);
     let error = $state("");
-    let showPickerModal = $state(false)
+    let showPickerModal = $state(false);
     let tripId = Number(page.params.tripId);
 
     // to be removed once proper implementation with backend is created
@@ -49,45 +50,47 @@
         scrollToContent: true,
     };
     // end of init data block
-    
+
     async function onClick() {
-        console.log("scene elements:")
+        console.log("scene elements:");
         console.log(excalidrawAPI!.getSceneElements());
     }
 
     async function showImagePickerModal() {
         showPickerModal = true;
     }
-    
 </script>
+
 <div>
-    <CreationButton
-            text="scrapboard elements"
-            onClick={onClick}
-            loading={saving}
-    />
-    <button class="btn btn-primary bi-image" onclick={showImagePickerModal}/>
+    <div class="scrapboard-toolbar">
+        <NavigationButton path="/home/trips/{tripId}" text="Back" />
+        <CreationButton text="scrapboard elements" {onClick} loading={saving} />
+        <button
+            class="btn btn-secondary bi-images image-picker-button"
+            onclick={showImagePickerModal}
+        />
+    </div>
 
     <div class="scrapboard-wrapper">
         <Excalidraw
-                bind:excalidrawAPI
-                {initialData}
-                theme="light"
-                name="Basic Test"
-                viewModeEnabled={false}
-                zenModeEnabled={false}
-                gridModeEnabled={false}
-                autoFocus={true}
-                UIOptions={{
-                    tools: {
-                        image: false,
-                    }
-                }}
+            bind:excalidrawAPI
+            {initialData}
+            theme="light"
+            name="Basic Test"
+            viewModeEnabled={false}
+            zenModeEnabled={false}
+            gridModeEnabled={false}
+            autoFocus={true}
+            UIOptions={{
+                tools: {
+                    image: false,
+                },
+            }}
         />
     </div>
 </div>
 
-<AlbumImagePickerModal tripId={tripId} bind:show={showPickerModal} excalidrawAPI={excalidrawAPI}/>
+<AlbumImagePickerModal {tripId} bind:show={showPickerModal} {excalidrawAPI} />
 
 <style>
     .scrapboard-wrapper {
@@ -95,5 +98,16 @@
         border: 3px solid black;
         border-radius: 5px;
         box-shadow: 8px 8px black;
+    }
+
+    .scrapboard-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .image-picker-button {
+        margin-left: auto;
     }
 </style>
