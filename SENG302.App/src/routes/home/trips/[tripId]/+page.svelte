@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { user } from "$lib/stores/user";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -21,7 +22,7 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
-    let ownerDisplayName: null | string = $state(null);
+    let tripOwner = $state(null);
     let hoveredPostId: number | null = $state(null);
     let collaborationModalShown: boolean = $state(false);
     let collaboratingUsersError: string = $state("");
@@ -176,10 +177,10 @@
                     credentials: "include",
                 },
             );
-            ownerDisplayName = await response.text();
+            tripOwner = await response.json();
         } catch (err) {
             throw new Error(
-                "Failed to fetch post creator: " + (err as Error).message,
+                "Failed to fetch trip owner"
             );
         }
     }
@@ -209,7 +210,7 @@
     async function fetchTripCollaborators() {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/collaborators` as any),
+                resolve(`/api/trip/${tripId}/collaboration` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -305,7 +306,8 @@
 
 <CollaborationModal
     bind:show={collaborationModalShown}
-    tripOwner={ownerDisplayName ?? ""}
+    isOwner={tripOwner?.id === $user.id}
+    tripOwner={tripOwner ? tripOwner.displayName : ""}
     tripCollaborators={collaboratingUsers}
     {error}
 />

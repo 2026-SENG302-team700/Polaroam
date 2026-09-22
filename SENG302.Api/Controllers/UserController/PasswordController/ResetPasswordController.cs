@@ -157,8 +157,8 @@ public class ResetPasswordController : ControllerBase
         }
 
         // Authenticate this context based on the password reset scheme
-         var resetResult = await HttpContext.AuthenticateAsync("PasswordResetScheme");
-        
+        var resetResult = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+
         // check if the user has requested a reset password
         if ((resetResult.Succeeded && resetResult.Principal != null) || user.ForgotIsResettingPassword)
         {

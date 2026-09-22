@@ -215,13 +215,6 @@
         try {
             loading = true;
 
-            if (
-                content.length > 0 ||
-                (files !== undefined && files !== null && files?.length > 0)
-            ) {
-                noContentAllowed = true;
-            }
-
             const form = new FormData();
             form.append("Id", parseInt(page.params.postId));
             form.append("TripId", tripId);
@@ -277,14 +270,14 @@
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
                     errors.title.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     errors.generic.length === 0 &&
                     errors.location.length === 0 &&
-                    photoIds.length === 0 &&
-                    files?.length === 0
+                    photoIds.length === 0
                 ) {
                     confirmationModalShown = true;
                 }
+                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
 
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {

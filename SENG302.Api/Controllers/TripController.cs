@@ -73,21 +73,29 @@ public class TripController : ControllerBase
     [HttpGet("{tripId:int}/user")]
     public async Task<ActionResult<GetUserResponse>> GetTripOwnerName(int tripId)
     {
+        // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("Not logged in!");
+        }
+        var userId = int.Parse(userIdString);
+        
         var trip = await _tripService.GetTripByIdAsync(tripId);
-
-        var user = await _userService.GetUserByIdAsync(trip.UserId);
-
-        if (user == null)
+        var ownerUser = await _userService.GetUserByIdAsync(trip.UserId);
+        if (ownerUser == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, trip.Id))
         {
             return NotFound();
         }
-        if (!await _tripService.UserHasCollaborationAccessToTrip(int.Parse(userIdString!), tripId))
+
+        var response = new GetUserResponse
         {
-            return NotFound();
-        }
-        return Ok(user.DisplayName);
+            Id = ownerUser.Id,
+            Email = ownerUser.Email,
+            DisplayName = ownerUser.DisplayName,
+            Country = ownerUser.Country
+        };
+        return Ok(response);
     }
 
     /// <summary>
@@ -278,47 +286,4 @@ public class TripController : ControllerBase
         var locations = await _tripService.GetTripLocations(tripId);
         return Ok(locations);
     }
-
-    /// <summary>
-    /// Returns all collaborates 
-    /// </summary>
-    /// <param name="tripId"></param>
-    /// <returns></returns>
-    [Authorize]
-    [HttpGet("{tripId:int}/collaborators")]
-    public async Task<ActionResult<IEnumerable<CollaboratingUser>>> GetTripCollaborators(int tripId)
-    {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrEmpty(userIdString))
-            return Unauthorized();
-
-        try
-        {
-            if (int.TryParse(userIdString, out var userId))
-            {
-                if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
-                {
-                    return Unauthorized(
-                        "User does not have access to collaborate on the trip and view collaboration details");
-                }
-            }
-            else
-            {
-                return Unauthorized("User Id does not exist");
-            }
-
-            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
-            return Ok(collaborators);
-        }
-        catch (KeyNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        catch (ArgumentException)
-        {
-            return NotFound("This trip does not exist");
-        }
-    }
-
 }
