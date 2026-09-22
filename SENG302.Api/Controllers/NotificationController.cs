@@ -28,7 +28,7 @@ public class NotificationController : ControllerBase
     /// <returns>list of notifications</returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<GetAllNotificationsResponse>> GetNotifications([FromQuery] int? limit, int? offset)
+    public async Task<ActionResult<GetAllNotificationsResponse>> GetNotifications([FromQuery] int? limit, [FromQuery] int? offset)
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -40,10 +40,10 @@ public class NotificationController : ControllerBase
         try
         {
             var userId = int.Parse(userIdString);
-            var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, limit ?? 5);
+            var notifications = await _notificationService.GetNotificationsByUserIdAsync(userId, limit ?? 5, offset ?? 0);
             List<NotificationResponse> notificationResponses = [.. notifications.Select(n => new NotificationResponse(n))];
             var unreadCount = await _notificationService.GetUnreadCount(userId);
-            var moreExist = await _notificationService.UserHasMoreThan(userId, limit ?? 5);
+            var moreExist = await _notificationService.UserHasMoreThan(userId, limit ?? 5, offset ?? 0);
 
             return Ok(
                 new GetAllNotificationsResponse()
