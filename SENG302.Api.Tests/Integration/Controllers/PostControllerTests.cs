@@ -64,7 +64,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
         context.Albums.Add(new Album { TripId = 1, PhotoIds = [] });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
     }
 
@@ -126,8 +126,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PhotoIds = [],
         });
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
-        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 2, CreatorId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post");
@@ -145,6 +145,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var post = new Post
         {
+            CreatorId = 30,
             PostId = 10,
             TripId = 20,
             Title = "Another user's post",
@@ -155,14 +156,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(post.PostId).Returns(post);
-        _mockPostService.UserOwnsPost(1, post.TripId).Returns(false);
+        _mockPostService.UserOwnsPost(1, post.TripId, post.PostId).Returns(false);
 
         var result = await _controller.GetPost(post.PostId);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
         await _mockPostService.Received(1).GetPostAsync(post.PostId);
-        await _mockPostService.Received(1).UserOwnsPost(1, post.TripId);
+        await _mockPostService.Received(1).UserOwnsPost(1, post.TripId, post.PostId);
     }
 
     [Fact]
@@ -207,8 +208,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PhotoIds = [],
         });
         // Add 1 post to each trip
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
-        context.Posts.Add(new Post { TripId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 2, CreatorId = 2, Title = "Ti  tle", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/trip/post/1");
@@ -245,6 +246,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
         {
             TripId = 1,
+            CreatorId = 1,
             Title = "name",
             Content = "test",
             CreationTime = DateTimeOffset.UtcNow,
@@ -282,6 +284,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var message = await HttpClient.PostAsJsonAsync("/api/post", new Post
         {
             TripId = 1,
+            CreatorId = 1,
             Title = "name",
             Content = "test",
             CreationTime = DateTimeOffset.UtcNow,
@@ -673,7 +676,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Users.Add(new User { Id = 2, Email = "other@example.com", DisplayName = "Other user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 2, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 2, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var file = await File.ReadAllBytesAsync("resources/panda.webp");
@@ -690,7 +693,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post/1/user");
@@ -707,7 +710,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var response = await HttpClient.GetAsync("/api/post/2/user");
@@ -728,7 +731,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         });
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Christchurch", });
         await context.SaveChangesAsync();
 
         var file = await File.ReadAllBytesAsync("resources/panda.webp");
@@ -753,7 +756,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         context.Users.Add(new User { Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ" });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = DateToDateTimeOffset(2025, 11, 21), EndDate = DateToDateTimeOffset(2025, 12, 21) });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine" });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", PhotoIds = [], OsmId = 1, LocationName = "Roumaine" });
         await context.SaveChangesAsync();
 
         var file = await File.ReadAllBytesAsync("resources/panda.webp");
@@ -860,6 +863,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Delete",
                 Content = "Content",
                 OsmId = 1,
@@ -917,6 +921,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 2,
                 Title = "Dont delete",
                 Content = "Content",
                 OsmId = 1,
@@ -982,6 +987,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -1054,6 +1060,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -1112,6 +1119,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -1161,6 +1169,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -1255,6 +1264,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var post = new Post
         {
+            CreatorId = 1,
             PostId = 10,
             TripId = 20,
             Title = "Post to delete",
@@ -1265,7 +1275,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, 20).Returns(true);
+        _mockPostService.UserOwnsPost(1, 20, 10).Returns(true);
 
         var result = await _controller.DeletePost(10);
 
@@ -1362,6 +1372,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = 10,
             TripId = 20,
+            CreatorId = 1,
             Title = "Test post",
             Content = "Test content",
             OsmId = 1,
@@ -1370,7 +1381,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, post.TripId).Returns(true);
+        _mockPostService.UserOwnsPost(1, post.TripId, 10).Returns(true);
 
         var result = await _controller.GetPost(10);
 
@@ -1402,6 +1413,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = request.Id,
             TripId = request.TripId,
+            CreatorId = 1,
             Title = "Existing post",
             Content = "Existing content",
             OsmId = 1,
@@ -1410,7 +1422,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId, request.Id).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
@@ -1501,6 +1513,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = request.Id,
             TripId = request.TripId,
+            CreatorId = 2,
             Title = "Existing post",
             Content = "Existing content",
             OsmId = 1,
@@ -1509,13 +1522,13 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(false);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId, request.Id).Returns(false);
 
         var result = await _controller.UpdatePost(request, null);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
-        await _mockPostService.Received(1).UserOwnsPost(1, request.TripId);
+        await _mockPostService.Received(1).UserOwnsPost(1, request.TripId, request.Id);
 
         await _mockPostService.DidNotReceive().UpdatePostAsync(Arg.Any<UpdatePostRequest>(), 1, Arg.Any<List<IFormFile>>());
     }
@@ -1542,6 +1555,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = request.Id,
             TripId = request.TripId,
+            CreatorId = 1,
             Title = "Existing post",
             Content = "Existing content",
             OsmId = 1,
@@ -1551,6 +1565,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var updatedPost = new Post
         {
+            CreatorId = 1,
             PostId = request.Id,
             TripId = request.TripId,
             Title = request.Title,
@@ -1562,7 +1577,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId, existingPost.PostId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>()).Returns(updatedPost);
 
@@ -1594,6 +1609,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var existingPost = new Post
         {
+            CreatorId = 1,
             PostId = request.Id,
             TripId = request.TripId,
             Title = "Existing post",
@@ -1611,7 +1627,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
-        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId, existingPost.PostId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>())
             .Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
@@ -1662,6 +1678,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var post = new Post
         {
+            CreatorId = 30,
             PostId = 10,
             TripId = 20,
             Title = "Someone else post",
@@ -1672,7 +1689,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, 20).Returns(false);
+        _mockPostService.UserOwnsPost(1, 20, 10).Returns(false);
 
         var result = await _controller.DeletePost(10);
 
@@ -1690,6 +1707,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = 10,
             TripId = 20,
+            CreatorId = 30,
             Title = "Test post",
             Content = "",
             OsmId = 1,
@@ -1698,7 +1716,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, 20).Returns(true);
+        _mockPostService.UserOwnsPost(1, 20, 10).Returns(true);
 
         _mockPostService.DeletePostByIdAsync(10).Returns(Task.FromException(new ArgumentException("Post does not exist")));
 
@@ -1717,6 +1735,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = 10,
             TripId = 20,
+            CreatorId = 1,
             Title = "Post to delete",
             Content = "",
             OsmId = 1,
@@ -1725,7 +1744,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
-        _mockPostService.UserOwnsPost(1, 20).Returns(true);
+        _mockPostService.UserOwnsPost(1, 20, 10).Returns(true);
 
         var result = await _controller.DeletePhotoFromPost(10, 15);
 
@@ -1751,6 +1770,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         {
             PostId = 10,
             TripId = 20,
+            CreatorId = 30,
             Title = "Post to delete",
             Content = "",
             OsmId = 1,

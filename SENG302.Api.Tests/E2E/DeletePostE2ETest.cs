@@ -64,6 +64,7 @@ public class DeletePostE2ETest : E2ETestFixture
         var post = new Post
         {
             TripId = trip.Id,
+            CreatorId = user.Id,
             Title = PostTitle,
             Content = "Content that should be gone",
             Date = DateTimeOffset.UtcNow.AddDays(-1),

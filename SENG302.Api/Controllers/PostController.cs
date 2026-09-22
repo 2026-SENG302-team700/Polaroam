@@ -73,6 +73,8 @@ public class PostController : ControllerBase
 
         try
         {
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, postRequest.TripId)) return NotFound();
+
             var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload);
             return Ok(response);
         }
@@ -253,7 +255,7 @@ public class PostController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        if (!await _postService.UserOwnsPost(userId, post.TripId, id))
         {
             return NotFound();
         }

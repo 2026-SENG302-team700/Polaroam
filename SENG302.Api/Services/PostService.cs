@@ -20,7 +20,7 @@ public interface IPostService
     Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
-    Task<bool> UserOwnsPost(int userId, int tripId);
+    Task<bool> UserOwnsPost(int userId, int tripId, int postId);
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
@@ -399,7 +399,7 @@ public class PostService : IPostService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        int? tripOwnerId = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && (t.UserId == userId || t.Collaborators.Contains(userId))).Select(t => t.UserId);
+        int? tripOwnerId = (await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && (t.UserId == userId || t.Collaborators.Contains(userId))))?.UserId;
         var isOwnerOfTrip = tripOwnerId == userId;
         var isPartOfTrip = tripOwnerId != null;
 

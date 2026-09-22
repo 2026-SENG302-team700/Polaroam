@@ -21,14 +21,14 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
 {
     private readonly ITestOutputHelper _output;
     private IFileService FileServiceMock => ServiceProvider.GetRequiredService<IFileService>();
-    
+
 
     public AlbumControllerTest(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) : base(
         webApplicationFactory)
     {
         _output = output;
     }
-    
+
     protected override void ConfigureAdditionalServices(IServiceCollection services)
     {
         services.RemoveAll<IFileService>();
@@ -41,17 +41,17 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
         {
-            Id = userId, 
-            Email = email, 
-            DisplayName = "Test user", 
-            PasswordKey = "password", 
+            Id = userId,
+            Email = email,
+            DisplayName = "Test user",
+            PasswordKey = "password",
             Country = "NZ"
         });
         context.Trips.Add(new Trip
         {
-            Id = 1, 
-            Title = "My trip", 
-            UserId = userId, 
+            Id = 1,
+            Title = "My trip",
+            UserId = userId,
             StartDate = DateToDateTimeOffset(2025, 11, 21),
             EndDate = DateToDateTimeOffset(2025, 12, 21)
         });
@@ -72,6 +72,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         {
             PostId = 1,
             TripId = 1,
+            CreatorId = 1,
             LocationName = "Location A",
             Title = "Title",
             OsmId = 1,
@@ -83,18 +84,18 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         var file1 = new CustomFile
         {
             Id = 1,
-            FileKey = "key1", 
-            MimeType = "image/webp", 
-            OriginalFileName = "file1.webp", 
-            OwnerId = 1, 
+            FileKey = "key1",
+            MimeType = "image/webp",
+            OriginalFileName = "file1.webp",
+            OwnerId = 1,
             Tags = ["beach", "sun"]
         };
         var file2 = new CustomFile
         {
-            Id = 2, 
-            FileKey = "key2", 
-            MimeType = "image/webp", 
-            OriginalFileName = "file2.webp", 
+            Id = 2,
+            FileKey = "key2",
+            MimeType = "image/webp",
+            OriginalFileName = "file2.webp",
             OwnerId = 1
         };
         context.CustomFiles.Add(file1);
@@ -110,22 +111,22 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         context.Albums.First(album => album.TripId == 1).PhotoIds.AddRange(3, 4);
         var file3 = new CustomFile
         {
-            Id = 3, 
-            FileKey = "key3", 
-            MimeType = "image/webp", 
-            OriginalFileName = "file3.webp", 
+            Id = 3,
+            FileKey = "key3",
+            MimeType = "image/webp",
+            OriginalFileName = "file3.webp",
             OwnerId = 1,
-            Tags = ["testOne"], 
+            Tags = ["testOne"],
             DateCreated = DateTimeOffset.UtcNow.AddDays(-1)
         };
         var file4 = new CustomFile
         {
-            Id = 4, 
-            FileKey = "key4", 
-            MimeType = "image/webp", 
-            OriginalFileName = "file4.webp", 
+            Id = 4,
+            FileKey = "key4",
+            MimeType = "image/webp",
+            OriginalFileName = "file4.webp",
             OwnerId = 1,
-            Tags = ["TestTwo"], 
+            Tags = ["TestTwo"],
             DateCreated = DateTimeOffset.UtcNow.AddDays(1)
         };
         context.CustomFiles.Add(file3);
@@ -249,9 +250,9 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             (pandaBytes, "panda.webp", "image/webp"),
             (kayakBytes, "kayak.webp", "image/webp")
         ]);
-        
+
         ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(true);
-        
+
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
 
@@ -300,7 +301,11 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await using var context = await DbContextFactory.CreateDbContextAsync();
         context.Users.Add(new User
         {
-            Id = 1, Email = "test@example.com", DisplayName = "Test user", PasswordKey = "password", Country = "NZ"
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test user",
+            PasswordKey = "password",
+            Country = "NZ"
         });
         await context.SaveChangesAsync();
 

@@ -105,6 +105,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 1,
+            CreatorId = 1,
             Title = "User 1 post",
             Content = "desc",
             OsmId = 292806332,
@@ -115,6 +116,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 2,
+            CreatorId = 2,
             Title = "User 2 post",
             Content = "desc",
             OsmId = 292806332,
@@ -161,6 +163,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
         var post = new Post
         {
             TripId = 1,
+            CreatorId = 1,
             Title = "Fetch me",
             Content = "desc",
             OsmId = 292806332,
@@ -256,6 +259,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -319,6 +323,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -372,6 +377,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -426,6 +432,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post1 = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -443,6 +450,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post2 = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -523,6 +531,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post1 = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -540,6 +549,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post2 = new Post
             {
                 TripId = 2,
+                CreatorId = 2,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -630,6 +640,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -681,6 +692,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "og title",
                 Content = "og content",
                 Date = DateTimeOffset.UtcNow.AddDays(-2),
@@ -743,6 +755,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "Post to delete",
                 Content = "Post content",
                 OsmId = 1,
@@ -807,6 +820,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "del post",
                 Content = "dfsdofdskjofdsjnlksdfjlnsdfjnlfsdjlsdljkndsfljkndfsljdfsjldfsljk",
                 OsmId = 1,
@@ -960,6 +974,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "del post",
                 Content = "dfsdofdskjofdsjnlksdfjlnsdfjnlfsdjlsdljkndsfljkndfsljdfsjldfsljk",
                 OsmId = 1,
@@ -1036,6 +1051,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "where photo",
                 Content = "sdfodsiofdsfidsmfdsmsdfoimfiodsmfdiosmfsiomdsfiofmdsi",
                 OsmId = 1,
@@ -1073,6 +1089,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "no photos",
                 Content = "asijdasiodasiomdsaiomdsaiomdasoijdasijadsoiadsjoidas",
                 OsmId = 1,
@@ -1120,6 +1137,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             var post = new Post
             {
                 TripId = 1,
+                CreatorId = 1,
                 Title = "lil calm post",
                 Content = "adiasodmoidmsamdiosamdoajdoimaodis",
                 OsmId = 1,

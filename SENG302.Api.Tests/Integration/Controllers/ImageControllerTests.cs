@@ -73,7 +73,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             Country = "Test Country"
         });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTimeOffset(2026, 8, 8, 14, 30, 0, TimeSpan.FromHours(12)), EndDate = new DateTimeOffset(2026, 8, 10, 14, 30, 0, TimeSpan.FromHours(12)), });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         context.CustomFiles.Add(new CustomFile
         {
             Id = 1,
@@ -129,6 +129,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         {
             PostId = postId,
             TripId = tripId,
+            CreatorId = 1,
             Title = "My post",
             Content = "",
             PhotoIds = [],
@@ -163,6 +164,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             {
                 PostId = 1,
                 TripId = 1,
+                CreatorId = 1,
                 Title = "My post",
                 Content = "Post content",
                 PhotoIds = [photoId],
@@ -397,7 +399,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             Country = "Test Country"
         });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTimeOffset(2026, 8, 8, 14, 30, 0, TimeSpan.FromHours(12)), EndDate = new DateTimeOffset(2026, 8, 10, 14, 30, 0, TimeSpan.FromHours(12)), });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         context.CustomFiles.Add(new CustomFile
         {
             Id = 1,
@@ -430,7 +432,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
             Country = "Test Country"
         });
         context.Trips.Add(new Trip { Id = 1, Title = "My trip", UserId = 1, StartDate = new DateTimeOffset(2026, 8, 8, 14, 30, 0, TimeSpan.FromHours(12)), EndDate = new DateTimeOffset(2026, 8, 10, 14, 30, 0, TimeSpan.FromHours(12)), });
-        context.Posts.Add(new Post { TripId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
+        context.Posts.Add(new Post { TripId = 1, CreatorId = 1, Title = "My post", Content = "", OsmId = 292806332, LocationName = "Christchurch", });
         context.CustomFiles.Add(new CustomFile
         {
             Id = 1,
@@ -762,6 +764,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
         context.Posts.Add(new Post
         {
             TripId = 1,
+            CreatorId = userId,
             Title = "My post",
             Content = "",
             OsmId = 292806332,

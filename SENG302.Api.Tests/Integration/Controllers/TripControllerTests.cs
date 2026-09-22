@@ -404,9 +404,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
         );
 
         context.Posts.AddRange(
-            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content" },
-            new Post { PostId = 2, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
-            new Post { PostId = 3, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
+            new Post { PostId = 1, CreatorId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content" },
+            new Post { PostId = 2, CreatorId = 1, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
+            new Post { PostId = 3, CreatorId = 1, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
         );
         try
         {
