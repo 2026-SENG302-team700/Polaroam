@@ -237,7 +237,13 @@
         />
 
         {#if moreNotificationsExist}
-            <span onclick={getNotificationSegment} class="see-more">See more...</span>
+            <div class="notification-footer">
+                <button
+                        class="btn btn-outline notification-footer-button"
+                        onclick={getNotificationSegment}>
+                    See more
+                </button> 
+            </div>
         {/if}
     </div>
 </div>
@@ -265,10 +271,12 @@
         position: relative;
     }
 
-    .see-more {
-        text-align: center;
-        padding: 0.5rem 0;
-        color: #1f1f1f;
+    .notification-footer {
+        margin: 0.5rem;
+    }
+    
+    .notification-footer-button {
+        width: 100%;
     }
 
     .icon-centered {

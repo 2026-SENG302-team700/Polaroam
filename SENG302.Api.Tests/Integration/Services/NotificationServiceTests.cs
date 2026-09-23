@@ -340,4 +340,104 @@ public class NotificationServiceTests : BaseIntegrationTestFixture
 
         result.ShouldBeFalse();
     }
+    
+    [Fact]
+    public async Task GetNotificationsByUserIdAsync_OffsetProvided_SkipsOffset()
+    {
+        var timestamp = DateTimeOffset.UtcNow;
+        
+        var newestNotification = CreateNotification(1, "Newest notification");
+        var oldestNotification = CreateNotification(1, "Oldest notification", timestamp: timestamp.AddHours(-13));
+        
+        await using (var context = await DbContextFactory.CreateDbContextAsync())
+        {
+            context.Notifications.AddRange(
+                CreateNotification(
+                    1, 
+                    "Notification two",
+                    timestamp: timestamp.AddHours(-11) 
+                ),                
+                CreateNotification(
+                    1, 
+                    "Notification three",
+                    timestamp: timestamp.AddHours(-10) 
+                ),
+                CreateNotification(
+                    1, 
+                    "Notification four",
+                    timestamp: timestamp.AddHours(-9) 
+                ),
+                CreateNotification(
+                    1, 
+                    "Notification five",
+                    timestamp: timestamp.AddHours(-8) 
+                ),
+                CreateNotification(
+                    1, 
+                    "Notification six",
+                    timestamp: timestamp.AddHours(-7) 
+                )
+            );
+
+            context.Notifications.Add(newestNotification);
+            context.Notifications.Add(oldestNotification);
+            
+            await context.SaveChangesAsync();
+        }
+
+        var notifications = await ServiceUnderTest.GetNotificationsByUserIdAsync(1, 6, 1);
+        notifications.Count.ShouldBe(6);
+        notifications.ShouldNotContain(n => n.Id == newestNotification.Id);
+        notifications.ShouldContain(n => n.Id == oldestNotification.Id);
+    }
+    
+    [Fact]
+    public async Task GetNotificationsByUserIdAsync_NoOffsetProvided_NoOffset()
+    {
+        var timestamp = DateTimeOffset.UtcNow;
+        
+        var newestNotification = CreateNotification(1, "Newest notification");
+        var oldestNotification = CreateNotification(1, "Oldest notification", timestamp: timestamp.AddHours(-13));
+        
+        await using (var context = await DbContextFactory.CreateDbContextAsync())
+        {
+            context.Notifications.AddRange(
+                CreateNotification(
+                    1, 
+                    "Notification two",
+                    timestamp: timestamp.AddHours(-11) 
+                ),                
+                CreateNotification(
+                    1, 
+                    "Notification three",
+                    timestamp: timestamp.AddHours(-10) 
+                ),
+                CreateNotification(
+                    1, 
+                    "Notification four",
+                    timestamp: timestamp.AddHours(-9) 
+                ),
+                CreateNotification(
+                    1, 
+                    "Notification five",
+                    timestamp: timestamp.AddHours(-8) 
+                ),
+                CreateNotification(
+                    1, 
+                    "Notification six",
+                    timestamp: timestamp.AddHours(-7) 
+                )
+            );
+
+            context.Notifications.Add(newestNotification);
+            context.Notifications.Add(oldestNotification);
+            
+            await context.SaveChangesAsync();
+        }
+
+        var notifications = await ServiceUnderTest.GetNotificationsByUserIdAsync(1, 6, 0);
+        notifications.Count.ShouldBe(6);
+        notifications.ShouldNotContain(n => n.Id == oldestNotification.Id);
+        notifications.ShouldContain(n => n.Id == newestNotification.Id);
+    }
 }
