@@ -206,7 +206,7 @@ public class CollaborationService : ICollaborationService
         {
             UserId = kickedUserId,
             HeaderText = $"Kicked from {trip.Title}!",
-            BodyText = $"You have been kicked out of the {trip.Title} trip! You can no longer collaborate on the trip",
+            BodyText = $"You have been kicked out of {trip.Title}! You can no longer collaborate on this trip",
             Timestamp = DateTimeOffset.UtcNow,
             NotificationType = "Notification",
         };

@@ -475,4 +475,167 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         notification.HeaderText.ShouldBe("New Invitation Request");
         notification.BodyText.ShouldBe("You have been invited to collaborate on the Trip! trip!");
     }
+
+    [Fact]
+    public async Task KickCollaborator_UserIsCurrentlyCollaborator_UserIsKickedAndOKResponseRecieved()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var updatedContext = DbContextFactory.CreateDbContext();
+        Trip? updatedTrip = await updatedContext.Trips.FirstOrDefaultAsync(t => t.Id == 1);
+        updatedTrip.ShouldNotBeNull();
+        updatedTrip.Collaborators.ShouldNotContain(2);
+    }
+
+    [Fact]
+    public async Task KickCollaborator_TripDoesNotExist_BadRequestReturned()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/67/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        String message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("Trip with the provided ID does not exist.");
+    }
+    
+    [Fact]
+    public async Task KickCollaborator_KickedUserDoesNotExist_BadRequestReturned()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        String message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User does not exist");
+    }
+
+    [Fact]
+    public async Task KickCollaborator_KickedUserNotPartOfTrip_ReturnsUnauthorized()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        String message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User does not have permission to kick collaborators from this trip");
+    }
+    
+    [Fact]
+    public async Task KickCollaborator_UserNotLoggedIn_ReturnsUnauthorized()
+    {
+        _controller.ControllerContext = new ControllerContext                                                                                                                      
+        {                                                                                                                                                                          
+            HttpContext = new DefaultHttpContext()                                                                                                                                 
+        };   
+
+        var response = await _controller.KickUser(1, 2);
+
+        response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
+    }
 }
