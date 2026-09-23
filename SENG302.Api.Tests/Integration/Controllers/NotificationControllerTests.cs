@@ -77,7 +77,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
         _notificationService.GetUnreadCount(1).Returns(1);
         _notificationService.UserHasMoreThan(1, 5).Returns(false);
 
-        var result = await _controller.GetAllNotifications(null);
+        var result = await _controller.GetNotifications(null, 0);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var response = okResult.Value.ShouldBeOfType<GetAllNotificationsResponse>();
@@ -96,7 +96,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
         _notificationService.GetUnreadCount(1).Returns(4);
         _notificationService.UserHasMoreThan(1, 5).Returns(true);
 
-        var result = await _controller.GetAllNotifications(null);
+        var result = await _controller.GetNotifications(null, 0);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var response = okResult.Value.ShouldBeOfType<GetAllNotificationsResponse>();
@@ -110,7 +110,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
     {
         _notificationService.GetNotificationsByUserIdAsync(1, 5).Returns([]);
 
-        var result = await _controller.GetAllNotifications(null);
+        var result = await _controller.GetNotifications(null, 0);
 
         result.Result.ShouldBeOfType<OkObjectResult>();
 
@@ -124,7 +124,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
     {
         _notificationService.GetNotificationsByUserIdAsync(1, 10).Returns([]);
 
-        var result = await _controller.GetAllNotifications(10);
+        var result = await _controller.GetNotifications(10, 0);
 
         result.Result.ShouldBeOfType<OkObjectResult>();
 
@@ -149,7 +149,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
 
         _notificationService.GetNotificationsByUserIdAsync(1, 5).Returns([notification]);
 
-        var result = await _controller.GetAllNotifications(null);
+        var result = await _controller.GetNotifications(null, 0);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         var response = okResult.Value.ShouldBeOfType<GetAllNotificationsResponse>();
@@ -162,7 +162,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
     {
         SetAuthenticatedUser(null);
 
-        var result = await _controller.GetAllNotifications(null);
+        var result = await _controller.GetNotifications(null, 0);
 
         result.Result.ShouldBeOfType<UnauthorizedResult>();
 
@@ -174,7 +174,7 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
     {
         SetAuthenticatedUser("invalid-user-id");
 
-        var result = await _controller.GetAllNotifications(null);
+        var result = await _controller.GetNotifications(null, 0);
 
         var unauthorizedResult = result.Result.ShouldBeOfType<UnauthorizedObjectResult>();
 
@@ -256,5 +256,19 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
         unauthorizedResult.Value.ShouldBe("Invalid User Id");
 
         await _notificationService.DidNotReceive().SetNotificationStatusByIdAsync(Arg.Any<int>(), Arg.Any<bool>());
+    }
+    
+    [Fact] 
+    public async Task GetAllNotifications_OffsetNotGiven_DefaultsToZero()
+    {
+        _notificationService.GetNotificationsByUserIdAsync(1, 5, 0).Returns([]);
+    
+        var result = await _controller.GetNotifications(null, null);
+    
+        result.Result.ShouldBeOfType<OkObjectResult>();
+    
+        await _notificationService.Received(1).GetNotificationsByUserIdAsync(1, 5, 0);
+    
+        await _notificationService.Received(1).UserHasMoreThan(1, 5, 0);
     }
 }

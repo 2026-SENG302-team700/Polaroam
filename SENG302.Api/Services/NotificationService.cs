@@ -7,12 +7,12 @@ namespace SENG302.Api.Services;
 public interface INotificationService
 {
     Task AddNotificationAsync(Notification notification);
-    Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count);
+    Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count, int offset = 0);
     Task SetNotificationStatusByIdAsync(int notificationId, bool status);
     Task SetNotificationHandledByIdAsync(int notificationId, bool handled);
     Task<bool> UserOwnsNotification(int notificationId, int userId);
     Task<int> GetUnreadCount(int userId);
-    Task<bool> UserHasMoreThan(int userId, int count);
+    Task<bool> UserHasMoreThan(int userId, int limit, int offset = 0);
     Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId);
 }
 
@@ -42,16 +42,20 @@ public class NotificationService : INotificationService
     /// </summary>
     /// <param name="userId">Id of the user to fetch notifications for</param>
     /// <param name="count">How many notifications to select from table and return</param>
+    /// <param name="offset">notifications to skip when loading notifications</param>
     /// <returns>A list of notification responses ordered correctly</returns>
-    public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count)
+    public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count, int offset = 0)
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         var notifications = await context.Notifications
             .Where(n => n.UserId == userId)
             .OrderBy(n => n.ReadStatus)
             .ThenByDescending(n => n.Timestamp)
+            .Skip(offset)
             .Take(count)
             .ToListAsync();
+        
         return notifications;
     }
 
@@ -104,12 +108,15 @@ public class NotificationService : INotificationService
     /// Checks if a user has more notifications (in total) than count
     /// </summary>
     /// <param name="userId">User we are checking</param>
-    /// <param name="count">The count we are wondering if they have more than that</param>
+    /// <param name="limit">The number of rows retrieved </param>
+    /// <param name="offset">offset for skipping notifications already classified</param>
     /// <returns>If the user has more than 'count' notifications</returns>
-    public async Task<bool> UserHasMoreThan(int userId, int count)
+    public async Task<bool> UserHasMoreThan(int userId, int limit, int offset = 0)
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();
-        return await context.Notifications.Where(n => n.UserId == userId).Skip(count).AnyAsync();
+
+        int count = await context.Notifications.Where(n => n.UserId == userId).CountAsync();
+        return offset + limit < count;
     }
 
     /// <summary>
