@@ -151,7 +151,7 @@
                 });
             }
         } catch (error) {
-            loadError = `Failed to load scrapboarddddddddddd ${error}`;
+            loadError = `Failed to load scrapboard ${error}`;
         }
     }
 
