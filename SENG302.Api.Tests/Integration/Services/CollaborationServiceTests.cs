@@ -602,6 +602,13 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
         await Should.NotThrowAsync(
             async () => await ServiceUnderTest.SwapOwnership(1, 2, 1)
         );
+        
+        await using var updatedContext = await DbContextFactory.CreateDbContextAsync();
+        Trip? updatedTrip = await updatedContext.Trips.FirstOrDefaultAsync(t => t.Id == trip.Id);
+
+        updatedTrip.ShouldNotBeNull();
+        updatedTrip?.Collaborators.ShouldContain(1);
+        updatedTrip?.UserId.ShouldBe(2);
     }
     
     [Fact]
