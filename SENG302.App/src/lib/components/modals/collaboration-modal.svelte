@@ -1,22 +1,25 @@
 ﻿<script lang="ts">
+    
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { page } from "$app/state";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import { onMount } from "svelte";
+    import { user } from "$lib/stores/user";
     
     let {
-        show = $bindable(false),
-        isOwner = $bindable(false),
-        tripOwner = "",
-        tripCollaborators = [],
-        error = "",
+        show = $bindable(false)
     }: {
         show: boolean;
-        isOwner: boolean;
-        tripOwner: string;
-        tripCollaborators: CollaboratingUser[];
-        error: string;
     } = $props();
+    
+    // Modal State
+    let tripId = page.params.tripId;
+    let isOwner = $state(false);
+    let tripOwner = $state(null);
+    let tripOwnerName = $state("");
+    let tripCollaborators = $state([]);
+    let error = $state("");
     
     // Leave Collaboration
     let leaveConfirmationModalShown = $state(false);
@@ -39,6 +42,36 @@
     let newOwnerId = $state<number | null>(null);
     let swapOwnershipMessage = $state("");
     
+    async function getCollaborators() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/collaboration` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            tripCollaborators = await response.json();
+        } catch (err) {
+            error = err.toString();
+        }
+    }
+
+    async function getOwner() {
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/user` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            tripOwner = await response.json();
+            isOwner = (tripOwner?.id === $user.id);
+        } catch (err) {
+            error = err.toString();
+        }
+    }
 
     /**
      * Clear fields of input
@@ -78,7 +111,6 @@
      */
     async function inviteCollaborators() {
         const emailInvite = invite;
-        const tripId = page.params.tripId;
         
         try {
             const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration` as any), {
@@ -144,8 +176,6 @@
      * Kick the user
      */
     async function kickUser() {
-        const tripId = page.params.tripId;
-        
         try {
             const response = await fetchWithCsrf(resolve(`/api/trip/${tripId}/collaboration/kick/${UserIdOfKicked}` as any), {
                 method: "DELETE",
@@ -171,7 +201,6 @@
      * hides the modal and navigates them to the MyTrips page
      */
     async function leaveCollaboration() {
-        const tripId = page.params.tripId;
         try {
             leaveCollaborationError = "";
             const response = await fetchWithCsrf(
@@ -212,7 +241,6 @@
      * @param userId
      */
     async function swapOwnership(userId: number) {
-        const tripId = page.params.tripId;
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/trip/${tripId}/collaboration/transfer/${newOwnerId}` as any),
@@ -224,10 +252,17 @@
             if (!response.ok) {
                 swapOwnershipError = "Failed to transfer ownership";
             }
+            await getOwner();
+            await getCollaborators();
         } catch {
             swapOwnershipError = "Failed to transfer ownership";
         }
     }
+    
+    onMount(async () => {
+        getOwner();
+        getCollaborators();
+    })
     
 </script>
 
@@ -240,7 +275,7 @@
                     {#if error !== ""}
                         Error: {error}
                     {/if}
-                    <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner}</h1>
+                    <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner.displayName}</h1>
                     {#each tripCollaborators as collaborator}
                         <div class="collaborators-list">
                             <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
