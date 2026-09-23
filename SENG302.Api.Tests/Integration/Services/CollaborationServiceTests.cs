@@ -565,4 +565,125 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
         notification.ShouldNotBeNull();
         notification.HeaderText.ShouldBe("New Invitation Request");
     }
+
+    [Fact]
+    public async Task SwapOwnership_ValidTripAndUser_OwnershipIsSwapped()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        await Should.NotThrowAsync(
+            async () => await ServiceUnderTest.SwapOwnership(1, 2, 1)
+        );
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_InvalidTrip_KeyNotFoundExceptionThrown()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var err = await Should.ThrowAsync<KeyNotFoundException>(
+            async () => await ServiceUnderTest.SwapOwnership(1, 2, 67)
+        );
+        
+        err.Message.ShouldBe("Trip does not exist");
+    }
+
+    [Fact]
+    public async Task SwapOwnership_ValidTripAndUser_NotificationCreatedForNewOwner()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        await Should.NotThrowAsync(
+            async () => await ServiceUnderTest.SwapOwnership(1, 2, 1)
+        );
+        
+        var notification = await context.Notifications.Where(x => x.UserId == 2).FirstOrDefaultAsync();
+
+        notification.ShouldNotBeNull();
+        notification.HeaderText.ShouldBe("Granted Ownership of Trip!!");
+    }
 }
