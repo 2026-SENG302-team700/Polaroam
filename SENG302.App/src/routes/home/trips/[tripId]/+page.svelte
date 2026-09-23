@@ -40,7 +40,6 @@
         fetchTrip();
         fetchPosts();
         fetchLocations();
-        fetchUserName();
     });
 
     /**

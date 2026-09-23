@@ -277,17 +277,19 @@
                     {/if}
                     <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner.displayName}</h1>
                     {#each tripCollaborators as collaborator}
-                        <div class="collaborators-list">
-                            <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
+                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list">
+                            <span class="collaborator-info fw-medium">{collaborator.displayName}</span>
                             {#if isOwner}
-                                <button class="btn btn-danger"
-                                        onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>
-                                    Kick
-                                </button>
-                                <button class="btn btn-danger"
-                                        onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
-                                    Grant Ownership
-                                </button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-secondary"
+                                            onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                        Grant Ownership
+                                    </button>
+                                    <button class="btn btn-danger"
+                                            onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                        Kick
+                                    </button>
+                                </div>
                             {/if}
                         </div>
                     {/each}
@@ -373,7 +375,7 @@
     }
     
     .modal-content {
-        width: 33vw;
+        width: clamp(320px, 90vw, 500px);
     }
     
     .modal-buttons {
