@@ -235,9 +235,6 @@ public static class CreateExampleUsersHelper
             await dbContext.Notifications.AddAsync(notification6);
             await dbContext.Notifications.AddAsync(notification7);
             await dbContext.Notifications.AddAsync(notification8);
-            //await dbContext.Notifications.AddAsync(notification9);
-            // await dbContext.Notifications.AddAsync(notification10);
-            // await dbContext.Notifications.AddAsync(notification11);
 
             var notification12 = new TripInvitationNotification
             {
