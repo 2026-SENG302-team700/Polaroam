@@ -138,6 +138,7 @@
      * Kick the user
      */
     async function kickUser() {
+        kickUserMessage = "";
         const tripId = page.params.tripId;
         
         try {
@@ -197,9 +198,16 @@
                     {#each tripCollaborators as collaborator}
                         <div class="collaborators-list">
                             <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
-                            <button class="btn btn-secondary" 
-                                    onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>Kick</button>
+                            {#if isOwner}
+                                <button class="btn btn-secondary"
+                                        onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>Kick</button>
+                            {/if}
                         </div>
+                        {#if kickUserError !== ""}
+                            <div class="invalid-feedback d-block mb-0">
+                                <span>{kickUserError}</span>
+                            </div>
+                        {/if}
                     {/each}
                     {#if inviteShown}
                         <div class="invite-wrapper">
