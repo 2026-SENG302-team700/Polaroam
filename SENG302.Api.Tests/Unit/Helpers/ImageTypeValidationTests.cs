@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using SENG302.Api.Helpers;
 using SENG302.Api.Helpers.Validators;
 using Shouldly;
+using System.Text;
 
 namespace SENG302.Api.Tests.Unit.Services;
 
@@ -93,6 +94,34 @@ public class ImageTypeValidationTests
     public async Task IsValidMimeType_InvalidMimeValidSpoof_Fail()
     {
         var file = GetMockFile("test", new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "application/octet-stream");
+        ImageValidator.IsValidMimeType(file).ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData("<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>")]
+    [InlineData("<?xml version=\"1.0\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>")]
+    [InlineData("  \n<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>")]
+    [InlineData("\uFEFF<!-- image -->\n<svg></svg>")]
+    public void IsValidMimeType_ValidSvg_Success(string svg)
+    {
+        var file = GetMockFile(
+            "test.svg",
+            Encoding.UTF8.GetBytes(svg),
+            "image/svg+xml"
+        );
+
+        ImageValidator.IsValidMimeType(file).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void IsValidMimeType_InvalidSvgRoot_Fail()
+    {
+        var file = GetMockFile(
+            "test.svg",
+            Encoding.UTF8.GetBytes("<html></html>"),
+            "image/svg+xml"
+        );
+
         ImageValidator.IsValidMimeType(file).ShouldBeFalse();
     }
 }

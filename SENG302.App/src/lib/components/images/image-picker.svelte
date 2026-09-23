@@ -40,6 +40,22 @@
      * @param file the image file
      */
     async function getRealValidMime(file: File) {
+        if (file.type === "image/svg+xml") {
+            const document = new DOMParser().parseFromString(
+                await file.text(),
+                "image/svg+xml",
+            );
+
+            if (
+                document.querySelector("parsererror") === null &&
+                document.documentElement.localName.toLowerCase() === "svg"
+            ) {
+                return "image/svg+xml";
+            }
+
+            return undefined;
+        }
+
         const magicNumber = new Uint8Array(
             await file.slice(0, 12).arrayBuffer(),
         );
