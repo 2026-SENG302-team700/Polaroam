@@ -68,6 +68,24 @@
     function closeModal() {
         dialog.close();
         show = false;
+        selectedPhotoId = null;
+        image = null;
+        imageError = "";
+    }
+
+    /**
+     * Handle keydown events for the modal, specifically the Enter key to append the image
+     * @param event the keyboard event
+     */
+    async function handleModalKeydown(event: KeyboardEvent) {
+        if (event.key !== "Enter") return;
+        if (!image || selectedPhotoId === null || loading) return;
+
+        // Allow the modal's normal buttons to handle their own Enter press
+        if ((event.target as HTMLElement).closest("BUTTON")) return;
+
+        event.preventDefault();
+        await appendImage();
     }
 
     /**
@@ -78,6 +96,9 @@
             openModal();
         } else if (dialog?.open) {
             dialog.close();
+            selectedPhotoId = null;
+            image = null;
+            imageError = "";
         }
     });
 
@@ -133,7 +154,12 @@
      * Appends the selected image to the excalidraw canvas
      */
     async function appendImage() {
-        if (!image) return;
+        if (!image || selectedPhotoId === null) {
+            imageError = "You must select an image to insert";
+            return;
+        }
+
+        imageError = "";
 
         dataUrl = await readFileAsDataUrl(image);
 
@@ -186,7 +212,11 @@
 </script>
 
 {#if show}
-    <dialog bind:this={dialog} class="modal-dialog-container">
+    <dialog
+        bind:this={dialog}
+        class="modal-dialog-container"
+        onkeydown={handleModalKeydown}
+    >
         <div class="modal-content">
             <div class="modal-title">
                 <span class="card-subtitle mb-2 h2"
@@ -211,14 +241,14 @@
                 />
             </div>
             <div class="modal-footer">
+                {#if imageError !== ""}
+                    <span class="text-danger">{imageError}</span>
+                {/if}
                 <button
                     class="btn btn-secondary select-button"
                     onclick={appendImage}
                     disabled={loading && !metadataLoaded}>Select</button
                 >
-                {#if imageError !== ""}
-                    <span class="danger">{imageError}</span>
-                {/if}
             </div>
         </div>
     </dialog>
@@ -260,6 +290,7 @@
 
     .modal-body {
         padding-top: 6px;
+        padding-bottom: 0.75rem;
         overflow-y: auto;
         flex-grow: 1;
     }

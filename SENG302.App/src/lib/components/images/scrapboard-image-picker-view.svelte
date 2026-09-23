@@ -100,9 +100,27 @@
      */
     async function clicked() {
         imageSelected = !imageSelected;
-        selectedPhotoId = imagePhotoId;
 
         if (imageSelected) {
+            selectedPhotoId = imagePhotoId;
+            image = imageFile;
+        } else {
+            selectedPhotoId = null;
+            image = null;
+        }
+    }
+
+    /**
+     * Selects the focused image before the Enter event bubbles to the modal,
+     * where the selected image is inserted into the scrapboard.
+     */
+    function handleKeydown(event: KeyboardEvent) {
+        if (event.key !== "Enter") return;
+
+        event.preventDefault();
+        if (!imageSelected) {
+            imageSelected = true;
+            selectedPhotoId = imagePhotoId;
             image = imageFile;
         }
     }
@@ -113,7 +131,10 @@
         <img
             src={displaySrc}
             onclick={clicked}
+            onkeydown={handleKeydown}
             alt="Image"
+            role="button"
+            aria-pressed={imageSelected}
             class="img-thumbnail clickable-image {imageSelected
                 ? 'rectangular-glow'
                 : ''}"
