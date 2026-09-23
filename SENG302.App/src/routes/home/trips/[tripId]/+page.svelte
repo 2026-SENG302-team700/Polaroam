@@ -223,8 +223,27 @@
     }
 </script>
 
+<ConfirmationModal
+    bind:show={deletionModalShown}
+    message="Are you sure you want to delete this trip? This action cannot be undone."
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={hideConfirmationModal}
+    onOption2={deleteTrip}
+/>
+
+<CollaborationModal
+    bind:show={collaborationModalShown}
+    isOwner={tripOwner?.id === $user.id}
+    tripOwner={tripOwner ? tripOwner.displayName : ""}
+    tripCollaborators={collaboratingUsers}
+    {error}
+/>
+
 {#if !loading && tripObject.id !== -1}
-    <div class="container trip-page-content">
+
+    <div class="container trip-page-content" inert={(collaborationModalShown||deletionModalShown)||null}>
         <div class="button-wrapper">
             <NavigationButton path="/home" text="Back" />
             <div class="modify-button-wrapper">
@@ -293,24 +312,6 @@
 {:else if !loading}
     <NotFound />
 {/if}
-
-<ConfirmationModal
-    bind:show={deletionModalShown}
-    message="Are you sure you want to delete this trip? This action cannot be undone."
-    option1Text="Do not delete"
-    option2Text="Delete"
-    option2Style="danger"
-    onOption1={hideConfirmationModal}
-    onOption2={deleteTrip}
-/>
-
-<CollaborationModal
-    bind:show={collaborationModalShown}
-    isOwner={tripOwner?.id === $user.id}
-    tripOwner={tripOwner ? tripOwner.displayName : ""}
-    tripCollaborators={collaboratingUsers}
-    {error}
-/>
 
 <style>
     .button-wrapper {
