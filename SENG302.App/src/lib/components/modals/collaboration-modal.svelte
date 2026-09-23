@@ -33,6 +33,12 @@
     let UserIdOfKicked = $state<number | null>(null)
     let kickUserError = $state("")
     
+    // Swap Ownership
+    let swapOwnershipConfirmationModalShown = $state(false);
+    let swapOwnershipError = $state("");
+    let newOwnerId = $state<number | null>(null);
+    let swapOwnershipMessage = $state("");
+    
 
     /**
      * Clear fields of input
@@ -182,6 +188,47 @@
             leaveCollaborationError = "Failed to leave collaboration";
         }
     }
+
+    /**
+     * Opens the transfer ownership confirmation modal
+     * @param collaboratorName
+     * @param collaboratorId
+     */
+    function showSwapOwnerConfirmationModal(collaboratorName: string, collaboratorId: number) {
+        swapOwnershipConfirmationModalShown = true
+        swapOwnershipMessage =  `Are you sure you want to transfer trip ownership to ${collaboratorName}?`
+        newOwnerId = collaboratorId
+    }
+
+    /**
+     * Hide the swap ownership confirmation modal
+     */
+    function hideSwapOwnershipConfirmationModal() {
+        swapOwnershipConfirmationModalShown = false
+    }
+
+    /**
+     * Calls backend to transfer ownership of the trip to the user.
+     * @param userId
+     */
+    async function swapOwnership(userId: number) {
+        const tripId = page.params.tripId;
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${tripId}/collaboration/transfer/${newOwnerId}` as any),
+                {
+                    method: "PATCH",
+                    credentials: "include",
+                },
+            );
+            if (!response.ok) {
+                swapOwnershipError = "Failed to transfer ownership";
+            }
+        } catch {
+            swapOwnershipError = "Failed to transfer ownership";
+        }
+    }
+    
 </script>
 
 {#if show}
@@ -197,8 +244,14 @@
                     {#each tripCollaborators as collaborator}
                         <div class="collaborators-list">
                             <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
-                            <button class="btn btn-secondary" 
-                                    onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>Kick</button>
+                            <button class="btn btn-danger" 
+                                    onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                Kick
+                            </button>
+                            <button class="btn btn-danger"
+                                    onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                Grant Ownership
+                            </button>
                         </div>
                     {/each}
                     {#if inviteShown}
@@ -258,6 +311,18 @@
         await kickUser();
     }}
         bind:show={kickUserConfirmationModalShown}
+/>
+
+<ConfirmationModal
+        message={swapOwnershipMessage}
+        option1Text="Cancel"
+        option2Text="Confirm"
+        option2Style="danger"
+        onOption1={hideSwapOwnershipConfirmationModal()}
+        onOption2={async () => {
+            await swapOwnership();
+        }}
+        bind:show={swapOwnershipConfirmationModalShown}
 />
 
 
