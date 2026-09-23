@@ -205,10 +205,10 @@ public class CollaborationService : ICollaborationService
         Notification kickedNotification = new Notification()
         {
             UserId = kickedUserId,
-            HeaderText = $"YKicked from {trip.Title}!",
+            HeaderText = $"Kicked from {trip.Title}!",
             BodyText = $"You have been kicked out of the {trip.Title} trip! You can no longer collaborate on the trip",
             Timestamp = DateTimeOffset.UtcNow,
-            NotificationType = "KickedFromTrip",
+            NotificationType = "Notification",
         };
         
         await _notificationService.AddNotificationAsync(kickedNotification);
