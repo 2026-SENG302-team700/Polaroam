@@ -62,15 +62,30 @@
         }
     }
 
+    function resetSelection() {
+        selectedPhotoId = null;
+        image = null;
+        imageError = "";
+    }
+
     /**
      * Close the file picker modal
      */
     function closeModal() {
         dialog.close();
         show = false;
-        selectedPhotoId = null;
-        image = null;
-        imageError = "";
+        resetSelection();
+    }
+
+    function handleDialogClose() {
+        show = false;
+        resetSelection();
+    }
+
+    function handleBackdropClick(event: MouseEvent) {
+        if (event.target === dialog) {
+            closeModal();
+        }
     }
 
     /**
@@ -93,12 +108,11 @@
      */
     $effect(() => {
         if (show) {
+            resetSelection();
             openModal();
         } else if (dialog?.open) {
             dialog.close();
-            selectedPhotoId = null;
-            image = null;
-            imageError = "";
+            resetSelection();
         }
     });
 
@@ -120,11 +134,32 @@
      * @returns the dimensions of the image file
      */
     async function getImageDimensions(file: File): Promise<ImageDimensions> {
-        const bitmap = await createImageBitmap(file);
-        const { width, height } = bitmap;
-        bitmap.close();
+        try {
+            const bitmap = await createImageBitmap(file);
+            const { width, height } = bitmap;
+            bitmap.close();
+            return { width, height };
+        } catch {
+            return await new Promise<ImageDimensions>((resolve, reject) => {
+                const objectUrl = URL.createObjectURL(file);
+                const imageElement = new Image();
 
-        return { width, height };
+                imageElement.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    resolve({
+                        width: imageElement.naturalWidth,
+                        height: imageElement.naturalHeight,
+                    });
+                };
+
+                imageElement.onerror = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error("Could not decode image"));
+                };
+
+                imageElement.src = objectUrl;
+            });
+        }
     }
 
     /**
@@ -216,6 +251,8 @@
         bind:this={dialog}
         class="modal-dialog-container"
         onkeydown={handleModalKeydown}
+        onclose={handleDialogClose}
+        onclick={handleBackdropClick}
     >
         <div class="modal-content">
             <div class="modal-title">

@@ -9,7 +9,6 @@
     import { exportToBlob } from "@excalidraw/excalidraw";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { onMount } from "svelte";
     import { resolve } from "$app/paths";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
@@ -113,7 +112,7 @@
      * Gets the trip's scrapboard from the backend, adds the files, then updates
      * the scene elements.
      */
-    async function loadScrapboard() {        
+    async function loadScrapboard(api: ExcalidrawImperativeAPI) {
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/scrapboard/${tripId}` as any),
@@ -140,11 +139,11 @@
                 }),
             );
 
-            excalidrawAPI!.addFiles(files);
+            api.addFiles(files);
             if (scrapboard.elements != "") {
                 const elements = JSON.parse(scrapboard.elements);
-                excalidrawAPI!.updateScene({ elements });
-                excalidrawAPI!.scrollToContent(elements, {
+                api.updateScene({ elements });
+                api.scrollToContent(elements, {
                     fitToContent: true,
                     animate: true,
                     duration: 300,
@@ -171,9 +170,10 @@
         showPickerModal = true;
     }
 
-    onMount(() => {
-        loadScrapboard();
-    });
+    function handleExcalidrawInit(api: ExcalidrawImperativeAPI) {
+        excalidrawAPI = api;
+        loadScrapboard(api);
+    }
 
     /** Builds a custom hamburger menu containing only the required actions. */
     function buildMainMenu(mod: typeof import("@excalidraw/excalidraw")) {
@@ -220,6 +220,7 @@
         <Excalidraw
             childrenBuilder={buildChildren}
             bind:excalidrawAPI
+            onInit={handleExcalidrawInit}
             theme="light"
             name="Basic Test"
             viewModeEnabled={false}
