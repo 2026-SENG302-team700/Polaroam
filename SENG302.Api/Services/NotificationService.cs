@@ -117,6 +117,6 @@ public class NotificationService : INotificationService
         using var context = await _dbContextFactory.CreateDbContextAsync();
 
         int count = await context.Notifications.Where(n => n.UserId == userId).CountAsync();
-        return offset + limit <= count;
+        return offset + limit < count;
     }
 }

@@ -257,4 +257,18 @@ public class NotificationControllerTests : BaseIntegrationTestFixture
 
         await _notificationService.DidNotReceive().SetNotificationStatusByIdAsync(Arg.Any<int>(), Arg.Any<bool>());
     }
+    
+    [Fact] 
+    public async Task GetAllNotifications_OffsetNotGiven_DefaultsToZero()
+    {
+        _notificationService.GetNotificationsByUserIdAsync(1, 5, 0).Returns([]);
+    
+        var result = await _controller.GetNotifications(null, null);
+    
+        result.Result.ShouldBeOfType<OkObjectResult>();
+    
+        await _notificationService.Received(1).GetNotificationsByUserIdAsync(1, 5, 0);
+    
+        await _notificationService.Received(1).UserHasMoreThan(1, 5, 0);
+    }
 }
