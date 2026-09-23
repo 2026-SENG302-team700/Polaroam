@@ -135,7 +135,7 @@
     }
 
     /**
-     * Kick the user
+     * Kick the user from the current trip
      */
     async function kickUser() {
         kickUserMessage = "";
