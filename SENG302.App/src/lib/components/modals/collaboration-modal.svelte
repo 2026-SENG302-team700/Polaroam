@@ -199,7 +199,7 @@
                         <div class="collaborators-list">
                             <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
                             {#if isOwner}
-                                <button class="btn btn-secondary"
+                                <button class="btn btn-danger"
                                         onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>Kick</button>
                             {/if}
                         </div>
@@ -259,7 +259,7 @@
 <ConfirmationModal
         message={kickUserMessage}
         option1Text="Cancel"
-        option2Text="Confirm to kick user"
+        option2Text="Confirm"
         option2Style="danger"
         onOption1={hideKickUserConfirmationModal}
         onOption2={async () => {
