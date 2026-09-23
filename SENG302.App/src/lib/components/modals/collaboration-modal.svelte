@@ -41,7 +41,10 @@
     let swapOwnershipError = $state("");
     let newOwnerId = $state<number | null>(null);
     let swapOwnershipMessage = $state("");
-    
+
+    /**
+     * Gets a list of everyone who is a collaborator on the trip
+     */
     async function getCollaborators() {
         try {
             const response = await fetchWithCsrf(
@@ -57,6 +60,9 @@
         }
     }
 
+    /**
+     * Gets the owner of the trip. If the user is the owner, then the isOwner variable is set to true.
+     */
     async function getOwner() {
         try {
             const response = await fetchWithCsrf(
