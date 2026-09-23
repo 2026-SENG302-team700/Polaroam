@@ -206,4 +206,39 @@ public class CollaborationController : ControllerBase
 
         return Ok(remainingCollaborators);
     }
+
+    [Authorize]
+    [HttpPatch("transfer/{newOwnerId:int}")]
+    public async Task<ActionResult> SwapOwnership(int tripId, int newOwnerId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("Not logged in");
+        }
+
+        var userId = int.Parse(userIdString);
+        if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+        {
+            return Unauthorized("User cannot transfer ownership as they are not the current owner");
+        }
+        
+        if (!await _tripService.UserHasCollaborationAccessToTrip(newOwnerId, tripId))
+        {
+            return Unauthorized("New owner does not have access to collaborate on the trip");
+        }
+
+        try
+        {
+            await _collaborationService.SwapOwnership(userId, newOwnerId, tripId);
+
+            return Ok();
+        }
+        catch (KeyNotFoundException e)
+        {
+            return BadRequest(e.Message);
+        }
+        
+        
+    } 
 }

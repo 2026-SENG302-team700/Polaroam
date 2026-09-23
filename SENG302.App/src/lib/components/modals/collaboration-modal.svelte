@@ -244,14 +244,16 @@
                     {#each tripCollaborators as collaborator}
                         <div class="collaborators-list">
                             <span class="collaborator-info">Collaborator: {collaborator.displayName}</span>
-                            <button class="btn btn-danger" 
-                                    onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>
-                                Kick
-                            </button>
-                            <button class="btn btn-danger"
-                                    onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
-                                Grant Ownership
-                            </button>
+                            {#if isOwner}
+                                <button class="btn btn-danger"
+                                        onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                    Kick
+                                </button>
+                                <button class="btn btn-danger"
+                                        onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                    Grant Ownership
+                                </button>
+                            {/if}
                         </div>
                     {/each}
                     {#if inviteShown}
@@ -318,7 +320,7 @@
         option1Text="Cancel"
         option2Text="Confirm"
         option2Style="danger"
-        onOption1={hideSwapOwnershipConfirmationModal()}
+        onOption1={hideSwapOwnershipConfirmationModal}
         onOption2={async () => {
             await swapOwnership();
         }}
