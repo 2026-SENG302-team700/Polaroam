@@ -367,44 +367,47 @@
                         </div>
                     {/if}
                 </div>
+
+                <ConfirmationModal
+                    bind:show={leaveConfirmationModalShown}
+                    message="Are you sure you want to stop collaborating and lose access to this trip?"
+                    option1Text="Cancel"
+                    option2Text="Confirm"
+                    option2Style="danger"
+                    onOption1={hideLeaveConfirmationModal}
+                    onOption2={leaveCollaboration}
+                    contained
+                />
+
+                <ConfirmationModal
+                    message={kickUserMessage}
+                    option1Text="Cancel"
+                    option2Text="Confirm"
+                    option2Style="danger"
+                    onOption1={hideKickUserConfirmationModal}
+                    onOption2={async () => {
+                        await kickUser();
+                    }}
+                    bind:show={kickUserConfirmationModalShown}
+                    contained
+                />
+
+                <ConfirmationModal
+                    message={swapOwnershipMessage}
+                    option1Text="Cancel"
+                    option2Text="Confirm"
+                    option2Style="danger"
+                    onOption1={hideSwapOwnershipConfirmationModal}
+                    onOption2={async () => {
+                        await swapOwnership(newOwnerId);
+                    }}
+                    bind:show={swapOwnershipConfirmationModalShown}
+                    contained
+                />
             </div>
         </div>
     </div>
 {/if}   
-
-<ConfirmationModal
-        bind:show={leaveConfirmationModalShown}
-        message="Are you sure you want to stop collaborating and lose access to this trip?"
-        option1Text="Cancel"
-        option2Text="Confirm"
-        option2Style="danger"
-        onOption1={hideLeaveConfirmationModal}
-        onOption2={leaveCollaboration}
-/>
-
-<ConfirmationModal
-        message={kickUserMessage}
-        option1Text="Cancel"
-        option2Text="Confirm"
-        option2Style="danger"
-        onOption1={hideKickUserConfirmationModal}
-        onOption2={async () => {
-        await kickUser();
-    }}
-        bind:show={kickUserConfirmationModalShown}
-/>
-
-<ConfirmationModal
-        message={swapOwnershipMessage}
-        option1Text="Cancel"
-        option2Text="Confirm"
-        option2Style="danger"
-        onOption1={hideSwapOwnershipConfirmationModal}
-        onOption2={async () => {
-            await swapOwnership(newOwnerId);
-        }}
-        bind:show={swapOwnershipConfirmationModalShown}
-/>
 
 
 <style>
