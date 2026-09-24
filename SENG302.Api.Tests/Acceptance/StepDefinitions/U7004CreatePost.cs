@@ -65,7 +65,7 @@ public class U7004CreatePost
             EndDate = DateToDateTimeOffset(2026, 7, 10),
             UserId = 1
         });
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
@@ -137,7 +137,7 @@ public class U7004CreatePost
 
         post.ShouldNotBeNull();
 
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}");
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}/trip/{post.TripId}");
 
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(post.PostId);
