@@ -205,7 +205,7 @@ public class PostService : IPostService
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
             OsmType = postRequest.OsmType,
-            LocationName = location.Name,
+            LocationName = locationName,
             CreatorId = creatorId
         };
         context.Set<Post>().Add(newPost);
@@ -218,7 +218,7 @@ public class PostService : IPostService
             PostId = newPost.PostId,
             Lat = location.Latitude,
             Lon = location.Longitude,
-            Name = location.Name,
+            Name = locationName,
             DisplayName = location.DisplayName,
         });
 
