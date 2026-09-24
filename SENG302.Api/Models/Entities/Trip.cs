@@ -17,13 +17,13 @@ public class Trip
     [Required]
     public string Title { get; set; } = string.Empty;
 
-    public bool HasScrapboard {get; set;} = false;
-    
+    public bool HasScrapboard { get; set; } = false;
+
     [Required]
     public int UserId { get; set; } // Foreign key to the User that owns this trip
 
     public string Description { get; set; } = string.Empty;
-    
+
     [Required]
     public DateTimeOffset? StartDate
     {

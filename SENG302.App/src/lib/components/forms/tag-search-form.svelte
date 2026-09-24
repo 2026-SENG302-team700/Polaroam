@@ -35,7 +35,7 @@
         const url =
             getSuggestionsUrl != null
                 ? getSuggestionsUrl
-                : `/api/image/tags?query=${encodeURIComponent(query)}`;
+                : `/api/images/tags?query=${encodeURIComponent(query)}`;
 
         const response = await fetchWithCsrf(resolve(url as any), {
             method: "GET",
@@ -67,7 +67,7 @@
             items = await fetchTagSuggestions(trimmed);
             isOpen = true;
         } catch (err) {
-            error = "Failed to fetch tag suggestions: " + (err as Error).message;
+            error = "Failed to fetch tag suggestions" + err.message;
             items = [];
         } finally {
             loading = false;
@@ -82,7 +82,7 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             fetchSuggestions();
-            performSearch?.();
+            performSearch();
         }, debounceTime);
     }
 
@@ -229,7 +229,9 @@
     {/if}
 
     {#if error}
-        <div class="invalid-feedback d-block">{error}</div>
+        <div class="invalid-feedback d-block">
+            {error}
+        </div>
     {/if}
 </div>
 

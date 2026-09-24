@@ -27,7 +27,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
     public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
-        
+
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
         _mockFileService = Substitute.For<IFileService>();
         _mockAuthService = Substitute.For<IAuthenticationService>();
@@ -62,7 +62,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
-    
+
     private async Task SetupTestUser()
     {
         await AddTestUser();
@@ -74,10 +74,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
         {
-            Headers = new HeaderDictionary(), ContentType = mimeType
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType
         };
     }
-        
+
     [Fact]
     public async Task UpdateUser_Success_ReturnOk()
     {
@@ -196,7 +197,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
     }
-    
+
     [Fact]
     public async Task AcceptPrivacyPolicy_Success_UpdatesAndOk()
     {
@@ -236,8 +237,8 @@ public class UserControllerTests : BaseIntegrationTestFixture
         var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
         updatedUser!.AiTaggingEnabled.ShouldBeTrue();
     }
-    
-    [Fact] 
+
+    [Fact]
     public async Task ToggleAiTagging_AiTaggingOn_TogglesAndOk()
     {
         await using (var context = DbContextFactory.CreateDbContext())
@@ -254,11 +255,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
             });
             await context.SaveChangesAsync();
         }
-    
+
         var response = await HttpClient.PutAsync("/api/user/ai-toggle", null);
-    
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-    
+
         await using var verifyContext = DbContextFactory.CreateDbContext();
         var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
         updatedUser!.AiTaggingEnabled.ShouldBeFalse();
@@ -271,7 +272,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         {
             context.Users.Add(new User
             {
-                Id = 1, 
+                Id = 1,
                 Email = "vulad@nispor.md",
                 DisplayName = "Vulad Nispor",
                 PasswordKey = "P4$$word",
@@ -283,7 +284,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
         var response1 = await HttpClient.PutAsync("/api/user/ai-toggle", null);
         response1.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
+
         var response2 = await HttpClient.PutAsync("/api/user/ai-toggle", null);
         response2.StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -310,12 +311,12 @@ public class UserControllerTests : BaseIntegrationTestFixture
     public async Task MapVisibility_SetX_IsX()
     {
         await AddTestUser();
-        
+
         var dataTrue = new { MapVisible = true };
         var response1 = await HttpClient.PutAsJsonAsync("/api/user/preference/mapvisible", dataTrue);
         response1.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeTrue();
-        
+
         var dataFalse = new { MapVisible = false };
         var response2 = await HttpClient.PutAsJsonAsync("/api/user/preference/mapvisible", dataFalse);
         response2.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -328,7 +329,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         await AddTestUser();
 
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, true);
-        
+
         var response1 = await HttpClient.GetAsync("/api/user/preference/mapvisible");
         response1.StatusCode.ShouldBe(HttpStatusCode.OK);
         var content1 = await response1.Content.ReadFromJsonAsync<MapVisibleObject>();
@@ -336,15 +337,15 @@ public class UserControllerTests : BaseIntegrationTestFixture
         content1.MapVisible.ShouldBeTrue();
 
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
-        
+
         var response2 = await HttpClient.GetAsync("/api/user/preference/mapvisible");
         response2.StatusCode.ShouldBe(HttpStatusCode.OK);
         var content2 = await response2.Content.ReadFromJsonAsync<MapVisibleObject>();
         content2.ShouldNotBeNull();
         content2.MapVisible.ShouldBeFalse();
     }
-    
-    
+
+
 
     [Fact]
     public async Task GetUser_UserExists_ReturnsOkWithNoPassword()
@@ -353,13 +354,13 @@ public class UserControllerTests : BaseIntegrationTestFixture
         var result = await _controller.GetUser();
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
-        var user = okResult.Value.ShouldBeOfType<GetUserResponse>();
+        var user = okResult.Value.ShouldBeOfType<UserResponse>();
     }
 
     [Fact]
     public async Task GetUser_UserNotFound_ReturnsNotFound()
     {
-        SetupUserContext("99","Test User", "test@example.com");
+        SetupUserContext("99", "Test User", "test@example.com");
 
         var result = await _controller.GetUser();
 
@@ -371,11 +372,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
     {
         var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
         await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User{ Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 });
+        context.Users.Add(new User { Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 });
         await context.SaveChangesAsync();
 
         SetupUserContext("10", "testName", "test@test.com");
-        
+
         _mockOneTimeCodeService.GetEpochTime().Returns(1050);
         _mockOneTimeCodeService.TimeoutTimeSeconds.Returns(300);
 
@@ -390,11 +391,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
     {
         var request = new NewOneTimeCodeRequest { Email = "test@test.com" };
         await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User{ Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 });
+        context.Users.Add(new User { Email = "test@test.com", DisplayName = "test", Country = "NZ", CodeGenerationTime = 1000 });
         await context.SaveChangesAsync();
-        
+
         SetupUserContext("1", "testName", "test@test.com");
-        
+
         _mockOneTimeCodeService.GetEpochTime().Returns(2000); // past timeout
         _mockOneTimeCodeService.TimeoutTimeSeconds.Returns(300);
 
@@ -411,7 +412,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         mockfile.OpenReadStream().Returns(stream);
 
         await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User{ Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 });
+        context.Users.Add(new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 });
         await context.SaveChangesAsync();
         var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = mimeType };
         var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = mimeType };
@@ -433,7 +434,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         result.Result.ShouldBeOfType<OkResult>();
 
         await _mockFileService.Received(1).DeleteFileAsync("old-key");
-        
+
         await using var verifyContext = DbContextFactory.CreateDbContext();
         var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 10);
         updatedUser.ShouldNotBeNull();
@@ -462,9 +463,9 @@ public class UserControllerTests : BaseIntegrationTestFixture
         mockfile.ContentType.Returns("image/png");
         mockfile.Length.Returns(10000001);
         mockfile.OpenReadStream().Returns(stream);
-        
+
         await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User{ Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 });
+        context.Users.Add(new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50 });
         await context.SaveChangesAsync();
         var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = "image/png" };
         var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = "image/png" };

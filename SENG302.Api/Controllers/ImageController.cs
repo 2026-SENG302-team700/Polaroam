@@ -11,7 +11,7 @@ namespace SENG302.Api.Controllers;
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/image")]
+[Route("api")]
 public class ImageController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -39,14 +39,14 @@ public class ImageController : ControllerBase
     /// <param name="photoId">id of photo</param>
     /// <returns>an array of strings containing the image tags</returns>
     [Authorize]
-    [HttpGet("{photoId:int}/tags")]
-    public async Task<IActionResult> GetPhotoTags(int photoId)
+    [HttpGet("trips/{tripId:int}/images/{photoId:int}/tags")]
+    public async Task<IActionResult> GetPhotoTags(int tripId, int photoId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
-        if (user == null || !await _fileService.CheckFileOwnership(photoId, userId))
+        if (user == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         try
@@ -83,8 +83,8 @@ public class ImageController : ControllerBase
     /// <summary>
     /// Removes a tag from an image owned by the current user.
     /// </summary>
-    [HttpDelete("{photoId:int}/tags/{tag}")]
-    public async Task<IActionResult> RemovePhotoTag(int photoId, string tag)
+    [HttpDelete("trips/{tripId:int}/images/{photoId:int}/tags/{tag}")]
+    public async Task<IActionResult> RemovePhotoTag(int tripId, int photoId, string tag)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var user = await _userService.GetUserByIdAsync(userId);
@@ -95,9 +95,9 @@ public class ImageController : ControllerBase
 
         try
         {
-            if (!await _fileService.CheckFileOwnership(photoId, userId))
+            if (!await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
             await _fileService.RemoveTagAsync(photoId, tag);
@@ -125,7 +125,7 @@ public class ImageController : ControllerBase
     /// Unauthorized - User is not authenticated
     /// BadRequest - Unknown error
     /// </returns>
-    [HttpGet("tags")]
+    [HttpGet("images/tags")]
     public async Task<ActionResult> GetSuggestedTags([FromQuery] string query)
     {
         try
@@ -161,7 +161,7 @@ public class ImageController : ControllerBase
     /// Unauthorized - User is not authenticated
     /// BadRequest - Unknown error
     /// </returns>
-    [HttpGet("tags/trip/{tripId:int}")]
+    [HttpGet("trips/{tripId:int}/images/tags")]
     public async Task<ActionResult> GetSuggestedTagsForTrip([FromQuery] string query, int tripId)
     {
         try
@@ -195,14 +195,14 @@ public class ImageController : ControllerBase
     /// Unauthorized - If the user is not logged in or does not own the file/image
     /// </returns>
     [Authorize]
-    [HttpPatch("{photoId:int}/tags")]
-    public async Task<IActionResult> RetryPhotoTagging(int photoId)
+    [HttpPatch("trips/{tripId:int}/images/{photoId:int}/tags")]
+    public async Task<IActionResult> RetryPhotoTagging(int tripId, int photoId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         User? user = await _userService.GetUserByIdAsync(userId);
-        if (user == null || !await _fileService.CheckFileOwnership(photoId, userId))
+        if (user == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         // Check if photoId already has error about queue being too full. If it does and user has tagging enabled, try re-tag
@@ -244,15 +244,15 @@ public class ImageController : ControllerBase
     /// <param name="photoId">id of photo</param>
     /// <returns>an image file</returns>
     [Authorize]
-    [HttpGet("{photoId:int}")]
-    public async Task<IActionResult> GetPostPhoto(int photoId)
+    [HttpGet("trips/{tripId:int}/images/{photoId:int}")]
+    public async Task<IActionResult> GetPostPhoto(int tripId, int photoId)
     {
         try
         {
             // verify that the user logged in is the owner of the images
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             CustomFile file = await _fileService.GetFileByIdAsync(photoId);
-            if (file == null || !await _fileService.CheckFileOwnership(file.Id, userId)) return NotFound();
+            if (file == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId)) return NotFound();
 
             byte[] bytes = await _fileService.GetFileContentAsync(file.FileKey);
 
@@ -273,19 +273,19 @@ public class ImageController : ControllerBase
     /// Not Found - Photo has no corelating post
     /// Ok - Returned with post Id.
     /// </returns>
-    [HttpGet("{photoId:int}/context")]
-    public async Task<ActionResult> GetImageContext(int photoId)
+    [HttpGet("trips/{tripId:int}/images/{photoId:int}/context")]
+    public async Task<ActionResult> GetImageContext(int tripId, int photoId)
     {
         try
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
-            if (user == null)
+            if (user == null || !await _fileService.UserHasAccessToFileFromTrip(userId, tripId, photoId))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
-            var imageContext = await _imageService.GetImageContextAsync(photoId, userId);
+            var imageContext = await _imageService.GetImageContextAsync(photoId);
 
             if (imageContext != null)
             {

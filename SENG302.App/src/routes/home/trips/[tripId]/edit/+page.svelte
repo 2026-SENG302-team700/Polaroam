@@ -29,7 +29,7 @@
     let endDate = $state(new Date("9999-03-03"));
     let startDateState: "valid" | "invalid" | "empty" = $state("valid");
     let endDateState: "valid" | "invalid" | "empty" = $state("valid");
-    
+
     onMount(fetchTrip);
 
     /**
@@ -61,13 +61,12 @@
                     credentials: "include",
                 },
             );
-            
+
             if (!response.ok) {
-                errors.generic =
-                    "Failed to fetch trip.";
+                errors.generic = "Failed to fetch trip.";
                 return;
             }
-            
+
             const data = await response.json();
             tripTitle = data.title;
             tripDescription = data.description;
@@ -75,8 +74,7 @@
             startDate = new Date(data.startDate);
             endDate = new Date(data.endDate);
         } catch (err) {
-            errors.generic =
-                "Failed to fetch trip.";
+            errors.generic = "Failed to fetch trip.";
         } finally {
             loading = false;
         }
@@ -105,7 +103,7 @@
                         EndDate: endDate == null ? null : endDate.toISOString(),
                     }),
                     credentials: "include",
-                }, 
+                },
             );
 
             const data = await response.json();
@@ -148,20 +146,20 @@
     }
 </script>
 
-{#if !loading && tripTitle !== ""}
+{#if !loading && errors.generic !== "Failed to fetch trip."}
     <TripForm
-            bind:title={tripTitle}
-            bind:description={tripDescription}
-            bind:startDate
-            bind:endDate
-            bind:startDateState
-            bind:endDateState
-            heading="Edit Trip"
-            submitText="Update Trip"
-            cancelPath={`/home/trips/${params.tripId}`}
-            {errors}
-            {loading}
-            onSubmit={updateTrip}
+        bind:title={tripTitle}
+        bind:description={tripDescription}
+        bind:startDate
+        bind:endDate
+        bind:startDateState
+        bind:endDateState
+        heading="Edit Trip"
+        submitText="Update Trip"
+        cancelPath={`/home/trips/${params.tripId}`}
+        {errors}
+        {loading}
+        onSubmit={updateTrip}
     />
 {:else if !loading}
     <NotFound />
