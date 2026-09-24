@@ -114,7 +114,10 @@
      * Validates that all fields are filled in before making the request. If login is successful,
      * redirects the user to the profile page. If there is an error, displays an appropriate message.
      */
-    async function loginUser() {
+    async function loginUser(e?: SubmitEvent) {
+        e?.preventDefault();
+        if (loading) return;
+        
         let valid = true;
         // Reset errors
         errors = {
@@ -466,28 +469,31 @@
 {/snippet}
 
 {#snippet body()}
+    <form id="login-form" onsubmit={loginUser}>
+        <div class="mb-3">
+            <EmailForm error={errors.email} {loading} bind:email />
+        </div>
+        <div class="mb-3">
+            <PasswordForm
+                    bind:password
+                    error={errors.password}
+                    {loading}
+                    id="password"
+            />
+            <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm text-decoration-none"
+                    onclick={requestNewPassword}>Forgot Password?
+            </button>
+        </div>
+        <div class="mb-3"></div>
+    </form>
     <div class="mb-3">
-        <EmailForm error={errors.email} {loading} bind:email />
-    </div>
-    <div class="mb-3">
-        <PasswordForm
-            bind:password
-            error={errors.password}
-            {loading}
-            id="password"
-        />
         <button
-            class="btn btn-outline-primary btn-sm text-decoration-none"
-            onclick={requestNewPassword}>Forgot Password?</button
-        >
-    </div>
-    <div class="mb-3"></div>
-    <div class="mb-3">
-        <button
-            class="btn btn-primary w-100"
-            hidden={errors.email !=
+                class="btn btn-primary w-100"
+                hidden={errors.email !=
                 "Account is not validated yet, check your emails."}
-            onclick={() => goto(resolve("/register/verification"))}
+                onclick={() => goto(resolve("/register/verification"))}
         >
             Verify Email
         </button>
@@ -496,7 +502,7 @@
 
 {#snippet footer()}
     <div class="mb-3 post-form-actions">
-        <AuthenticatorButton buttonType={"login"} onClick={loginUser} />
+        <AuthenticatorButton form="login-form" buttonType={"login"} />
         <CancelButton path="/"></CancelButton>
     </div>
 {/snippet}
