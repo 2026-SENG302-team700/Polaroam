@@ -95,8 +95,8 @@ public class PostController : ControllerBase
     /// <param name="id">The desired post's id</param>
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Post>> GetPost(int id)
+    [HttpGet("{id:int}/trip/{tripId:int}")]
+    public async Task<ActionResult<Post>> GetPost(int id, int tripId)
     {
         try
         {
@@ -105,7 +105,7 @@ public class PostController : ControllerBase
 
             var post = await _postService.GetPostAsync(id);
 
-            if (post == null || !await _postService.UserOwnsPost(userId, post.TripId)) return NotFound();
+            if (post == null || !await _postService.UserOwnsPost(userId, post.TripId) || post.TripId != tripId) return NotFound();
             return Ok(post);
         }
         catch (Exception e)
@@ -170,13 +170,13 @@ public class PostController : ControllerBase
     /// <param name="postId">The id of the post</param>
     /// <returns>a list of metadata objects</returns>
     [Authorize]
-    [HttpGet("{postId:int}/images")]
-    public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId)
+    [HttpGet("{postId:int}/images/trip/{tripId:int}")]
+    public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId, int tripId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
-        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
+        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId) || post.TripId != tripId)
         {
             return NotFound("Post not found");
         }

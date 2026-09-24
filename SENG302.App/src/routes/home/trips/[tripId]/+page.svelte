@@ -22,7 +22,7 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
-    let tripOwner = $state(null);
+    let tripOwner = $state();
     let hoveredPostId: number | null = $state(null);
     let collaborationModalShown: boolean = $state(false);
     let collaboratingUsersError: string = $state("");
