@@ -25,6 +25,7 @@ public class DatabaseContext : DbContext
             .HasDiscriminator(n => n.NotificationType)
             .HasValue<Notification>("Notification")
             .HasValue<TripInvitationNotification>("TripInvitation");
+            
 
         modelBuilder.Entity<Notification>()
             .Property("Timestamp")

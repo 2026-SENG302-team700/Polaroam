@@ -41,9 +41,17 @@
 
     <div class="post-details">
         <h3>{post.title}</h3>
+
+        <div>
+            <i class="bi bi-person-fill"></i>
+            <p class="location">{post.creatorDisplayName}</p>
+        </div>
         {#if post.locationName}
-            <p class="location"><i class="bi bi-geo-alt-fill"></i>{post.locationName}</p>
+            <p class="location">
+                <i class="bi bi-geo-alt-fill"></i>{post.locationName}
+            </p>
         {/if}
+
         <p class="content" class:empty={!post.content}>
             {post.content || "No description"}
         </p>
@@ -69,7 +77,9 @@
         background: #fff8e8;
         box-shadow: 5px 5px 0 #686868;
         cursor: pointer;
-        transition: transform 120ms ease, box-shadow 120ms ease;
+        transition:
+            transform 120ms ease,
+            box-shadow 120ms ease;
     }
 
     .post-card:hover,

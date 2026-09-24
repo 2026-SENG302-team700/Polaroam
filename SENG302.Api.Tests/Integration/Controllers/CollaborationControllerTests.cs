@@ -41,7 +41,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             _mockUserService
         );
 
-        AddTestPrincipalToController(_controller);
+        TestingPrincipalHelper.AddTestPrincipalToController(_controller);
 
         _output = output;
     }
@@ -187,21 +187,21 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<NoContentResult>();
     }
-
+    
     [Fact]
     public async Task LeaveCollaboration_NotCollaborator_ReturnsUnauthorized()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(false);
-
+        
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<UnauthorizedObjectResult>();
     }
-
+    
     [Fact]
     public async Task LeaveCollaboration_ErrorOccurs_ReturnsBadRequest()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws(new Exception());
-
+        
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<BadRequestObjectResult>();
     }
@@ -209,21 +209,21 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task InviteCollaborator_UserNotLoggedIn_ReturnsUnauthorized()
     {
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
-
-        var requestData = new InviteCollaboratorRequest { Email = "test@example.com" };
-
+        _controller.ControllerContext = new ControllerContext                                                                                                                      
+        {                                                                                                                                                                          
+            HttpContext = new DefaultHttpContext()                                                                                                                                 
+        };   
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test@example.com"};
+       
         var response = await _controller.InviteUser(1, requestData);
-
+        
         response.ShouldBeOfType<UnauthorizedObjectResult>();
 
         var responseObject = response as UnauthorizedObjectResult;
 
         var CollaborationResponse = responseObject?.Value as CollaborationInviteResponse;
-
+        
         CollaborationResponse?.Message.ShouldBe("Not logged in");
 
         // responseObject?.Value?.ToString().ShouldBe("Not logged in");
@@ -235,20 +235,20 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         await AddTestUser();
 
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         User user2 = new()
         {
-
+            
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-
+            
         };
-
+        
         context.Users.Add(user2);
-
+        
         var trip = new Trip
         {
             Title = "Trip!",
@@ -258,7 +258,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [3]
         };
-
+        
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
@@ -277,7 +277,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         await AddTestUser();
 
         await using var context = DbContextFactory.CreateDbContext();
-
+        
         var trip = new Trip
         {
             Title = "Trip!",
@@ -287,22 +287,22 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [3]
         };
-
+        
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-
-        var requestData = new InviteCollaboratorRequest { Email = "test@@example.com" };
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test@@example.com"};
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-
-        var colabResponse = await response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
+        
+        var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
         colabResponse?.Message.ShouldBe("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
-
+    
     [Fact]
     public async Task InviteCollaborator_UserInTrip_ReturnsBadRequest()
     {
@@ -312,17 +312,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-
+            
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-
+            
         };
-
+        
         context.Users.Add(user2);
-
+        
         var trip = new Trip
         {
             Title = "Trip!",
@@ -332,20 +332,20 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = [2]
         };
-
+        
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        var colabResponse = await response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
+        var colabResponse = await  response.Content.ReadFromJsonAsync<CollaborationInviteResponse>();
         colabResponse?.Message.ShouldBe("This user is already a part of this trip.");
-
+        
     }
 
     [Fact]
@@ -357,17 +357,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-
+            
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-
+            
         };
-
+        
         context.Users.Add(user2);
-
+        
         var trip = new Trip
         {
             Title = "Trip!",
@@ -377,12 +377,12 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = []
         };
-
+        
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
@@ -398,17 +398,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-
+            
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-
+            
         };
-
+        
         context.Users.Add(user2);
-
+        
         var trip = new Trip
         {
             Title = "Trip!",
@@ -419,12 +419,12 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             Collaborators = [],
             PendingInvites = ["test2@example.com"]
         };
-
+        
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
@@ -440,17 +440,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         User user2 = new()
         {
-
+            
             Id = 2,
             Email = "test2@example.com",
             DisplayName = "Test User 2",
             PasswordKey = "password",
             Country = "Test Country"
-
+            
         };
-
+        
         context.Users.Add(user2);
-
+        
         var trip = new Trip
         {
             Title = "Trip!",
@@ -460,17 +460,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
             EndDate = DateToDateTimeOffset(2025, 12, 21),
             Collaborators = []
         };
-
+        
         context.Trips.Add(trip);
 
         await context.SaveChangesAsync();
-
-        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com" };
+        
+        var requestData = new InviteCollaboratorRequest { Email = "test2@example.com"};
 
         var response = await HttpClient.PostAsJsonAsync("/api/trip/1/collaboration", requestData);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-
+        
         var notification = await context.Notifications.Where(n => n.UserId == 2 && n.NotificationType == "TripInvitation").FirstOrDefaultAsync();
         notification.ShouldNotBeNull();
         notification.HeaderText.ShouldBe("New Invitation Request");
@@ -663,5 +663,292 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var message = await response.Content.ReadAsStringAsync();
         message.ShouldBe("Not a valid collaboration action!");
+    }
+
+    [Fact]
+    public async Task KickCollaborator_UserIsCurrentlyCollaborator_UserIsKickedAndOKResponseRecieved()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        await using var updatedContext = DbContextFactory.CreateDbContext();
+        Trip? updatedTrip = await updatedContext.Trips.FirstOrDefaultAsync(t => t.Id == 1);
+        updatedTrip.ShouldNotBeNull();
+        updatedTrip.Collaborators.ShouldNotContain(2);
+    }
+
+    [Fact]
+    public async Task KickCollaborator_TripDoesNotExist_BadRequestReturned()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/67/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        String message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("Trip with the provided ID does not exist.");
+    }
+    
+    [Fact]
+    public async Task KickCollaborator_KickedUserDoesNotExist_BadRequestReturned()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        String message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User does not exist");
+    }
+
+    [Fact]
+    public async Task KickCollaborator_KickedUserNotPartOfTrip_ReturnsUnauthorized()
+    {
+        await AddTestUser();
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+        
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        var response = await HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        String message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User does not have permission to kick collaborators from this trip");
+    }
+    
+    [Fact]
+    public async Task KickCollaborator_UserNotLoggedIn_ReturnsUnauthorized()
+    {
+        _controller.ControllerContext = new ControllerContext                                                                                                                      
+        {                                                                                                                                                                          
+            HttpContext = new DefaultHttpContext()                                                                                                                                 
+        };   
+
+        var response = await _controller.KickUser(1, 2);
+
+        response.Result.ShouldBeOfType<UnauthorizedObjectResult>();
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_ToCollaborator_ReturnsOK()
+    {
+        // Setup: User ID 1 is the owner of trip 1, and user ID 2 is a collaborator
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+        
+        // Swap Ownership
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_NotOwner_ReturnsUnauthorized()
+    {
+        // Setup: User ID 2 is the owner of trip 1, and user ID 1 is a collaborator
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [1]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+        
+        // User ID 1 attempts to give themselves ownership of trip 1
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/1", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User cannot transfer ownership as they are not the current owner");
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_ToNonCollaborator_ReturnsOK()
+    {
+        // Setup: User ID 1 is the owner of trip 1, and user ID 2 is not a collaborator but does exist
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+        
+        // Attempt to swap ownership to user ID 2
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("New owner does not have access to collaborate on the trip");
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_TripDoesNotExist_ReturnsBadRequest()
+    {
+        // Setup: User ID 1 is the owner of trip 1, and user ID 2 is a collaborator
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        await context.SaveChangesAsync();
+        
+        // Swap Ownership
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("Trip with the provided ID does not exist.");
     }
 }

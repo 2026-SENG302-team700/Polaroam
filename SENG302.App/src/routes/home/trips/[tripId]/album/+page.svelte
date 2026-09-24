@@ -194,7 +194,10 @@
 {#if !loading && metadataLoaded}
     <div class="card mb-2 post-wrapper">
         <div class="card-header">
-            <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
+            <NavigationButton
+                path={`/home/trips/${params.tripId}`}
+                text="Back"
+            />
             <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         </div>
         <div class="card-body"></div>
@@ -204,10 +207,10 @@
                 <TagSearchForm
                     bind:query={tagQuery}
                     performSearch={getImageMetadata}
-                    getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+                    getSuggestionsUrl={`/api/trips/${tripId}/images/tags?query=${encodeURIComponent(tagQuery)}`}
                 />
             </div>
-    
+
             {#if imageMetadata.length > 0 && tagQuery !== ""}
                 <p class="text-center">
                     {imageMetadata.length} images found matching "{tagQuery}"
@@ -215,7 +218,7 @@
             {:else if imageMetadata.length > 0 && tagQuery === ""}
                 <p class="text-center">{imageMetadata.length} images found</p>
             {/if}
-    
+
             <div class:empty-album={imageMetadata.length === 0}>
                 <ImageGallery
                     bind:imageMetadata
@@ -240,7 +243,7 @@
 {:else if !loading}
     <NotFound />
 {/if}
-    
+
 {#if uploadModalShown}
     <div class="modal-backdrop show"></div>
     <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">

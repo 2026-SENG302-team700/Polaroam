@@ -98,4 +98,65 @@ public class U70023TripCollaborationInvitations
         notification.BodyText.ShouldBe("You have been invited to collaborate on the Original trip trip!");
     }
 
+    [Given("I am the owner of a trip And I am on the collaboration tab")]
+    public async Task GivenIAmAOwnerOnCollaborationTab()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        
+        await SetupUser();
+        
+        context.Users.Add(new User
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Original trip",
+            Description = "Original description",
+            StartDate = DateToDateTimeOffset(2026, 7, 1),
+            EndDate = DateToDateTimeOffset(2026, 7, 10),
+            UserId = 1,
+            Collaborators = [2]
+        });
+        
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+        
+        await context.SaveChangesAsync();
+    }
+
+    [When("I make a collaborator the new owner")]
+    public async Task WhenIMakeCollaboratorNewOwner()
+    {
+        var response = await _fixture.HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+    }
+
+    [Then("I am demoted to collaborator And they are promoted to owner And all permissions adjust to match the new ownership hierarchy And the new owner receives a notification informing them of the change.")]
+    public async Task ThenImDemotedToCollaboratorAndTheyArePromotedToOwnerAndOwnerRecievesNotification()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+
+        Trip? trip = await context.Trips.FirstOrDefaultAsync(t => t.UserId == 2);
+
+        trip.ShouldNotBeNull();
+        trip.Collaborators.ShouldContain(1);
+
+        Notification? notification = await context.Notifications.FirstOrDefaultAsync(n => n.UserId == 2);
+
+        notification.ShouldNotBeNull();
+        notification.HeaderText.ShouldBe("Granted Ownership of Original trip!");
+
+    }
+
 }

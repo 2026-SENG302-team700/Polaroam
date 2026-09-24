@@ -111,7 +111,7 @@
 
             if (!response.ok) {
                 notificationsError = await response.text();
-                return
+                return;
             }
 
             var getAllNotificationsResponse =
@@ -166,7 +166,7 @@
                 notificationListElement == null ||
                 notificationButtonElement == null
             ) {
-                throw new Error("Cannot find the required elements");
+                return;
             }
             const clickedInsideList = e
                 .composedPath()
