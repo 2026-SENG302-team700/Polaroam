@@ -5,7 +5,6 @@
     import { addToast } from "$lib/toast/toast";
     import { onMount } from "svelte";
     import CodeForm from "$lib/components/forms/code-form.svelte";
-    import ImageDisplay from "$lib/components/images/image-display.svelte";
 
     let email = $state("");
     let serverTime = $state(0);
@@ -30,7 +29,6 @@
     let errors = $state({
         codeError: "",
     });
-
 
     onMount(async () => {
         email = localStorage.getItem("email") ?? "";
@@ -338,25 +336,26 @@
                         <a
                             role="button"
                             class="text-decoration-underline"
-                            on:click={sendCode} 
-                            disabled={resendingCode}>
+                            on:click={sendCode}
+                            disabled={resendingCode}
+                        >
                             {resendingCode ? "Resending..." : "Resend Code"}</a
                         >
                     {/if}
                 {/key}
                 <p class="text-danger">{errorMessage}</p>
                 <CodeForm
-                        bind:digit1
-                        bind:digit2
-                        bind:digit3
-                        bind:digit4
-                        bind:digit5
-                        bind:digit6
-                        error={errors.codeError}
+                    bind:digit1
+                    bind:digit2
+                    bind:digit3
+                    bind:digit4
+                    bind:digit5
+                    bind:digit6
+                    error={errors.codeError}
                 />
                 {#key buttonDisabled}
                     <button
-                            id="confirm-verification-button"
+                        id="confirm-verification-button"
                         style="margin-top: 10px"
                         class="btn btn-primary w-100"
                         on:click={checkCode}

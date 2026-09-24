@@ -35,7 +35,7 @@ public class PostController : ControllerBase
     /// <returns>All posts belonging to that user</returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
+    public async Task<ActionResult<IEnumerable<PostResponse>>> GetAllPosts()
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -47,7 +47,14 @@ public class PostController : ControllerBase
         try
         {
             var posts = await _postService.GetAllPostsAsync(int.Parse(userIdString));
-            return Ok(posts);
+            var postResponses = new List<PostResponse>();
+
+            foreach (Post post in posts)
+            {
+                postResponses.Add(new PostResponse(post, await _userService.GetUserDisplayName(post.CreatorId)));
+            }
+
+            return Ok(postResponses);
         }
         catch (Exception e)
         {
@@ -67,8 +74,8 @@ public class PostController : ControllerBase
     [HttpPost]
     [RequestSizeLimit(200000000)]
     public async Task<ActionResult<Post>> CreatePost(
-        [FromForm] NewPostRequest postRequest, 
-        [FromForm] List<IFormFile>? files, 
+        [FromForm] NewPostRequest postRequest,
+        [FromForm] List<IFormFile>? files,
         [FromForm] bool aiTaggingForUpload = true,
         [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null
         )
@@ -80,8 +87,10 @@ public class PostController : ControllerBase
 
         try
         {
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, postRequest.TripId)) return NotFound();
+
             var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload, acceptLanguage);
-            return Ok(response);
+            return Ok(response.PostId);
         }
         catch (MultipleValidationListException e)
         {
@@ -103,7 +112,7 @@ public class PostController : ControllerBase
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Post>> GetPost(int id)
+    public async Task<ActionResult<PostResponse>> GetPost(int id)
     {
         try
         {
@@ -112,8 +121,11 @@ public class PostController : ControllerBase
 
             var post = await _postService.GetPostAsync(id);
 
-            if (post == null || !await _postService.UserOwnsPost(userId, post.TripId)) return NotFound();
-            return Ok(post);
+            if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)) return NotFound();
+
+            var postResponse = new PostResponse(post, await _userService.GetUserDisplayName(post.CreatorId));
+
+            return Ok(postResponse);
         }
         catch (Exception e)
         {
@@ -127,13 +139,13 @@ public class PostController : ControllerBase
     /// </summary>
     /// <param name="postUpdates">updated values for a post</param>
     /// <returns>
-    /// The updated post if ok
+    /// The id of the updated post if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
     [RequestSizeLimit(200_000_000)]
-    public async Task<ActionResult<Post>> UpdatePost(
+    public async Task<ActionResult<int>> UpdatePost(
         [FromForm] UpdatePostRequest postUpdates,
         [FromForm] List<IFormFile>? files,
         [FromForm] bool aiTaggingForUpload = true)
@@ -144,12 +156,12 @@ public class PostController : ControllerBase
 
         if (post == null) return NotFound();
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId)!) return NotFound();
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)!) return NotFound();
 
         try
         {
             post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
-            return Ok(post);
+            return Ok(post?.PostId);
         }
         catch (MultipleValidationListException e)
         {
@@ -183,7 +195,7 @@ public class PostController : ControllerBase
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
-        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
+        if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
             return NotFound("Post not found");
         }
@@ -203,36 +215,6 @@ public class PostController : ControllerBase
         }
 
         return Ok(photos);
-    }
-
-    /// <summary>
-    /// Returns the users display name from the post id so that it can be displayed with a trip
-    /// </summary>
-    /// <param name="postId"></param>
-    /// <returns></returns>
-    [Authorize]
-    [HttpGet("{postId:int}/user")]
-    public async Task<ActionResult<User>> GetUserNameByPost(int postId)
-    {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-        var post = await _postService.GetPostAsync(postId);
-
-        if (post == null || !await _postService.UserOwnsPost(userId, post.TripId))
-        {
-            return NotFound("Post not found!");
-        }
-        var tripId = post.TripId;
-
-        var trip = await _tripService.GetTripByIdAsync(tripId);
-
-        var user = await _userService.GetUserByIdAsync(trip.UserId);
-
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
-        return Ok(user.DisplayName);
     }
 
     /// <summary>
@@ -260,7 +242,7 @@ public class PostController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        if (!await _postService.UserOwnsPost(userId, post.TripId, id))
         {
             return NotFound();
         }
@@ -289,7 +271,7 @@ public class PostController : ControllerBase
             return NotFound("Post does not exist");
         }
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
             return NotFound();
         }

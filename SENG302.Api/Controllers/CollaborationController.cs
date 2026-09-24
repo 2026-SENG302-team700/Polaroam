@@ -184,27 +184,26 @@ public class CollaborationController : ControllerBase
         {
             return Unauthorized("Not logged in");
         }
+        
 
         var userId = int.Parse(userIdString);
-        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
-        {
-            return Unauthorized("User does not have access to collaborate on the trip and kick users");
-        }
-
-        List<CollaboratingUserResponse> remainingCollaborators = [];
         
         try
         {
+            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            {
+                return Unauthorized("User does not have permission to kick collaborators from this trip");
+            }
+            
             await _collaborationService.KickUserAsync(tripId, kickedUserId);
-
-            remainingCollaborators = await _collaborationService.GetTripCollaborators(tripId);
+            
         }
         catch (KeyNotFoundException e)
         {
             return BadRequest(e.Message);
         }
 
-        return Ok(remainingCollaborators);
+        return Ok();
     }
 
     /// <summary>

@@ -49,12 +49,15 @@
         deleteError = "";
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${image.photoId}/context` as any),
+                resolve(
+                    `/api/trips/${tripId}/images/${image.photoId}/context` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
 
             if (!response.ok) {
-                deleteError = "Failed to check whether the image can be deleted";
+                deleteError =
+                    "Failed to check whether the image can be deleted";
                 return;
             }
 
@@ -101,7 +104,6 @@
                 }
             } catch {
                 deleteError = "Failed to delete image";
-                console.log(deleteError);
             }
 
             pendingDeleteIndex = null;
