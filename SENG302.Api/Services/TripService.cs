@@ -190,7 +190,7 @@ public class TripService : ITripService
 
         var trip = await GetTripByIdAsync(tripId);
 
-        return trip.UserId == userId;
+        return trip.UserId == userId || trip.Collaborators.Contains(userId);
     }
 
     /// <summary>

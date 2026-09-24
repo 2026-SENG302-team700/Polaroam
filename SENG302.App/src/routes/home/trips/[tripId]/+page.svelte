@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { user } from "$lib/stores/user";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -22,11 +21,8 @@
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
-    let tripOwner = $state(null);
     let hoveredPostId: number | null = $state(null);
     let collaborationModalShown: boolean = $state(false);
-    let collaboratingUsersError: string = $state("");
-
     let tripObject = $state({
         id: -1,
         title: "No Title",
@@ -36,16 +32,6 @@
         userId: 0,
     });
 
-    let collaboratingUsers: CollaboratingUser[] = $state([]);
-
-    const LoadState = {
-        UNLOADED: 0,
-        LOADING: 1,
-        LOADED: 2,
-    };
-
-    let collaboratingLoadingState: number = $state(LoadState.UNLOADED);
-
     let postLocations = $state([]);
     let posts = $state([]);
     let selectedPost = $state(null);
@@ -54,7 +40,6 @@
         fetchTrip();
         fetchPosts();
         fetchLocations();
-        fetchUserName();
     });
 
     /**
@@ -168,58 +153,12 @@
         deletionModalShown = false;
     }
 
-    async function fetchUserName() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/user` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            tripOwner = await response.json();
-        } catch (err) {
-            throw new Error(
-                "Failed to fetch trip owner"
-            );
-        }
-    }
-
     /**
      * Turn on the collaboration modal
      * If the collaborators are not yet loaded then load them
      */
     function showCollaborationModal() {
-        if (collaboratingLoadingState === LoadState.UNLOADED) {
-            collaboratingLoadingState = LoadState.LOADING;
-            fetchTripCollaborators()
-                .then(() => {
-                    collaboratingLoadingState = LoadState.LOADED;
-                })
-                .catch((e: Error) => {
-                    collaboratingUsersError = e.message;
-                });
-        }
-
         collaborationModalShown = true;
-    }
-
-    /**
-     * Fetch all collaborators of trip from backend
-     */
-    async function fetchTripCollaborators() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/collaboration` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            collaboratingUsers = await response.json();
-        } catch (err: any) {
-            collaboratingUsersError = err.toString();
-        }
     }
 </script>
 
@@ -306,10 +245,6 @@
 
 <CollaborationModal
     bind:show={collaborationModalShown}
-    isOwner={tripOwner?.id === $user.id}
-    tripOwner={tripOwner ? tripOwner.displayName : ""}
-    tripCollaborators={collaboratingUsers}
-    {error}
 />
 
 <style>
