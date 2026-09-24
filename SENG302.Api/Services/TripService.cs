@@ -13,10 +13,12 @@ public interface ITripService
     Task<Trip> GetTripByIdAsync(int id);
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
     Task DeleteTripByIdAsync(int tripId);
-    Task<bool> UserHasModifyAccessToTrip(int userId, int tripId);
+    Task<bool> UserHasCollaborationAccessToTrip(int userId, int tripId);
     Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
     Task<List<Location>> GetTripLocations(int tripId);
     Task<List<Trip>> GetTripsFromQuery(int userId, string query);
+    Task<bool> UserIsOwnerOfTrip(int userId, int tripId);
+    Task<Trip> UpdateScrapboardReferenceAsync(int tripId);
 }
 
 public class TripService : ITripService
@@ -134,6 +136,32 @@ public class TripService : ITripService
         return trip;
     }
 
+    /// <summary>
+    /// gets the trip wit the provided id, checks if it exists and whether it already has a scrapboard.
+    /// if it has a scrapboard, update it's boolean value to reflect this.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<Trip> UpdateScrapboardReferenceAsync(int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+        if (trip == null)
+        {
+            throw new ArgumentException("Trip with the provided ID does not exist.");
+        }
+        if (trip.HasScrapboard == true)
+        {
+            throw new ArgumentException("Trip already has a scrapboard.");
+        }
+        trip.HasScrapboard = true;
+        await context.SaveChangesAsync();
+
+        return trip;
+    }
+
 
     /// <summary>
     /// Delete the trip from the database
@@ -150,12 +178,28 @@ public class TripService : ITripService
     }
 
     /// <summary>
-    /// Get if a user has access to a particular trip
+    /// Get if a user has access to collaborate on a particular trip
     /// </summary>
     /// <param name="userId">The id of the user</param>
     /// <param name="tripId">The id of the trip</param>
     /// <returns>Whether the user has access to the trip specified</returns>
-    public async Task<bool> UserHasModifyAccessToTrip(int userId, int tripId)
+    public async Task<bool> UserHasCollaborationAccessToTrip(int userId, int tripId)
+    {
+        // For permissions this needs to be edited
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var trip = await GetTripByIdAsync(tripId);
+
+        return trip.UserId == userId;
+    }
+
+    /// <summary>
+    /// See if user is the owner of a trip
+    /// </summary>
+    /// <param name="userId"> User Id</param>
+    /// <param name="tripId"> Trip Id</param>
+    /// <returns>If user is the owner of a trip</returns>
+    public async Task<bool> UserIsOwnerOfTrip(int userId, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 

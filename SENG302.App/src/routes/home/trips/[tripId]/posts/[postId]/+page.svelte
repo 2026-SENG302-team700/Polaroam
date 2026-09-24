@@ -9,10 +9,12 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostDisplayCard from "$lib/components/trip-components/post-display-card.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let loading = $state(false);
     let error = $state("");
     let deletionModalShown = $state(false);
+    let postNotFound = $state(false);
 
     let { params } = $props();
     let postId = params.postId;
@@ -39,29 +41,6 @@
         fetchPost();
         fetchDisplayName();
     });
-
-    // /**
-    //  * Fetches the location name from the backend for an osmId
-    //  */
-    // async function fetchLocationName() {
-
-    //     try {
-    //         loading = true;
-    //         const response = await fetchWithCsrf(
-    //             resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
-    //             {
-    //                 method: "GET",
-    //                 credentials: "include",
-    //             },
-    //         );
-    //         let location = await response.json();
-    //         locationName = location.name;
-    //     } catch (err) {
-    //         error = "Failed to fetch location name: " + (err as Error).message;
-    //     } finally {
-    //         loading = false;
-    //     }
-    // }
 
     /**
      * Fetch the display name of the user based on the post
@@ -144,6 +123,12 @@
                     credentials: "include",
                 },
             );
+
+            if (response.status == 404) {
+                postNotFound = true;
+                return;
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
@@ -197,31 +182,38 @@
     }
 </script>
 
-<div
-    class="container trip-page-content d-flex justify-content-center align-items-center"
->
-    <div class="w-100" style="max-width: 900px;">
-        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
-        <EditButton
-            path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
-        />
-        <DeleteButton deleteAction={showConfirmationModal} />
-        <ErrorDisplay errors={[error]} />
+{#if postNotFound}
+    <NotFound />
+{:else}
+    <div
+        class="container trip-page-content d-flex justify-content-center align-items-center"
+    >
+        <div class="w-100" style="max-width: 900px;">
+            <NavigationButton
+                path={`/home/trips/${params.tripId}`}
+                text="Back"
+            />
+            <EditButton
+                path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
+            />
+            <DeleteButton deleteAction={showConfirmationModal} />
+            <ErrorDisplay errors={[error]} />
 
-        <PostDisplayCard
-            post={postObject}
-            userName={displayName}
-            {photos}
-            {photoIds}
-        />
+            <PostDisplayCard
+                post={postObject}
+                userName={displayName}
+                {photos}
+                {photoIds}
+            />
+        </div>
     </div>
-</div>
-
+{/if}
 <ConfirmationModal
     bind:show={deletionModalShown}
     message="Are you sure you want to delete this post? This action cannot be undone."
-    option1Text="Delete"
-    option2Text="Do not delete"
-    onOption1={deletePost}
-    onOption2={hideConfirmationModal}
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={hideConfirmationModal}
+    onOption2={deletePost}
 />

@@ -1,6 +1,4 @@
 ﻿using System.Security.Cryptography;
-using SENG302.Api.DataAccess;
-using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Models.Entities;
 
 

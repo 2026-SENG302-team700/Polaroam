@@ -32,7 +32,7 @@ public class ImageControllerTest : BaseIntegrationTestFixture
     /// <param name="content"> content of the file to create</param>
     /// <param name="mimeType">mimetype of file to create</param>
     /// <returns></returns>
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)

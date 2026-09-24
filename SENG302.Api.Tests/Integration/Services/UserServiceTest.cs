@@ -268,7 +268,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
     [Theory]
     [InlineData("345678", 123456789, true)]
-    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(String code, long timeCreated, bool userVerified)
+    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(string code, long timeCreated, bool userVerified)
     {
         await using var context = DbContextFactory.CreateDbContext();
 
@@ -285,7 +285,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         // Use the TripService function to create a new trip with the name and user email
-        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
+        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified, false);
 
         user.ShouldNotBeNull();
 

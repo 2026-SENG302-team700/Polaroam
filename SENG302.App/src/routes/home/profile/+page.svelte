@@ -62,10 +62,13 @@
      */
     async function logoutUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/logout`), {
-                method: "DELETE",
-                credentials: "include",
-            });
+            const response = await fetchWithCsrf(
+                resolve(`/api/logout` as any),
+                {
+                    method: "POST",
+                    credentials: "include",
+                },
+            );
 
             if (response.status === 500) {
                 addToast("Failed to logout. Refresh Webpage", "error");
@@ -86,22 +89,22 @@
             onclick={() => goto(resolve("/home/profile/edit-profile"))}
             >Edit Profile</button
         >
-    <div class="profile-content card">
-        <div class="card-body card-content">
-            <ProfilePic pfpData={$user.pfpData} size="large" />
-            <p class="username">{username}</p>
-            <p class="user_email">Email: {email}</p>
+        <div class="profile-content card">
+            <div class="card-body card-content">
+                <ProfilePic pfpData={$user.pfpData} size="large" />
+                <p class="username">{username}</p>
+                <p class="user_email">Email: {email}</p>
+            </div>
+            <div class="card-footer card-content">
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick={showModal}
+                >
+                    Logout
+                </button>
+            </div>
         </div>
-        <div class="card-footer card-content">
-            <button
-            type="button"
-            class="btn btn-danger"
-            onclick={showModal}
-        >
-            Logout
-        </button>
-        </div>
-    </div>
     </div>
     <div class="modal fade" bind:this={modalElement} tabindex="-1">
         <div class="modal-dialog">
@@ -131,11 +134,10 @@
 
 <style>
     .card-content {
-        display:flex;
+        display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        
     }
 
     .profile-box {
@@ -146,7 +148,6 @@
     }
 
     .username {
-        
         margin-top: 20px;
         font-weight: 600;
         font-style: normal;

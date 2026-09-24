@@ -63,7 +63,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             // Get the image
@@ -101,7 +101,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             var images = await _albumService.GetImagesMetadataFromAlbumAsync(tripId);
@@ -124,7 +124,7 @@ public class AlbumController : ControllerBase
             return BadRequest("An unexpected error occurred.");
         }
     }
-    
+
     /// <summary>
     /// Gets all images from an album that match the tag param. This includes images added
     /// directly to the album and images added to a post in the trip.
@@ -141,7 +141,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             tag = tag ?? "";
@@ -170,6 +170,7 @@ public class AlbumController : ControllerBase
     /// NotFound - trip not found
     /// </returns>
     [HttpPost("images")]
+    [RequestSizeLimit(200_000_000)]
     public async Task<ActionResult> AddImagesToAlbum(int tripId, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
     {
         try
@@ -181,7 +182,7 @@ public class AlbumController : ControllerBase
             User? user = await _userService.GetUserByIdAsync(userId);
 
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
             {
                 return Unauthorized();
             }
@@ -229,7 +230,7 @@ public class AlbumController : ControllerBase
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             User? user = await _userService.GetUserByIdAsync(userId);
             if (user == null ||
-                !await _tripService.UserHasModifyAccessToTrip(user.Id, tripId))
+                !await _tripService.UserHasCollaborationAccessToTrip(user.Id, tripId))
                 return Unauthorized();
 
             var postId = await _albumService.DeleteImageFromAlbumAsync(imageId, tripId);

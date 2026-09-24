@@ -9,23 +9,26 @@
     type TripFormErrors = {
         title: string[];
         description: string[];
-        dateOne: string;
-        dateTwo: string;
+        dateOne: string[];
+        dateTwo: string[];
         generic: string;
     };
 
     let {
         title = $bindable(""),
         description = $bindable(""),
-        startDate = $bindable(null),
-        endDate = $bindable(null),
+        startDate = $bindable(undefined),
+        endDate = $bindable(undefined),
+        startDateState = $bindable<DateInputState>("empty"),
+        endDateState = $bindable<DateInputState>("empty"),
         heading,
         submitText,
+        cancelPath = `/home`,
         errors = {
             title: [],
             description: [],
-            dateOne: "",
-            dateTwo: "",
+            dateOne: [],
+            dateTwo: [],
             generic: "",
         },
         loading = false,
@@ -33,8 +36,10 @@
     }: {
         title: string;
         description: string;
-        startDate: Date | null;
-        endDate: Date | null;
+        startDate: Date | null | undefined;
+        endDate: Date | null | undefined;
+        startDateState?: DateInputState;
+        endDateState?: DateInputState;
         heading: string;
         submitText: string;
         cancelPath: string;
@@ -42,6 +47,8 @@
         loading?: boolean;
         onSubmit: () => void | Promise<void>;
     } = $props();
+
+    type DateInputState = "valid" | "invalid" | "empty";
 </script>
 
 {#snippet header()}
@@ -64,6 +71,7 @@
         <DescriptionForm
             bind:description
             errors={errors.description}
+            maxLength={2048}
             {loading}
         />
 
@@ -72,6 +80,7 @@
                 <label for="trip-start-date">Start Date</label>
                 <Datepicker
                     bind:value={startDate}
+                    bind:inputState={startDateState}
                     disabled={loading}
                     error={errors.dateOne}
                 />
@@ -80,6 +89,7 @@
                 <label for="trip-end-date">End Date</label>
                 <Datepicker
                     bind:value={endDate}
+                    bind:inputState={endDateState}
                     disabled={loading}
                     error={errors.dateTwo}
                 />
@@ -95,7 +105,7 @@
 {/snippet}
 {#snippet footer()}
     <div class="post-form-actions">
-        <CancelButton path={`/home`} />
+        <CancelButton path={cancelPath} />
         <CreationButton onClick={onSubmit} text={submitText} {loading} />
     </div>
 {/snippet}

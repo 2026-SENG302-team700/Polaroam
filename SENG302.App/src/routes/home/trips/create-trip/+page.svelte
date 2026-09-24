@@ -2,21 +2,30 @@
     import TripForm from "$lib/components/forms/trip-form.svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
-    import { fetchWithCsrf } from "../../../../lib/csrf";
+    import { fetchWithCsrf } from "$lib/csrf";
 
     let loading = $state(false);
     let tripTitle = $state("");
     let tripDescription = $state("");
-    let errors = $state({
+
+    let errors = $state<{
+        title: string[];
+        description: string[];
+        dateOne: string[];
+        dateTwo: string[];
+        generic: string;
+    }>({
         title: [],
         description: [],
-        dateOne: "",
-        dateTwo: "",
+        dateOne: [],
+        dateTwo: [],
         generic: "",
     });
 
-    let startDate = $state(new Date());
-    let endDate = $state(new Date());
+    let startDate: Date | null | undefined = $state(new Date());
+    let endDate: Date | null | undefined = $state(new Date());
+    let startDateState: "valid" | "invalid" | "empty" = $state("valid");
+    let endDateState: "valid" | "invalid" | "empty" = $state("valid");
 
     /**
      * Removes all errors from the form.
@@ -25,8 +34,8 @@
         errors = {
             title: [],
             description: [],
-            dateOne: "",
-            dateTwo: "",
+            dateOne: [],
+            dateTwo: [],
             generic: "",
         };
     }
@@ -51,7 +60,7 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/trip`), {
+            const response = await fetchWithCsrf(resolve(`/api/trip` as any), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -71,6 +80,21 @@
                 errors.description = data.errors?.description ?? [];
                 errors.dateOne = data.errors?.dateOne ?? "";
                 errors.dateTwo = data.errors?.dateTwo ?? "";
+
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (startDateState === "invalid") {
+                    errors.dateOne = ["Invalid date"];
+                } else if (startDateState === "empty") {
+                    errors.dateOne = ["Start date is required"];
+                }
+
+                if (endDateState === "invalid") {
+                    errors.dateTwo = ["Invalid date"];
+                } else if (endDateState === "empty") {
+                    errors.dateTwo = ["End date is required"];
+                }
+                
+
                 return;
             }
 
@@ -88,6 +112,8 @@
     bind:description={tripDescription}
     bind:startDate
     bind:endDate
+    bind:startDateState
+    bind:endDateState
     heading="Create New Trip"
     submitText="Create Trip"
     cancelPath="/home"

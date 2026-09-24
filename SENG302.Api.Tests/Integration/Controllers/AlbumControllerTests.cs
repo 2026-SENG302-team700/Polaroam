@@ -253,8 +253,8 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         ImageTaggingQueueMock.QueueImageTaggingAsync(Arg.Any<ImageTaggingJob>()).Returns(true);
         
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
-        var contentt = await response.Content.ReadAsStringAsync();
-        response.EnsureSuccessStatusCode();
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var album = context.Albums.FirstOrDefault(album => album.TripId == 1)!;
         album.PhotoIds.Count.ShouldBe(2);

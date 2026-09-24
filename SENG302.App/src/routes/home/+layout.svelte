@@ -5,8 +5,8 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
-    import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
-    import AppLogo from "$lib/components/logo/app-logo.svelte";
+    import AppLogo from "$lib/components/app-logo.svelte";
+    import NotificationBell from "$lib/components/content/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
 
@@ -69,23 +69,28 @@
     }
 </script>
 
+
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
         <AppLogo />
-        <NavBarMenuButton path="/home" text="My Trips" />
-        <div class="right">
-            <h5
-                class="text username"
-                style=" margin-bottom: 0px; padding-bottom: 0px;"
-            >
+        <div
+            class="right"
+            style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
+        >
+            <NotificationBell />
+
+            <div class="vertical-separator"></div>
+
+            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
                 {$user.displayName}
             </h5>
-            <div
+
+            <button
                 class="profile-button"
                 onclick={() => goto(resolve("/home/profile"))}
             >
                 <ProfilePic pfpData={$user.pfpData} size="small" />
-            </div>
+            </button>
         </div>
     </div>
 </nav>
@@ -97,6 +102,12 @@
 </div>
 
 <style>
+    .vertical-separator {
+        background-color: red;
+        border-left: 2px solid black;
+        margin: 0px 5px;
+        height: 35px;
+    }
     .profile-button {
         width: 40px;
         height: 40px;
@@ -105,6 +116,7 @@
         border-radius: 50%;
         margin-left: 5px;
         cursor: pointer;
+        border: 0;
     }
 
     .navBar {
@@ -116,6 +128,7 @@
         display: flex;
         align-content: center;
     }
+    .right {
     .right {
         position: relative;
         right: 0;
@@ -134,6 +147,9 @@
     }
 
     .content-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         display: flex;
         flex-direction: row;
         align-items: center;

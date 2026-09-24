@@ -22,7 +22,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
     /// <param name="content">What bytes are in the file</param>
     /// <param name="mimeType">The mime type for the mock file</param>
     /// <returns>The mock file</returns>
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
@@ -1179,7 +1179,7 @@ public class PostServiceTests : BaseIntegrationTestFixture
             [image]
         );
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
 
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(post.PhotoIds[0]);
@@ -1229,10 +1229,58 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         await context.SaveChangesAsync();
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
 
         album.PhotoIds.Count.ShouldBe(1);
         album.PhotoIds.ShouldContain(updatedPost.PhotoIds[0]);
+    }
+
+    [Fact]
+    public async Task UpdatePostAsync_WithExistingAndNewImages_RetainsAllImages()
+    {
+        await SetupUserAndTrip(1, 1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "original post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
+        };
+
+        var existingImage = GetMockFile("existing.png", pngBytes, "image/png");
+        var post = await ServiceUnderTest.CreateNewPostAsync(request, 1, [existingImage]);
+        var existingImageId = post.PhotoIds.Single();
+
+        var updateRequest = new UpdatePostRequest
+        {
+            Id = post.PostId,
+            TripId = post.TripId,
+            Title = "updated title",
+            Content = "updated content",
+            OsmId = post.OsmId,
+            OsmType = post.OsmType,
+            Date = post.Date
+        };
+
+        var firstNewImage = GetMockFile("first-new.png", pngBytes, "image/png");
+        var secondNewImage = GetMockFile("second-new.png", pngBytes, "image/png");
+
+        var updatedPost = await ServiceUnderTest.UpdatePostAsync(
+            updateRequest,
+            1,
+            [firstNewImage, secondNewImage]
+        );
+
+        updatedPost.PhotoIds.Count.ShouldBe(3);
+        updatedPost.PhotoIds.ShouldContain(existingImageId);
+        updatedPost.PhotoIds.ShouldBeUnique();
+
+        await using var context = DbContextFactory.CreateDbContext();
+        var album = await context.Albums.SingleAsync(album => album.TripId == 1);
+        album.PhotoIds.ShouldBe(updatedPost.PhotoIds, ignoreOrder: true);
     }
 
 
@@ -1269,6 +1317,38 @@ public class PostServiceTests : BaseIntegrationTestFixture
 
         ImageTaggingQueueMock.Received(1).QueueImageTaggingAsync(
             Arg.Any<ImageTaggingJob>()
+        );
+    }
+
+    [Fact]
+    public async Task CreateNewPostAsync_WithMultipleImages_QueuesEachImageForTagging()
+    {
+        await SetupUserAndTrip(1, 1);
+        await EnableAiTagging(1);
+        SetupGeoMock();
+
+        var request = new NewPostRequest
+        {
+            TripId = 1,
+            Title = "test post",
+            Content = "description",
+            OsmId = 1,
+            Date = DateTimeOffset.UtcNow.AddDays(-2)
+        };
+
+        var firstImage = GetMockFile("first.png", pngBytes, "image/png");
+        var secondImage = GetMockFile("second.png", pngBytes, "image/png");
+        var thirdImage = GetMockFile("third.png", pngBytes, "image/png");
+
+        var post = await ServiceUnderTest.CreateNewPostAsync(
+            request,
+            1,
+            [firstImage, secondImage, thirdImage]
+        );
+
+        post.PhotoIds.Count.ShouldBe(3);
+        ImageTaggingQueueMock.Received(3).QueueImageTaggingAsync(
+            Arg.Is<ImageTaggingJob>(job => post.PhotoIds.Contains(job.ImageId))
         );
     }
 

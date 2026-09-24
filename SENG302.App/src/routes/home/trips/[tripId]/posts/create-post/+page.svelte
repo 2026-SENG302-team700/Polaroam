@@ -19,10 +19,12 @@
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
 
+    let dateState: "valid" | "invalid" | "empty" = $state("valid");
+
     type PostFormErrors = {
         title: string[];
         content: string[];
-        date: string;
+        date: string[];
         generic: string;
         location: string;
         photos: string[];
@@ -35,7 +37,7 @@
         return {
             title: [],
             content: [],
-            date: "",
+            date: [],
             generic: "",
             location: "",
             photos: [],
@@ -120,17 +122,25 @@
                 body: form,
                 credentials: "include",
             });
-            const data = await response.json();
 
             if (!response.ok) {
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType?.includes("application/json")) {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                    return;
+                }
+
+                const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
                 errors.date =
-                    data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
+                    data.errors?.date ?? data.errors?.Date ?? [];
                 errors.content =
                     data.errors?.content ?? data.errors?.Content ?? [];
                 errors.location =
@@ -147,15 +157,25 @@
                     errors.title.length === 0 &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     !errors.generic &&
                     !errors.location
                 ) {
                     showConfirmationModal = true;
                 }
+                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
+                
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (dateState === "invalid") {
+                    errors.date = ["Invalid date"];
+                } else if (dateState === "empty") {
+                    errors.date = ["Date is required"];
+                }
+                
                 return;
             }
-            console.log(data);
+
+            const data = await response.json();
             goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
@@ -180,7 +200,7 @@
 
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
-    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+    <DatePicker bind:value={date} bind:inputState={dateState} bind:error={errors.date} disabled={loading} />
 
     <LocationForm
         bind:searchQuery
@@ -193,6 +213,7 @@
         placeholder="Content"
         bind:description={content}
         errors={errors.content}
+        maxLength={8196}
         bind:loading
     />
 {/snippet}
@@ -237,12 +258,13 @@
 <ConfirmationModal
     bind:show={showConfirmationModal}
     message="Post contains no content, are you sure you want to create post?"
-    option1Text="Create anyway"
-    option2Text="Cancel"
-    onOption1={() => {
+    option1Text="Cancel"
+    option2Text="Create anyway"
+    option2Style="primary"
+    onOption1={() => (showConfirmationModal = false)}
+    onOption2={() => {
         noContentAllowed = true;
         showConfirmationModal = false;
         createPost();
     }}
-    onOption2={() => (showConfirmationModal = false)}
 />

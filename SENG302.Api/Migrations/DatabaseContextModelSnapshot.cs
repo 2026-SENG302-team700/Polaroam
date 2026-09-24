@@ -86,6 +86,48 @@ namespace SENG302.Api.Migrations
                     b.ToTable("CustomFiles");
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BodyText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Handled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("HeaderText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<bool>("ReadStatus")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("Timestamp")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Notifications");
+
+                    b.HasDiscriminator<string>("NotificationType").HasValue("Notification");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Post", b =>
                 {
                     b.Property<int>("PostId")
@@ -131,6 +173,30 @@ namespace SENG302.Api.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Scrapboard", b =>
+                {
+                    b.Property<int>("TripId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
+
+                    b.Property<string>("Elements")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<List<int>>("Files")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int>("Thumbnail")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TripId");
+
+                    b.ToTable("Scrapboards");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Trip", b =>
                 {
                     b.Property<int>("Id")
@@ -139,12 +205,23 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.PrimitiveCollection<List<int>>("Collaborators")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("HasScrapboard")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<string>>("PendingInvites")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -193,6 +270,9 @@ namespace SENG302.Api.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("EmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ForgotIsResettingPassword")
                         .HasColumnType("boolean");
 
                     b.Property<string>("OneTimeCode")
@@ -264,6 +344,16 @@ namespace SENG302.Api.Migrations
                     b.HasKey("PostId");
 
                     b.ToTable("Locations");
+                });
+
+            modelBuilder.Entity("SENG302.Api.Models.Entities.TripInvitationNotification", b =>
+                {
+                    b.HasBaseType("SENG302.Api.Models.Entities.Notification");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasDiscriminator().HasValue("TripInvitation");
                 });
 #pragma warning restore 612, 618
         }

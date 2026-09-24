@@ -14,6 +14,7 @@ using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
 using Shouldly;
 using static SENG302.Api.Helpers.DateHelper;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -135,6 +136,33 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var posts = await response.Content.ReadFromJsonAsync<List<Post>>();
         posts!.Count.ShouldBe(1);
         posts.First().Title.ShouldBe("My post");
+    }
+
+    [Fact]
+    public async Task GetPost_UserDoesNotOwnPost_ReturnsNotFound()
+    {
+        SetupUserContext("1");
+
+        var post = new Post
+        {
+            PostId = 10,
+            TripId = 20,
+            Title = "Another user's post",
+            Content = "Test content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
+        _mockPostService.GetPostAsync(post.PostId).Returns(post);
+        _mockPostService.UserOwnsPost(1, post.TripId).Returns(false);
+
+        var result = await _controller.GetPost(post.PostId);
+
+        result.Result.ShouldBeOfType<NotFoundResult>();
+
+        await _mockPostService.Received(1).GetPostAsync(post.PostId);
+        await _mockPostService.Received(1).UserOwnsPost(1, post.TripId);
     }
 
     [Fact]
@@ -533,6 +561,11 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var post = await response.Content.ReadFromJsonAsync<Post>();
         post!.PhotoIds!.Count.ShouldBe(2);
+        post.PhotoIds.ShouldBeUnique();
+
+        await using var verificationContext = DbContextFactory.CreateDbContext();
+        var album = await verificationContext.Albums.SingleAsync(album => album.TripId == 1);
+        album.PhotoIds.ShouldBe(post.PhotoIds, ignoreOrder: true);
     }
 
     [Fact]
@@ -633,7 +666,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UpdatePost_NotOwnerOfPost_ReturnsUnauthorized()
+    public async Task UpdatePost_NotOwnerOfPost_ReturnsNotFound()
     {
         await using var context = DbContextFactory.CreateDbContext();
 
@@ -647,7 +680,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         using var content = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
 
         var response = await HttpClient.PutAsync("/api/post/1", content);
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -856,7 +889,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeletePost_WrongUser_ReturnsUnauthorizedAndKeepsPost()
+    public async Task DeletePost_WrongUser_ReturnsNotFoundAndKeepsPost()
     {
         int postId;
 
@@ -901,7 +934,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response =
             await HttpClient.DeleteAsync($"/api/post/{postId}");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         await using var assertContext =
             DbContextFactory.CreateDbContext();
@@ -1158,7 +1191,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         errors.Errors["photos"].ShouldContain(e => e.Contains("bad1.png"));
         errors.Errors["photos"].ShouldContain(e => e.Contains("bad2.jpeg"));
     }
-    
+
     /// <summary>
     /// Create a new authenticated user
     /// </summary>
@@ -1323,6 +1356,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPost_PostExists_ReturnsOkWithPost()
     {
+        SetupUserContext("1");
+
         var post = new Post
         {
             PostId = 10,
@@ -1335,6 +1370,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         };
 
         _mockPostService.GetPostAsync(10).Returns(post);
+        _mockPostService.UserOwnsPost(1, post.TripId).Returns(true);
 
         var result = await _controller.GetPost(10);
 
@@ -1357,13 +1393,25 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
-        
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
+
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>?>())
             .Returns(Task.FromException<Post?>(new Exception("Unable to update post")));
 
@@ -1377,6 +1425,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPost_PostDoesNotExist_ReturnsNotFound()
     {
+        SetupUserContext("1");
+
         _mockPostService.GetPostAsync(999).Returns((Post?)null);
 
         var result = await _controller.GetPost(999);
@@ -1418,6 +1468,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetPost_ServiceThrowsException_ReturnsBadRequest()
     {
+        SetupUserContext("1");
+
         _mockPostService.GetPostAsync(10).Returns(Task.FromException<Post?>(new Exception("Unable to retrieve post")));
 
         var result = await _controller.GetPost(10);
@@ -1428,10 +1480,10 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task UpdatePost_UserDoesNotOwnPost_ReturnsUnauthorized()
+    public async Task UpdatePost_UserDoesNotOwnPost_ReturnsNotFound()
     {
         SetupUserContext("1");
-        
+
         var user = new User
         {
             Id = 1,
@@ -1440,16 +1492,28 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(false);
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
+
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(false);
 
         var result = await _controller.UpdatePost(request, null);
 
-        result.Result.ShouldBeOfType<UnauthorizedResult>();
+        result.Result.ShouldBeOfType<NotFoundResult>();
 
         await _mockPostService.Received(1).UserOwnsPost(1, request.TripId);
 
@@ -1469,10 +1533,21 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
+
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
 
         var updatedPost = new Post
         {
@@ -1486,7 +1561,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PhotoIds = []
         };
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>()).Returns(updatedPost);
 
@@ -1511,10 +1587,21 @@ public class PostControllerTests : BaseIntegrationTestFixture
             PasswordKey = "password",
             Country = "NZ"
         };
-        
+
         _mockUserService.GetUserByIdAsync(1).Returns(user);
-        
+
         var request = CreateUpdateRequest();
+
+        var existingPost = new Post
+        {
+            PostId = request.Id,
+            TripId = request.TripId,
+            Title = "Existing post",
+            Content = "Existing content",
+            OsmId = 1,
+            LocationName = "Christchurch",
+            PhotoIds = []
+        };
 
         var errors = new Dictionary<string, List<string>>{
             {
@@ -1523,7 +1610,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
             }
         };
 
-        _mockPostService.UserOwnsPost(1, request.TripId).Returns(true);
+        _mockPostService.GetPostAsync(request.Id).Returns(existingPost);
+        _mockPostService.UserOwnsPost(1, existingPost.TripId).Returns(true);
 
         _mockPostService.UpdatePostAsync(request, 1, Arg.Any<List<IFormFile>>())
             .Returns(Task.FromException<Post?>(new MultipleValidationListException(errors)));
@@ -1568,7 +1656,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeletePost_UserDoesNotOwnPost_ReturnsUnauthorized()
+    public async Task DeletePost_UserDoesNotOwnPost_ReturnsNotFound()
     {
         SetupUserContext("1");
 
@@ -1588,7 +1676,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var result = await _controller.DeletePost(10);
 
-        result.ShouldBeOfType<UnauthorizedResult>();
+        result.ShouldBeOfType<NotFoundResult>();
 
         await _mockPostService.DidNotReceive().DeletePostByIdAsync(Arg.Any<int>());
     }
@@ -1655,7 +1743,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task DeletePhotoFromPost_UserNotOwner_Unauthorized()
+    public async Task DeletePhotoFromPost_UserNotOwner_NotFound()
     {
         SetupUserContext("1");
 
@@ -1674,6 +1762,6 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         var result = await _controller.DeletePhotoFromPost(10, 15);
 
-        result.ShouldBeOfType<UnauthorizedResult>();
+        result.ShouldBeOfType<NotFoundResult>();
     }
 }

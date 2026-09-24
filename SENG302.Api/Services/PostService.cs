@@ -158,9 +158,18 @@ public class PostService : IPostService
             }
             else
             {
-                file.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
-                context.CustomFiles.Update(file);
-                await context.SaveChangesAsync();
+                if (!IsAiTaggable(photo))
+                {
+                    file.TagError = "AI failed to generate tags due to image not being JPG, JPEG, PNG, GIF";
+                    context.CustomFiles.Update(file);
+                    await context.SaveChangesAsync();
+                }
+                else
+                {
+                    file.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
+                    context.CustomFiles.Update(file);
+                    await context.SaveChangesAsync(); 
+                }
             }
 
 
