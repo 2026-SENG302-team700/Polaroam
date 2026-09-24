@@ -186,7 +186,6 @@ public class CollaborationController : ControllerBase
         }
         
 
-        List<CollaboratingUserResponse> remainingCollaborators = [];
         var userId = int.Parse(userIdString);
         
         try
@@ -197,15 +196,14 @@ public class CollaborationController : ControllerBase
             }
             
             await _collaborationService.KickUserAsync(tripId, kickedUserId);
-
-            remainingCollaborators = await _collaborationService.GetTripCollaborators(tripId);
+            
         }
         catch (KeyNotFoundException e)
         {
             return BadRequest(e.Message);
         }
 
-        return Ok(remainingCollaborators);
+        return Ok();
     }
 
     /// <summary>

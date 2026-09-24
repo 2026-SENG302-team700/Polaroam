@@ -16,8 +16,8 @@
     
     // Modal State
     let tripId = page.params.tripId;
-    let isOwner = $state(false);
     let tripOwner = $state<null | UserResponse>(null);
+    let isOwner = $derived(tripOwner !== null && $user.id !== null && tripOwner.id === $user.id);
     let tripOwnerName = $state("");
     let tripCollaborators = $state<{"userId": number,"displayName": string}[]>([]);
     let error = $state("");
@@ -42,6 +42,8 @@
     let swapOwnershipError = $state("");
     let newOwnerId = $state<number | null>(null);
     let swapOwnershipMessage = $state("");
+    
+    let loading = $state(false)
 
     /**
      * Gets a list of everyone who is a collaborator on the trip
@@ -58,6 +60,8 @@
             tripCollaborators = await response.json();
         } catch (err: any) {
             error = err.toString();
+        } finally {
+            loading = false
         }
     }
 
@@ -65,6 +69,7 @@
      * Gets the owner of the trip. If the user is the owner, then the isOwner variable is set to true.
      */
     async function getOwner() {
+        loading =  true
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/trip/${tripId}/user` as any),
@@ -74,9 +79,10 @@
                 },
             );
             tripOwner = await response.json();
-            isOwner = (tripOwner?.id === $user.id);
         } catch (err: any) {
             error = err.toString();
+        } finally {
+            loading = true
         }
     }
 
@@ -174,6 +180,7 @@
         kickUserConfirmationModalShown = true;
         kickUserMessage = `Are you sure you want to kick ${collaboratorName}?`;
         UserIdOfKicked = collaboratorId;
+        
     }
 
     /**
@@ -203,9 +210,9 @@
 
             if (!response.ok) {
                 kickUserError = await response.text();
-            } else {
-                tripCollaborators = await response.json();
-            }
+            } 
+
+            await getCollaborators();
         } catch (e: any) {
             kickUserError = e.message;
         } finally {
@@ -278,8 +285,9 @@
     }
     
     onMount(async () => {
-        getOwner();
-        getCollaborators();
+        await getOwner();
+        await getCollaborators();
+        console.log(`Owner: ${isOwner}`)
     })
     
 </script>
@@ -294,28 +302,31 @@
                         Error: {error}
                     {/if}
                     <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner?.displayName}</h1>
-                    {#each tripCollaborators as collaborator}
-                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list">
-                            <span class="collaborator-info fw-medium">{collaborator.displayName}</span>
-                            {#if isOwner}
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button class="btn btn-outline-secondary"
-                                            onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
-                                        Grant Ownership
-                                    </button>
-                                    <button class="btn btn-danger"
-                                            onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}>
-                                        Kick
-                                    </button>
+                    {#if !loading}
+                        {#each tripCollaborators as collaborator}
+                            <div class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list">
+                                <span class="collaborator-info fw-medium">{collaborator.displayName}</span>
+                                {#if isOwner}
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-secondary"
+                                                onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                            Grant Ownership
+                                        </button>
+                                        <button class="btn btn-danger"
+                                                onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}
+                                                disabled={loading}>
+                                            Kick
+                                        </button>
+                                    </div>
+                                {/if}
+                            </div>
+                            {#if kickUserError !== ""}
+                                <div class="invalid-feedback d-block mb-0">
+                                    <span>{kickUserError}</span>
                                 </div>
                             {/if}
-                        </div>
-                        {#if kickUserError !== ""}
-                            <div class="invalid-feedback d-block mb-0">
-                                <span>{kickUserError}</span>
-                            </div>
-                        {/if}
-                    {/each}
+                        {/each}
+                    {/if}
                     {#if inviteShown}
                         <div class="invite-wrapper">
                             <span>Invite Collaborators to Trip:</span>
@@ -328,10 +339,12 @@
                                     placeholder="john@example.com"
                                     bind:value={invite}
                                     onkeydown={handleInviteKeydown}
+                                    disabled={loading}
                                 />
                                 <button
                                     class="btn btn-primary"
                                     onclick={inviteCollaborators}
+                                    disabled={loading}
                                 >
                                     <i class="bi bi-envelope-arrow-up" />
                                 </button>
@@ -344,11 +357,13 @@
                     <div class="modal-buttons">
                         <button
                             class="btn btn-secondary modal-footer-button"
-                            onclick={backToTrip}>Back to trip</button
+                            onclick={backToTrip}
+                            disabled={loading}>Back to trip</button
                         >
                         <button
                             class="btn btn-primary modal-footer-button"
                             onclick={() => (inviteShown = !inviteShown)}
+                            disabled={loading}
                             >{inviteShown
                                 ? "Close Invite field"
                                 : "Invite"}</button
@@ -357,6 +372,7 @@
                             <button
                                 class="btn btn-danger modal-footer-button"
                                 onclick={showLeaveConfirmationModal}
+                                disabled={loading}
                                 >Leave</button
                             >
                         {/if}
