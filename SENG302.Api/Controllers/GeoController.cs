@@ -35,12 +35,17 @@ public class GeoController : ControllerBase
     /// Gets the location of a given OSM id
     /// </summary>
     /// <param name="osmId">Id for a location</param>
+    /// <param name="acceptLanguage"></param>
     /// <param name="osmType">Type of the OSM element</param>
     /// <returns></returns>
     [HttpGet("location")]
-    public async Task<IActionResult> GetLocationAsync([FromQuery] long osmId, [FromQuery] string osmType = "node")
+    public async Task<IActionResult> GetLocationAsync(
+        [FromQuery] long osmId, 
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null,
+        [FromQuery] string osmType = "node"
+        )
     {
-        var result = await _geoService.GetLocationAsync(osmId, osmType);
+        var result = await _geoService.GetLocationAsync(osmId, acceptLanguage, osmType);
         return Ok(result);
     }
 }

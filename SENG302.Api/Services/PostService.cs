@@ -17,7 +17,8 @@ public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId);
-    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
+    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos,
+        bool aiTaggingForUpload = true, string? acceptLanguageHeader = null);
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
     Task<bool> UserOwnsPost(int userId, int tripId);
@@ -95,12 +96,15 @@ public class PostService : IPostService
     /// <param name="postRequest"></param>
     /// <param name="userId"></param>
     /// <param name="photos"></param>
+    /// <param name="aiTaggingForUpload"></param>
+    /// <param name="acceptLanguageHeader"></param>
     /// <returns>the newly created postItem</returns>
     public async Task<Post> CreateNewPostAsync(
         NewPostRequest postRequest,
         int userId,
         List<IFormFile>? photos = null,
-        bool aiTaggingForUpload = true
+        bool aiTaggingForUpload = true,
+        string? acceptLanguageHeader = null
         )
     {
         // Clean Request
@@ -171,8 +175,6 @@ public class PostService : IPostService
                     await context.SaveChangesAsync(); 
                 }
             }
-
-
         }
 
         Album album = await _albumService.GetAlbumByIdAsync(postRequest.TripId);
@@ -182,7 +184,7 @@ public class PostService : IPostService
         await context.SaveChangesAsync();
 
         // Add location
-        var location = await _geoService.GetLocationAsync(postRequest.OsmId, postRequest.OsmType);
+        var location = await _geoService.GetLocationAsync(postRequest.OsmId, acceptLanguageHeader, postRequest.OsmType);
         if (location == null)
         {
             throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -312,7 +314,7 @@ public class PostService : IPostService
 
         if (postUpdates.OsmId != post.OsmId || postUpdates.OsmType != post.OsmType)
         {
-            location = await _geoService.GetLocationAsync(postUpdates.OsmId, postUpdates.OsmType!);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId, osmType: postUpdates.OsmType);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>

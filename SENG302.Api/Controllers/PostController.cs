@@ -60,11 +60,18 @@ public class PostController : ControllerBase
     /// </summary>
     /// <param name="postRequest"></param>
     /// <param name="files"></param>
+    /// <param name="aiTaggingForUpload"></param>
+    /// <param name="acceptLanguage"></param>
     /// <returns></returns>
     [Authorize]
     [HttpPost]
     [RequestSizeLimit(200000000)]
-    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
+    public async Task<ActionResult<Post>> CreatePost(
+        [FromForm] NewPostRequest postRequest, 
+        [FromForm] List<IFormFile>? files, 
+        [FromForm] bool aiTaggingForUpload = true,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null
+        )
     {
 
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -73,7 +80,7 @@ public class PostController : ControllerBase
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload);
+            var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload, acceptLanguage);
             return Ok(response);
         }
         catch (MultipleValidationListException e)
