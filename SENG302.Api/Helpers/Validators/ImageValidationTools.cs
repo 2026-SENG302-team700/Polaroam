@@ -1,4 +1,5 @@
 using SENG302.Api.Constants;
+using System.Xml;
 
 namespace SENG302.Api.Helpers.Validators;
 
@@ -29,6 +30,11 @@ public static class ImageValidator
     /// <returns>The real mime type based on the first 4-12 bytes of the file if it is valid, else "INVALID MIME"</returns>
     public static string GetRealImageMime(IFormFile file)
     {
+        if (file.ContentType.Equals("image/svg+xml", StringComparison.OrdinalIgnoreCase))
+        {
+            return HasValidSvgRoot(file) ? "image/svg+xml" : InvalidMimeString;
+        }
+
         var stream = file.OpenReadStream();
 
         byte[] magicNumber = new byte[12];
@@ -63,6 +69,41 @@ public static class ImageValidator
         }
 
         return InvalidMimeString;
+    }
+
+    /// <summary>
+    /// Validates SVG files by parsing their XML and checking the root element.
+    /// Unlike binary image formats, an SVG may begin with whitespace, comments,
+    /// a byte-order mark, or an XML declaration before its svg element.
+    /// </summary>
+    private static bool HasValidSvgRoot(IFormFile file)
+    {
+        try
+        {
+            using var stream = file.OpenReadStream();
+            using var reader = XmlReader.Create(stream, new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                IgnoreComments = true,
+                IgnoreWhitespace = true
+            });
+
+            while (reader.Read())
+            {
+                if (reader.NodeType != XmlNodeType.Element) continue;
+
+                return reader.LocalName.Equals("svg", StringComparison.OrdinalIgnoreCase) &&
+                    (string.IsNullOrEmpty(reader.NamespaceURI) ||
+                     reader.NamespaceURI == "http://www.w3.org/2000/svg");
+            }
+        }
+        catch (XmlException)
+        {
+            return false;
+        }
+
+        return false;
     }
 
     public static bool IsValidFilesize(IFormFile file)
