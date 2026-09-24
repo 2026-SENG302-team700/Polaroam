@@ -207,4 +207,46 @@ public class CollaborationController : ControllerBase
 
         return Ok(remainingCollaborators);
     }
+
+    /// <summary>
+    /// changes the owner of the trip
+    /// </summary>
+    /// <param name="tripId">id of trip where owner is being swapped</param>
+    /// <param name="newOwnerId">the owner to become owner of the trip</param>
+    /// <returns>
+    /// Unauthorized - Not logged in, user is not owner, owner trying to set owner that isn't a collaborator
+    /// Bad Request - exceptions
+    /// OK - Ownership of trip is transferred to the new owner
+    /// </returns>
+    [Authorize]
+    [HttpPatch("transfer/{newOwnerId:int}")]
+    public async Task<ActionResult> SwapOwnership(int tripId, int newOwnerId)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized("Not logged in");
+            }
+
+            var userId = int.Parse(userIdString);
+            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            {
+                return Unauthorized("User cannot transfer ownership as they are not the current owner");
+            }
+        
+            if (!await _tripService.UserHasCollaborationAccessToTrip(newOwnerId, tripId))
+            {
+                return Unauthorized("New owner does not have access to collaborate on the trip");
+            }
+            await _collaborationService.SwapOwnership(userId, newOwnerId, tripId);
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    } 
 }

@@ -198,7 +198,7 @@ public class TripService : ITripService
             throw new KeyNotFoundException(e.Message);
         }
 
-        return trip.UserId == userId;
+        return trip.UserId == userId || trip.Collaborators.Contains(userId);
     }
 
     /// <summary>

@@ -13,6 +13,8 @@
     let moreNotificationsExist: boolean = $state(false);
     let notificationsError: string = $state("");
 
+    let offset: number = $state(0);
+
     let notificationListElement: HTMLDivElement | null = $state(null);
     let notificationButtonElement: HTMLButtonElement | null = $state(null);
 
@@ -117,7 +119,38 @@
                 notifications.push(createNotificationData(n)),
             );
         } catch (err) {
-            console.log("Error happens here")
+            notificationsError = (err as Error).message;
+        }
+    }
+
+    /**
+     * Get a new segment of notifications from the backend
+     */
+    async function getNotificationSegment() {
+        try {
+            let count = notifications.length;
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/notifications?offset=${count}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+
+            if (!response.ok) {
+                notificationsError = await response.text();
+                return
+            }
+
+            var getAllNotificationsResponse =
+                (await response.json()) as GetAllNotificationsResponse;
+
+            notificationUnreadCount = getAllNotificationsResponse.unreadCount;
+            moreNotificationsExist = getAllNotificationsResponse.moreExist;
+            getAllNotificationsResponse.notificationResponses.forEach((n) =>
+                notifications.push(createNotificationData(n)),
+            );
+        } catch (err) {
             notificationsError = (err as Error).message;
         }
     }
@@ -200,11 +233,17 @@
         </div>
 
         <NotificationList
-            notifications={notifications.slice(0, NOTIFICATION_SHOWN_CAP)}
+            notifications={notifications}
         />
 
         {#if moreNotificationsExist}
-            <span class="see-more">See more...</span>
+            <div class="notification-footer">
+                <button
+                        class="btn btn-outline notification-footer-button"
+                        onclick={getNotificationSegment}>
+                    See more
+                </button> 
+            </div>
         {/if}
     </div>
 </div>
@@ -232,10 +271,12 @@
         position: relative;
     }
 
-    .see-more {
-        text-align: center;
-        padding: 0.5rem 0;
-        color: #1f1f1f;
+    .notification-footer {
+        margin: 0.5rem;
+    }
+    
+    .notification-footer-button {
+        width: 100%;
     }
 
     .icon-centered {
