@@ -151,7 +151,6 @@
     position: absolute;
     z-index: 2;
     top: 50%;
-    transform: translateY(-50%);
  }
 
  .left-arrow {
