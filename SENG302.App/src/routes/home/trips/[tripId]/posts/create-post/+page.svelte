@@ -246,8 +246,8 @@
     <div class="post-form-actions">
         <ConfirmCancelButton
             path={`/home/trips/${tripId}`}
-            option1Text="Back to your Trip"
-            option2Text="Stay on This Page"
+            option1Text="Stay on This Page"
+            option2Text="Back to Trip"
         />
         <CreationButton onClick={createPost} text="Create Post" {loading} />
     </div>
