@@ -130,7 +130,7 @@ public class TripService : ITripService
         var trip = await context.Set<Trip>().Where(t => t.Id == id).FirstOrDefaultAsync();
         if (trip == null)
         {
-            throw new ArgumentException("Trip with the provided ID does not exist.");
+            throw new KeyNotFoundException("Trip with the provided ID does not exist.");
         }
 
         return trip;
@@ -188,7 +188,15 @@ public class TripService : ITripService
         // For permissions this needs to be edited
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var trip = await GetTripByIdAsync(tripId);
+        Trip trip;
+        try
+        {
+            trip = await GetTripByIdAsync(tripId);
+        }
+        catch (KeyNotFoundException e)
+        {
+            throw new KeyNotFoundException(e.Message);
+        }
 
         return trip.UserId == userId || trip.Collaborators.Contains(userId);
     }
