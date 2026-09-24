@@ -90,4 +90,58 @@ public class U70024TripCollaborationFunctionality
 
         trip?.Collaborators.ShouldBeEmpty();
     }
+
+    [Given("I am collaborating on a trip")]
+    public async Task GivenIAmCollaboratingOnATrip()
+    {
+        await SetupUser();
+        
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        
+        context.Users.Add(new User
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        
+        context.Trips.Add(new Trip
+        {
+            Id = 1,
+            Title = "Original trip",
+            Description = "Original description",
+            StartDate = DateToDateTimeOffset(2026, 7, 1),
+            EndDate = DateToDateTimeOffset(2026, 7, 10),
+            UserId = 1,
+            Collaborators = [2]
+        });
+        
+        context.Albums.Add(new Album
+        {
+            TripId = 1,
+            PhotoIds = []
+        });
+
+        await context.SaveChangesAsync();
+    }
+
+    [When("I am kicked from the trip")]
+    public async Task WheIAmKickedFromATrip()
+    {
+        var response = await _fixture.HttpClient.DeleteAsync("/api/trip/1/collaboration/kick/2");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Then("I receive a notification and email letting me know that I was kicked from the specific trip")]
+    public async Task IRecieveANotificationAndEmailLettingMeKnowAboutBeingKickedFromATrip()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+
+        Notification? notification = await context.Notifications.FirstOrDefaultAsync(n => n.UserId == 2);
+
+        notification.ShouldNotBeNull();
+        notification.HeaderText.ShouldBe("Kicked from Original trip!");
+    }
 }
