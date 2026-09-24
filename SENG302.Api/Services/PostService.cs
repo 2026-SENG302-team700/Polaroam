@@ -192,6 +192,7 @@ public class PostService : IPostService
                 ["location"] = ["This isn't a valid location"]
             });
         }
+        var locationName = location.Name == "" ? location.DisplayName : location.Name;
 
         // Add post
         var newPost = new Post
@@ -204,7 +205,7 @@ public class PostService : IPostService
             PhotoIds = photoIds,
             OsmId = postRequest.OsmId,
             OsmType = postRequest.OsmType,
-            LocationName = location.Name,
+            LocationName = locationName,
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
