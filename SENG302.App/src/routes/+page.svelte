@@ -8,17 +8,18 @@
 </svelte:head>
 
 <main class="landing-page-flex">
-    <div class="landing-page-wrapper post-form">
+    <div class="landing-page-wrapper">
         <LandingLogo />
         <p class="subheader">
             <i>Your trips captured, collected and collaged.</i>
         </p>
-        <div class="post-form-actions">
-            <NavigationButton path="/login" text="Login" />
-            <NavigationButton path="/register" text="Register" />
+        <div class="post-form button-wrapper">
+            <div class="post-form-actions">
+                <NavigationButton path="/login" text="Login" />
+                <NavigationButton path="/register" text="Register" />
+            </div>
         </div>
         <div class="selling-points">
-            <div class="post-form-footer">
                 <div class="section-divider"></div>
                 <div class="topic-grid">
                     <div class="info-box card">
@@ -65,13 +66,12 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </main>
 
 <style>
     .landing-page-flex {
-        height: 80vh;
+
         margin-top: 60px;
         display: flex;
         align-items: center;
@@ -86,13 +86,9 @@
         gap: 60px;
         flex-shrink: 1;
     }
+
     .section-divider {
         width: 100%;
-    }
-    .post-form-footer {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
     }
     .subheader {
         font-size: max(18px, 1.3vw);
@@ -100,10 +96,14 @@
     }
     .post-form-actions {
         margin: 0;
-        width: max(50%, 300px);
+        padding: 10px;
+        width: max(300px, 30vw);
     }
     .selling-points {
         width: 80%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     .topic-grid {
         width: 80%;
