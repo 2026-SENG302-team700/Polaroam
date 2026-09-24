@@ -276,33 +276,33 @@
                         </div>
                     {/if}
                 </div>
+
+                <ConfirmationModal
+                    bind:show={leaveConfirmationModalShown}
+                    message="Are you sure you want to stop collaborating and lose access to this trip?"
+                    option1Text="Confirm"
+                    option2Text="Cancel"
+                    onOption1={leaveCollaboration}
+                    onOption2={hideLeaveConfirmationModal}
+                    contained
+                />
+
+                <ConfirmationModal
+                    message={kickUserMessage}
+                    option1Text="Cancel"
+                    option2Text="Confirm"
+                    option2Style="danger"
+                    onOption1={hideKickUserConfirmationModal}
+                    onOption2={async () => {
+                        await kickUser();
+                    }}
+                    bind:show={kickUserConfirmationModalShown}
+                    contained
+                />
             </div>
         </div>
     </div>
 {/if}
-
-<ConfirmationModal
-    bind:show={leaveConfirmationModalShown}
-    message="Are you sure you want to stop collaborating and lose access to this trip?"
-    option1Text="Confirm"
-    option2Text="Cancel"
-    onOption1={leaveCollaboration}
-    onOption2={hideLeaveConfirmationModal}
-    size="collaboration"
-/>
-
-<ConfirmationModal
-    message={kickUserMessage}
-    option1Text="Cancel"
-    option2Text="Confirm"
-    option2Style="danger"
-    onOption1={hideKickUserConfirmationModal}
-    onOption2={async () => {
-        await kickUser();
-    }}
-    bind:show={kickUserConfirmationModalShown}
-    size="collaboration"
-/>
 
 <style>
     .modal {
@@ -314,6 +314,7 @@
     }
 
     .modal-content {
+        position: relative;
         width: 33vw;
     }
 
