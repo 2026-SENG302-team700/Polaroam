@@ -15,6 +15,7 @@
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
     import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
+    import { user } from "$lib/stores/user.js";
 
     let loading = $state(false);
     let error = $state("");
