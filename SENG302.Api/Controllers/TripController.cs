@@ -57,7 +57,7 @@ public class TripController : ControllerBase
             var trip = await _tripService.GetTripByIdAsync(id);
             if (!await _tripService.UserHasCollaborationAccessToTrip(userId, id))
                 return NotFound("Trip not found");
-            return Ok(trip);
+            return Ok(await TripToTripResponse(trip));
         }
         catch (ArgumentException)
         {
