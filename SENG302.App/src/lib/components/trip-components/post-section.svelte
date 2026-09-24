@@ -10,7 +10,7 @@
         onPostHover,
         onPostLeave,
     }: {
-        posts: any[];
+        posts: Post[];
         tripId: number;
         selectedPost: number | null;
         onPostHover: (postId: number) => void;

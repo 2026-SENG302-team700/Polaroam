@@ -14,7 +14,7 @@ public interface ITripService
     Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId);
     Task DeleteTripByIdAsync(int tripId);
     Task<bool> UserHasCollaborationAccessToTrip(int userId, int tripId);
-    Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId);
+    Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest);
     Task<List<Location>> GetTripLocations(int tripId);
     Task<List<Trip>> GetTripsFromQuery(int userId, string query);
     Task<bool> UserIsOwnerOfTrip(int userId, int tripId);
@@ -42,7 +42,7 @@ public class TripService : ITripService
     public async Task<IEnumerable<Trip>> GetTripsByUserIdAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var trips = await context.Set<Trip>().Where(t => t.UserId == userId).ToListAsync();
+        var trips = await context.Set<Trip>().Where(t => t.UserId == userId || t.Collaborators.Contains(userId)).ToListAsync();
         return trips;
     }
 
@@ -185,7 +185,6 @@ public class TripService : ITripService
     /// <returns>Whether the user has access to the trip specified</returns>
     public async Task<bool> UserHasCollaborationAccessToTrip(int userId, int tripId)
     {
-        // For permissions this needs to be edited
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         Trip trip;
@@ -221,10 +220,9 @@ public class TripService : ITripService
     /// Returns the updated trip if successful, or throws an ArgumentException if validation fails or the
     /// </summary>
     /// <param name="tripRequest"></param>
-    /// <param name="userId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest, int userId)
+    public async Task<Trip> UpdateTripAsync(UpdateTripRequest tripRequest)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -318,7 +316,7 @@ public class TripService : ITripService
     public async Task<List<Trip>> GetTripsFromQuery(int userId, string query)
     {
         query = query.Trim().ToLower();
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var trips = await context.Trips

@@ -47,6 +47,44 @@ type CollaboratingUser = {
     displayName: string,
 }
 
+type Trip = {
+    id: number,
+    title: string,
+    userId: number,
+    ownerName: string,
+    description: string,
+    startDate: string,
+    endDate: string,
+    collaborators: CollaboratingUser[],
+}
+
+type TripPhotoGroup = {
+    tripId: number,
+    tripTitle: string,
+    photos: File[],
+    photoIds: number[],
+}
+
+type TripIdAndPhoto = {
+    tripId: number,
+    photoId: number,
+}
+
+type Post = {
+    postId: number,
+    tripId: number,
+    title: string,
+    content: string,
+    date: string,
+    osmId: number,
+    osmType: string,
+    locationName: string,
+    photoIds: number[],
+    creationTime: string,
+    creatorId: number,
+    creatorDisplayName: string,
+}
+
 type UserResponse = {
     id: number,
     email: string,
@@ -58,5 +96,4 @@ type UserResponse = {
     profilePictureZoom: number,
     acceptedAiPrivacyPolicy: boolean,
     aiTagging: boolean
-    
 }

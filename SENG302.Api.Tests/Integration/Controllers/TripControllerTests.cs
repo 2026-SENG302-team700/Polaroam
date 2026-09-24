@@ -19,34 +19,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
 {
     private ITestOutputHelper _output;
 
-    private ITripService _mockTripService;
-    private IPostService _mockPostService;
-    private IAlbumService _mockAlbumService;
-    private IUserService _mockUserService;
-    private ICollaborationService _mockCollaborationService;
-
-
-    private TripController _controller;
-
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
         base(webApplicationFactory)
     {
-        _mockTripService = Substitute.For<ITripService>();
-        _mockPostService = Substitute.For<IPostService>();
-        _mockAlbumService = Substitute.For<IAlbumService>();
-        _mockUserService = Substitute.For<IUserService>();
-        _mockCollaborationService = Substitute.For<ICollaborationService>();
-
-        _controller = new TripController(
-            _mockTripService,
-            _mockPostService,
-            _mockAlbumService,
-            _mockUserService,
-            _mockCollaborationService
-        );
-
-        AddTestPrincipalToController(_controller);
-
         _output = output;
     }
 
@@ -67,8 +42,6 @@ public class TripControllerTests : BaseIntegrationTestFixture
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(testUser);
         await context.SaveChangesAsync();
-
-        _mockUserService.GetUserByIdAsync(testUser.Id).Returns(Task.FromResult((User?)testUser));
     }
 
     /// <summary>
@@ -431,9 +404,9 @@ public class TripControllerTests : BaseIntegrationTestFixture
         );
 
         context.Posts.AddRange(
-            new Post { PostId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content" },
-            new Post { PostId = 2, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
-            new Post { PostId = 3, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
+            new Post { PostId = 1, CreatorId = 1, TripId = trip1.Id, LocationName = "Location A", Title = "Title", OsmId = 1, Content = "Content" },
+            new Post { PostId = 2, CreatorId = 1, TripId = trip1.Id, LocationName = "Location B", Title = "Title", OsmId = 2, Content = "Content" },
+            new Post { PostId = 3, CreatorId = 1, TripId = trip2.Id, LocationName = "Location C", Title = "Title", OsmId = 3, Content = "Content" }
         );
         try
         {
@@ -456,4 +429,34 @@ public class TripControllerTests : BaseIntegrationTestFixture
         locations.Count.ShouldBe(2);
         locations.ShouldNotContain(l => l.OsmId == 3);
     }
+
+    [Fact]
+    public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
+    {
+        await AddTestUser();
+
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
+        };
+
+        await using var context = DbContextFactory.CreateDbContext();
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.GetAsync("/api/trip/1/collaborators");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var collaborators = await response.Content.ReadFromJsonAsync<List<CollaboratingUserResponse>>();
+
+        collaborators.ShouldBeEmpty();
+    }
+
 }

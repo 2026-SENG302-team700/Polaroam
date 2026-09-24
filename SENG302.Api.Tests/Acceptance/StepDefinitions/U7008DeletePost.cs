@@ -55,6 +55,7 @@ public class U7005DeletePost
         var post = new Post
         {
             TripId = trip.Id,
+            CreatorId = user.Id,
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
@@ -117,6 +118,7 @@ public class U7005DeletePost
         var post = new Post
         {
             TripId = trip.Id,
+            CreatorId = user.Id,
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,

@@ -9,7 +9,7 @@
 
     let {
         images = $bindable([]),
-        photoIds = [],
+        photosData = [],
         letDelete = false,
         ondelete,
         errors = [],
@@ -18,7 +18,7 @@
         children,
     }: {
         images?: File[] | null;
-        photoIds?: number[];
+        photosData?: TripIdAndPhoto[];
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
@@ -77,8 +77,8 @@
                     {image}
                     {index}
                     {images}
-                    photoId={photoIds[index]}
-                    {photoIds}
+                    photoData={photosData[index]}
+                    {photosData}
                     {viewContext}
                 />
                 {#if letDelete}

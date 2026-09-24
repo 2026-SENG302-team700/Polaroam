@@ -34,17 +34,17 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         _mockTripService = Substitute.For<ITripService>();
         _mockCollaborationService = Substitute.For<ICollaborationService>();
         _mockUserService = Substitute.For<IUserService>();
-    
+
         _controller = new CollaborationController(
             _mockTripService,
             _mockCollaborationService
         );
-    
-        AddTestPrincipalToController(_controller);
-    
+
+        TestingPrincipalHelper.AddTestPrincipalToController(_controller);
+
         _output = output;
     }
-    
+
     /// <summary>
     /// Creates and adds to the database a test user for these tests
     /// </summary>
@@ -65,7 +65,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
 
         _mockUserService.GetUserByIdAsync(testUser.Id).Returns(Task.FromResult((User?)testUser));
     }
-    
+
     [Fact]
     public async Task GetTripCollaborators_ValidRequest_ReturnsCorrectly()
     {
@@ -85,7 +85,7 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         collaborators.ShouldNotBeNull();
         collaborators.ShouldBe(mockObject);
     }
-    
+
     [Fact]
     public async Task GetTripCollaborators_NoCollaborators_ReturnsOkResponseWithEmptyList()
     {
@@ -182,25 +182,25 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
     public async Task LeaveCollaboration_ValidRequest_ReturnsNoContent()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(true);
-        
+
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<NoContentResult>();
     }
-    
+
     [Fact]
     public async Task LeaveCollaboration_NotCollaborator_ReturnsUnauthorized()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Returns(false);
-        
+
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<UnauthorizedObjectResult>();
     }
-    
+
     [Fact]
     public async Task LeaveCollaboration_ErrorOccurs_ReturnsBadRequest()
     {
         _mockTripService.UserHasCollaborationAccessToTrip(1, 1).Throws(new Exception());
-        
+
         var response = await _controller.LeaveCollaboration(1);
         response.ShouldBeOfType<BadRequestObjectResult>();
     }
