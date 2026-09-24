@@ -175,11 +175,11 @@
 />
 
 <CollaborationModal
-    bind:show={collaborationModalShown}
-    isOwner={tripOwner?.id === $user.id}
-    tripOwner={tripOwner ? tripOwner.displayName : ""}
-    tripCollaborators={collaboratingUsers}
-    {error}
+        bind:show={collaborationModalShown}
+        tripOwner={tripObject.ownerName ?? ""}
+        isOwner={tripObject.userId == $user.id}
+        tripCollaborators={tripObject.collaborators}
+        {error}
 />
 
 {#if !loading && tripObject.id !== -1}
