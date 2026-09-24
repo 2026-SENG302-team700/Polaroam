@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { user } from "$lib/stores/user";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
