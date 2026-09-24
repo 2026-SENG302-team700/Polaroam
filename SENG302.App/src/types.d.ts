@@ -46,3 +46,17 @@ type CollaboratingUser = {
     userId: number,
     displayName: string,
 }
+
+type UserResponse = {
+    id: number,
+    email: string,
+    displayName: string,
+    country: string,
+    profilePicture: number,
+    profilePictureOffsetX: number,
+    profilePictureOffsetY: number,
+    profilePictureZoom: number,
+    acceptedAiPrivacyPolicy: boolean,
+    aiTagging: boolean
+    
+}

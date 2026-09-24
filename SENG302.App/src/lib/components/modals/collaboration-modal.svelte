@@ -10,24 +10,16 @@
     
     let {
         show = $bindable(false),
-        isOwner = $bindable(false),
-        tripOwner = "",
-        tripCollaborators = [],
-        error = "",
     }: {
         show: boolean;
-        isOwner: boolean;
-        tripOwner: string;
-        tripCollaborators: CollaboratingUser[];
-        error: string;
     } = $props();
     
     // Modal State
     let tripId = page.params.tripId;
     let isOwner = $state(false);
-    let tripOwner = $state(null);
+    let tripOwner = $state<null | UserResponse>(null);
     let tripOwnerName = $state("");
-    let tripCollaborators = $state([]);
+    let tripCollaborators = $state<{"userId": number,"displayName": string}[]>([]);
     let error = $state("");
     
     // Leave Collaboration
@@ -44,13 +36,6 @@
     let kickUserMessage = $state("");
     let UserIdOfKicked = $state<number | null>(null);
     let kickUserError = $state("");
-    let emailMessage = $state("")
-    let emailMessageStyle = $state("")
-    
-    let kickUserConfirmationModalShown = $state(false)
-    let kickUserMessage = $state("")
-    let UserIdOfKicked = $state<number | null>(null)
-    let kickUserError = $state("")
     
     // Swap Ownership
     let swapOwnershipConfirmationModalShown = $state(false);
@@ -71,7 +56,8 @@
                 },
             );
             tripCollaborators = await response.json();
-        } catch (err) {
+            console.log(JSON.stringify(tripCollaborators))
+        } catch (err: any) {
             error = err.toString();
         }
     }
@@ -90,7 +76,7 @@
             );
             tripOwner = await response.json();
             isOwner = (tripOwner?.id === $user.id);
-        } catch (err) {
+        } catch (err: any) {
             error = err.toString();
         }
     }
@@ -273,7 +259,7 @@
      * Calls backend to transfer ownership of the trip to the user.
      * @param userId
      */
-    async function swapOwnership(userId: number) {
+    async function swapOwnership(userId: number | null) {
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/trip/${tripId}/collaboration/transfer/${newOwnerId}` as any),
@@ -308,7 +294,7 @@
                     {#if error !== ""}
                         Error: {error}
                     {/if}
-                    <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner.displayName}</h1>
+                    <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner?.displayName}</h1>
                     {#each tripCollaborators as collaborator}
                         <div class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list">
                             <span class="collaborator-info fw-medium">{collaborator.displayName}</span>
@@ -382,6 +368,10 @@
                         </div>
                     {/if}
                 </div>
+            </div>
+        </div>
+    </div>
+{/if}   
 
 <ConfirmationModal
         bind:show={leaveConfirmationModalShown}
@@ -412,7 +402,7 @@
         option2Style="danger"
         onOption1={hideSwapOwnershipConfirmationModal}
         onOption2={async () => {
-            await swapOwnership();
+            await swapOwnership(newOwnerId);
         }}
         bind:show={swapOwnershipConfirmationModalShown}
 />
