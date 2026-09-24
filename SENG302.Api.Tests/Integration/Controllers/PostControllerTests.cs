@@ -735,7 +735,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
         await HttpClient.PutAsync("/api/post/1", uploadForm);
 
-        var response = await HttpClient.GetAsync("/api/post/1/images");
+        var response = await HttpClient.GetAsync("/api/post/1/images/trip/1");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var photos = await response.Content.ReadFromJsonAsync<List<PhotoMetadataResponse>>();
@@ -760,7 +760,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
         await HttpClient.PutAsync("/api/post/1", uploadForm);
 
-        var response = await HttpClient.GetAsync("/api/post/3/images");
+        var response = await HttpClient.GetAsync("/api/post/3/images/trip/1");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var photos = await response.Content.ReadAsStringAsync();
