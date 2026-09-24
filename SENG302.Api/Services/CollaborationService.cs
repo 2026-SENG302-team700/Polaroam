@@ -220,6 +220,11 @@ public class CollaborationService : ICollaborationService
         var trip = await context.Trips.Where(t => t.Id == tripId).FirstOrDefaultAsync();
         if (trip.PendingInvites.Remove(user.Email))
         {
+            var notifications = context.Notifications.OfType<TripInvitationNotification>().Where(n => n.UserId == user.Id && n.TripId == tripId).ToList();
+            foreach (var notification in notifications)
+            {
+                notification.Handled = true;
+            }
             await context.SaveChangesAsync();
             var rejectNotificationForOwner = new Notification()
             {

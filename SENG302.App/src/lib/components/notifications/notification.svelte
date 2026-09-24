@@ -1,10 +1,14 @@
 <script lang="ts">
+    import { addToast, type ToastType } from "$lib/toast/toast";
+
     let { notification }: { notification: NotificationData } = $props();
     let handled = $state(false);
+    
 
-    let handler = (func:()=>void) => {
+    let handler = (func:()=>void, toastText: string, toastType: ToastType = "success") => {
         func();
         handled = true;
+        addToast(toastText, toastType);
     }
 </script>
 
@@ -17,7 +21,7 @@
         {#if notification.leftAction && !handled}
             <button
                 class={`btn action-buttons ${notification.leftAction.colour}`}
-                onclick={() => handler(notification.leftAction.function)}
+                onclick={() => handler(notification.leftAction.function,notification.leftAction.toastText)}
             >
                 {notification.leftAction.text}
             </button>
@@ -25,7 +29,7 @@
         {#if notification.rightAction && !handled}
             <button
                 class={`btn action-buttons ${notification.rightAction.colour}`}
-                onclick={() => handler(notification.rightAction.function)}
+                onclick={() => handler(notification.rightAction.function,notification.rightAction.toastText,"error")}
             >
                 {notification.rightAction.text}
             </button>

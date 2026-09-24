@@ -12,7 +12,8 @@ type PostPhotoData = {
 type NotificationActionButton = {
     function: () => void,
     text: string,
-    colour: string
+    colour: string,
+    toastText:string,
 }
 
 type NotificationData = {

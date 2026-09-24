@@ -641,7 +641,7 @@ public class UserService : IUserService
     public async Task CreateUpdatePendingUserAsync(string email, int tripId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var user = await GetPendingUserAsync(email);
+        var user = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null)
         {
             var newPendingUser = new PendingUser()

@@ -41,12 +41,14 @@
                     function: () => acceptInvite(data.tripId, response.handled),
                     text: "Accept",
                     colour: "btn-success",
+                    toastText: "You have accepted the trip invite!"
                 };
 
                 data.rightAction = {
                     text: "Decline",
                     function: () => rejectInvite(data.tripId, response.handled),
                     colour: "btn-danger",
+                    toastText: "You have rejected the trip invite."
                 };
             }
         }
