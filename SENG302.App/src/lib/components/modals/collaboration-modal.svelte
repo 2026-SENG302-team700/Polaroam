@@ -289,6 +289,23 @@
         await getCollaborators();
         console.log(`Owner: ${isOwner}`)
     })
+
+    // Lock scrolling only while the modal is visible
+    $effect(() => {
+        if (!show) return;
+
+        const previousBodyOverflow = document.body.style.overflow;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
+
+        // Runs when `show` becomes false or the component is destroyed
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+        };
+    });
     
 </script>
 

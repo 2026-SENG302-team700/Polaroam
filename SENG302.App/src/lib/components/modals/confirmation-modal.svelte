@@ -28,13 +28,30 @@
     } = $props();
 
     /**
-     * Calls the function passed in than closes the modal
+     * Calls the function passed in then closes the modal
      * @param optionFunc The function to be called
      */
     function handleOption(optionFunc: () => void) {
         optionFunc();
         show = false;
     }
+
+    // Lock scrolling only while the modal is visible
+    $effect(() => {
+        if (!show) return;
+
+        const previousBodyOverflow = document.body.style.overflow;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
+
+        // Runs when `show` becomes false or the component is destroyed
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+        };
+    });
 </script>
 
 {#if show && contained}
