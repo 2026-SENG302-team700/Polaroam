@@ -56,7 +56,6 @@
                 },
             );
             tripCollaborators = await response.json();
-            console.log(JSON.stringify(tripCollaborators))
         } catch (err: any) {
             error = err.toString();
         }
