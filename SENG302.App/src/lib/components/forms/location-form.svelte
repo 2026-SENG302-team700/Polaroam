@@ -15,6 +15,7 @@
         searchQuery = $bindable(""),
         location = $bindable({
             osmId: 0,
+            osmType: "",
             lat: 0,
             lon: 0,
             name: "",
@@ -29,8 +30,19 @@
     let searchContainer: HTMLDivElement;
 
     /**
-     * Handle when the user closes the location input
-     * @param event
+     * Returns all suggestion buttons currently in the dropdown
+     */
+    function getButtons() {
+        return Array.from(
+            searchContainer.querySelectorAll<HTMLButtonElement>(
+                ".dropdown-list li button",
+            ),
+        );
+    }
+
+    /**
+     * Close the dropdown only when focus leaves the whole component
+     * @param event - the focus event
      */
     function handleFocusOut(event: FocusEvent) {
         const nextElement = event.relatedTarget as Node | null;
@@ -58,7 +70,6 @@
 
     /**
      * Gets the search results from the backend
-     * @param event - the keyboard event
      */
     async function getSearchResults() {
         if (loading) return;
@@ -102,13 +113,40 @@
     }
 
     /**
-     * Triggers search on Enter key
+     * Handles keys pressed in the search input
      * @param event - the keyboard event
      */
     function handleKeydown(event: KeyboardEvent) {
-        if (event.key !== "Enter") return;
-        event.preventDefault();
-        getSearchResults();
+        if (event.key === "Enter") {
+            event.preventDefault();
+            getSearchResults();
+        } else if (event.key === "ArrowDown" && isOpen) {
+            event.preventDefault();
+            getButtons()[0]?.focus();
+        } else if (event.key === "Escape") {
+            isOpen = false;
+        }
+    }
+
+    /**
+     * Handles arrow keys and Escape while focus is inside the dropdown list
+     * @param event - the keyboard event
+     */
+    function handleListKeydown(event: KeyboardEvent) {
+        const buttons = getButtons();
+        const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            buttons[Math.min(i + 1, buttons.length - 1)]?.focus();
+        } else if (event.key === "ArrowUp") {
+            event.preventDefault();
+            if (i <= 0) searchContainer.querySelector("input")?.focus();
+            else buttons[i - 1].focus();
+        } else if (event.key === "Escape") {
+            isOpen = false;
+            searchContainer.querySelector("input")?.focus();
+        }
     }
 
     /**
@@ -127,109 +165,93 @@
         searchQuery = item.name;
         error = "";
         isOpen = false;
+        searchContainer.querySelector("input")?.focus();
     }
 </script>
 
 <div
-    class="search-container mb-3"
-    bind:this={searchContainer}
-    onfocusout={handleFocusOut}
+        class="position-relative mb-3"
+        bind:this={searchContainer}
+        onfocusout={handleFocusOut}
 >
-    <div class="input-group" style="gap:2px;">
+    <div class="input-group gap-1">
         <input
-            type="text"
-            class="form-control"
-            class:is-invalid={Boolean(error)}
-            placeholder="Search location... *"
-            bind:value={searchQuery}
-            oninput={handleInput}
-            onkeydown={handleKeydown}
-            disabled={loading}
+                type="text"
+                class="form-control"
+                class:is-invalid={Boolean(error)}
+                placeholder="Search location... *"
+                bind:value={searchQuery}
+                oninput={handleInput}
+                onkeydown={handleKeydown}
+                readonly={loading}
+                aria-busy={loading}
         />
         <button
-            type="button"
-            title="search your trips using the provided query."
-            class="btn btn-outline-secondary"
-            onclick={getSearchResults}
-            disabled={loading}
+                type="button"
+                title="search locations using the provided query."
+                class="btn btn-outline-secondary"
+                onclick={getSearchResults}
+                aria-disabled={loading}
         >
             {#if loading}
                 <div
-                    class="spinner-border spinner-border-sm text-primary"
-                    role="status"
-                />
+                        class="spinner-border spinner-border-sm text-primary"
+                        role="status"
+                ></div>
             {:else}
                 <i class="bi bi-search"></i>
             {/if}
         </button>
     </div>
 
-    {#if isOpen && items.length > 0}
-        <ul class="dropdown-list">
+    {#if isOpen}
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <ul
+                class="dropdown-menu show w-100 top-100 mt-1 p-1 shadow overflow-y-auto dropdown-list"
+                onkeydown={handleListKeydown}
+        >
             {#each items as item}
                 <li>
-                    <button type="button" onclick={() => selectItem(item)}>
+                    <button
+                            type="button"
+                            class="dropdown-item text-wrap border rounded mb-1 item-highlight"
+                            onclick={() => selectItem(item)}
+                    >
                         {item.name}<br />
-                        <span class="item-display-name">{item.displayName}</span
-                        >
+                        <span class="small fst-italic text-body-secondary">
+                            {item.displayName}
+                        </span>
                     </button>
                 </li>
+            {:else}
+                <li>
+                    <span
+                            class="dropdown-item-text fst-italic text-body-secondary"
+                    >
+                        No items found
+                    </span>
+                </li>
             {/each}
-        </ul>
-    {:else if isOpen}
-        <ul class="dropdown-list no-results">
-            <li>No items found</li>
         </ul>
     {/if}
 
     {#if error}
-        <div class="invalid-feedback d-block">
-            {error}
-        </div>
+        <div class="invalid-feedback d-block">{error}</div>
     {/if}
 </div>
 
 <style>
-    .search-container {
-        position: relative;
-    }
-
     .dropdown-list {
-        position: absolute;
-        width: 100%;
         max-height: 200px;
-        overflow-y: auto;
-        margin: 4px 0 0 0;
-        padding: 0;
-        list-style: none;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        z-index: 10;
     }
 
-    .dropdown-list li button {
-        width: 100%;
-        padding: 10px;
-        text-align: left;
-        background: none;
-        border: none;
-        cursor: pointer;
+    .item-highlight {
+        --bs-dropdown-link-hover-bg: var(--bs-primary-bg-subtle);
+        --bs-dropdown-link-hover-color: var(--bs-primary-text-emphasis);
     }
 
-    .dropdown-list li button:hover {
-        background-color: #f0f0f0;
-    }
-
-    .no-results li {
-        padding: 10px;
-        color: #666;
-        font-style: italic;
-    }
-
-    .item-display-name {
-        font-weight: italics;
-        color: gray;
+    .item-highlight:hover,
+    .item-highlight:focus {
+        border-color: var(--bs-primary) !important;
     }
 </style>
