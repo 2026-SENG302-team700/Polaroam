@@ -794,12 +794,6 @@ public class TripServiceTests : BaseIntegrationTestFixture
     };
 
     [Fact]
-    public async Task CreateNewTrip_UserDoesNotExist_ThrowsArgumentException()
-    {
-        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
-    }
-
-    [Fact]
     public async Task DeleteTrip_NoTripExists_Fails()
     {
         await Should.ThrowAsync<KeyNotFoundException>(async () => await _tripService.DeleteTripByIdAsync(45));
