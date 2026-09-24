@@ -106,7 +106,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U70023TripCollaborationInvitations.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/U70023TripCollaborationInvitations.feature.ndjson", 4);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -165,6 +165,43 @@ namespace SENG302.Api.Tests.Acceptance.Features
 #line 6
         await testRunner.ThenAsync("I receive a notification with options to accept or decline and a email letting me" +
                         " know I have been invited to the specific trip", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="AC12 - Owner passes on ownership")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U70023 - As a user I want to be able to invite polaroam users to collaborate on m" +
+            "y trips so that we can both contribute to the same trip together")]
+        [global::Xunit.TraitAttribute("Description", "AC12 - Owner passes on ownership")]
+        public async global::System.Threading.Tasks.Task AC12_OwnerPassesOnOwnership()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "1";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC12 - Owner passes on ownership", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 8
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 9
+        await testRunner.GivenAsync("I am the owner of a trip And I am on the collaboration tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 10
+        await testRunner.WhenAsync("I make a collaborator the new owner", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 11
+        await testRunner.ThenAsync("I am demoted to collaborator And they are promoted to owner And all permissions a" +
+                        "djust to match the new ownership hierarchy And the new owner receives a notifica" +
+                        "tion informing them of the change.", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

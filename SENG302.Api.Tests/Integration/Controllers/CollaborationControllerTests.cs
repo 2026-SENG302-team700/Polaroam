@@ -475,4 +475,128 @@ public class CollaborationControllerTests : BaseIntegrationTestFixture
         notification.HeaderText.ShouldBe("New Invitation Request");
         notification.BodyText.ShouldBe("You have been invited to collaborate on the Trip! trip!");
     }
+    
+    [Fact]
+    public async Task SwapOwnership_ToCollaborator_ReturnsOK()
+    {
+        // Setup: User ID 1 is the owner of trip 1, and user ID 2 is a collaborator
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+        
+        // Swap Ownership
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_NotOwner_ReturnsUnauthorized()
+    {
+        // Setup: User ID 2 is the owner of trip 1, and user ID 1 is a collaborator
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 2,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [1]
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+        
+        // User ID 1 attempts to give themselves ownership of trip 1
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/1", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("User cannot transfer ownership as they are not the current owner");
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_ToNonCollaborator_ReturnsOK()
+    {
+        // Setup: User ID 1 is the owner of trip 1, and user ID 2 is not a collaborator but does exist
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+        context.Trips.Add(trip);
+        await context.SaveChangesAsync();
+        
+        // Attempt to swap ownership to user ID 2
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("New owner does not have access to collaborate on the trip");
+    }
+    
+    [Fact]
+    public async Task SwapOwnership_TripDoesNotExist_ReturnsBadRequest()
+    {
+        // Setup: User ID 1 is the owner of trip 1, and user ID 2 is a collaborator
+        await AddTestUser();
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        User user2 = new()
+        {
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+        };
+        context.Users.Add(user2);
+        await context.SaveChangesAsync();
+        
+        // Swap Ownership
+        var response = await HttpClient.PatchAsync("/api/trip/1/collaboration/transfer/2", null);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var message = await response.Content.ReadAsStringAsync();
+        message.ShouldBe("Trip with the provided ID does not exist.");
+    }
 }
