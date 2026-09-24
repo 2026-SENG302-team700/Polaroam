@@ -7,6 +7,7 @@
     import { resolve } from "$app/paths";
     import { goto } from "$app/navigation";
     import { queuetooltip } from "$lib/ToolTips/QueueFullToolTip";
+    import { onMount } from "svelte";
 
     type ImageSource = File | string;
     type ImageViewContext = "search" | "album" | "post" | "none";
@@ -45,6 +46,19 @@
     let imageContext = $state<ImageContext | null>(null);
     let objectUrl = $state<string | null>(null);
     let aspectRatio = $state(1);
+
+    onMount(() => {
+        const previousBodyOverflow = document.body.style.overflow;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+        };
+    });
 
     /**
      * Get's image aspect ratio
