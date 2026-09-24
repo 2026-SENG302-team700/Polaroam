@@ -97,43 +97,44 @@
 {/snippet}
 
 {#snippet body()}
-    <div class="mb-3">
-        <EmailForm error={errors.email} {loading} bind:email />
-    </div>
-    <div class="mb-3">
-        <DisplayNameForm
-            bind:displayName
-            error={errors.displayName}
-            {loading}
-            registering={true}
-        />
-    </div>
-    <div class="mb-3">
-        <CountrySelectForm
-            bind:selectedCountryCode
-            error={errors.country}
-            {loading}
-        />
-    </div>
-    <div class="mb-3">
-        <PasswordForm
-            id="initial-password-input"
-            bind:password
-            error={errors.password}
-            {loading}
-            passConfirm={false}
-        />
-    </div>
-    <div class="mb-3">
-        <PasswordForm
-            id="confirm-password"
-            bind:password={passwordConfirm}
-            error={errors.passwordConfirm}
-            {loading}
-            passConfirm={true}
-        />
-    </div>
-
+    <form id="registration-form">
+        <div class="mb-3">
+            <EmailForm error={errors.email} {loading} bind:email />
+        </div>
+        <div class="mb-3">
+            <DisplayNameForm
+                    bind:displayName
+                    error={errors.displayName}
+                    {loading}
+                    registering={true}
+            />
+        </div>
+        <div class="mb-3">
+            <CountrySelectForm
+                    bind:selectedCountryCode
+                    error={errors.country}
+                    {loading}
+            />
+        </div>
+        <div class="mb-3">
+            <PasswordForm
+                    id="initial-password-input"
+                    bind:password
+                    error={errors.password}
+                    {loading}
+                    passConfirm={false}
+            />
+        </div>
+        <div class="mb-3">
+            <PasswordForm
+                    id="confirm-password"
+                    bind:password={passwordConfirm}
+                    error={errors.passwordConfirm}
+                    {loading}
+                    passConfirm={true}
+            />
+        </div>
+    </form>
     <div class="mb-3"></div>
     <div class="mb-3">
         <button
@@ -149,7 +150,7 @@
 
 {#snippet footer()}
     <div class="mb-3 post-form-actions">
-        <AuthenticatorButton buttonType={"register"} onClick={registerUser} />
+        <AuthenticatorButton form="registration-form" buttonType={"register"} onClick={registerUser} />
         <CancelButton path="/"></CancelButton>
     </div>
 {/snippet}
