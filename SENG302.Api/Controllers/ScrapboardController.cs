@@ -219,14 +219,14 @@ public class ScrapboardController : ControllerBase
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
             {
-                return Unauthorized("Not logged in");
+                return NotFound("Not logged in");
             }
 
             var userId = int.Parse(userIdString);
 
-            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
             await _scrapboardService.DeleteScrapboardAsync(tripId);
