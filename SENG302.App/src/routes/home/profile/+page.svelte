@@ -84,18 +84,19 @@
 
 <div class="display: flex; flex-direction: row;">
     <div class="profile-box ca">
-        <button
-            class="btn btn-primary ms-auto"
-            onclick={() => goto(resolve("/home/profile/edit-profile"))}
-            >Edit Profile</button
-        >
         <div class="profile-content card">
             <div class="card-body card-content">
                 <ProfilePic pfpData={$user.pfpData} size="large" />
                 <p class="username">{username}</p>
                 <p class="user_email">Email: {email}</p>
             </div>
-            <div class="card-footer card-content">
+            <div class="card-footer profile-buttons">
+                <button
+                        class="btn btn-primary"
+                        onclick={() => goto(resolve("/home/profile/edit-profile"))}
+                >
+                    Edit Profile
+                </button>
                 <button
                     type="button"
                     class="btn btn-danger"
@@ -118,14 +119,18 @@
                     <button
                         type="button"
                         class="btn btn-secondary"
-                        data-bs-dismiss="modal">Close</button
+                        data-bs-dismiss="modal"
                     >
+                        Close
+                    </button>
                     <button
                         type="button"
                         class="btn btn-outline-danger"
                         data-bs-dismiss="modal"
-                        onclick={logoutUser}>Logout</button
+                        onclick={logoutUser}
                     >
+                        Logout
+                    </button>
                 </div>
             </div>
         </div>
@@ -160,5 +165,11 @@
         font-size: 1rem;
         font-family: Arial;
         word-break: break-all;
+    }
+    
+    .profile-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
     }
 </style>
