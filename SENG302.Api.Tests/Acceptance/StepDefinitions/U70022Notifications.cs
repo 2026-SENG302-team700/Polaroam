@@ -52,7 +52,7 @@ public class U70022Notifications
     private async Task GetNotifications(int count)
     {
         _lastResponse = await _fixture.HttpClient.GetAsync(
-            $"api/user/notifications?count={count}"
+            $"api/user/notifications?limit={count}"
         );
 
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
