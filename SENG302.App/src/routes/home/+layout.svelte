@@ -5,8 +5,10 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
-    import AppLogo from "$lib/components/app-logo.svelte";
+    import AppLogo from "$lib/components/logo/app-logo.svelte";
     import NotificationBell from "$lib/components/content/notification-bell.svelte";
+   
+
 
     let pfpUrl: string | null = null;
 
@@ -24,7 +26,7 @@
      */
     async function retrieveUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(resolve(`/api/user` as any), {
                 method: "GET",
                 credentials: "include",
             });
@@ -39,7 +41,7 @@
 
             if (data.profilePicture !== 0) {
                 const pfpResponse = await fetchWithCsrf(
-                    resolve("/api/user/pfp"),
+                    resolve("/api/user/pfp" as any),
                     {
                         method: "GET",
                         credentials: "include",
@@ -68,6 +70,7 @@
         }
     }
 </script>
+
 
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
@@ -119,8 +122,7 @@
     }
 
     .navBar {
-        z-index: 1000;
-        vertical-align: top;
+        z-index: 1;
         background-color: white;
         height: 60px;
         border-radius: 10px;
@@ -136,7 +138,7 @@
         align-items: center;
         flex: 1;
         justify-content: flex-end;
-        margin-right: 5px;
+        margin-right: 15px;
     }
 
     .page-wrapper {
@@ -149,6 +151,16 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         width: 100%;
+        flex-shrink: 1;
+    }
+
+    @media (max-width: 650px) {
+        .username {
+            display: none;
+        }
     }
 </style>
