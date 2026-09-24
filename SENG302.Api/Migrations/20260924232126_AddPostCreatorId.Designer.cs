@@ -13,7 +13,7 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260921020952_AddPostCreatorId")]
+    [Migration("20260924232126_AddPostCreatorId")]
     partial class AddPostCreatorId
     {
         /// <inheritdoc />
@@ -89,6 +89,48 @@ namespace SENG302.Api.Migrations
                     b.ToTable("CustomFiles");
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BodyText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Handled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("HeaderText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<bool>("ReadStatus")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("Timestamp")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Notifications");
+
+                    b.HasDiscriminator<string>("NotificationType").HasValue("Notification");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Post", b =>
                 {
                     b.Property<int>("PostId")
@@ -104,7 +146,7 @@ namespace SENG302.Api.Migrations
                     b.Property<DateTimeOffset>("CreationTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("CreatorId")
+                    b.Property<int>("CreatorId")
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("Date")
@@ -145,11 +187,15 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
 
-                    b.Property<string>("FileKey")
+                    b.Property<string>("Elements")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("OwnerId")
+                    b.PrimitiveCollection<List<int>>("Files")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int>("Thumbnail")
                         .HasColumnType("integer");
 
                     b.HasKey("TripId");
@@ -178,6 +224,10 @@ namespace SENG302.Api.Migrations
 
                     b.Property<bool>("HasScrapboard")
                         .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<string>>("PendingInvites")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -300,6 +350,16 @@ namespace SENG302.Api.Migrations
                     b.HasKey("PostId");
 
                     b.ToTable("Locations");
+                });
+
+            modelBuilder.Entity("SENG302.Api.Models.Entities.TripInvitationNotification", b =>
+                {
+                    b.HasBaseType("SENG302.Api.Models.Entities.Notification");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasDiscriminator().HasValue("TripInvitation");
                 });
 #pragma warning restore 612, 618
         }
