@@ -157,7 +157,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         _mockPostService.GetPostAsync(post.PostId).Returns(post);
         _mockPostService.UserOwnsPost(1, post.TripId).Returns(false);
 
-        var result = await _controller.GetPost(post.PostId);
+        var result = await _controller.GetPost(post.PostId, post.TripId);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
@@ -1372,7 +1372,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockPostService.UserOwnsPost(1, post.TripId).Returns(true);
 
-        var result = await _controller.GetPost(10);
+        var result = await _controller.GetPost(10, 20);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldBe(post);
@@ -1429,7 +1429,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(999).Returns((Post?)null);
 
-        var result = await _controller.GetPost(999);
+        var result = await _controller.GetPost(999, 1);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
@@ -1472,7 +1472,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(10).Returns(Task.FromException<Post?>(new Exception("Unable to retrieve post")));
 
-        var result = await _controller.GetPost(10);
+        var result = await _controller.GetPost(10, 1);
 
         var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
 
