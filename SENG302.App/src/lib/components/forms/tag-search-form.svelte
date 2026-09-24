@@ -22,7 +22,7 @@
     let items = $state<string[]>([]);
     let loading = $state(false);
     let error = $state("");
-    
+
     let debounceTime = 250;
     let debounceTimer: ReturnType<typeof setTimeout>;
 
@@ -34,7 +34,7 @@
         const url =
             getSuggestionsUrl != null
                 ? getSuggestionsUrl
-                : `/api/image/tags?query=${encodeURIComponent(query)}`;
+                : `/api/images/tags?query=${encodeURIComponent(query)}`;
 
         const response = await fetchWithCsrf(resolve(url as any), {
             method: "GET",
@@ -76,7 +76,7 @@
     function handleInput() {
         selectedTag = "";
         error = "";
-        
+
         // Debounce
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {

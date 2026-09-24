@@ -65,7 +65,7 @@ public class U7004CreatePost
             EndDate = DateToDateTimeOffset(2026, 7, 10),
             UserId = 1
         });
-        
+
         context.Albums.Add(new Album
         {
             TripId = 1,
@@ -133,14 +133,14 @@ public class U7004CreatePost
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+        var postId = await _lastResponse.Content.ReadAsStringAsync();
 
-        post.ShouldNotBeNull();
+        postId.ShouldNotBeNull();
 
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}");
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
 
         retrievedPost.ShouldNotBeNull();
-        retrievedPost.PostId.ShouldBe(post.PostId);
+        retrievedPost.PostId.ShouldBe(int.Parse(postId));
     }
 
     // AC 4

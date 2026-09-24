@@ -92,6 +92,7 @@ public static class CreateExampleUsersHelper
                     var post = new Post
                     {
                         Title = "Post " + j.ToString(),
+                        CreatorId = 2,
                         TripId = trip.Id,
                         Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
                         Date = DateTimeOffset.MaxValue,

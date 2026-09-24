@@ -16,6 +16,8 @@ public interface ICollaborationService
     Task<List<CollaboratingUserResponse>> GetTripCollaborators(int tripId);
     Task LeaveCollaboration(int userId, int tripId);
     Task SendInviteAsync(string userEmail, int inviterId, int tripId);
+    Task KickUserAsync(int tripId, int kickedUserId);
+    Task SwapOwnership(int previousOwnerId, int newOwnerId, int tripId);
 }
 
 public class CollaborationService : ICollaborationService
@@ -170,5 +172,91 @@ public class CollaborationService : ICollaborationService
         {
             await _notificationService.AddNotificationAsync(inviteNotification);
         }
+    }
+    
+    /// <summary>
+    /// Kick a user from a specified trip
+    /// </summary>
+    /// <param name="tripId">Trip user is removed from as collaborator</param>
+    /// <param name="kickedUserId">The user id of the user being kicked</param>
+    /// <exception cref="KeyNotFoundException">If trip or user with given id does not exist, throw an exception</exception>
+    public async Task KickUserAsync(int tripId, int kickedUserId)
+    {
+        User? kickedUser = await _userService.GetUserByIdAsync(kickedUserId);
+
+        if (kickedUser == null)
+        {
+            throw new KeyNotFoundException("User does not exist");
+        }
+
+        var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        Trip? trip = await context.Set<Trip>().Where(t => t.Id == tripId).FirstOrDefaultAsync();
+
+        if (trip == null)
+        {
+            throw new KeyNotFoundException("Trip does not exist");
+        }
+
+        trip.Collaborators.Remove(kickedUserId);
+        
+        await context.SaveChangesAsync();
+        
+        
+        Notification kickedNotification = new Notification()
+        {
+            UserId = kickedUserId,
+            HeaderText = $"Kicked from {trip.Title}!",
+            BodyText = $"You have been kicked out of {trip.Title}! You can no longer collaborate on this trip",
+            Timestamp = DateTimeOffset.UtcNow,
+            NotificationType = "Notification",
+        };
+        
+        await _notificationService.AddNotificationAsync(kickedNotification);
+        
+        // email setup and logic
+        var emailDict = new Dictionary<string, string>
+        {
+            { "TRIP_NAME", trip.Title },
+            { "DISPLAY_NAME", kickedUser.DisplayName}
+        };
+        
+        await _emailQueue.QueueEmailAsync(new EmailJob(kickedUser.Email, EmailTemplate.KickedFromTripEmailTemplate, emailDict));
+    }
+
+    /// <summary>
+    /// Swaps the ownership of a trip over
+    /// </summary>
+    /// <param name="previousOwnerId">the current owner of trip</param>
+    /// <param name="newOwnerId">the soon to be owner of the trip</param>
+    /// <param name="tripId">the trip id</param>
+    /// <exception cref="KeyNotFoundException">Trip doesn't exist</exception>
+    public async Task SwapOwnership(int previousOwnerId, int newOwnerId, int tripId) 
+    {
+        var context = await _dbContextFactory.CreateDbContextAsync();
+
+        Trip? trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId);
+
+        if (trip == null)
+        {
+            throw new KeyNotFoundException("Trip does not exist");
+        }
+
+        trip.UserId = newOwnerId;
+        trip.Collaborators.Remove(newOwnerId);
+        trip.Collaborators.Add(previousOwnerId);
+
+        await context.SaveChangesAsync();
+        
+        Notification ownershipGrantedNotification = new Notification()
+        {
+            UserId = newOwnerId,
+            HeaderText = $"Granted Ownership of {trip.Title}!",
+            BodyText = $"You have been granted ownership of the {trip.Title} trip!",
+            Timestamp = DateTimeOffset.UtcNow,
+            NotificationType = "Notification",
+        };
+
+        await _notificationService.AddNotificationAsync(ownershipGrantedNotification);
     }
 }

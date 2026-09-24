@@ -20,7 +20,7 @@ public interface IPostService
     Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
     Task<Post?> GetPostAsync(int id);
     Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
-    Task<bool> UserOwnsPost(int userId, int tripId);
+    Task<bool> UserOwnsPost(int userId, int tripId, int postId);
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
     Task DeletePhotoFromPostAsync(int postId, int photoId);
@@ -65,7 +65,7 @@ public class PostService : IPostService
         // get all the posts
         var posts = await context.Set<Post>()
             .Where(post => context.Set<Trip>()
-                .Any(trip => trip.Id == post.TripId && trip.UserId == userId))
+                .Any(trip => trip.Id == post.TripId && (trip.UserId == userId || trip.Collaborators.Contains(userId))))
             .ToListAsync();
 
         return posts.OrderBy(post => post.Date);
@@ -74,7 +74,7 @@ public class PostService : IPostService
     /// <summary>
     /// Determines if an image is suitable for AI tagging.
     /// </summary>
-    /// <param name="image"></param>
+    /// <param name="image"></param>|| trip.Collaborators.Contains(userId))
     /// <returns></returns>
     private static bool IsAiTaggable(IFormFile image)
     {
@@ -93,12 +93,12 @@ public class PostService : IPostService
     /// dueDate must be in the future, and currentStatus will be automatically set to
     /// </summary>
     /// <param name="postRequest"></param>
-    /// <param name="userId"></param>
+    /// <param name="creatorId"></param>
     /// <param name="photos"></param>
     /// <returns>the newly created postItem</returns>
     public async Task<Post> CreateNewPostAsync(
         NewPostRequest postRequest,
-        int userId,
+        int creatorId,
         List<IFormFile>? photos = null,
         bool aiTaggingForUpload = true
         )
@@ -136,7 +136,7 @@ public class PostService : IPostService
             throw new MultipleValidationListException(errors);
         }
 
-        User? user = await _userService.GetUserByIdAsync(userId);
+        User? user = await _userService.GetUserByIdAsync(creatorId);
 
         if (user == null)
         {
@@ -149,10 +149,10 @@ public class PostService : IPostService
         var photoIds = new List<int>();
         foreach (var photo in photos)
         {
-            var file = await _fileService.SaveFileAsync(photo, userId);
+            var file = await _fileService.SaveFileAsync(photo, creatorId);
             photoIds.Add(file.Id);
 
-            if (await _userService.UserAiTaggingCheckAsync(userId) && aiTaggingForUpload && IsAiTaggable(photo))
+            if (await _userService.UserAiTaggingCheckAsync(creatorId) && aiTaggingForUpload && IsAiTaggable(photo))
             {
                 await _imageTaggingService.QueueImageTaggingJobs(photo, file.Id);
             }
@@ -168,7 +168,7 @@ public class PostService : IPostService
                 {
                     file.TagError = "Tags not available. AI tagging was disabled when image was uploaded";
                     context.CustomFiles.Update(file);
-                    await context.SaveChangesAsync(); 
+                    await context.SaveChangesAsync();
                 }
             }
 
@@ -203,6 +203,7 @@ public class PostService : IPostService
             OsmId = postRequest.OsmId,
             OsmType = postRequest.OsmType,
             LocationName = location.Name,
+            CreatorId = creatorId
         };
         context.Set<Post>().Add(newPost);
         await context.SaveChangesAsync();
@@ -256,12 +257,12 @@ public class PostService : IPostService
     /// Updates the content then pushes to DB.
     /// </summary>
     /// <param name="postUpdates">Incoming Post Item Request</param>
-    /// <param name="userId"></param>
+    /// <param name="editorId"></param>
     /// <param name="photos"></param>
     /// <returns>The updated Post item</returns>
     public async Task<Post?> UpdatePostAsync(
         UpdatePostRequest postUpdates,
-        int userId,
+        int editorId,
         List<IFormFile>? photos = null,
         bool aiTaggingForUpload = true
         )
@@ -331,7 +332,7 @@ public class PostService : IPostService
             await context.SaveChangesAsync();
         }
 
-        User? user = await _userService.GetUserByIdAsync(userId);
+        User? user = await _userService.GetUserByIdAsync(editorId);
 
         if (user == null)
         {
@@ -339,7 +340,7 @@ public class PostService : IPostService
         }
 
         var shouldTagNewImages =
-            await _userService.UserAiTaggingCheckAsync(userId) &&
+            await _userService.UserAiTaggingCheckAsync(editorId) &&
             aiTaggingForUpload;
 
         // Add / Remove Photos 
@@ -347,7 +348,7 @@ public class PostService : IPostService
 
         foreach (var photo in photos)
         {
-            var customFile = await _fileService.SaveFileAsync(photo, userId);
+            var customFile = await _fileService.SaveFileAsync(photo, editorId);
             customFileIds.Add(customFile.Id);
 
             if (shouldTagNewImages && IsAiTaggable(photo))
@@ -394,20 +395,25 @@ public class PostService : IPostService
     /// <param name="userId"></param>
     /// <param name="tripId"></param>
     /// <returns>A boolean indicating if the user owns the trip or not</returns>
-    public async Task<bool> UserOwnsPost(int userId, int tripId)
+    public async Task<bool> UserOwnsPost(int userId, int tripId, int postId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var trip = await context.Trips.FirstOrDefaultAsync(u => u.Id == tripId);
-        if (trip == null)
-        {
-            return false;
-        }
-        return trip.UserId == userId;
+        int? tripOwnerId = (await context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && (t.UserId == userId || t.Collaborators.Contains(userId))))?.UserId;
+        var isPartOfTrip = tripOwnerId != null;
+
+        var ownsPost = await context.Posts
+            .Where(
+                p => p.PostId == postId &&
+                p.TripId == tripId &&
+                isPartOfTrip && p.CreatorId == userId)
+            .AnyAsync();
+
+        return ownsPost;
     }
 
     /// <summary>
-    /// Delete a specific post by its id from the database and remove accociated images along with it.
+    /// Delete a specific post by its id from the database and remove associated images along with it.
     /// </summary>
     /// <param name="postId"></param>
     /// <returns></returns>
