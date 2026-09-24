@@ -207,6 +207,16 @@ public class CollaborationController : ControllerBase
         return Ok(remainingCollaborators);
     }
 
+    /// <summary>
+    /// changes the owner of the trip
+    /// </summary>
+    /// <param name="tripId">id of trip where owner is being swapped</param>
+    /// <param name="newOwnerId">the owner to become owner of the trip</param>
+    /// <returns>
+    /// Unauthorized - Not logged in, user is not owner, owner trying to set owner that isn't a collaborator
+    /// Bad Request - exceptions
+    /// OK - Ownership of trip is transferred to the new owner
+    /// </returns>
     [Authorize]
     [HttpPatch("transfer/{newOwnerId:int}")]
     public async Task<ActionResult> SwapOwnership(int tripId, int newOwnerId)

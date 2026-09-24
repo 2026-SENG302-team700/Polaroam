@@ -119,7 +119,6 @@
                 notifications.push(createNotificationData(n)),
             );
         } catch (err) {
-            console.log("Error happens here")
             notificationsError = (err as Error).message;
         }
     }

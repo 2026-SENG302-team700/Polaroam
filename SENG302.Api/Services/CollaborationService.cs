@@ -225,12 +225,12 @@ public class CollaborationService : ICollaborationService
     }
 
     /// <summary>
-    /// 
+    /// Swaps the ownership of a trip over
     /// </summary>
-    /// <param name="previousOwnerId"></param>
-    /// <param name="newOwnerId"></param>
-    /// <param name="tripId"></param>
-    /// <exception cref="KeyNotFoundException"></exception>
+    /// <param name="previousOwnerId">the current owner of trip</param>
+    /// <param name="newOwnerId">the soon to be owner of the trip</param>
+    /// <param name="tripId">the trip id</param>
+    /// <exception cref="KeyNotFoundException">Trip doesn't exist</exception>
     public async Task SwapOwnership(int previousOwnerId, int newOwnerId, int tripId) 
     {
         var context = await _dbContextFactory.CreateDbContextAsync();
