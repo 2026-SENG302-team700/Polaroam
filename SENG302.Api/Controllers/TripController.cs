@@ -63,6 +63,10 @@ public class TripController : ControllerBase
         {
             return NotFound();
         }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     /// <summary>

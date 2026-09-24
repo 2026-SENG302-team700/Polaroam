@@ -253,7 +253,7 @@ public class TripControllerTests : BaseIntegrationTestFixture
         var responseMessage = await deleteResponse.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.BadRequest, deleteResponse.StatusCode);
-        responseMessage.ShouldBe("Trip does not exist");
+        responseMessage.ShouldBe("Trip with the provided ID does not exist.");
     }
 
     [Fact]

@@ -567,6 +567,174 @@ public class CollaborationServiceTests : BaseIntegrationTestFixture
     }
 
     [Fact]
+    public async Task KickUser_UserWasCollaboratingInValidTrip_UserIsKickedFromTrip()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        _mockEmailQueue
+            .QueueEmailAsync(new EmailJob("test2@example.com", EmailTemplate.KickedFromTripEmailTemplate,
+                new Dictionary<string, string>())).Returns(new ValueTask());
+        
+        await Should.NotThrowAsync(async () => await ServiceUnderTest.KickUserAsync(1, 2));
+        
+        await using var updatedContext = DbContextFactory.CreateDbContext();
+
+        Trip? updatedTrip = await updatedContext.Trips.FirstOrDefaultAsync(t => t.UserId == 1);
+        updatedTrip?.Collaborators.ShouldNotContain(user2.Id);
+    }
+
+    [Fact]
+    public async Task KickUser_TripDoesNotExist_KeyNotFoundExceptionThrown()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        _mockEmailQueue
+            .QueueEmailAsync(new EmailJob("test2@example.com", EmailTemplate.KickedFromTripEmailTemplate,
+                new Dictionary<string, string>())).Returns(new ValueTask());
+        
+        var err = await Should.ThrowAsync<KeyNotFoundException>(async () => await ServiceUnderTest.KickUserAsync(5, 2));
+        err.Message.ShouldBe("Trip does not exist");
+        
+        
+    }
+    
+    [Fact]
+    public async Task KickUser_UserDoesNotExist_KeyNotFoundExceptionThrown()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = []
+        };
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        _mockEmailQueue
+            .QueueEmailAsync(new EmailJob("test2@example.com", EmailTemplate.KickedFromTripEmailTemplate,
+                new Dictionary<string, string>())).Returns(new ValueTask());
+        
+        var err = await Should.ThrowAsync<KeyNotFoundException>(async () => await ServiceUnderTest.KickUserAsync(1, 2));
+        
+        err.Message.ShouldBe("User does not exist");
+    }
+
+    [Fact]
+    public async Task UserWasCollaboratingInValidTrip_KickedUserIsSentNotification()
+    {
+        await AddTestUser();
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
+        
+        User user2 = new()
+        {
+            
+            Id = 2,
+            Email = "test2@example.com",
+            DisplayName = "Test User 2",
+            PasswordKey = "password",
+            Country = "Test Country"
+            
+        };
+        
+        context.Users.Add(user2);
+
+        context.Trips.Add(trip);
+
+        await context.SaveChangesAsync();
+        
+        _mockEmailQueue
+            .QueueEmailAsync(new EmailJob("test2@example.com", EmailTemplate.KickedFromTripEmailTemplate,
+                new Dictionary<string, string>())).Returns(new ValueTask());
+        
+        await Should.NotThrowAsync(async () => await ServiceUnderTest.KickUserAsync(1, 2));
+        
+        await using var updatedContext = DbContextFactory.CreateDbContext();
+
+        Notification? notification = await updatedContext.Notifications.FirstOrDefaultAsync(n => n.UserId == user2.Id);
+
+        notification.ShouldNotBeNull();
+        notification.HeaderText.ShouldBe("Kicked from Trip!!");
+    }
+
+    [Fact]
     public async Task SwapOwnership_ValidTripAndUser_OwnershipIsSwapped()
     {
         await AddTestUser();

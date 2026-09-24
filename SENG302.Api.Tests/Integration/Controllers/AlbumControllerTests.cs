@@ -317,7 +317,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
             (kayakBytes, "kayak.webp", "image/webp")
         ]);
         var response = await HttpClient.PostAsync("/api/album/1/images", content);
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     // DeleteAlbumImage Tests
@@ -400,7 +400,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await AddAlbumImages();
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/404/tag?tag=beach");
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -410,7 +410,7 @@ public class AlbumControllerTest : BaseIntegrationTestFixture
         await AddAlbumImages();
         await AddPostImages();
         var response = await HttpClient.GetAsync($"/api/album/404/tag?tag=beach");
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]

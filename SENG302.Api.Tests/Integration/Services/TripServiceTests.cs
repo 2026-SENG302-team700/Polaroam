@@ -784,7 +784,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
 
         await Should.NotThrowAsync(async () => await _tripService.DeleteTripByIdAsync(trip.Id));
 
-        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.GetTripByIdAsync(trip.Id));
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _tripService.GetTripByIdAsync(trip.Id));
     }
 
     private readonly NewTripRequest testTripRequest = new NewTripRequest
@@ -804,7 +804,7 @@ public class TripServiceTests : BaseIntegrationTestFixture
     [Fact]
     public async Task DeleteTrip_NoTripExists_Fails()
     {
-        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.DeleteTripByIdAsync(45));
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _tripService.DeleteTripByIdAsync(45));
     }
 
     [Fact]
