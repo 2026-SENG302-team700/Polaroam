@@ -107,34 +107,6 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        Are you sure you want to logout?
-                    </h5>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Close
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-outline-danger"
-                        data-bs-dismiss="modal"
-                        onclick={logoutUser}
-                    >
-                        Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <ConfirmationModal
