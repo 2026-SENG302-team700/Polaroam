@@ -297,7 +297,6 @@
     onMount(async () => {
         await getOwner();
         await getCollaborators();
-        console.log(`Owner: ${isOwner}`);
     });
 
     // Lock scrolling only while the modal is visible

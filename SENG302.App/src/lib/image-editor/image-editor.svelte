@@ -4,9 +4,9 @@
     import mimeMagicNumbers from "../../../../SENG302.Shared/mimeTypes.json";
 
     const profileSize = $state(250.0);
-    
-    let { imageErrors = $bindable("") } = $props()
-    
+
+    let { imageErrors = $bindable("") } = $props();
+
     let imageSrc = $state("");
     let imageFile = $state();
 
@@ -49,33 +49,25 @@
      * @returns true if valid, false if not
      */
     export async function validateImg(file: File) {
-        
         var realMimeType = await getRealValidMime(file);
 
         if (!mimeTypes.includes(file.type) || realMimeType == undefined) {
-            imageErrors = "Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp";
-            addToast(
-                imageErrors,
-                "error",
-            );
+            imageErrors =
+                "Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp";
+            addToast(imageErrors, "error");
             return false;
         }
 
         if (file.type != realMimeType) {
-            imageErrors = "Invalid image, file extension does not match file type";
-            addToast(
-                imageErrors,
-                "error",
-            );
+            imageErrors =
+                "Invalid image, file extension does not match file type";
+            addToast(imageErrors, "error");
             return false;
         }
 
         if (file.size > 5000000) {
             imageErrors = "Image too large, maximum file size is 5MB";
-            addToast(
-                imageErrors,
-                "error",
-            )
+            addToast(imageErrors, "error");
             return false;
         }
 
@@ -88,7 +80,9 @@
      * @param file the image file
      */
     export async function getRealValidMime(file: File) {
-        const magicNumber = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+        const magicNumber = new Uint8Array(
+            await file.slice(0, 12).arrayBuffer(),
+        );
 
         const dict = Object.entries(mimeMagicNumbers);
 
@@ -107,7 +101,7 @@
                     break;
                 }
             }
-            
+
             if (valid) {
                 return dict[mimeI][1];
             }
@@ -139,10 +133,9 @@
                 newWidth = (newHeight / height) * width;
             }
         } catch (error) {
-            console.log("image not found", error);
+            console.error(error);
         }
     }
-    
 
     /**
      * Get the dimensions of an image
@@ -276,7 +269,7 @@
         document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
-        highlightError(false)
+        highlightError(false);
     });
 
     onDestroy(() => {

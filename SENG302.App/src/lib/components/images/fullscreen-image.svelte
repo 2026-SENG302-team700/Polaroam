@@ -130,7 +130,7 @@
 
     async function getUserPreferences() {
         aiTaggingPreference = sessionStorage.getItem("aiTaggingPreference");
-        console.log("aiTaggingPreference: " + aiTaggingPreference);
+
         if (aiTaggingPreference !== null) return;
 
         try {
