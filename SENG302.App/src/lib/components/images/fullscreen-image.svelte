@@ -317,6 +317,7 @@
                         <div class="image-details">
                             <div class="image-detail btn btn-secondary btn-sm">
                                 <span
+                                        style={imageContext.postId ? "max-width: 50cqw" : "max-width: 85cqw"}
                                     ><strong>Trip:</strong>
                                     {imageContext.tripTitle}</span
                                 >
@@ -518,6 +519,7 @@
         position: relative;
         width: min(100cqw, 100cqh * var(--aspectRatio, 1));
         height: min(100cqh, 100cqw / var(--aspectRatio, 1));
+        container-type: inline-size;
     }
     .image {
         display: block;
