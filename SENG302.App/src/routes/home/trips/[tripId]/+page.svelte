@@ -207,7 +207,7 @@
                     class="title-and-date"
                     style="display: flex; flex-direction: row;"
                 >
-                    <h1 class="card-subtitle mb-2 h1 user-name">
+                    <h1 class="card-subtitle mb-2 h1 trip-title">
                         {tripObject.title}
                     </h1>
                     <div
@@ -269,5 +269,10 @@
         display: flex;
         justify-content: space-between;
         margin-bottom: 5px;
+    }
+    
+    .trip-title {
+        max-width: 80%;
+        flex-wrap: wrap;
     }
 </style>
