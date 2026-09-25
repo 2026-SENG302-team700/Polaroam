@@ -130,6 +130,7 @@
 
     async function getUserPreferences() {
         aiTaggingPreference = sessionStorage.getItem("aiTaggingPreference");
+        console.log("aiTaggingPreference: " + aiTaggingPreference);
         if (aiTaggingPreference !== null) return;
 
         try {
@@ -147,7 +148,6 @@
             aiTaggingPreference = String(data.aiTagging);
             sessionStorage.setItem("aiTaggingPreference", aiTaggingPreference);
         } catch {
-            console.log("Cannot get user AI tagging preferences");
         } finally {
             loading = false;
         }

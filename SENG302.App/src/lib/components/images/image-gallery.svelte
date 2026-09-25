@@ -136,6 +136,7 @@
                             `/api/album/${tripId}/images/${image.photoId}`,
                         )}
                         {index}
+                        {tripId}
                         viewContext="album"
                         images={imageMetadata.map((m) =>
                             resolve(`/api/album/${tripId}/images/${m.photoId}`),

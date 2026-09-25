@@ -82,7 +82,7 @@
 
     onMount(async () => {
         await loadAiTaggingPreference();
-        fetchTrip();
+        fetchTripName();
     });
 
     /**
