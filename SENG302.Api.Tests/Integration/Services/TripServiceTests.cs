@@ -17,13 +17,11 @@ public class TripServiceTests : BaseIntegrationTestFixture
     private ITripService ServiceUnderTest => ServiceProvider.GetRequiredService<ITripService>();
 
     private readonly ITripService _tripService;
-    private readonly FakeTimeProvider _fakeTimeProvider;
-    private readonly IUserService _mockUserService;
+    private readonly IUserService _mockUserService = Substitute.For<IUserService>();
     public TripServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
     {
-        _mockUserService = Substitute.For<IUserService>();
-        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
-        _tripService = new TripService(DbContextFactory, _fakeTimeProvider, _mockUserService);
+
+        _tripService = new TripService(DbContextFactory);
     }
 
     private async Task<Trip> CreateTestTripWithUserId(int userId)
@@ -796,12 +794,6 @@ public class TripServiceTests : BaseIntegrationTestFixture
     };
 
     [Fact]
-    public async Task CreateNewTrip_UserDoesNotExist_ThrowsArgumentException()
-    {
-        await Should.ThrowAsync<ArgumentException>(async () => await _tripService.CreateNewTripAsync(testTripRequest, -1));
-    }
-
-    [Fact]
     public async Task DeleteTrip_NoTripExists_Fails()
     {
         await Should.ThrowAsync<KeyNotFoundException>(async () => await _tripService.DeleteTripByIdAsync(45));
@@ -850,7 +842,5 @@ public class TripServiceTests : BaseIntegrationTestFixture
         await Should.ThrowAsync<ArgumentException>(
             () => _tripService.UpdateScrapboardReferenceAsync(trip.Id)
         );
-
     }
-
 }

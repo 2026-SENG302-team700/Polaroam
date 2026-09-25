@@ -1,5 +1,4 @@
 ﻿<script lang="ts">
-    
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { page } from "$app/state";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -7,21 +6,25 @@
 
     import { onMount } from "svelte";
     import { user } from "$lib/stores/user";
-    
+    import { goto } from "$app/navigation";
+
     let {
         show = $bindable(false),
     }: {
         show: boolean;
     } = $props();
-    
+
     // Modal State
     let tripId = page.params.tripId;
     let tripOwner = $state<null | UserResponse>(null);
-    let isOwner = $derived(tripOwner !== null && $user.id !== null && tripOwner.id === $user.id);
-    let tripOwnerName = $state("");
-    let tripCollaborators = $state<{"userId": number,"displayName": string}[]>([]);
+    let isOwner = $derived(
+        tripOwner !== null && $user.id !== null && tripOwner.id === $user.id,
+    );
+    let tripCollaborators = $state<{ userId: number; displayName: string }[]>(
+        [],
+    );
     let error = $state("");
-    
+
     // Leave Collaboration
     let leaveConfirmationModalShown = $state(false);
     let leaveCollaborationError = $state("");
@@ -36,14 +39,14 @@
     let kickUserMessage = $state("");
     let UserIdOfKicked = $state<number | null>(null);
     let kickUserError = $state("");
-    
+
     // Swap Ownership
     let swapOwnershipConfirmationModalShown = $state(false);
     let swapOwnershipError = $state("");
     let newOwnerId = $state<number | null>(null);
     let swapOwnershipMessage = $state("");
-    
-    let loading = $state(false)
+
+    let loading = $state(false);
 
     /**
      * Gets a list of everyone who is a collaborator on the trip
@@ -61,7 +64,7 @@
         } catch (err: any) {
             error = err.toString();
         } finally {
-            loading = false
+            loading = false;
         }
     }
 
@@ -69,7 +72,7 @@
      * Gets the owner of the trip. If the user is the owner, then the isOwner variable is set to true.
      */
     async function getOwner() {
-        loading =  true
+        loading = true;
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/trip/${tripId}/user` as any),
@@ -82,7 +85,7 @@
         } catch (err: any) {
             error = err.toString();
         } finally {
-            loading = true
+            loading = true;
         }
     }
 
@@ -180,7 +183,6 @@
         kickUserConfirmationModalShown = true;
         kickUserMessage = `Are you sure you want to kick ${collaboratorName}?`;
         UserIdOfKicked = collaboratorId;
-        
     }
 
     /**
@@ -210,7 +212,7 @@
 
             if (!response.ok) {
                 kickUserError = await response.text();
-            } 
+            }
 
             await getCollaborators();
         } catch (e: any) {
@@ -237,7 +239,10 @@
             );
             if (!response.ok) {
                 leaveCollaborationError = "Failed to leave collaboration";
+                return;
             }
+
+            goto(resolve("/home"));
         } catch {
             leaveCollaborationError = "Failed to leave collaboration";
         }
@@ -248,17 +253,20 @@
      * @param collaboratorName
      * @param collaboratorId
      */
-    function showSwapOwnerConfirmationModal(collaboratorName: string, collaboratorId: number) {
-        swapOwnershipConfirmationModalShown = true
-        swapOwnershipMessage =  `Are you sure you want to transfer trip ownership to ${collaboratorName}?`
-        newOwnerId = collaboratorId
+    function showSwapOwnerConfirmationModal(
+        collaboratorName: string,
+        collaboratorId: number,
+    ) {
+        swapOwnershipConfirmationModalShown = true;
+        swapOwnershipMessage = `Are you sure you want to transfer trip ownership to ${collaboratorName}?`;
+        newOwnerId = collaboratorId;
     }
 
     /**
      * Hide the swap ownership confirmation modal
      */
     function hideSwapOwnershipConfirmationModal() {
-        swapOwnershipConfirmationModalShown = false
+        swapOwnershipConfirmationModalShown = false;
     }
 
     /**
@@ -268,7 +276,9 @@
     async function swapOwnership(userId: number | null) {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/collaboration/transfer/${newOwnerId}` as any),
+                resolve(
+                    `/api/trip/${tripId}/collaboration/transfer/${newOwnerId}` as any,
+                ),
                 {
                     method: "PATCH",
                     credentials: "include",
@@ -283,12 +293,12 @@
             swapOwnershipError = "Failed to transfer ownership";
         }
     }
-    
+
     onMount(async () => {
         await getOwner();
         await getCollaborators();
-        console.log(`Owner: ${isOwner}`)
-    })
+        console.log(`Owner: ${isOwner}`);
+    });
 
     // Lock scrolling only while the modal is visible
     $effect(() => {
@@ -306,7 +316,6 @@
             document.documentElement.style.overflow = previousHtmlOverflow;
         };
     });
-    
 </script>
 
 {#if show}
@@ -318,20 +327,41 @@
                     {#if error !== ""}
                         Error: {error}
                     {/if}
-                    <h1 class="card-subtitle mb-4 h2 user-name">Owner: {tripOwner?.displayName}</h1>
+                    <h1 class="card-subtitle mb-4 h2 user-name">
+                        Owner: {tripOwner?.displayName}
+                    </h1>
                     {#if !loading}
                         {#each tripCollaborators as collaborator}
-                            <div class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list">
-                                <span class="collaborator-info fw-medium">{collaborator.displayName}</span>
+                            <div
+                                class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list"
+                            >
+                                <span class="collaborator-info fw-medium"
+                                    >{collaborator.displayName}</span
+                                >
                                 {#if isOwner}
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-secondary"
-                                                onclick={() => showSwapOwnerConfirmationModal(collaborator.displayName, collaborator.userId)}>
+                                    <div
+                                        class="btn-group btn-group-sm"
+                                        role="group"
+                                    >
+                                        <button
+                                            class="btn btn-outline-secondary"
+                                            onclick={() =>
+                                                showSwapOwnerConfirmationModal(
+                                                    collaborator.displayName,
+                                                    collaborator.userId,
+                                                )}
+                                        >
                                             Grant Ownership
                                         </button>
-                                        <button class="btn btn-danger"
-                                                onclick={() => showKickUserConfirmationModal(collaborator.displayName, collaborator.userId)}
-                                                disabled={loading}>
+                                        <button
+                                            class="btn btn-danger"
+                                            onclick={() =>
+                                                showKickUserConfirmationModal(
+                                                    collaborator.displayName,
+                                                    collaborator.userId,
+                                                )}
+                                            disabled={loading}
+                                        >
                                             Kick
                                         </button>
                                     </div>
@@ -389,8 +419,7 @@
                             <button
                                 class="btn btn-danger modal-footer-button"
                                 onclick={showLeaveConfirmationModal}
-                                disabled={loading}
-                                >Leave</button
+                                disabled={loading}>Leave</button
                             >
                         {/if}
                     </div>
@@ -440,8 +469,7 @@
             </div>
         </div>
     </div>
-{/if}   
-
+{/if}
 
 <style>
     .modal {

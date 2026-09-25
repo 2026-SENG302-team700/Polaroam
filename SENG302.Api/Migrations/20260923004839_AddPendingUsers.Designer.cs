@@ -13,8 +13,8 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260921083212_SetCreatorIdNonNullable")]
-    partial class SetCreatorIdNonNullable
+    [Migration("20260923004839_AddPendingUsers")]
+    partial class AddPendingUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -131,6 +131,23 @@ namespace SENG302.Api.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.PendingUser", b =>
+                {
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<List<int>>("TripInvites")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("Email");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("PendingUsers");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Post", b =>
                 {
                     b.Property<int>("PostId")
@@ -145,9 +162,6 @@ namespace SENG302.Api.Migrations
 
                     b.Property<DateTimeOffset>("CreationTime")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CreatorId")
-                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("Date")
                         .HasColumnType("timestamp with time zone");
@@ -187,11 +201,15 @@ namespace SENG302.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("TripId"));
 
-                    b.Property<string>("FileKey")
+                    b.Property<string>("Elements")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("OwnerId")
+                    b.PrimitiveCollection<List<int>>("Files")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int>("Thumbnail")
                         .HasColumnType("integer");
 
                     b.HasKey("TripId");
@@ -220,6 +238,10 @@ namespace SENG302.Api.Migrations
 
                     b.Property<bool>("HasScrapboard")
                         .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<string>>("PendingInvites")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("timestamp with time zone");

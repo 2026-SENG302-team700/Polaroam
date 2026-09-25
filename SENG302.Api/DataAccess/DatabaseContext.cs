@@ -17,6 +17,7 @@ public class DatabaseContext : DbContext
     public DbSet<Album> Albums { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Scrapboard> Scrapboards { get; set; }
+    public DbSet<PendingUser> PendingUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
