@@ -625,47 +625,48 @@
                         <CountrySelectForm bind:selectedCountryCode={country} />
                     </div>
                 </div>
-                <div class="mb-3"></div>
-                <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Settings</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
-                        class="d-flex align-items-center justify-content-between"
-                    >
-                        <label for="aiToggle" class="form-label"
-                            >Photo Tagging w/ Artifical Intelligence</label
-                        >
-                        <ToggleForm
-                            id="aiToggle"
-                            bind:checked={aiToggle}
-                            onchange={() => updateAiToggle(aiToggle)}
-                        />
-                    </div>
-                </div>
 
-                <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Account Security</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
-                        class="d-flex align-items-center justify-content-between"
-                    >
-                        <p class="small text-secondary mb-0">
-                            Change your password to keep your account secure.
-                        </p>
-                        <button
-                            type="button"
-                            class="btn btn-outline-primary btn-sm"
-                            onclick={requestPasswordChange}
-                        >
-                            Update Password
-                        </button>
-                    </div>
-                </div>
                 <div class="post-form-actions">
                     <CancelButton path={"/home/profile"} />
                     <AuthenticatorButton buttonType={"update"} />
                 </div>
             </form>
+            <div class="mb-3"></div>
+            <div class="mt-5 mb-4">
+                <h5 class="text-muted mb-2">Settings</h5>
+                <hr class="mt-0" style="opacity: 0.15;" />
+                <div
+                        class="d-flex align-items-center justify-content-between"
+                >
+                    <label for="aiToggle" class="form-label"
+                    >Photo Tagging w/ Artifical Intelligence</label
+                    >
+                    <ToggleForm
+                            id="aiToggle"
+                            bind:checked={aiToggle}
+                            onchange={() => updateAiToggle(aiToggle)}
+                    />
+                </div>
+            </div>
+
+            <div class="mt-5 mb-4">
+                <h5 class="text-muted mb-2">Account Security</h5>
+                <hr class="mt-0" style="opacity: 0.15;" />
+                <div
+                        class="d-flex align-items-center justify-content-between"
+                >
+                    <p class="small text-secondary mb-0">
+                        Change your password to keep your account secure.
+                    </p>
+                    <button
+                            type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            onclick={requestPasswordChange}
+                    >
+                        Update Password
+                    </button>
+                </div>
+            </div>
     </div>
     
     </div>

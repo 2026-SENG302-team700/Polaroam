@@ -187,7 +187,7 @@
 
 <div class="notification-main">
     <button
-        class="notification-bell-button"
+        class="notification-bell-button btn"
         aria-label="notifications"
         bind:this={notificationButtonElement}
         onclick={() => {
@@ -285,52 +285,36 @@
     }
 
     .icon-centered {
-        width: 100%;
-        height: 100%;
+        display: flex;
+        line-height: 1;
+        vertical-align: 0;
         font-size: 1.4rem;
     }
 
     .notification-bell-button {
-        background-color: white;
         width: 40px;
         height: 40px;
-        border-radius: 0.25rem;
-        align-content: center;
-        border: 2px solid black;
-        box-shadow: 3px 3px 0 #1f1f1f;
-        transition: transform 120ms ease box-shadow 120ms ease background-color
-            120ms ease;
-    }
-
-    .notification-bell-button:hover {
-        background-color: rgb(230, 228, 228);
-        border-color: #1f1f1f;
-        transform: translate(1px, 1px);
-        box-shadow: 2px 2px 0 #1f1f1f;
-        transition: transform 120ms ease box-shadow 120ms ease background-color
-            120ms ease;
-    }
-
-    .notification-bell-button:active,
-    .notification-bell-button:focus:active {
-        background-color: rgb(207, 207, 207);
-        transform: translate(3px, 3px);
-        box-shadow:
-            0px 0px 0 #1f1f1f,
-            1px 1px 0 #1f1f1f inset;
-        transition: transform 120ms ease box-shadow 120ms ease background-color
-            120ms ease;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
     }
 
     .notification-counter {
         position: absolute;
-        transform: translate(15px, -40px);
+        top: -4px;
+        right: -4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background-color: red;
         color: white;
         border-radius: 50%;
         width: 22px;
         height: 22px;
         font-size: smaller;
+        line-height: 1;
     }
 
     .notification-topbar {

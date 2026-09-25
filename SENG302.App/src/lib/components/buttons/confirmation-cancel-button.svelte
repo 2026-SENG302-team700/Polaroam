@@ -20,6 +20,6 @@
     option1Text={option1Text}
     option2Text={option2Text}
     option2Style="danger"
-    onOption1={() => goto(resolve(path))}
-    onOption2={() => {cancelConfirmModalShown = false;}}
+    onOption1={() => {cancelConfirmModalShown = false;}}
+    onOption2={() => goto(resolve(path))}
 />
