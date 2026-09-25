@@ -206,14 +206,16 @@
                 />
             </div>
 
-            {#if imageMetadata.length > 0 && tagQuery !== ""}
+            {#if imageMetadata.length == 0}
                 <p class="text-center">
-                    {imageMetadata.length} images found matching "{tagQuery}"
+                    No images found {tagQuery !== ""? `matching "${tagQuery}"` : ''}
                 </p>
-            {:else if imageMetadata.length > 0 && tagQuery === ""}
-                <p class="text-center">{imageMetadata.length} images found</p>
             {/if}
-
+            {#if imageMetadata.length > 0}
+                <p class="text-center">
+                    {imageMetadata.length} image{imageMetadata.length == 1? '': 's'} found {tagQuery !== ""? `matching "${tagQuery}"` : ''}
+                </p>
+            {/if}
             <div class:empty-album={imageMetadata.length === 0}>
                 <ImageGallery
                     bind:imageMetadata

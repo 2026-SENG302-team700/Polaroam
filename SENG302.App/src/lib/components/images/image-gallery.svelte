@@ -160,13 +160,6 @@
     </div>
 </div>
 
-{#if !imageMetadata || imageMetadata.length === 0}
-    <div
-        class="position-relative d-flex flex-column align-items-center justify-content-center text-center"
-    >
-        <p class="fs-3">No images found</p>
-    </div>
-{/if}
 {#if !errorsBesidePicker}
     <ExpandableErrorDisplay {errors} lines={5} />
 {/if}
