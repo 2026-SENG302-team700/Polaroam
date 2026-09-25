@@ -32,6 +32,10 @@
   <Content Include="Resources\EmailTemplates\*.html">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </Content>
+  <Content Include="Resources\DefaultDatabase\ExampleImages\**\*.jpg;Resources\DefaultDatabase\ExampleImages\**\*.jpeg;Resources\DefaultDatabase\ExampleImages\**\*.png;Resources\DefaultDatabase\ExampleImages\**\*.gif;Resources\DefaultDatabase\ExampleImages\**\*.webp">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
 </ItemGroup>
 
   <ItemGroup>
