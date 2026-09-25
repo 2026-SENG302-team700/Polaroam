@@ -75,7 +75,6 @@
         <AppLogo />
         <div
             class="right"
-            style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
         >
             <NotificationBell />
 
@@ -137,6 +136,7 @@
         flex: 1;
         justify-content: flex-end;
         margin-right: 15px;
+        gap: 6px;
     }
 
     .page-wrapper {

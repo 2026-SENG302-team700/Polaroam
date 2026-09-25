@@ -246,7 +246,7 @@
                 <button
                         class="btn btn-outline notification-footer-button"
                         onclick={getNotificationSegment}>
-                    See more
+                    See more...
                 </button> 
             </div>
         {/if}
