@@ -84,6 +84,9 @@
 
 <style>
     .trip-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
         width: 100%;
         overflow: hidden;
         border: 2px solid black;
@@ -109,6 +112,7 @@
         overflow: hidden;
         border-bottom: 2px solid black;
         background: #efe7d6;
+        flex-shrink: 0;
     }
 
     .cover img,
@@ -141,6 +145,10 @@
         flex-direction: column;
         padding: 1rem 1.1rem 1.1rem;
         background-color: #fff8e8;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
     }
 
     .trip-details h2 {
