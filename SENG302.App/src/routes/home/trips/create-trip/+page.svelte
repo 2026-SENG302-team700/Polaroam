@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { serializeLocalDate } from "$lib/datepicker/formatDate";
 
     let loading = $state(false);
     let tripTitle = $state("");
@@ -68,8 +69,10 @@
                 body: JSON.stringify({
                     Title: tripTitle,
                     Description: tripDescription,
-                    StartDate: startDate?.toISOString(),
-                    EndDate: endDate?.toISOString(),
+                    StartDate: startDate
+                        ? serializeLocalDate(startDate)
+                        : null,
+                    EndDate: endDate ? serializeLocalDate(endDate) : null,
                 }),
                 credentials: "include",
             });
