@@ -148,6 +148,7 @@
             aiTaggingPreference = String(data.aiTagging);
             sessionStorage.setItem("aiTaggingPreference", aiTaggingPreference);
         } catch {
+            console.error("Failed to get user AI tagging preferences");
         } finally {
             loading = false;
         }
