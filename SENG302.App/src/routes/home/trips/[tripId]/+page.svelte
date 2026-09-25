@@ -275,4 +275,8 @@
         max-width: 80%;
         flex-wrap: wrap;
     }
+    
+    .card-footer {
+        margin-bottom: 1rem;
+    }
 </style>
