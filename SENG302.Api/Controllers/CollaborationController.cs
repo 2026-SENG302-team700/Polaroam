@@ -16,13 +16,14 @@ public class CollaborationController : ControllerBase
     private readonly ITripService _tripService;
     private readonly ICollaborationService _collaborationService;
 
-
-    public CollaborationController(ITripService tripService, ICollaborationService collaborationService)
+    private readonly IUserService _userService;
+    public CollaborationController(ITripService tripService, ICollaborationService collaborationService, IUserService userService)
     {
         _tripService = tripService;
         _collaborationService = collaborationService;
+        _userService = userService;
     }
-    
+
     /// <summary>
     /// Returns all collaborates 
     /// </summary>
@@ -46,14 +47,13 @@ public class CollaborationController : ControllerBase
                     return Unauthorized(
                         "User does not have access to collaborate on the trip and view collaboration details");
                 }
+                var collaborators = await _collaborationService.GetTripCollaborators(tripId);
+                return Ok(collaborators);
             }
             else
             {
                 return Unauthorized("User Id does not exist");
             }
-
-            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
-            return Ok(collaborators);
         }
         catch (KeyNotFoundException e)
         {
@@ -89,7 +89,7 @@ public class CollaborationController : ControllerBase
             {
                 return Unauthorized("Not a collaborator on the trip");
             }
-            
+
             // Leave collaboration
             await _collaborationService.LeaveCollaboration(userId, tripId);
             return NoContent();
@@ -99,7 +99,7 @@ public class CollaborationController : ControllerBase
             return BadRequest("Failed to leave collaboration");
         }
     }
-    
+
     /// <summary>
     /// End point for posting invite to a user to a trip
     /// </summary>
@@ -163,6 +163,54 @@ public class CollaborationController : ControllerBase
             });
         }
         return Ok();
+    }
+
+    /// <summary>
+    /// If a user has been invited to the given trip, then the action provided in collaborationRequest
+    /// will be passed to the backend to have their action performed.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="collaborationRequest"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpPost("action")]
+    public async Task<ActionResult> ActionCollaboration(int tripId, [FromBody] CollaborationRequest collaborationRequest)
+    {
+        try
+        {
+            // Check logged in
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Not logged in");
+
+            // Get user and trip
+            var user = await _userService.GetUserByIdAsync(int.Parse(userIdString));
+            if (user == null) return Unauthorized("User not found");
+            var trip = await _tripService.GetTripByIdAsync(tripId);
+
+            // Check for pending invite
+            if (!trip.PendingInvites.Contains(user.Email)) return BadRequest("No pending invites");
+
+            // Reject
+            if (collaborationRequest.Action == 0)
+            {
+                await _collaborationService.ActionRejectAsync(tripId, user);
+                return Ok("successfully rejected");
+            }
+
+            // Accept
+            if (collaborationRequest.Action == 1)
+            {
+                await _collaborationService.ActionAcceptAsync(tripId, user);
+                return Ok("successfully accepted");
+            }
+
+            // Invalid action (not 0 or 1)
+            return BadRequest("Not a valid collaboration action!");
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 
     /// <summary>

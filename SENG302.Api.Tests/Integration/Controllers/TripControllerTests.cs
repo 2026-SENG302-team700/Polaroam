@@ -19,9 +19,32 @@ public class TripControllerTests : BaseIntegrationTestFixture
 {
     private ITestOutputHelper _output;
 
+    private ITripService _mockTripService;
+    private IPostService _mockPostService;
+    private IAlbumService _mockAlbumService;
+    private IUserService _mockUserService;
+    private ICollaborationService _mockCollaborationService;
+    private TripController _controller;
+
     public TripControllerTests(WebApplicationFactory<Program> webApplicationFactory, ITestOutputHelper output) :
         base(webApplicationFactory)
     {
+        _mockTripService = Substitute.For<ITripService>();
+        _mockPostService = Substitute.For<IPostService>();
+        _mockAlbumService = Substitute.For<IAlbumService>();
+        _mockUserService = Substitute.For<IUserService>();
+        _mockCollaborationService = Substitute.For<ICollaborationService>();
+
+        _controller = new TripController(
+            _mockTripService,
+            _mockPostService,
+            _mockAlbumService,
+            _mockUserService,
+            _mockCollaborationService
+        );
+        
+        TestingPrincipalHelper.AddTestPrincipalToController(_controller);
+
         _output = output;
     }
 

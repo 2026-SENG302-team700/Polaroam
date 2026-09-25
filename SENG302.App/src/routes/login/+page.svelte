@@ -12,7 +12,6 @@
     import EmailForm from "$lib/components/forms/email-form.svelte";
     import CodeForm from "$lib/components/forms/code-form.svelte";
     import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
-    import CreationButton from "$lib/components/buttons/creation-button.svelte";
 
     let email = $state("");
     let password = $state("");

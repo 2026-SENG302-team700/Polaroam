@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace SENG302.Api.Models.Entities;
 
 public class Notification

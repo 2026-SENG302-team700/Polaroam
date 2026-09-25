@@ -42,7 +42,7 @@ public class TripController : ControllerBase
     /// </returns>
     [Authorize]
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<TripResponse>> GetTrip(int id)
+    public async Task<ActionResult<Trip>> GetTrip(int id)
     {
         // get the user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -85,7 +85,7 @@ public class TripController : ControllerBase
             return Unauthorized("Not logged in!");
         }
         var userId = int.Parse(userIdString);
-
+        
         var trip = await _tripService.GetTripByIdAsync(tripId);
         var ownerUser = await _userService.GetUserByIdAsync(trip.UserId);
         if (ownerUser == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, trip.Id))
@@ -147,10 +147,13 @@ public class TripController : ControllerBase
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized("Not logged in!");
-
+            var userId = int.Parse(userIdString);
+            if (await _userService.GetUserByIdAsync(userId) == null)
+            {
+                return BadRequest("User with the provided id does not exist.");
+            }
             // Create trip belonging to the logged in user
-            var trip = await _tripService.CreateNewTripAsync(tripRequest, int.Parse(userIdString));
-
+            var trip = await _tripService.CreateNewTripAsync(tripRequest, userId);
             await _albumService.CreateNewAlbumAsync(trip.Id);
 
             return Ok(trip);
