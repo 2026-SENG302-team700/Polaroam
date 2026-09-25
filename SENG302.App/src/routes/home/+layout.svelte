@@ -5,7 +5,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
-    import AppLogo from "$lib/components/app-logo.svelte";
+    import AppLogo from "$lib/components/logo/app-logo.svelte";
     import NotificationBell from "$lib/components/notifications/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
