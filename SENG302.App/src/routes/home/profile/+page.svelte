@@ -7,25 +7,25 @@
     import { addToast } from "$lib/toast/toast";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import { user } from "$lib/stores/user";
+    import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
 
     let email = $state("");
     let username = $state("");
     let pfpUrl: string | null = $state(null);
-    let modalElement: HTMLElement | undefined = $state();
-    let logoutModal: Modal | undefined;
+    let logoutConfirmationModalShown = $state(false);
 
     onMount(async () => {
         retrieveUserData();
-
-        const { Modal: BootstrapModal } = await import("bootstrap");
-        if (modalElement) {
-            logoutModal = new BootstrapModal(modalElement);
-        }
     });
 
     /// shows the logout popup
     function showModal() {
-        logoutModal?.show();
+        logoutConfirmationModalShown = true;
+    }
+    
+    // Close the logout confirmation modal
+    function closeModal() {
+        logoutConfirmationModalShown = false;
     }
 
     /// <summary>
@@ -107,35 +107,16 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" bind:this={modalElement} tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        Are you sure you want to logout?
-                    </h5>
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Close
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-outline-danger"
-                        data-bs-dismiss="modal"
-                        onclick={logoutUser}
-                    >
-                        Logout
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
+
+<ConfirmationModal
+        message="Are you sure you want to logout?"
+        onOption1={closeModal}
+        option2Text="Logout"
+        onOption2={logoutUser}
+        option2Style="danger"
+        show={logoutConfirmationModalShown}
+/>
 
 <style>
     .card-content {

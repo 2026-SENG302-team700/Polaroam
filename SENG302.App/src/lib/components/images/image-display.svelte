@@ -107,9 +107,6 @@
     {/if}
 </div>
 
-{#if !images || images.length === 0}
-    <p class="empty-message">No image selected</p>
-{/if}
 <ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
