@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Notification from "$lib/components/content/notification.svelte";
+    import Notification from "./notification.svelte";
 
     let {
         notifications = [],

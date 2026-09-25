@@ -17,13 +17,10 @@ public class
 {
     private IScrapboardService ServiceUnderTest => ServiceProvider.GetRequiredService<IScrapboardService>();
     private readonly ITripService _tripService;
-    private readonly FakeTimeProvider _fakeTimeProvider;
-    private readonly IUserService _mockUserService;
+
     public ScrapboardServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory)
     {
-        _mockUserService = Substitute.For<IUserService>();
-        _fakeTimeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
-        _tripService = new TripService(DbContextFactory, _fakeTimeProvider, _mockUserService);
+        _tripService = new TripService(DbContextFactory);
     }
 
     private async Task SetupUserAndTrip(int userId, int tripId)
@@ -67,7 +64,7 @@ public class
     [Fact]
     public async Task CreateScrapboard_TripHasNoScrapboard_Success()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
         var scrapboard = ServiceUnderTest.CreateScrapboardAsync(1);
         var newScrapboard = await context.Scrapboards.FirstOrDefaultAsync(s => s.TripId == 1);
@@ -82,7 +79,7 @@ public class
     [Fact]
     public async Task CreateScrapboard_TripHasScrapboard_Failure()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
         var scrapboard = ServiceUnderTest.CreateScrapboardAsync(1);
         var trip = await _tripService.GetTripByIdAsync(1);
@@ -97,9 +94,9 @@ public class
     [Fact]
     public async Task GetScrapboardByTrip_TripHasScrapboard_Success()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 1,
@@ -112,7 +109,7 @@ public class
     [Fact]
     public async Task GetScrapboardByTrip_TripHasNoScrapboard_ReturnsNull()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         var scrapboard = await ServiceUnderTest.GetScrapboardByTripAsync(1);
         scrapboard.ShouldBeNull();
     }

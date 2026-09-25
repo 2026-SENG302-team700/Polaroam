@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
@@ -15,6 +13,7 @@ public interface INotificationService
     Task<bool> UserOwnsNotification(int notificationId, int userId);
     Task<int> GetUnreadCount(int userId);
     Task<bool> UserHasMoreThan(int userId, int limit, int offset = 0);
+    Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId);
 }
 
 public class NotificationService : INotificationService
@@ -29,10 +28,10 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Add a new notification to the database
     /// </summary>
-    /// <param name="notification">the noitification to add to database</param>
+    /// <param name="notification">the notification to add to database</param>
     public async Task AddNotificationAsync(Notification notification)
     {
-        using var context = await _dbContextFactory.CreateDbContextAsync();
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
         await context.Notifications.AddAsync(notification);
         await context.SaveChangesAsync();
     }
@@ -118,5 +117,25 @@ public class NotificationService : INotificationService
 
         int count = await context.Notifications.Where(n => n.UserId == userId).CountAsync();
         return offset + limit < count;
+    }
+
+    /// <summary>
+    /// creates an invitation notification for a trip invite and stores it with the given user.
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="invitedUserId"></param>
+    /// <returns></returns>
+    public async Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId)
+    {
+        var inviteNotification = new TripInvitationNotification
+        {
+            TripId = tripId,
+            UserId = invitedUserId,
+            HeaderText = "New Invitation Request",
+            BodyText = $"You have been invited to collaborate on the {title} trip!",
+            Timestamp = DateTimeOffset.UtcNow,
+            NotificationType = "TripInvitation",
+        };
+        await AddNotificationAsync(inviteNotification);
     }
 }

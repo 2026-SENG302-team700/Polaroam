@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -51,6 +50,6 @@ public class Trip
     }
 
     public List<int> Collaborators { get; set; } = [];
-    
+
     public List<string> PendingInvites { get; set; } = [];
 }

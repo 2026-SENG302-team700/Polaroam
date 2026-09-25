@@ -1,7 +1,15 @@
 <script lang="ts">
-    import type { Snippet } from "svelte";
+    import { addToast, type ToastType } from "$lib/toast/toast";
 
     let { notification }: { notification: NotificationData } = $props();
+    let handled = $state(false);
+    
+
+    let handler = (func:()=>void, toastText: string, toastType: ToastType = "success") => {
+        func();
+        handled = true;
+        addToast(toastText, toastType);
+    }
 </script>
 
 <div
@@ -10,18 +18,18 @@
     <span class="notification-title">{notification.title}</span>
     <span class="notification-description">{notification.text}</span>
     <div class="notification-actions">
-        {#if notification.leftAction}
+        {#if notification.leftAction && !handled}
             <button
                 class={`btn action-buttons ${notification.leftAction.colour}`}
-                onclick={notification.leftAction.function}
+                onclick={() => handler(notification.leftAction.function,notification.leftAction.toastText)}
             >
                 {notification.leftAction.text}
             </button>
         {/if}
-        {#if notification.rightAction}
+        {#if notification.rightAction && !handled}
             <button
                 class={`btn action-buttons ${notification.rightAction.colour}`}
-                onclick={notification.rightAction.function}
+                onclick={() => handler(notification.rightAction.function,notification.rightAction.toastText,"error")}
             >
                 {notification.rightAction.text}
             </button>

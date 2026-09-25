@@ -6,9 +6,7 @@
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import AppLogo from "$lib/components/logo/app-logo.svelte";
-    import NotificationBell from "$lib/components/content/notification-bell.svelte";
-   
-
+    import NotificationBell from "$lib/components/notifications/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
 
