@@ -439,6 +439,7 @@
         display: flex;
         align-items: center;
         gap: 0.4rem;
+        padding: 4px;
     }
     .image-detail {
         display: inline-flex;
@@ -469,7 +470,9 @@
         display: flex;
         gap: 0.4rem;
         margin-left: auto;
+        padding: 3px;
     }
+
     .image-toolbar {
         position: absolute;
         top: 0;
