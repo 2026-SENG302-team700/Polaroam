@@ -133,12 +133,15 @@
                 <div class="position-relative">
                     <LazyClickableImage
                         src={resolve(
-                            `/api/album/${tripId}/images/${image.photoId}`,
+                            `/api/album/${tripId}/images/${image.photoId}` as any,
                         )}
                         {index}
+                        {tripId}
                         viewContext="album"
                         images={imageMetadata.map((m) =>
-                            resolve(`/api/album/${tripId}/images/${m.photoId}`),
+                            resolve(
+                                `/api/album/${tripId}/images/${m.photoId}` as any,
+                            ),
                         )}
                         photoId={image.photoId}
                         {photoIds}

@@ -46,7 +46,6 @@
         } finally {
             loading = false;
         }
-        console.log(trips);
     }
 
     async function performSearch() {

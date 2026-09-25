@@ -7,6 +7,7 @@
         src,
         index,
         images = null,
+        tripId,
         photoId,
         photoIds,
         rootMargin = "200px",
@@ -15,6 +16,7 @@
         src: string;
         index: number;
         images: ImageSource[] | null;
+        tripId: number;
         photoId: number;
         photoIds: number[];
         rootMargin?: string;
@@ -80,8 +82,8 @@
             image={file}
             {index}
             images={images ?? []}
-            {photoId}
-            {photoIds}
+            photoData={{ tripId, photoId }}
+            photosData={photoIds.map((id) => ({ tripId, photoId: id }))}
             {viewContext}
         />
     {:else if failed}
