@@ -300,7 +300,7 @@
             }
 
             const postId = await response.text();
-            goto(resolve(`/home/trips/${tripId}`));
+            goto(resolve(`/home/trips/${tripId}/posts/${page.params.postId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -386,9 +386,9 @@
 
     <div class="post-form-actions">
         <ConfirmCancelButton
-            path={`/home/trips/${tripId}`}
-            option1Text="Back to your Trip"
-            option2Text="Stay on This Page"
+            path={`/home/trips/${tripId}/posts/${page.params.postId}`}
+            option2Text="Back to your post"
+            option1Text="Stay on This Page"
         />
 
         <CreationButton onClick={updatePost} text="Update Post" {loading} />

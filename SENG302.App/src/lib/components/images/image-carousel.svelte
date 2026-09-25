@@ -150,12 +150,11 @@
         justify-content: center;
     }
 
-    .carousel-arrow {
-        position: absolute;
-        z-index: 2;
-        top: 50%;
-        transform: translateY(-50%);
-    }
+ .carousel-arrow {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+ }
 
     .left-arrow {
         left: 0.75rem;

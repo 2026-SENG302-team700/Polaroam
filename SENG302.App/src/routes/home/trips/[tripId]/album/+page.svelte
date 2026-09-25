@@ -47,7 +47,6 @@
      */
     async function getImageMetadata() {
         try {
-            loading = true;
             const response = await fetch(
                 resolve(`/api/album/${tripId}/tag?tag=${tagQuery}` as any),
                 {
@@ -63,8 +62,6 @@
             metadataLoaded = true;
         } catch (err) {
             tagDataError = "An unexpected error occurred: ";
-        } finally {
-            loading = false;
         }
     }
 
@@ -91,7 +88,6 @@
     async function uploadPhotos() {
         try {
             errors = emptyErrors();
-            loading = true;
             const form = new FormData();
             if (filesToUpload != null) {
                 for (let i = 0; i < filesToUpload.length; i++) {
@@ -133,7 +129,6 @@
             errors.generic =
                 "Failed to upload images: " + (err as Error).message;
         } finally {
-            loading = false;
             filesToUpload = [];
             getImageMetadata();
         }
