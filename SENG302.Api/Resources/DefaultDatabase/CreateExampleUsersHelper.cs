@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Http;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Responses;
-using SENG302.Api.Services;
 
 namespace SENG302.Api.Resources.DefaultDatabase;
 
@@ -17,7 +15,7 @@ public static class CreateExampleUsersHelper
     /// 
     /// The majority of the seed data was generated using ChatGPT, with some minor edits to ensure accuracy and realism.
     /// </summary>
-    public static async Task CreateExamples(DatabaseContext db, IFileService fileService)
+    public static async Task CreateExamples(DatabaseContext db, string fileStoragePath)
     {
         var john = await GetOrCreateUser(
             db,
@@ -40,7 +38,7 @@ public static class CreateExampleUsersHelper
 
         var southIslandTrip = await CreateTripIfMissing(
             db,
-            fileService,
+            fileStoragePath,
             john,
             "South Island Road Trip",
             "A winter road trip through some of the South Island's most memorable landscapes.",
@@ -95,7 +93,7 @@ public static class CreateExampleUsersHelper
 
         var sydneyTrip = await CreateTripIfMissing(
             db,
-            fileService,
+            fileStoragePath,
             jeff,
             "Sydney Harbour Weekend",
             "A long weekend exploring Sydney's harbour, beaches, and neighbourhoods.",
@@ -136,7 +134,7 @@ public static class CreateExampleUsersHelper
 
         var europeTrip = await CreateTripIfMissing(
             db,
-            fileService,
+            fileStoragePath,
             jane,
             "European Summer",
             "Three weeks travelling by train through France, Switzerland, and Italy.",
@@ -234,7 +232,7 @@ public static class CreateExampleUsersHelper
 
     private static async Task<Trip> CreateTripIfMissing(
         DatabaseContext db,
-        IFileService fileService,
+        string fileStoragePath,
         User owner,
         string title,
         string description,
@@ -287,12 +285,12 @@ public static class CreateExampleUsersHelper
             await db.SaveChangesAsync();
 
             var image = await SaveExampleImage(
-                fileService,
+                db,
+                fileStoragePath,
                 seedPost.ImageFileName,
                 seedPost.CreatorId,
                 seedPost.Tags
             );
-            db.CustomFiles.Update(image);
             post.PhotoIds.Add(image.Id);
             album.PhotoIds.Add(image.Id);
 
@@ -313,7 +311,8 @@ public static class CreateExampleUsersHelper
     }
 
     private static async Task<CustomFile> SaveExampleImage(
-        IFileService fileService,
+        DatabaseContext db,
+        string fileStoragePath,
         string fileName,
         int ownerId,
         List<string> tags
@@ -327,15 +326,26 @@ public static class CreateExampleUsersHelper
             fileName
         );
 
-        await using var stream = File.OpenRead(imagePath);
-        var formFile = new FormFile(stream, 0, stream.Length, "image", fileName)
+        Directory.CreateDirectory(fileStoragePath);
+        var fileKey = $"{Guid.NewGuid()}{Path.GetExtension(fileName)}";
+        var storedImagePath = Path.Combine(fileStoragePath, fileKey);
+        await using (var source = File.OpenRead(imagePath))
         {
-            Headers = new HeaderDictionary(),
-            ContentType = GetImageContentType(fileName),
-        };
+            await using var destination = File.Create(storedImagePath);
+            await source.CopyToAsync(destination);
+        }
 
-        var image = await fileService.SaveFileAsync(formFile, ownerId);
-        image.Tags = tags;
+        var image = new CustomFile
+        {
+            OwnerId = ownerId,
+            FileKey = fileKey,
+            OriginalFileName = fileName,
+            MimeType = GetImageContentType(fileName),
+            FileSize = new FileInfo(imagePath).Length,
+            Tags = tags,
+        };
+        db.CustomFiles.Add(image);
+        await db.SaveChangesAsync();
         return image;
     }
 
