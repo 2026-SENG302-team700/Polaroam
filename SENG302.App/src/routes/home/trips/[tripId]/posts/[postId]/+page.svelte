@@ -50,7 +50,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/images` as any),
+                resolve(`/api/post/${postId}/images/trip/${params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -105,7 +105,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}` as any),
+                resolve(`/api/post/${postId}/trip/${params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
