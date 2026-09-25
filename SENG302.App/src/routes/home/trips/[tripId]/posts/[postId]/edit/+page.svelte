@@ -17,6 +17,7 @@
     import { goto } from "$app/navigation";
     import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
+    import { serializeLocalDate } from "$lib/datepicker/formatDate";
 
     let title = $state("");
     let content = $state("");
@@ -229,7 +230,7 @@
             form.append("OsmId", location.osmId);
             form.append("OsmType", location.osmType);
             form.append("Content", content);
-            form.append("Date", date?.toISOString() ?? "");
+            form.append("Date", date ? serializeLocalDate(date) : "");
             form.append("NoContentAllowed", noContentAllowed);
             // add the ai tagging option to the form data
             form.append("aiTaggingForUpload", aiTaggingForUpload.toString());
