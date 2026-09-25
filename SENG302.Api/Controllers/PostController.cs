@@ -251,10 +251,6 @@ public class PostController : ControllerBase
         try
         {
             trip = await _tripService.GetTripByIdAsync(post.TripId);
-            if (trip == null)
-            {
-                return NotFound();
-            }
         }
         catch (KeyNotFoundException)
         {
