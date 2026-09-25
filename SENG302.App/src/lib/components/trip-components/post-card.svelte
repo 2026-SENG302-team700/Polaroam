@@ -58,7 +58,7 @@
     </div>
 
     {#if post.photoIds?.length > 0}
-        <div class="post-images" onclick={(event) => event.stopPropagation()}>
+        <div class="post-images">
             <ImageCarousel {post} />
         </div>
     {/if}

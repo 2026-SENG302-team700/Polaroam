@@ -84,6 +84,16 @@
             error = "Failed to fetch images: " + (err as Error).message;
         }
     }
+
+    /**
+     * Handler for carousel buttons click
+     * @param event
+     * @param func
+     */
+    function handleCarouselButtons(event, func: () => {}) {
+        event.stopPropagation();
+        func();
+    }
 </script>
 
 <svelte:window
@@ -103,21 +113,21 @@
     <div class="image-container">
         <div class="close-button-wrapper">
             <img src={imageUrl} alt="Image" class="image" />
+            {#if photos !== null && photos?.length > 1 && index !== 0}
+                <button
+                        type="button"
+                        class="btn btn-secondary bi-arrow-left carousel-arrow left-arrow"
+                        title="Previous image"
+                        onclick={(event) => handleCarouselButtons(event, moveToLeftImage)}
+                />
+            {/if}
             {#if photos !== null && photos?.length > 1 && index !== photos?.length - 1}
                 <button
                     type="button"
                     class="btn btn-secondary bi-arrow-right carousel-arrow right-arrow"
                     title="Next image"
-                    onclick={moveToRightImage}
-                ></button>
-            {/if}
-            {#if photos !== null && photos?.length > 1 && index !== 0}
-                <button
-                    type="button"
-                    class="btn btn-secondary bi-arrow-left carousel-arrow left-arrow"
-                    title="Previous image"
-                    onclick={moveToLeftImage}
-                ></button>
+                        onclick={(event) => handleCarouselButtons(event, moveToRightImage)}
+                />
             {/if}
         </div>
     </div>
