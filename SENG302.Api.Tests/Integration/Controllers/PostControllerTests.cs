@@ -1520,7 +1520,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task DeletePost_UserDoesNotOwnPost_ReturnsNotFound()
     {
         SetupUserContext("1");
-
+        
+        
         var post = new Post
         {
             CreatorId = 30,
@@ -1535,6 +1536,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockPostService.UserOwnsPost(1, 20, 10).Returns(false);
+        _mockTripService.GetTripByIdAsync(20).Returns(new Trip
+        {
+            Id = 20,
+            Title = "Someone else trip",
+            UserId = 30,
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
+        });
 
         var result = await _controller.DeletePost(10);
 
@@ -1547,7 +1556,16 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task DeletePost_ServiceCannotFindPost_ReturnsNotFound()
     {
         SetupUserContext("1");
-
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
         var post = new Post
         {
             PostId = 10,
@@ -1562,6 +1580,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockPostService.UserOwnsPost(1, 20, 10).Returns(true);
+        _mockTripService.GetTripByIdAsync(20).Returns(trip);
 
         _mockPostService.DeletePostByIdAsync(10).Returns(Task.FromException(new ArgumentException("Post does not exist")));
 

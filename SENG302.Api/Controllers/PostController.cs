@@ -247,7 +247,19 @@ public class PostController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId, id))
+        Trip trip;
+        try
+        {
+            trip = await _tripService.GetTripByIdAsync(post.TripId);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+
+        
+        
+        if (!await _postService.UserOwnsPost(userId, post.TripId, id) && trip.UserId != userId)
         {
             return NotFound();
         }

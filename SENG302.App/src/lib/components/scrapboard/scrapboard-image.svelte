@@ -67,9 +67,7 @@
                 }),
                 credentials: "include",
             });
-            if (response.ok) {
-                await goto(resolve(`/home/trips/${tripId}/scrapboard` as any));
-            }
+            await fetchScrapboard()
         } finally {
             loading = false;
         }
