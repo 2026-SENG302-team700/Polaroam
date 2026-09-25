@@ -1,13 +1,21 @@
-<script>
+<script lang="ts">
     import { resolve } from "$app/paths";
     import { goto } from "$app/navigation";
     import TripCard from "$lib/components/trip-components/trip-card.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
 
-    let { trips, photoTrips, query = "" } = $props();
+    let {
+        trips,
+        photosPerTrip,
+        query = "",
+    }: {
+        trips: Trip[];
+        photosPerTrip: TripPhotoGroup[];
+        query: string;
+    } = $props();
 
     let imageCount = $derived(
-        photoTrips.reduce(
+        photosPerTrip.reduce(
             (sum, photoTrip) => sum + (photoTrip.photos?.length ?? 0),
             0,
         ),
@@ -16,7 +24,7 @@
     /**
      * Navigates to the given trip's page
      */
-    function goToTrip(tripId) {
+    function goToTrip(tripId: number) {
         goto(resolve(`/home/trips/${tripId}`));
     }
 </script>
@@ -29,34 +37,32 @@
         </p>
     {/if}
     <div class="photo-trip-list">
-        {#if photoTrips.length > 0}
-            {#each photoTrips as photoTrip}
+        {#if photosPerTrip.length > 0}
+            {#each photosPerTrip as tripPhotos}
                 <div class="photo-trip">
                     <div
                         tabindex="0"
                         role="button"
                         class="photo-trip-header"
-                        onclick={() => goToTrip(photoTrip.tripId)}
+                        onclick={() => goToTrip(tripPhotos.tripId)}
                         onkeydown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
-                                goToTrip(photoTrip.tripId);
+                                goToTrip(tripPhotos.tripId);
                             }
                         }}
                     >
                         <span class="header-icon bi-journal-richtext" />
-                        <h3>{photoTrip.tripTitle}</h3>
+                        <h3>{tripPhotos.tripTitle}</h3>
                     </div>
                     <div class="photo-trip-body">
                         <ImageDisplay
-                            images={photoTrip.photos}
-                            photosData={photoTrip.map(
-                                (/** @type {TripIdAndPhoto} */ photoTrip) => {
-                                    return {
-                                        photoId: photoTrip.photoId,
-                                        tripId: photoTrip.tripId,
-                                    };
-                                },
-                            )}
+                            images={tripPhotos.photos}
+                            photosData={tripPhotos.photoIds.map((id) => {
+                                return {
+                                    photoId: id,
+                                    tripId: tripPhotos.tripId,
+                                };
+                            })}
                             viewContext="search"
                         />
                     </div>
