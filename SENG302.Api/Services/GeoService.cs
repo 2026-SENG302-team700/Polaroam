@@ -14,7 +14,7 @@ public interface IGeoService
         string? acceptLanguageHeader,
         CancellationToken cancellationToken
     );
-    Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string osmType = "node");
+    Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string? acceptLanguageHeader = null, string? osmType = "node");
 }
 
 public class GeoService : IGeoService
@@ -73,9 +73,13 @@ public class GeoService : IGeoService
     /// Gets a location from an osm id
     /// </summary>
     /// <param name="osmId">The osm id of a location</param>
+    /// <param name="acceptLanguageHeader"></param>
+    /// <param name="osmType"></param>
     /// <returns>Location information</returns>
     /// <exception cref="HttpRequestException"></exception>
-    public async Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string osmType = "node")
+    public async Task<GeoLocationSearchResult?> GetLocationAsync(long osmId,
+        string? acceptLanguageHeader = null,
+        string? osmType = "node")
     {
         var prefix = osmType.ToLowerInvariant() switch
         {
@@ -84,14 +88,21 @@ public class GeoService : IGeoService
             "relation" => "R",
             _ => throw new ArgumentException($"Invalid osmType: {osmType}. Must be 'node', 'way', or 'relation'.")
         };
-
+        
         var q = new QueryBuilder
         {
             { "osm_ids", $"{prefix}{osmId}" },
             { "format", "json" }
         };
 
-        var response = await _httpClient.GetAsync($"lookup{q}");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"lookup{q}");
+        
+        if (!string.IsNullOrEmpty(acceptLanguageHeader))
+        {
+            request.Headers.TryAddWithoutValidation("Accept-Language", acceptLanguageHeader);
+        }
+        
+        var response = await _httpClient.SendAsync(request);
 
         if (!response.IsSuccessStatusCode)
         {

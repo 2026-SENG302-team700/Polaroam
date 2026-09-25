@@ -162,7 +162,7 @@
             name: item.name,
             displayName: item.displayName,
         };
-        searchQuery = item.name;
+        searchQuery = item.name == "" ? item.displayName : item.name;
         error = "";
         isOpen = false;
         searchContainer.querySelector("input")?.focus();
