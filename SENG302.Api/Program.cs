@@ -246,7 +246,8 @@ public class Program
                 await dbContext.Database.MigrateAsync();
             }
 
-            await CreateExampleUsersHelper.CreateExamples(dbContext);
+            var fileService = serviceProvider.GetRequiredService<IFileService>();
+            await CreateExampleUsersHelper.CreateExamples(dbContext, fileService);
         }
         catch (Exception e)
         {
