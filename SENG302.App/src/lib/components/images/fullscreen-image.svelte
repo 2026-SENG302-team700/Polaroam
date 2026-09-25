@@ -460,6 +460,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        max-width: 40cqw;
     }
     .detail-divider {
         width: auto;
