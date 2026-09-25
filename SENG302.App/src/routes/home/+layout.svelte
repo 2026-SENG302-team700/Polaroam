@@ -69,6 +69,7 @@
     }
 </script>
 
+
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
         <AppLogo />
@@ -119,8 +120,7 @@
     }
 
     .navBar {
-        z-index: 1000;
-        vertical-align: top;
+        z-index: 1;
         background-color: white;
         height: 60px;
         border-radius: 10px;
@@ -136,7 +136,7 @@
         align-items: center;
         flex: 1;
         justify-content: flex-end;
-        margin-right: 5px;
+        margin-right: 15px;
     }
 
     .page-wrapper {
@@ -149,6 +149,16 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         width: 100%;
+        flex-shrink: 1;
+    }
+
+    @media (max-width: 650px) {
+        .username {
+            display: none;
+        }
     }
 </style>
