@@ -6,7 +6,7 @@ namespace SENG302.Api.Tests.Unit.Helpers;
 
 public class ImageTagGeneratorHelperTests
 {
-    private IFormFile GetMockFile(string filename, Byte[] content, string? mimeType = null)
+    private IFormFile GetMockFile(string filename, byte[] content, string? mimeType = null)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
@@ -15,16 +15,16 @@ public class ImageTagGeneratorHelperTests
             ContentType = mimeType!
         };
     }
-    
-    
+
+
     [Fact]
     public async Task IsValidFile_ValidFile_ContentPreservedSuccess()
     {
-        Byte[] bytes = new byte[] { 0x89, 0x50, 0x4e, 0x47 };
+        byte[] bytes = new byte[] { 0x89, 0x50, 0x4e, 0x47 };
         var file = GetMockFile("test", bytes);
         FormFile newFile = await ImageTagGeneratorHelper.createFormFileForTagging(file);
         // using var oldStream = file.OpenReadStream();
-        Byte[] newFileBytes;
+        byte[] newFileBytes;
         using var newStream = newFile.OpenReadStream();
         using (var memoryStream = new MemoryStream())
         {
@@ -35,25 +35,24 @@ public class ImageTagGeneratorHelperTests
         newFileBytes.ShouldBeEquivalentTo(bytes);
         newFileBytes.Length.ShouldBe(bytes.Length);
     }
-    
+
     [Fact]
     public async Task IsValidFile_PositionAt0_Success()
     {
-        Byte[] bytes = new byte[] { 0x89, 0x50, 0x4e, 0x47 };
-        
+        byte[] bytes = new byte[] { 0x89, 0x50, 0x4e, 0x47 };
+
         var file = GetMockFile("test", bytes);
         FormFile newFile = await ImageTagGeneratorHelper.createFormFileForTagging(file);
-        
-        Byte[] newFileBytes;
+
         using var newStream = newFile.OpenReadStream();
-        
+
         newStream.Position.ShouldBe(0);
     }
 
     [Fact]
     public async Task IsValidData_EmptyFileZeroBytes_Success()
     {
-        Byte[] bytes = new byte[] { };
+        byte[] bytes = new byte[] { };
         var file = GetMockFile("test", bytes);
 
         await Should.NotThrowAsync(async () =>
@@ -61,13 +60,13 @@ public class ImageTagGeneratorHelperTests
             await ImageTagGeneratorHelper.createFormFileForTagging(file);
         });
     }
-    
+
     [Fact]
     public async Task IsValidData_NullFilenameNullContentType_Success()
     {
-        Byte[] bytes = new byte[] { };
+        byte[] bytes = new byte[] { };
         var stream = new MemoryStream(bytes);
-        
+
         var file = new FormFile(stream, 0, stream.Length, "", "")
         {
             Headers = new HeaderDictionary(),

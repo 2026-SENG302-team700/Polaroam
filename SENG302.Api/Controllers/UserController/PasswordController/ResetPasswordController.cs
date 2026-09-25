@@ -21,8 +21,6 @@ public class ResetPasswordController : ControllerBase
     private readonly IEmailQueue _emailQueue;
     private readonly IOneTimeCodeService _codeService;
 
-    private readonly string ResetSchemeName = "PasswordResetScheme";
-
     public ResetPasswordController(IUserService userService, IOneTimeCodeService codeService, IEmailQueue emailQueue)
     {
         _userService = userService;
@@ -47,7 +45,7 @@ public class ResetPasswordController : ControllerBase
         long timerStartTime = _codeService.GetEpochTime();
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user == null) return Ok();
-        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified);
+        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code, timerStartTime, user.EmailVerified, true);
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -81,7 +79,6 @@ public class ResetPasswordController : ControllerBase
             return BadRequest(new { message = "An email is required" });
         }
 
-
         var user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return BadRequest(new { message = "Invalid Code" });
 
@@ -93,6 +90,7 @@ public class ResetPasswordController : ControllerBase
 
         if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
+            await _userService.UpdateUserOneTimeCode(user.Email, "", 0, user.EmailVerified, false);
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
 
@@ -105,7 +103,7 @@ public class ResetPasswordController : ControllerBase
 
         if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
         {
-            var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true, false);
             if (userUpdated == null) return Problem();
 
 
@@ -153,34 +151,34 @@ public class ResetPasswordController : ControllerBase
 
         var user = await _userService.GetUserFromEmailAsync(cancelRequest.Email);
 
-        // Authenticate this context based on the password reset scheme
-        await HttpContext.SignOutAsync(ResetSchemeName);
-
         if (user == null)
         {
             return Ok();
         }
 
-        // Immediately invalidate the stored reset code.
-        await _userService.UpdateUserOneTimeCode(
-            user.Email,
-            "",
-            0,
-            user.EmailVerified
-        );
+        // Authenticate this context based on the password reset scheme
+        var resetResult = await HttpContext.AuthenticateAsync("PasswordResetScheme");
 
-        var emailDictionary = new Dictionary<string, string>
+        // check if the user has requested a reset password
+        if ((resetResult.Succeeded && resetResult.Principal != null) || user.ForgotIsResettingPassword)
         {
-          { "DISPLAY_NAME", user.DisplayName }
-        };
+            await HttpContext.SignOutAsync("PasswordResetScheme");
 
-        await _emailQueue.QueueEmailAsync(
-            new EmailJob(
+            // Immediately invalidate the stored reset code.
+            await _userService.UpdateUserOneTimeCode(
                 user.Email,
-                EmailTemplate.PasswordResetProcessCancelled,
-                emailDictionary
-            )
-        );
+                string.Empty,
+                0,
+                user.EmailVerified,
+                false
+            );
+
+            var emailDictionary = new Dictionary<string, string>
+            {
+                { "DISPLAY_NAME", user.DisplayName }
+            };
+            await _emailQueue.QueueEmailAsync(new EmailJob(user.Email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary));
+        }
 
         return Ok();
     }

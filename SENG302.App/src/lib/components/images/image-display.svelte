@@ -9,7 +9,7 @@
 
     let {
         images = $bindable([]),
-        photoIds = [],
+        photosData = [],
         letDelete = false,
         ondelete,
         errors = [],
@@ -18,7 +18,7 @@
         children,
     }: {
         images?: File[] | null;
-        photoIds?: number[];
+        photosData?: TripIdAndPhoto[];
         letDelete?: boolean;
         ondelete?: (image: File, index: number) => void;
         errors?: string[];
@@ -70,13 +70,6 @@
             </div>
         </div>
     {/if}
-    {#if (!images || images.length === 0) && !pickerFirst && children}
-        <div class="col">
-            <div class="picker-tile">
-                {@render children()}
-            </div>
-        </div>
-    {/if}
     {#each images ?? [] as image, index}
         <div class="col">
             <div class="position-relative" class:has-error={hasError(image)}>
@@ -84,8 +77,8 @@
                     {image}
                     {index}
                     {images}
-                    photoId={photoIds[index]}
-                    {photoIds}
+                    photoData={photosData[index]}
+                    {photosData}
                     {viewContext}
                 />
                 {#if letDelete}
@@ -114,18 +107,16 @@
     {/if}
 </div>
 
-{#if !images || images.length === 0}
-    <p class="empty-message">No image selected</p>
-{/if}
 <ExpandableErrorDisplay {errors} lines={5} />
 
 <ConfirmationModal
     bind:show={confirmationModalShown}
     message="Are you sure you want to delete this image?"
-    option1Text="Delete"
-    option2Text="Do not delete"
-    onOption1={() => ConfirmDelete()}
-    onOption2={() => (confirmationModalShown = false)}
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={() => (confirmationModalShown = false)}
+    onOption2={() => ConfirmDelete()}
 />
 
 <style>

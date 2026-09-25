@@ -80,7 +80,7 @@ public class Program
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         }
-        
+
         builder.Services.AddHttpContextAccessor();
 
         // Register custom services 
@@ -169,7 +169,7 @@ public class Program
             });
         }
 
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
+        _ = InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -239,7 +239,7 @@ public class Program
         {
             if (isDevelopment)
             {
-                dbContext.Database.EnsureCreated();
+                await dbContext.Database.EnsureCreatedAsync();
             }
             else
             {
@@ -250,7 +250,7 @@ public class Program
         }
         catch (Exception e)
         {
-            Console.WriteLine("Error occured: ", e);
+            Console.WriteLine("Error occured: " + e);
             throw;
         }
 
@@ -266,7 +266,10 @@ public class Program
         services.AddScoped<IPostService, PostService>();
         services.AddScoped<IAlbumService, AlbumService>();
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IScrapboardService, ScrapboardService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
+        services.AddScoped<ICollaborationService, CollaborationService>();
         services.AddHttpClient<IGeoService, GeoService>(client =>
         {
             client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");

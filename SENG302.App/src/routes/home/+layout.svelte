@@ -5,8 +5,8 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { user } from "$lib/stores/user";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
-    import NavBarMenuButton from "$lib/components/buttons/nav-bar-menu-button.svelte";
-    import AppLogo from "$lib/components/app-logo.svelte";
+    import AppLogo from "$lib/components/logo/app-logo.svelte";
+    import NotificationBell from "$lib/components/notifications/notification-bell.svelte";
 
     let pfpUrl: string | null = null;
 
@@ -24,7 +24,7 @@
      */
     async function retrieveUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(resolve(`/api/user` as any), {
                 method: "GET",
                 credentials: "include",
             });
@@ -39,7 +39,7 @@
 
             if (data.profilePicture !== 0) {
                 const pfpResponse = await fetchWithCsrf(
-                    resolve("/api/user/pfp"),
+                    resolve("/api/user/pfp" as any),
                     {
                         method: "GET",
                         credentials: "include",
@@ -68,21 +68,29 @@
         }
     }
 </script>
+
+
 <nav class="navBar menu-bar">
     <div class="content-wrapper">
         <AppLogo />
-        <NavBarMenuButton path="/home" text="My Trips" />
-        <div class="right">
-            <h5 class="text"
-                style=" margin-bottom: 0px; padding-bottom: 0px;">
+        <div
+            class="right"
+            style="gap: 6px; padding-right: 5px; display: flex; flex-direction: row;"
+        >
+            <NotificationBell />
+
+            <div class="vertical-separator"></div>
+
+            <h5 class="text" style=" margin-bottom: 0px; padding-bottom: 0px;">
                 {$user.displayName}
             </h5>
-            <div
+
+            <button
                 class="profile-button"
                 onclick={() => goto(resolve("/home/profile"))}
             >
                 <ProfilePic pfpData={$user.pfpData} size="small" />
-            </div>
+            </button>
         </div>
     </div>
 </nav>
@@ -94,7 +102,12 @@
 </div>
 
 <style>
-
+    .vertical-separator {
+        background-color: red;
+        border-left: 2px solid black;
+        margin: 0px 5px;
+        height: 35px;
+    }
     .profile-button {
         width: 40px;
         height: 40px;
@@ -103,28 +116,27 @@
         border-radius: 50%;
         margin-left: 5px;
         cursor: pointer;
+        border: 0;
     }
 
     .navBar {
-        z-index: 1000;
-        vertical-align: top;
+        z-index: 1;
         background-color: white;
         height: 60px;
         border-radius: 10px;
         margin-bottom: 20px;
         display: flex;
         align-content: center;
-        
     }
-    .right  {
+    .right {
         position: relative;
         right: 0;
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
-        flex: 1; 
-        justify-content: flex-end; 
-        margin-right: 5px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex: 1;
+        justify-content: flex-end;
+        margin-right: 15px;
     }
 
     .page-wrapper {
@@ -134,9 +146,19 @@
     }
 
     .content-wrapper {
-        display: flex; 
-        flex-direction: row; 
-        align-items: center; 
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         width: 100%;
+        flex-shrink: 1;
+    }
+
+    @media (max-width: 650px) {
+        .username {
+            display: none;
+        }
     }
 </style>

@@ -7,23 +7,24 @@
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
-    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
-    import PostForm from "$lib/components/forms/post-form.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import { onMount } from "svelte";
     import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
 
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
 
+    let dateState: "valid" | "invalid" | "empty" = $state("valid");
+
     type PostFormErrors = {
         title: string[];
         content: string[];
-        date: string;
+        date: string[];
         generic: string;
         location: string;
         photos: string[];
@@ -36,7 +37,7 @@
         return {
             title: [],
             content: [],
-            date: "",
+            date: [],
             generic: "",
             location: "",
             photos: [],
@@ -121,17 +122,24 @@
                 body: form,
                 credentials: "include",
             });
-            const data = await response.json();
 
             if (!response.ok) {
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType?.includes("application/json")) {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                    return;
+                }
+
+                const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
-                errors.date =
-                    data.errors?.date?.[0] ?? data.errors?.Date?.[0] ?? "";
+                errors.date = data.errors?.date ?? data.errors?.Date ?? [];
                 errors.content =
                     data.errors?.content ?? data.errors?.Content ?? [];
                 errors.location =
@@ -148,16 +156,30 @@
                     errors.title.length === 0 &&
                     errors.title.length === 0 &&
                     errors.photos.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     !errors.generic &&
                     !errors.location
                 ) {
                     showConfirmationModal = true;
                 }
+                errors.content = errors.content.filter(
+                    (e) =>
+                        e !==
+                        "Post contains no content, are you sure you want to create post?",
+                );
+
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (dateState === "invalid") {
+                    errors.date = ["Invalid date"];
+                } else if (dateState === "empty") {
+                    errors.date = ["Date is required"];
+                }
+
                 return;
             }
-            console.log(data);
-            goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
+
+            const postId = await response.text();
+            goto(resolve(`/home/trips/${tripId}/posts/${postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;
@@ -168,7 +190,12 @@
     }
 </script>
 
-<PostForm heading="Create Post">
+{#snippet header()}
+    <span class="header-icon bi-journal-richtext"></span>
+    <h1>{"Create Post"}</h1>
+{/snippet}
+
+{#snippet body()}
     <div class="section-heading">
         <i class="bi bi-pencil-square"></i>
         <h2>Post Details</h2>
@@ -176,7 +203,12 @@
 
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
-    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
+    <DatePicker
+        bind:value={date}
+        bind:inputState={dateState}
+        bind:error={errors.date}
+        disabled={loading}
+    />
 
     <LocationForm
         bind:searchQuery
@@ -189,11 +221,12 @@
         placeholder="Content"
         bind:description={content}
         errors={errors.content}
+        maxLength={8196}
         bind:loading
     />
+{/snippet}
 
-    <div class="section-divider"></div>
-
+{#snippet footer()}
     <div class="section-heading">
         <i class="bi bi-camera"></i>
         <h2>Photos</h2>
@@ -221,22 +254,25 @@
     <div class="post-form-actions">
         <ConfirmCancelButton
             path={`/home/trips/${tripId}`}
-            option1Text="Back to your Trip"
-            option2Text="Stay on This Page"
+            option1Text="Stay on This Page"
+            option2Text="Back to Trip"
         />
         <CreationButton onClick={createPost} text="Create Post" {loading} />
     </div>
-</PostForm>
+{/snippet}
+
+<FormWrapper {header} {body} {footer} />
 
 <ConfirmationModal
     bind:show={showConfirmationModal}
     message="Post contains no content, are you sure you want to create post?"
-    option1Text="Create anyway"
-    option2Text="Cancel"
-    onOption1={() => {
+    option1Text="Cancel"
+    option2Text="Create anyway"
+    option2Style="primary"
+    onOption1={() => (showConfirmationModal = false)}
+    onOption2={() => {
         noContentAllowed = true;
         showConfirmationModal = false;
         createPost();
     }}
-    onOption2={() => (showConfirmationModal = false)}
 />

@@ -52,4 +52,6 @@ public class User
     
     public bool PreferenceMapVisible { get; set; } = true;
 
+    public bool ForgotIsResettingPassword { get; set; } = false;
+
 }

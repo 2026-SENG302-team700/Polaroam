@@ -19,6 +19,7 @@
     message="If you leave this page all progress will be lost"
     option1Text={option1Text}
     option2Text={option2Text}
-    onOption1={() => goto(resolve(path))}
-    onOption2={() => {cancelConfirmModalShown = false;}}
+    option2Style="danger"
+    onOption1={() => {cancelConfirmModalShown = false;}}
+    onOption2={() => goto(resolve(path))}
 />

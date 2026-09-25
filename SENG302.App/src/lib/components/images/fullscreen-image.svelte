@@ -7,6 +7,7 @@
     import { resolve } from "$app/paths";
     import { goto } from "$app/navigation";
     import { queuetooltip } from "$lib/ToolTips/QueueFullToolTip";
+    import { onMount } from "svelte";
 
     type ImageSource = File | string;
     type ImageViewContext = "search" | "album" | "post" | "none";
@@ -22,16 +23,16 @@
         enlarged = $bindable(false),
         index = $bindable(0),
         images,
-        photoId,
-        photoIds,
+        photoData,
+        photosData,
         viewContext,
     }: {
         image: ImageSource;
         enlarged: boolean;
         index: number;
         images: ImageSource[] | null;
-        photoId?: number;
-        photoIds?: number[];
+        photoData?: TripIdAndPhoto;
+        photosData?: TripIdAndPhoto[];
         viewContext: ImageViewContext;
     } = $props();
 
@@ -44,8 +45,39 @@
     let tagColour = $state("secondary");
     let imageContext = $state<ImageContext | null>(null);
     let objectUrl = $state<string | null>(null);
+    let aspectRatio = $state(1);
 
-    let currentPhotoId = $derived(photoIds?.[index] ?? photoId);
+    onMount(() => {
+        const previousBodyOverflow = document.body.style.overflow;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+
+        document.body.style.overflow = "hidden";
+        document.documentElement.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+        };
+    });
+
+    /**
+     * Get's image aspect ratio
+     */
+    function handleImageLoad(e: Event) {
+        const img = e.currentTarget as HTMLImageElement;
+        if (img.naturalWidth && img.naturalHeight) {
+            aspectRatio = img.naturalWidth / img.naturalHeight;
+        }
+    }
+
+    const informationalTagMessages = [
+        "Tags not available. AI tagging was disabled when image was uploaded",
+        "No tags available",
+    ];
+
+    let isTagInformation = $derived(informationalTagMessages.includes(error));
+
+    let currentPhotoData = $derived(photosData?.[index] ?? photoData);
     let displaySrc = $derived(image instanceof File ? objectUrl : image);
     let showTripAlbumButton = $derived(
         imageContext !== null &&
@@ -68,19 +100,19 @@
     });
 
     $effect(() => {
-        const id = currentPhotoId;
+        const data = currentPhotoData;
 
         resetMessages();
         tags = [];
         showRetryTagging = false;
 
-        if (id === undefined || viewContext === "none") {
+        if (data === undefined || viewContext === "none") {
             imageContext = null;
             return;
         }
 
-        fetchImageContext(id);
-        loadImageTags(id);
+        fetchImageContext(data);
+        loadImageTags(data);
     });
 
     function resetMessages() {
@@ -89,15 +121,16 @@
         tagColour = "secondary";
     }
 
-    async function loadImageTags(id: number) {
+    async function loadImageTags(data: TripIdAndPhoto) {
         await getUserPreferences();
         if (aiTaggingPreference === "true") {
-            await fetchImageTags(id);
+            await fetchImageTags(data);
         }
     }
 
     async function getUserPreferences() {
         aiTaggingPreference = sessionStorage.getItem("aiTaggingPreference");
+
         if (aiTaggingPreference !== null) return;
 
         try {
@@ -115,18 +148,20 @@
             aiTaggingPreference = String(data.aiTagging);
             sessionStorage.setItem("aiTaggingPreference", aiTaggingPreference);
         } catch {
-            console.log("Cannot get user AI tagging preferences");
+            console.error("Failed to get user AI tagging preferences");
         } finally {
             loading = false;
         }
     }
 
-    async function fetchImageContext(id: number) {
+    async function fetchImageContext(data: TripIdAndPhoto) {
         imageContext = null;
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/context` as any),
+                resolve(
+                    `/api/trips/${data.tripId}/images/${data.photoId}/context` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
             if (!response.ok) {
@@ -142,11 +177,11 @@
         }
     }
 
-    async function deleteImageTag(id: number, tag: string) {
+    async function deleteImageTag(data: TripIdAndPhoto, tag: string) {
         try {
             const response = await fetchWithCsrf(
                 resolve(
-                    `/api/image/${id}/tags/${encodeURIComponent(tag)}` as any,
+                    `/api/trips/${data.tripId}/images/${data.photoId}/tags/${encodeURIComponent(tag)}` as any,
                 ),
                 { method: "DELETE", credentials: "include" },
             );
@@ -182,34 +217,32 @@
         }
     }
 
-    async function fetchImageTags(id: number) {
+    async function fetchImageTags(data: TripIdAndPhoto) {
         try {
             loading = true;
             tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/tags` as any),
+                resolve(
+                    `/api/trips/${data.tripId}/images/${data.photoId}/tags` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
 
             if (!response.ok) {
-                if (response.status === 500) {
-                    const data = await response.json();
-                    if (data?.detail === "Tagging failed: Queue was full") {
-                        error = data.detail;
-                        showRetryTagging = true;
-                        return;
-                    }
-                    if (
-                        data?.detail ===
-                        "Tags not available. AI tagging was disabled when image was uploaded"
-                    ) {
-                        error = data.detail;
-                        return;
-                    }
-                    error = "AI failed to generate tags";
+                const errorMessage = await response.text();
+                if (errorMessage === "Tagging failed: Queue was full") {
+                    error = errorMessage;
+                    showRetryTagging = true;
                     return;
                 }
-                error = "No tags available";
+                if (
+                    errorMessage ===
+                    "Tags not available. AI tagging was disabled when image was uploaded"
+                ) {
+                    error = errorMessage;
+                    return;
+                }
+                error = "AI failed to generate tags";
                 return;
             }
 
@@ -231,13 +264,15 @@
         }
     }
 
-    async function retryImageTagging(id: number) {
+    async function retryImageTagging(data: TripIdAndPhoto) {
         loading = true;
         error = "";
         try {
             tags = [];
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${id}/tags` as any),
+                resolve(
+                    `/api/trips/${data.tripId}/images/${data.photoId}/tags` as any,
+                ),
                 { method: "PATCH", credentials: "include" },
             );
             if (!response.ok) {
@@ -264,122 +299,143 @@
 />
 
 <div class="fullscreen-image-wrapper">
+    <a class="click-to-return" onclick={() => (enlarged = false)} />
     <div class="image-container">
-        <div class="close-button-wrapper">
-            {#if displaySrc}
-                <img src={displaySrc} alt="Image" class="image" />
-            {/if}
-
-            <div class="image-toolbar">
-                {#if imageContext}
-                    <div class="image-details">
-                        <div class="image-detail btn btn-secondary btn-sm">
-                            <span
-                                ><strong>Trip:</strong>
-                                {imageContext.tripTitle}</span
-                            >
-                            {#if imageContext.postId}
-                                <span class="detail-divider"
-                                    ><strong>Post:</strong>
-                                    {imageContext.postTitle}</span
-                                >
-                            {/if}
-                        </div>
-                    </div>
+        <div class="image-content">
+            <div class="image-frame" style:--aspectRatio={aspectRatio}>
+                {#if displaySrc}
+                    <img
+                        src={displaySrc}
+                        alt="Image"
+                        class="image"
+                        onload={handleImageLoad}
+                    />
                 {/if}
 
-                <div class="action-buttons">
-                    {#if imageContext?.postId && showPostButton}
-                        <button
-                            class="btn btn-secondary btn-sm"
-                            onclick={() =>
-                                goto(
-                                    resolve(
-                                        `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
-                                    ),
-                                )}>Go to Post</button
-                        >
+                <div class="image-toolbar">
+                    {#if imageContext}
+                        <div class="image-details">
+                            <div class="image-detail btn btn-secondary btn-sm">
+                                <span
+                                    ><strong>Trip:</strong>
+                                    {imageContext.tripTitle}</span
+                                >
+                                {#if imageContext.postId}
+                                    <span class="detail-divider"
+                                        ><strong>Post:</strong>
+                                        {imageContext.postTitle}</span
+                                    >
+                                {/if}
+                            </div>
+                        </div>
                     {/if}
-                    {#if imageContext && showTripAlbumButton}
-                        <button
-                            class="btn btn-secondary btn-sm"
-                            onclick={() =>
-                                goto(
-                                    resolve(
-                                        `/home/trips/${imageContext!.tripId}/album`,
-                                    ),
-                                )}>Go to Trip Album</button
-                        >
-                    {/if}
+
+                    <div class="action-buttons">
+                        {#if imageContext?.postId && showPostButton}
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick={() =>
+                                    goto(
+                                        resolve(
+                                            `/home/trips/${imageContext!.tripId}/posts/${imageContext!.postId}`,
+                                        ),
+                                    )}>Go to Post</button
+                            >
+                        {/if}
+                        {#if imageContext && showTripAlbumButton}
+                            <button
+                                class="btn btn-secondary btn-sm"
+                                onclick={() =>
+                                    goto(
+                                        resolve(
+                                            `/home/trips/${imageContext!.tripId}/album`,
+                                        ),
+                                    )}>Go to Trip Album</button
+                            >
+                        {/if}
+                    </div>
+                </div>
+
+                <div class="close-control">
                     <CloseButton bind:close={enlarged} class="btn-sm" />
                 </div>
-            </div>
 
-            {#if images !== null && images.length > 1 && index !== images.length - 1}
-                <RightArrowButton
-                    class="position-absolute"
-                    bind:image
-                    bind:index
-                    bind:images
-                    {moveToRightImage}
-                />
-            {/if}
-            {#if images !== null && images.length > 1 && index !== 0}
-                <LeftArrowButton
-                    class="position-absolute"
-                    bind:image
-                    bind:index
-                    bind:images
-                    {moveToLeftImage}
-                />
-            {/if}
-
-            {#if aiTaggingPreference === "true"}
-                {#if error.length > 0}
-                    <div class="error-wrapper">
-                        <span
-                            class="bi bi-exclamation-triangle-fill text-warning fs-2"
-                            use:queuetooltip={error}
-                        ></span>
-                    </div>
-                {/if}
-                <div class="tags-wrapper">
-                    {#if tags.length > 0}
-                        {#each tags as tag}
-                            <TagPill
-                                {tag}
-                                isRealTag
-                                deleteFunc={() =>
-                                    currentPhotoId === undefined
-                                        ? "Photo not found"
-                                        : deleteImageTag(currentPhotoId, tag)}
-                            />
-                        {/each}
-                    {:else if tagStatus}
-                        <TagPill
-                            {tagColour}
-                            tag={tagStatus}
-                            isRealTag={false}
+                {#if images !== null && images.length > 1 && index !== images.length - 1}
+                    <div class="arrow-control right-control">
+                        <RightArrowButton
+                            bind:image
+                            bind:index
+                            bind:images
+                            {moveToRightImage}
                         />
-                    {/if}
-                </div>
-                {#if showRetryTagging && currentPhotoId !== undefined}
-                    <div class="tags-wrapper">
-                        <button
-                            class="btn btn-primary"
-                            onclick={() => {
-                                showRetryTagging = false;
-                                retryImageTagging(currentPhotoId);
-                            }}>Retry Tagging</button
-                        >
                     </div>
                 {/if}
-            {/if}
+                {#if images !== null && images.length > 1 && index !== 0}
+                    <div class="arrow-control left-control">
+                        <LeftArrowButton
+                            bind:image
+                            bind:index
+                            bind:images
+                            {moveToLeftImage}
+                        />
+                    </div>
+                {/if}
+            </div>
         </div>
+
+        {#if aiTaggingPreference === "true"}
+            {#if error.length > 0}
+                <div class="error-wrapper">
+                    <button
+                        type="button"
+                        class="tag-error-button bi fs-2"
+                        class:bi-info-square-fill={isTagInformation}
+                        class:text-white={isTagInformation}
+                        class:bi-exclamation-triangle-fill={!isTagInformation}
+                        class:text-warning={!isTagInformation}
+                        use:queuetooltip={error}
+                        aria-label={`Image tagging ${isTagInformation ? "information" : "error"}: ${error}`}
+                    ></button>
+                </div>
+            {/if}
+            <div class="tags-wrapper">
+                {#if tags.length > 0}
+                    {#each tags as tag}
+                        <TagPill
+                            {tag}
+                            isRealTag
+                            deleteFunc={() =>
+                                currentPhotoData === undefined
+                                    ? "Photo not found"
+                                    : deleteImageTag(currentPhotoData, tag)}
+                        />
+                    {/each}
+                {:else if tagStatus}
+                    <TagPill {tagColour} tag={tagStatus} isRealTag={false} />
+                {/if}
+            </div>
+            {#if showRetryTagging && currentPhotoData !== undefined}
+                <div class="tags-wrapper">
+                    <button
+                        class="btn btn-primary"
+                        onclick={() => {
+                            showRetryTagging = false;
+                            retryImageTagging(currentPhotoData);
+                        }}>Retry Tagging</button
+                    >
+                </div>
+            {/if}
+        {/if}
     </div>
 </div>
 
 <style>
+    .click-to-return {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        z-index: 101;
+    }
     .image-details {
         display: flex;
         align-items: center;
@@ -425,7 +481,7 @@
         flex-wrap: wrap;
         align-items: flex-start;
         gap: 0.4rem;
-        padding: 5px;
+        padding: 5px 3rem 5px 5px;
     }
     .fullscreen-image-wrapper {
         z-index: 100;
@@ -435,24 +491,59 @@
         left: 0;
         height: 100vh;
         width: 100vw;
-    }
-    .image-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
     }
-    .image {
-        border-radius: 5px;
+    .image-container {
         position: relative;
-        min-width: 20vw;
-        max-height: 70vh;
-        max-width: 70vw;
+        display: flex;
+        width: 90vw;
+        height: 90vh;
+        flex-direction: column;
+        align-items: center;
+        z-index: 102;
     }
-    .close-button-wrapper {
+    .image-content {
         position: relative;
+        width: 100%;
+        height: 85vh;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        container-type: size;
+    }
+    .image-frame {
+        position: relative;
+        width: min(100cqw, 100cqh * var(--aspectRatio, 1));
+        height: min(100cqh, 100cqw / var(--aspectRatio, 1));
+    }
+    .image {
+        display: block;
+        border-radius: 5px;
+        width: 100%;
+        height: 100%;
+    }
+    .close-control {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 3;
+        line-height: normal;
+    }
+    .arrow-control {
+        position: absolute;
+        top: 50%;
+        z-index: 3;
+        line-height: normal;
+        transform: translateY(-50%);
+    }
+    .left-control {
+        left: 0.5rem;
+    }
+    .right-control {
+        right: 0.5rem;
     }
     .tags-wrapper {
         position: relative;
@@ -466,7 +557,16 @@
         position: relative;
         display: flex;
         justify-content: center;
+        align-items: center;
+        margin-top: 10px;
         margin-bottom: 10px;
     }
 
+    .tag-error-button {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        line-height: 1;
+        cursor: default;
+    }
 </style>

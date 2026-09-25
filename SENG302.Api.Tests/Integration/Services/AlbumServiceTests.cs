@@ -22,7 +22,7 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
     byte[] pngBytes = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
 
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    private IFormFile GetMockFile(string filename, byte[] content, string mimeType)
     {
         var stream = new MemoryStream(content);
         return new FormFile(stream, 0, stream.Length, "file", filename)
@@ -941,8 +941,7 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
             await ServiceUnderTest.CreateNewAlbumAsync(1);
         });
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 1).FirstOrDefaultAsync();
-
+        var album = await context.Albums.Where(album => album.TripId == 1).FirstOrDefaultAsync();
         album.ShouldNotBeNull();
     }
 
@@ -967,7 +966,7 @@ public class AlbumServiceTests : BaseIntegrationTestFixture
         });
         ex.Message.ShouldBe("Trip with that Id does not exist.");
 
-        var album = await context.Set<Album>().Where(album => album.TripId == 2).FirstOrDefaultAsync();
+        var album = await context.Albums.Where(album => album.TripId == 2).FirstOrDefaultAsync();
 
         album.ShouldBeNull();
     }

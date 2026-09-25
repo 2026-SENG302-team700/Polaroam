@@ -51,6 +51,7 @@ public class U7005ImageValidation
         {
             PostId = 1,
             TripId = 1,
+            CreatorId = 1,
             Title = "My post",
             Content = "",
             PhotoIds = [],

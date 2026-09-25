@@ -167,6 +167,28 @@ public class UserServiceTest : BaseIntegrationTestFixture
         errors.Errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
 
+
+    [Theory]
+    [InlineData("vlad.nistor.email")]
+    [InlineData("pandya@gmail+!.co#m")]
+    [InlineData(".@gmail.com")]
+    [InlineData("cool..man@gmail.com")]
+    [InlineData("person@yahoo.")]
+    [InlineData("crazy.@gmail.nz")]
+    [InlineData("CrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyyCrazyyBoyy@gmail.com")]
+    [InlineData("man@gmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompanygmailiscom.comcompany")]
+    [InlineData("froggy@-outlook.com")]
+    [InlineData("froggy@outlook.com-")]
+    [InlineData("crazy@.nz")]
+    [InlineData("abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij@abcdefghijabcdefghijabcdefgh")]
+    [InlineData("shidrl@panfgh")]
+    public async Task CreateUser_InvalidEmail_ExpectValidationException(string userEmail)
+    {
+        await Should.ThrowAsync<MultipleValidationException>(async () =>
+            await ServiceUnderTest.CreateNewUserAsync(userEmail, "Test User", "Password123!", "Password123!", "NZ")
+        );
+    }
+
     [Fact]
     public async Task CreateNewUser_InvalidEmail_MultipleValidationException()
     {
@@ -246,7 +268,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
     [Theory]
     [InlineData("345678", 123456789, true)]
-    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(String code, long timeCreated, bool userVerified)
+    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(string code, long timeCreated, bool userVerified)
     {
         await using var context = DbContextFactory.CreateDbContext();
 
@@ -263,7 +285,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         // Use the TripService function to create a new trip with the name and user email
-        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
+        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified, false);
 
         user.ShouldNotBeNull();
 
@@ -392,10 +414,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
         context.Users.Add(new User
         {
             Id = 1,
-                Email = "test@example.com",
-                DisplayName = "test",
-                PasswordKey = "P4$$word",
-                Country = "NZ",
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ",
             AcceptedAiPrivacyPolicy = true,
             AiTaggingEnabled = true
         });
@@ -406,7 +428,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await using var newContext = DbContextFactory.CreateDbContext();
         var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
         user!.AiTaggingEnabled.ShouldBeFalse();
-        }
+    }
 
     [Fact]
     public async Task ToggleAiTaggingAsync_CalledTwice_BecomesDisabled()
@@ -491,23 +513,23 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
         result.ShouldBeFalse();
     }
-    
-    [Fact] 
+
+    [Fact]
     public async Task CreateNewUser_ValidInformation_AcceptedAiPrivacyPolicyFalse()
-    { 
+    {
         await ServiceUnderTest.CreateNewUserAsync(
             "jon@bler.com",
-            "Jon Bler", 
+            "Jon Bler",
             "paSSWord123#@%",
-            "paSSWord123#@%", 
+            "paSSWord123#@%",
             "SK");
-    
-        await using var context = await DbContextFactory.CreateDbContextAsync(); 
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         var singleItemInDB = context.Users.ShouldHaveSingleItem();
-    
+
         singleItemInDB.AcceptedAiPrivacyPolicy.ShouldBeFalse();
     }
-    
+
     [Fact]
     public async Task CreateNewUser_ValidInformation_AiTaggingEnabledFalse()
     {
@@ -517,10 +539,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
             "paSSWord123#@%",
             "paSSWord123#@%",
             "SK");
-    
+
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var singleItemInDB = context.Users.ShouldHaveSingleItem();
-    
+
         singleItemInDB.AiTaggingEnabled.ShouldBeFalse();
     }
 
@@ -533,11 +555,124 @@ public class UserServiceTest : BaseIntegrationTestFixture
             "paSSWord123#@%",
             "paSSWord123#@%",
             "SK");
-        
+
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, true);
         (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeTrue();
-        
+
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
         (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateUser_ValidRequest_ExpectUpdatedUser()
+    {
+        int userId;
+
+        using (var context = await DbContextFactory.CreateDbContextAsync())
+        {
+            var user = new User { Email = "old@test.com", DisplayName = "Old Name", Country = "NZ", PasswordKey = "hash" };
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            userId = user.Id;
+        }
+
+        var updatedUser = await ServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU");
+
+        Assert.NotNull(updatedUser);
+        Assert.Equal("new@test.com", updatedUser.Email);
+        Assert.Equal("New Name", updatedUser.DisplayName);
+        Assert.Equal("AU", updatedUser.Country);
+    }
+
+    [Fact]
+    public async Task CheckUserCredentials_UnverifiedEmail_ExpectAccountUnverifiedResult()
+    {
+        var email = "unverified@test.com";
+        var user = await ServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
+        user.EmailVerified = false;
+        user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
+
+        using (var mockDatabaseContext = await DbContextFactory.CreateDbContextAsync())
+        {
+            mockDatabaseContext.Users.Add(user);
+            await mockDatabaseContext.SaveChangesAsync();
+        }
+
+        var result = await ServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
+        Assert.Equal(UserVerificationResult.AccountUnverified, result.userVerificationResult);
+        Assert.NotNull(result.user);
+
+    }
+
+    [Fact]
+    public async Task CheckUserCredentials_UserDoesNotExist_ExpectDoesNotExistResult()
+    {
+        var result = await ServiceUnderTest.CheckUserCredentialsAsync("nonexistent@test.com", "AnyPassword1!");
+
+        Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
+        Assert.Null(result.user);
+    }
+
+    [Fact]
+    public async Task CreateUpdatePendingUser_ValidDetails_PendingUserCreated()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var pendingUser = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == "bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.TripInvites.ShouldContain(1);
+    }
+
+    [Fact]
+    public async Task CreateUpdatePendingUser_ValidUpdatedDetails_PendingUserUpdated()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 2);
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var pendingUser = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == "bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.TripInvites.ShouldContain(1);
+        pendingUser.TripInvites.ShouldContain(2);
+    }
+
+    [Fact]
+    public async Task CreateUpdatePendingUser_PreexistingDetails_NothingChanges()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var pendingUser = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == "bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.TripInvites.ShouldContain(1);
+        pendingUser.TripInvites.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetPendingUser_ValidDetails_ReturnsUser()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        var pendingUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.Email.ShouldBe("bob@example.com");
+        pendingUser.TripInvites.Count.ShouldBe(1);
+        pendingUser.TripInvites.ShouldContain(1);
+    }
+
+    [Fact]
+    public async Task GetPendingUser_InvalidDetails_ReturnsNull()
+    {
+        var pendingUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        pendingUser.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task RemovePendingUser_ValidUser_RemoveUser()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        var pendingUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        await ServiceUnderTest.RemovePendingUserAsync("bob@example.com");
+        var testUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        testUser.ShouldBeNull();
     }
 }

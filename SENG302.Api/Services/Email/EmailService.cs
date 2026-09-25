@@ -13,7 +13,9 @@ public enum EmailTemplate
     ResetPasswordCode,
     PasswordChangedConfirmation,
     PasswordResetConfirmation,
-    PasswordResetProcessCancelled
+    PasswordResetProcessCancelled,
+    CollaborationInvite,
+    KickedFromTripEmailTemplate,
 }
 
 public interface IEmailService

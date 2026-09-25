@@ -15,7 +15,7 @@ public interface IUserService
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
     Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry);
-    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
+    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified, bool isResetting);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
@@ -26,6 +26,10 @@ public interface IUserService
     Task<bool> UserAiTaggingCheckAsync(int userId);
     Task SetPreferenceMapVisibleAsync(int userId, bool mapVisible);
     Task<bool> GetPreferenceMapVisibleAsync(int userId);
+    Task<string> GetUserDisplayName(int userId);
+    Task<PendingUser?> GetPendingUserAsync(string email);
+    Task CreateUpdatePendingUserAsync(string email, int tripId);
+    Task RemovePendingUserAsync(string email);
 }
 
 public enum UserVerificationResult
@@ -48,11 +52,15 @@ public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly ITripService _tripService;
+    private readonly INotificationService _notificationService;
 
-    public UserService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public UserService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, ITripService tripService, INotificationService notificationService)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        _tripService = tripService;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -150,8 +158,20 @@ public class UserService : IUserService
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
-
         await context.SaveChangesAsync();
+
+        //if the user is pending, then send them invite notifications tied to the pending user object
+        var pendingUser = await GetPendingUserAsync(user.Email);
+        if (pendingUser != null)
+        {
+            var registeredUser = await GetUserFromEmailAsync(user.Email);
+            foreach (var tripId in pendingUser.TripInvites)
+            {
+                var trip = await _tripService.GetTripByIdAsync(tripId);
+                await _notificationService.SendInviteNotificationAsync(trip.Title, registeredUser.Id, trip.Id);
+            }
+            await RemovePendingUserAsync(user.Email);
+        }
     }
 
     /// <summary>
@@ -350,15 +370,16 @@ public class UserService : IUserService
     /// <summary>
     /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
     /// </summary>
-    /// <param name="email"></param> The user's email
-    /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
-    /// an empty string if the code is expired
-    /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired
-    /// <param name="userVerified"></param> A boolean that notifies method whether the user has successfully verified their account or not
+    /// <param name="email">The user's email</param>
+    /// <param name="oneTimeCode">The code that was generated and emailed to the user or
+    /// an empty string if the code is expired</param>
+    /// <param name="epochTime">The time that code was generated at or 0 to represent that the code expired</param>
+    /// <param name="userVerified">A boolean that notifies method whether the user has successfully verified their account or not</param>
+    /// <param name="forgotIsResetting">A boolean corresponding to whether the user is trying to reset their email through 'forgot password'</param>
     /// <returns>
     /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
     /// </returns>
-    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified)
+    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified, bool forgotIsResetting)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -375,6 +396,9 @@ public class UserService : IUserService
         {
             user.EmailVerified = true;
         }
+
+
+        user.ForgotIsResettingPassword = forgotIsResetting;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
@@ -483,13 +507,13 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        
+
         user!.AcceptedAiPrivacyPolicy = true;
-        
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
     }
-    
+
     /// <summary>
     /// Checks to see whether or not a user has accepted the AI privacy policy.
     /// </summary>
@@ -501,7 +525,7 @@ public class UserService : IUserService
     public async Task<bool> PrivacyPolicyCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);
-        
+
         // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
         if (user == null)
         {
@@ -510,7 +534,7 @@ public class UserService : IUserService
 
         return user.AcceptedAiPrivacyPolicy;
     }
-    
+
     /// <summary>
     /// Switches the state of the "AiTaggingEnabled" field in a user.
     /// </summary>
@@ -544,7 +568,7 @@ public class UserService : IUserService
     public async Task<bool> UserAiTaggingCheckAsync(int userId)
     {
         User? user = await GetUserByIdAsync(userId);
-        
+
         // if this occurs something horrible has gone wrong, mainly just to get the linter to leave me alone
         if (user == null)
         {
@@ -578,7 +602,76 @@ public class UserService : IUserService
     public async Task<bool> GetPreferenceMapVisibleAsync(int userId)
     {
         User user = await GetUserByIdAsync(userId) ?? throw new UnauthorizedAccessException("Id didn't match any user");
-        
+
         return user.PreferenceMapVisible;
+    }
+
+    /// <summary>
+    /// Get the user display name
+    /// </summary>
+    /// <param name="userId">User Id</param>
+    /// <returns>User display name</returns>
+    public async Task<string> GetUserDisplayName(int userId)
+    {
+        User user = await GetUserByIdAsync(userId);
+
+        return user.DisplayName;
+    }
+
+    /// <summary>
+    /// gets a pending user given their email address.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns>the pending user</returns>
+    public async Task<PendingUser?> GetPendingUserAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == email);
+        return user;
+    }
+
+    /// <summary>
+    /// given an email and a trip id, adds a new pendingUser to the database using their email and tripId.
+    /// if the user already exists, then update them by appending the trip id to the end of their 
+    /// pending list. If the trip id is already in the list, do nothing.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="tripId"></param>
+    /// <returns></returns>
+    public async Task CreateUpdatePendingUserAsync(string email, int tripId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            var newPendingUser = new PendingUser()
+            {
+                Email = email,
+                TripInvites = [tripId]
+            };
+            context.PendingUsers.Add(newPendingUser);
+        }
+        else if (!user.TripInvites.Contains(tripId))
+        {
+            user.TripInvites.Add(tripId);
+        }
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// given an email, remove that user from the database if they exist.
+    /// do nothing otherwise.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public async Task RemovePendingUserAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await GetPendingUserAsync(email);
+        if (user != null)
+        {
+            context.PendingUsers.Remove(user);
+            await context.SaveChangesAsync();
+        }
     }
 }

@@ -10,7 +10,7 @@
         onPostHover,
         onPostLeave,
     }: {
-        posts: any[];
+        posts: Post[];
         tripId: number;
         selectedPost: number | null;
         onPostHover: (postId: number) => void;
@@ -37,7 +37,7 @@
             <AddButton path={`/home/trips/${tripId}/posts/create-post`} />
         </div>
     </div>
-        
+
     <div class="post-grid">
         {#each displayedPosts as post (post.postId)}
             <PostCard
@@ -49,12 +49,14 @@
         {/each}
     </div>
 </div>
+
 <style>
     .post-section-flex {
         margin-top: 10px;
         margin-bottom: 10px;
         display: flex;
-        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
         width: 100%;
     }
 

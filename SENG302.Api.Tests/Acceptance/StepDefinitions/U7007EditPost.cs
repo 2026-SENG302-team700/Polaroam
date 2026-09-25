@@ -85,10 +85,11 @@ public class U7007EditPost
         {
             PostId = 1,
             TripId = 1,
+            CreatorId = 1,
             Title = "My post",
             Content = "",
             PhotoIds = [],
-            OsmId = 1,  
+            OsmId = 1,
             LocationName = "Christchurch"
         });
         await context.SaveChangesAsync();
@@ -256,11 +257,16 @@ public class U7007EditPost
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+        var postId = await _lastResponse.Content.ReadAsStringAsync();
 
-        post.ShouldNotBeNull();
-        post.Title.ShouldBe(_title);
-        post.Content.ShouldBe(_content);
+        postId.ShouldNotBeNull();
+
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+
+        retrievedPost.ShouldNotBeNull();
+        retrievedPost.PostId.ShouldBe(int.Parse(postId));
+        retrievedPost.Title.ShouldBe(_title);
+        retrievedPost.Content.ShouldBe(_content);
     }
 
     [Then("the two new images are associated with the post")]

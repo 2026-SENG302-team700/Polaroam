@@ -9,17 +9,18 @@
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostDisplayCard from "$lib/components/trip-components/post-display-card.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
+    import { user } from "$lib/stores/user.js";
 
     let loading = $state(false);
     let error = $state("");
     let deletionModalShown = $state(false);
+    let postNotFound = $state(false);
 
     let { params } = $props();
     let postId = params.postId;
 
-    let displayName = $state("");
-
-    let postObject = $state({
+    let postObject: Post = $state({
         postId: 0,
         tripId: 0,
         title: "No Title",
@@ -28,61 +29,20 @@
         date: "9999-12-31",
         photoIds: [],
         osmId: 0,
+        osmType: "",
+        creatorId: 0,
+        creatorDisplayName: "Creator Name",
         locationName: "No Location",
         creationTime: "9999-12-31",
     });
 
     let photos: File[] = $state([]);
-    let photoIds: number[] = $state([]);
+    let photosData: TripIdAndPhoto[] = $state([]);
 
     onMount(() => {
         fetchPost();
-        fetchDisplayName();
     });
 
-    // /**
-    //  * Fetches the location name from the backend for an osmId
-    //  */
-    // async function fetchLocationName() {
-
-    //     try {
-    //         loading = true;
-    //         const response = await fetchWithCsrf(
-    //             resolve(`/api/geo/location?osmId=${postObject.osmId}` as any),
-    //             {
-    //                 method: "GET",
-    //                 credentials: "include",
-    //             },
-    //         );
-    //         let location = await response.json();
-    //         locationName = location.name;
-    //     } catch (err) {
-    //         error = "Failed to fetch location name: " + (err as Error).message;
-    //     } finally {
-    //         loading = false;
-    //     }
-    // }
-
-    /**
-     * Fetch the display name of the user based on the post
-     */
-    async function fetchDisplayName() {
-        try {
-            loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/user` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            displayName = await response.text();
-        } catch (err) {
-            error = "Failed to fetch post creator: " + (err as Error).message;
-        } finally {
-            loading = false;
-        }
-    }
     /**
      * Fetch Images
      */
@@ -110,7 +70,9 @@
             photos = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/image/${meta.photoId}` as any),
+                        resolve(
+                            `/api/trips/${postObject.tripId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
                             credentials: "include",
@@ -122,7 +84,12 @@
                     });
                 }),
             );
-            photoIds = metadata.map((meta) => meta.photoId);
+            photosData = metadata.map((meta) => {
+                return {
+                    photoId: meta.photoId,
+                    tripId: postObject.tripId,
+                } as TripIdAndPhoto;
+            });
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -144,6 +111,12 @@
                     credentials: "include",
                 },
             );
+
+            if (response.status == 404) {
+                postNotFound = true;
+                return;
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
@@ -197,48 +170,35 @@
     }
 </script>
 
-<div
-    class="container trip-page-content d-flex justify-content-center align-items-center"
->
-    <div class="w-100" style="max-width: 900px;">
-        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
-        <EditButton
-            path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
-        />
-        <DeleteButton deleteAction={showConfirmationModal} />
-        <ErrorDisplay errors={[error]} />
+{#if postNotFound}
+    <NotFound />
+{:else}
+    <div
+        class="container trip-page-content d-flex justify-content-center align-items-center"
+    >
+        <div class="w-100" style="max-width: 900px;">
+            <NavigationButton
+                path={`/home/trips/${params.tripId}`}
+                text="Back"
+            />
+            <EditButton
+                path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
+            />
+            {#if postObject.creatorId == $user.id}
+                <DeleteButton deleteAction={showConfirmationModal} />
+            {/if}
+            <ErrorDisplay errors={[error]} />
 
-        <PostDisplayCard
-            post={postObject}
-            userName={displayName}
-            {photos}
-            {photoIds}
-        />
+            <PostDisplayCard post={postObject} {photos} {photosData} />
+        </div>
     </div>
-</div>
-
+{/if}
 <ConfirmationModal
     bind:show={deletionModalShown}
     message="Are you sure you want to delete this post? This action cannot be undone."
-    option1Text="Delete"
-    option2Text="Do not delete"
-    onOption1={deletePost}
-    onOption2={hideConfirmationModal}
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={hideConfirmationModal}
+    onOption2={deletePost}
 />
-
-<style>
-    .post-head-grid {
-        display: flex;
-        flex-direction: column;
-    }
-    .date-object {
-        margin-left: 10px;
-        bottom: 0;
-    }
-
-    .photo-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 600px));
-        gap: 0.75rem;
-    }
-</style>

@@ -23,7 +23,7 @@
         tripId: number;
         errors?: string[];
         errorsBesidePicker?: boolean;
-        children: Snippet;
+        children?: Snippet;
     } = $props();
 
     let photoIds = $derived(imageMetadata?.map((m) => m.photoId) ?? []);
@@ -49,12 +49,15 @@
         deleteError = "";
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${image.photoId}/context` as any),
+                resolve(
+                    `/api/trips/${tripId}/images/${image.photoId}/context` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
 
             if (!response.ok) {
-                deleteError = "Failed to check whether the image can be deleted";
+                deleteError =
+                    "Failed to check whether the image can be deleted";
                 return;
             }
 
@@ -101,7 +104,6 @@
                 }
             } catch {
                 deleteError = "Failed to delete image";
-                console.log(deleteError);
             }
 
             pendingDeleteIndex = null;
@@ -131,12 +133,15 @@
                 <div class="position-relative">
                     <LazyClickableImage
                         src={resolve(
-                            `/api/album/${tripId}/images/${image.photoId}`,
+                            `/api/album/${tripId}/images/${image.photoId}` as any,
                         )}
                         {index}
+                        {tripId}
                         viewContext="album"
                         images={imageMetadata.map((m) =>
-                            resolve(`/api/album/${tripId}/images/${m.photoId}`),
+                            resolve(
+                                `/api/album/${tripId}/images/${m.photoId}` as any,
+                            ),
                         )}
                         photoId={image.photoId}
                         {photoIds}
@@ -170,22 +175,23 @@
 <ConfirmationModal
     bind:show={confirmDeleteModal}
     message="Are you sure you want to delete this image?"
-    option1Text="Delete"
-    option2Text="Do not delete"
-    onOption1={() => ConfirmDelete()}
-    onOption2={() => (confirmDeleteModal = false)}
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={() => (confirmDeleteModal = false)}
+    onOption2={() => ConfirmDelete()}
 />
 
 <ConfirmationModal
     bind:show={goToPostModal}
     message="Selected image belongs to a post, delete the image from the post to remove the image."
-    option1Text="Go to post"
-    option2Text="Cancel"
-    option1Style="primary"
-    onOption1={() => {
+    option1Text="Cancel"
+    option2Text="Go to post"
+    option2Style="primary"
+    onOption1={() => (goToPostModal = false)}
+    onOption2={() => {
         goto(resolve(`/home/trips/${tripId}/posts/${linkedPostId}`));
     }}
-    onOption2={() => (goToPostModal = false)}
 />
 
 <style>

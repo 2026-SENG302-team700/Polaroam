@@ -14,6 +14,9 @@ using Reqnroll.Assist;
 using SENG302.Api.Services.Email;
 using SENG302.Api.Services.ImageTagging;
 using Microsoft.Extensions.Hosting;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -101,14 +104,14 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
                 // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
-                
+
                 ConfigureAdditionalServices(services);
             });
         });
 
         HttpClient = _webAppFactory.CreateClient();
     }
-    
+
     // Used to add mocks to new services
     protected virtual void ConfigureAdditionalServices(IServiceCollection services)
     {
@@ -125,9 +128,14 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
 
     public virtual async Task DisposeAsync()
     {
+        // Dispose the Http client and webfactory aswell
+        HttpClient.Dispose();
         // Close and dispose the sqlite connection when tests are done
         await _connection.CloseAsync();
         await _connection.DisposeAsync();
+
+        await _webAppFactory.DisposeAsync();
+
         DisposeDirectory();
     }
 

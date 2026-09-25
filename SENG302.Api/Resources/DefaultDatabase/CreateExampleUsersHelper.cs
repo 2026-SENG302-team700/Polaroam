@@ -63,7 +63,7 @@ public static class CreateExampleUsersHelper
             dbContext.Users.Add(user);
             await dbContext.SaveChangesAsync();
 
-            for (int i = 0; i < 20; i++)
+            for (int i = 20; i < 40; i++)
             {
                 var trip = new Trip
                 {
@@ -72,6 +72,7 @@ public static class CreateExampleUsersHelper
                     UserId = user.Id,
                     StartDate = DateTimeOffset.UtcNow,
                     EndDate = DateTimeOffset.UtcNow.AddDays(1),
+                    Collaborators = [1, 3]
                 };
 
                 dbContext.Add(trip);
@@ -81,7 +82,7 @@ public static class CreateExampleUsersHelper
                     TripId = i,
                     PhotoIds = new List<int>()
                 };
-                
+
                 dbContext.Add(album);
 
                 await dbContext.SaveChangesAsync();
@@ -91,6 +92,7 @@ public static class CreateExampleUsersHelper
                     var post = new Post
                     {
                         Title = "Post " + j.ToString(),
+                        CreatorId = 2,
                         TripId = trip.Id,
                         Content = (j % 5) != 4 ? "Number: " + j.ToString() : "antimony, arsenic, aluminum, selenium And hydrogen, and oxygen, and nitrogen, and rhenium And nickel, neodymium, neptunium, germanium And iron, americium, ruthenium, uranium Europium, zirconium, lutetium, vanadium And lanthanum, and osmium, and astatine, and radium And gold, protactinium, and indium, and gallium And iodine, and thorium, and thulium, and thallium There's yttrium, ytterbium, actinium, rubidium And boron, gadolinium, niobium, iridium And strontium, and silicon, and silver, and samarium And bismuth, bromine, lithium, beryllium, and barium",
                         Date = DateTimeOffset.MaxValue,
@@ -125,7 +127,127 @@ public static class CreateExampleUsersHelper
             };
             var hasher = new PasswordHasher<User>();
             user.PasswordKey = hasher.HashPassword(user, "P4$$word");
-            dbContext.Users.Add(user);
+            await dbContext.Users.AddAsync(user);
+
+            var notification1 = new Notification
+            {
+                BodyText = "Andrew has posted on your timeline",
+                HeaderText = "New Post!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-5),
+                UserId = 3,
+            };
+
+            var notification2 = new Notification
+            {
+                BodyText = "Sarah has commented on your post",
+                HeaderText = "New Comment!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-4),
+                UserId = 3,
+            };
+
+            var notification3 = new Notification
+            {
+                BodyText = "Michael has liked your post",
+                HeaderText = "Post Liked!",
+                ReadStatus = true,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-3),
+                UserId = 3,
+            };
+
+            var notification4 = new Notification
+            {
+                BodyText = "Emma has invited you to join a trip",
+                HeaderText = "Trip Invitation!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-2),
+                UserId = 3,
+            };
+
+            var notification5 = new Notification
+            {
+                BodyText = "James has started following you",
+                HeaderText = "New Follower!",
+                ReadStatus = true,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
+                UserId = 3,
+            };
+
+            var notification6 = new Notification
+            {
+                BodyText = "Olivia has commented on your trip",
+                HeaderText = "New Comment!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddHours(-20),
+                UserId = 3,
+            };
+
+            var notification7 = new Notification
+            {
+                BodyText = "Daniel has accepted your trip request",
+                HeaderText = "Request Accepted!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddHours(-15),
+                UserId = 3,
+            };
+
+            var notification8 = new Notification
+            {
+                BodyText = "Charlotte has sent you a message",
+                HeaderText = "New Message!",
+                ReadStatus = true,
+                Timestamp = DateTimeOffset.UtcNow.AddHours(-10),
+                UserId = 3,
+            };
+
+            var notification9 = new Notification
+            {
+                BodyText = "Liam has joined your trip",
+                HeaderText = "New Collaborator!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddHours(-6),
+                UserId = 3,
+            };
+
+            var notification10 = new Notification
+            {
+                BodyText = "Sophie has liked your comment",
+                HeaderText = "Comment Liked!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddHours(-3),
+                UserId = 3,
+            };
+
+            var notification11 = new Notification
+            {
+                BodyText = "Noah has mentioned you in a post",
+                HeaderText = "You Were Mentioned!",
+                ReadStatus = false,
+                Timestamp = DateTimeOffset.UtcNow.AddHours(-1),
+                UserId = 3,
+            };
+
+            await dbContext.Notifications.AddAsync(notification1);
+            await dbContext.Notifications.AddAsync(notification2);
+            await dbContext.Notifications.AddAsync(notification3);
+            await dbContext.Notifications.AddAsync(notification4);
+            await dbContext.Notifications.AddAsync(notification5);
+            await dbContext.Notifications.AddAsync(notification6);
+            await dbContext.Notifications.AddAsync(notification7);
+            await dbContext.Notifications.AddAsync(notification8);
+
+            var notification12 = new TripInvitationNotification
+            {
+                BodyText = "Andrew has invited you to his trip 'Helinksi'",
+                HeaderText = "You're famous!",
+                ReadStatus = true,
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-2),
+                TripId = 1,
+                UserId = 3,
+            };
+            await dbContext.Notifications.AddAsync(notification12);
+
             await dbContext.SaveChangesAsync();
         }
     }

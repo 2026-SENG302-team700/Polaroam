@@ -55,6 +55,7 @@ public class U7005DeletePost
         var post = new Post
         {
             TripId = trip.Id,
+            CreatorId = user.Id,
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
@@ -117,6 +118,7 @@ public class U7005DeletePost
         var post = new Post
         {
             TripId = trip.Id,
+            CreatorId = user.Id,
             Title = "Post to delete",
             Content = "Post content",
             OsmId = 1,
@@ -185,7 +187,7 @@ public class U7005DeletePost
         await using var context =
             await _fixture.DbContextFactory.CreateDbContextAsync();
 
-        var postExists = await context.Set<Post>().AnyAsync(p => p.PostId == _postId);
+        var postExists = await context.Posts.AnyAsync(p => p.PostId == _postId);
         postExists.ShouldBe(false);
     }
 
@@ -197,8 +199,8 @@ public class U7005DeletePost
 
         int numericPhotoId;
         int.TryParse(_photoId, out numericPhotoId);
-        var locationExists = await context.Set<Location>().AnyAsync(p => p.PostId == _postId);
-        var imageExists = await context.Set<CustomFile>().AnyAsync(p => p.Id == numericPhotoId);
+        var locationExists = await context.Locations.AnyAsync(p => p.PostId == _postId);
+        var imageExists = await context.CustomFiles.AnyAsync(p => p.Id == numericPhotoId);
 
         locationExists.ShouldBe(false);
         imageExists.ShouldBe(false);

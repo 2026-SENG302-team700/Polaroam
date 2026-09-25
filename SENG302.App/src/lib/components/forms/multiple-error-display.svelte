@@ -8,14 +8,14 @@
 <div>
     {#if nonEmptyErrors.length > 0}
         {#if nonEmptyErrors.length > 1}
-            <div class="invalid-feedback d-block mb-0 ps-3">
+            <div class="invalid-feedback d-block mb-0">
                 {#each nonEmptyErrors as err}
-                    <span>{err}</span>
+                    <div>{err}</div>
                 {/each}
             </div>
         {:else}
             <div class="invalid-feedback d-block mb-0">
-                <span>{nonEmptyErrors[0]}</span>
+                <div>{nonEmptyErrors[0]}</div>
             </div>
         {/if}
     {/if}

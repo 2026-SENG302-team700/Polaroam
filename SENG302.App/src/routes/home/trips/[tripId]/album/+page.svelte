@@ -9,10 +9,12 @@
     import { goto } from "$app/navigation";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import AiTaggingUploadOption from "$lib/components/images/ai-tagging-upload-option.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let tripName = $state("");
     let filesToUpload: File[] | null | undefined = $state([]);
-    let loading = $state(false);
+    let loading = $state(true);
+    let metadataLoaded = $state(false);
     let { params } = $props();
     let fileErrors: string[] = $state([]);
     let imageMetadata = $state<{ photoId: number }[]>([]);
@@ -38,6 +40,7 @@
             photos: [],
         };
     }
+    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     /**
      * Gets the image metadata of all images in the album matching the tagQuery
@@ -53,16 +56,14 @@
             );
             if (!response.ok) {
                 tagDataError = await response.text();
+                return;
             }
             imageMetadata = await response.json();
+            metadataLoaded = true;
         } catch (err) {
             tagDataError = "An unexpected error occurred: ";
-        } finally {
-            loading = false;
         }
     }
-
-    let errors = $state<AlbumImageUploadErrors>(emptyErrors());
 
     async function loadAiTaggingPreference() {
         const response = await fetchWithCsrf(resolve("/api/user" as any), {
@@ -78,7 +79,7 @@
 
     onMount(async () => {
         await loadAiTaggingPreference();
-        fetchTrip();
+        fetchTripName();
     });
 
     /**
@@ -86,7 +87,7 @@
      */
     async function uploadPhotos() {
         try {
-            loading = true;
+            errors = emptyErrors();
             const form = new FormData();
             if (filesToUpload != null) {
                 for (let i = 0; i < filesToUpload.length; i++) {
@@ -106,14 +107,21 @@
             );
 
             if (response.status != 201) {
-                let data = await response.json();
                 if (response.status === 413) {
                     errors.generic =
-                        "Upload too large, please upload less photos at a time";
+                        "Upload too large, please upload fewer photos at a time";
                     return;
                 }
-                errors.photos =
-                    data.errors?.photos ?? data.errors?.Photos ?? [];
+                const contentType = response.headers.get("content-type");
+                if (contentType?.includes("application/json")) {
+                    const data = await response.json();
+                    errors.photos =
+                        data.errors?.photos ?? data.errors?.Photos ?? [];
+                    errors.generic = data.message ?? "";
+                } else {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                }
                 return;
             }
         } catch (err) {
@@ -121,7 +129,6 @@
             errors.generic =
                 "Failed to upload images: " + (err as Error).message;
         } finally {
-            loading = false;
             filesToUpload = [];
             getImageMetadata();
         }
@@ -179,51 +186,58 @@
     onMount(getImageMetadata);
 </script>
 
-<div class="card mb-2 post-wrapper">
-    <div class="card-header">
-        <NavigationButton path={`/home/trips/${params.tripId}`} text="Back" />
-        <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
-    </div>
-    <div class="card-body"></div>
-    <div class="card-footer text-muted images"></div>
-    <div class="card-body p-4" style="min-height: 100vh;">
-        <div class="album-search container px-0">
-            <TagSearchForm
-                bind:query={tagQuery}
-                performSearch={getImageMetadata}
-                getSuggestionsUrl={`/api/image/tags/trip/${tripId}?query=${encodeURIComponent(tagQuery)}`}
+{#if !loading && metadataLoaded}
+    <div class="card mb-2 post-wrapper">
+        <div class="card-header">
+            <NavigationButton
+                path={`/home/trips/${params.tripId}`}
+                text="Back"
             />
+            <h6 class="card-subtitle mb-2 text-muted trip-name">{tripName}</h6>
         </div>
+        <div class="card-body"></div>
+        <div class="card-footer text-muted images"></div>
+        <div class="card-body p-4" style="min-height: 100vh;">
+            <div class="album-search container px-0">
+                <TagSearchForm
+                    bind:query={tagQuery}
+                    performSearch={getImageMetadata}
+                    getSuggestionsUrl={`/api/trips/${tripId}/images/tags?query=${encodeURIComponent(tagQuery)}`}
+                />
+            </div>
 
-        {#if imageMetadata.length > 0 && tagQuery !== ""}
-            <p class="text-center">
-                {imageMetadata.length} images found matching "{tagQuery}"
-            </p>
-        {:else if imageMetadata.length > 0 && tagQuery === ""}
-            <p class="text-center">{imageMetadata.length} images found</p>
-        {/if}
+            {#if imageMetadata.length > 0 && tagQuery !== ""}
+                <p class="text-center">
+                    {imageMetadata.length} images found matching "{tagQuery}"
+                </p>
+            {:else if imageMetadata.length > 0 && tagQuery === ""}
+                <p class="text-center">{imageMetadata.length} images found</p>
+            {/if}
 
-        <div class:empty-album={imageMetadata.length === 0}>
-            <ImageGallery
-                bind:imageMetadata
-                {tripId}
-                errors={[errors.generic, ...errors.photos, ...fileErrors]}
-                errorsBesidePicker
-            >
-                <div class="header-content-item">
-                    <ImagePicker
-                        bind:filesList={filesToUpload}
-                        errors={errors.photos}
-                        bind:fileErrors
-                        {loading}
-                        uploadFunc={preparePhotoUpload}
-                        fill
-                    />
-                </div>
-            </ImageGallery>
+            <div class:empty-album={imageMetadata.length === 0}>
+                <ImageGallery
+                    bind:imageMetadata
+                    {tripId}
+                    errors={[errors.generic, ...errors.photos, ...fileErrors]}
+                    errorsBesidePicker
+                >
+                    <div class="header-content-item">
+                        <ImagePicker
+                            bind:filesList={filesToUpload}
+                            errors={errors.photos}
+                            bind:fileErrors
+                            {loading}
+                            uploadFunc={preparePhotoUpload}
+                            fill
+                        />
+                    </div>
+                </ImageGallery>
+            </div>
         </div>
     </div>
-</div>
+{:else if !loading}
+    <NotFound />
+{/if}
 
 {#if uploadModalShown}
     <div class="modal-backdrop show"></div>
@@ -293,10 +307,6 @@
 
     .album-search {
         margin-bottom: 1.25rem;
-    }
-
-    .header-content-wrapper {
-        width: 100%;
     }
 
     .trip-name {

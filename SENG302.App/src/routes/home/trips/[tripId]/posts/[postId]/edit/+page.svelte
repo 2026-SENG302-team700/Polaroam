@@ -1,31 +1,33 @@
 <script lang="ts">
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import PostForm from "$lib/components/forms/post-form.svelte";
+    import PostForm from "$lib/components/forms/form-wrapper.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
-    import MultipleErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
     import LocationForm from "$lib/components/forms/location-form.svelte";
     import ImagePicker from "$lib/components/images/image-picker.svelte";
     import ImageDisplay from "$lib/components/images/image-display.svelte";
     import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
-
     import { onMount } from "svelte";
     import { page } from "$app/state";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { goto } from "$app/navigation";
-    import AiPrivacyPolicy from "$lib/policies/ai-privacy-policy.svelte";
+    import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
 
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
-    let photoIds = $state([]);
+    let photosData = $state([]);
     let photoIdFileMap = new WeakMap();
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
+    let postNotFound = $state(false);
+
+    let dateState: "valid" | "invalid" | "empty" = $state("valid");
 
     const tripId = page.params.tripId;
     let newUploadsCount = $state(0);
@@ -48,7 +50,7 @@
     type UpdateFormErrors = {
         title: string[];
         content: string[];
-        date: string;
+        date: string[];
         generic: string;
         location: string;
         photos: string[];
@@ -61,7 +63,7 @@
         return {
             title: [],
             content: [],
-            date: "",
+            date: [],
             generic: "",
             location: "",
             photos: [],
@@ -78,11 +80,13 @@
     let errors = $state<UpdateFormErrors>(emptyErrors());
 
     onMount(async () => {
-        await Promise.all([
-            loadAiTaggingPreference(),
-            fetchPost(),
-            fetchImages(),
-        ]);
+        await loadAiTaggingPreference();
+
+        const postLoaded = await fetchPost();
+
+        if (postLoaded) {
+            await fetchImages();
+        }
     });
 
     /**
@@ -115,7 +119,7 @@
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
                         resolve(
-                            `/api/image/${meta.photoId}` as any,
+                            `/api/trips/${tripId}/images/${meta.photoId}` as any,
                         ),
                         {
                             method: "GET",
@@ -161,23 +165,35 @@
                     credentials: "include",
                 },
             );
+            if (response.status == 404) {
+                postNotFound = true;
+                return false;
+            }
 
             const data = await response.json();
             if (!response.ok) {
                 errors.generic =
                     `Failed to fetch post: ${data}` || "Failed to fetch post.";
-                return;
+                return false;
             }
             title = data.title;
             content = data.content;
             date = new Date(data.date);
             location.osmId = data.osmId;
             location.osmType = data.osmType;
-            photoIds = data.photoIds;
+            photosData = data.photoIds.map((id: number) => {
+                return {
+                    tripId: Number.parseInt(tripId as any),
+                    photoId: id,
+                } as TripIdAndPhoto;
+            });
             searchQuery = data.locationName;
+
+            return true;
         } catch (err) {
             errors.generic =
                 `Failed to fetch post: ${err}` || "Failed to fetch post.";
+            return false;
         } finally {
             loading = false;
         }
@@ -205,13 +221,6 @@
     async function updatePost() {
         try {
             loading = true;
-
-            if (
-                content.length > 0 ||
-                (files !== undefined && files !== null && files?.length > 0)
-            ) {
-                noContentAllowed = true;
-            }
 
             const form = new FormData();
             form.append("Id", parseInt(page.params.postId));
@@ -241,10 +250,23 @@
                     credentials: "include",
                 },
             );
-            const data = await response.json();
 
             if (!response.ok) {
-                errors.date = data.errors?.date?.[0] ?? "";
+                if (response.status === 413) {
+                    errors.generic =
+                        "Upload too large, please upload fewer photos at a time";
+                    return;
+                }
+
+                const contentType = response.headers.get("content-type");
+                if (!contentType?.includes("application/json")) {
+                    errors.generic =
+                        "Failed to upload images. Please try fewer images.";
+                    return;
+                }
+
+                const data = await response.json();
+                errors.date = data.errors?.date ?? [];
                 errors.content = data.errors?.content ?? [];
                 errors.location = data.errors?.location?.[0] ?? "";
                 errors.title = data.errors?.title ?? [];
@@ -255,17 +277,30 @@
                         "Post contains no content, are you sure you want to create post?",
                     ) &&
                     errors.title.length === 0 &&
-                    !errors.date &&
+                    errors.date.length === 0 &&
                     errors.generic.length === 0 &&
                     errors.location.length === 0 &&
-                    photoIds.length === 0 &&
-                    files?.length === 0
+                    photosData.length === 0
                 ) {
                     confirmationModalShown = true;
                 }
+                errors.content = errors.content.filter(
+                    (e) =>
+                        e !==
+                        "Post contains no content, are you sure you want to create post?",
+                );
+
+                // This section of date validation is attributed to Codex gpt-5.6-sol
+                if (dateState === "invalid") {
+                    errors.date = ["Invalid date"];
+                } else if (dateState === "empty") {
+                    errors.date = ["Date is required"];
+                }
                 return;
             }
-            goto(resolve(`/home/trips/${data.tripId}`));
+
+            const postId = await response.text();
+            goto(resolve(`/home/trips/${tripId}/posts/${page.params.postId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -304,7 +339,9 @@
                 return;
             }
 
-            photoIds = photoIds.filter((id) => id !== photoId);
+            photosData = photosData.filter(
+                (data: TripIdAndPhoto) => data.photoId !== photoId,
+            );
         } catch (err) {
             errors.photos.push(
                 "Failed to delete image: " + (err as Error).message,
@@ -314,28 +351,12 @@
     }
 </script>
 
-<PostForm heading="Edit Post">
-    <div class="section-heading">
-        <i class="bi bi-pencil-square"></i>
-        <h2>Post Details</h2>
-    </div>
-    <TitleForm bind:name={title} errors={errors.title} {loading} />
+{#snippet header()}
+    <span class="header-icon bi-journal-richtext"></span>
+    <h1>{"Edit Post"}</h1>
+{/snippet}
 
-    <DatePicker bind:value={date} error={errors.date} disabled={loading} />
-
-    <LocationForm
-        bind:searchQuery
-        bind:location
-        bind:error={errors.location}
-        bind:loading
-    />
-    <DescriptionForm
-        placeholder="Content"
-        bind:description={content}
-        errors={errors.content}
-    />
-    <div class="section-divider"></div>
-
+{#snippet footer()}
     <div class="section-heading">
         <i class="bi bi-camera"></i>
         <h2>Photos</h2>
@@ -343,7 +364,7 @@
 
     <ImageDisplay
         bind:images={files}
-        {photoIds}
+        {photosData}
         errors={[...errors.photos, ...fileErrors]}
         letDelete={true}
         ondelete={removePhoto}
@@ -365,27 +386,65 @@
 
     <div class="post-form-actions">
         <ConfirmCancelButton
-            path={`/home/trips/${tripId}`}
-            option1Text="Back to your Trip"
-            option2Text="Stay on This Page"
+            path={`/home/trips/${tripId}/posts/${page.params.postId}`}
+            option2Text="Back to your post"
+            option1Text="Stay on This Page"
         />
 
         <CreationButton onClick={updatePost} text="Update Post" {loading} />
     </div>
-</PostForm>
+{/snippet}
 
-<ConfirmationModal
-    bind:show={confirmationModalShown}
-    message="Post would contain no content or images, are you sure you want to update this post?"
-    option1Text="Update anyway"
-    option2Text="Cancel"
-    onOption1={() => {
-        noContentAllowed = true;
-        confirmationModalShown = false;
-        updatePost();
-    }}
-    onOption2={() => (confirmationModalShown = false)}
-/>
+{#snippet body()}
+    <div class="section-heading">
+        <i class="bi bi-pencil-square"></i>
+        <h2>Post Details</h2>
+    </div>
+
+    <TitleForm bind:name={title} errors={errors.title} {loading} />
+
+    <DatePicker
+        bind:value={date}
+        bind:inputState={dateState}
+        bind:error={errors.date}
+        disabled={loading}
+    />
+
+    <LocationForm
+        bind:searchQuery
+        bind:location
+        bind:error={errors.location}
+        bind:loading
+    />
+
+    <DescriptionForm
+        placeholder="Content"
+        bind:description={content}
+        errors={errors.content}
+        maxLength={8196}
+        bind:loading
+    />
+{/snippet}
+
+{#if postNotFound}
+    <NotFound />
+{:else}
+    <FormWrapper {header} {footer} {body} />
+
+    <ConfirmationModal
+        bind:show={confirmationModalShown}
+        message="Post would contain no content or images, are you sure you want to update this post?"
+        option1Text="Cancel"
+        option2Text="Update anyway"
+        option2Style="primary"
+        onOption1={() => (confirmationModalShown = false)}
+        onOption2={() => {
+            noContentAllowed = true;
+            confirmationModalShown = false;
+            updatePost();
+        }}
+    />
+{/if}
 
 <style>
     .section-heading {
@@ -404,12 +463,6 @@
 
     .section-heading i {
         font-size: 1.15rem;
-    }
-
-    .section-divider {
-        margin: 1.75rem 0;
-        border-top: 2px dashed #686868;
-        opacity: 0.65;
     }
 
     .post-form-actions {

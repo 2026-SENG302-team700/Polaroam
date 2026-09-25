@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1.Crmf;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Responses;
 using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
@@ -11,7 +9,7 @@ public interface IImageService
 {
     Task<List<string>> GetSuggestedTagsForUser(int userId, string query, int? tripId = null);
     public Task<List<TripPhotoGroupResponse>> GetPhotosFromQueryAsync(int userId, string query);
-    Task<ImageContextResponse?> GetImageContextAsync(int photoId, int userId);
+    Task<ImageContextResponse?> GetImageContextAsync(int photoId);
 }
 
 public class ImageService : IImageService
@@ -169,20 +167,13 @@ public class ImageService : IImageService
     /// Finds the post id from a provided photo id
     /// </summary>
     /// <param name="photoId">photo id</param>
-    /// <param name="userId">user id, used for verifying file ownership</param>
     /// <returns>
     /// postId: the post id where the image has been found
     /// null: image not apart of any post (just part of a trip album)
     /// </returns>
-    /// <exception cref="UnauthorizedAccessException">if user does not own the file.</exception>
-    public async Task<ImageContextResponse?> GetImageContextAsync(int photoId, int userId)
+    public async Task<ImageContextResponse?> GetImageContextAsync(int photoId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        if (!await _fileService.CheckFileOwnership(photoId, userId))
-        {
-            throw new UnauthorizedAccessException();
-        }
 
         var album = await context.Albums.FirstOrDefaultAsync(a => a.PhotoIds.Contains(photoId));
 
@@ -191,11 +182,11 @@ public class ImageService : IImageService
             throw new KeyNotFoundException("The image does not belong to any album.");
         }
 
-        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == album.TripId && t.UserId == userId);
+        var trip = await context.Trips.FirstOrDefaultAsync(t => t.Id == album.TripId);
 
         if (trip == null)
         {
-            throw new UnauthorizedAccessException();
+            throw new KeyNotFoundException();
         }
 
         var post = await context.Posts.FirstOrDefaultAsync(p => p.TripId == trip.Id && p.PhotoIds.Contains(photoId));

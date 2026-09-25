@@ -1,51 +1,50 @@
 <script lang="ts">
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
+    import LandingLogo from "$lib/components/logo/landing-logo.svelte";
 </script>
 
 <svelte:head>
     <title>Welcome | Polaroam</title>
 </svelte:head>
 
-<main class="landing-page-wrapper">
-    <div class="card text-center landing-card" style="font-size:x-large;">
-        <div class="card-header">Welcome to Polaroam</div>
-        <div
-                class="card-body"
-                style="display: grid; grid-template-columns: auto; row-gap: 10px;"
-        >
-            <NavigationButton path="/register" text="Register" />
-            <NavigationButton path="/login" text="Log In" />
+<div class="landing-page-flex">
+    <div class="landing-page-wrapper">
+        <LandingLogo />
+        <p class="subheader">
+            <i>Your trips captured, collected and collaged.</i>
+        </p>
+        <div class="post-form button-wrapper">
+            <div class="post-form-actions">
+                <NavigationButton path="/login" text="Login" />
+                <NavigationButton path="/register" text="Register" />
+            </div>
         </div>
     </div>
-</main>
+</div>
 
 <style>
-    .landing-page-wrapper {
-        height: 80vh;
+    .landing-page-flex {
+        min-height: 90vh;
         display: flex;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
     }
-
-    .landing-card {
-        width: 90vw;
+    .landing-page-wrapper {
+        width: 70%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 60px;
+        flex-shrink: 1;
     }
-
-    @media (min-width: 576px) {
-        .landing-card {
-            width: 70vw;
-        }
+    .subheader {
+        font-size: max(18px, 1.3vw);
+        margin: 0;
     }
-
-    @media (min-width: 768px) {
-        .landing-card {
-            width: 50vw;
-        }
-    }
-
-    @media (min-width: 992px) {
-        .landing-card {
-            width: 30vw;
-        }
+    .post-form-actions {
+        margin: 0;
+        padding: 10px;
+        width: max(300px, 30vw);
     }
 </style>

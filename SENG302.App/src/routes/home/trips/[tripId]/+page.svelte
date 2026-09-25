@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { MapLibre, Marker, Popup } from "svelte-maplibre";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -8,12 +7,15 @@
     import DeleteButton from "$lib/components/buttons/delete-button.svelte";
     import { goto } from "$app/navigation";
     import ErrorDisplay from "$lib/components/forms/multiple-error-display.svelte";
-    import AddButton from "$lib/components/buttons/add-button.svelte";
     import ConfirmationModal from "$lib/components/modals/confirmation-modal.svelte";
+    import CollaborationModal from "$lib/components/modals/collaboration-modal.svelte";
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostSection from "$lib/components/trip-components/post-section.svelte";
     import Map from "$lib/components/trip-components/map.svelte";
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
+    import NotFound from "$lib/components/content/not-found.svelte";
+    import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
+    import { user } from "$lib/stores/user.js";
 
     let loading = $state(false);
     let error = $state("");
@@ -21,18 +23,21 @@
     let { params } = $props();
     let tripId = params.tripId;
     let hoveredPostId: number | null = $state(null);
+    let collaborationModalShown: boolean = $state(false);
 
-    let tripObject = $state({
-        id: 0,
+    let tripObject: Trip = $state({
+        id: -1,
         title: "No Title",
         description: "No Description",
         startDate: "9998-12-31",
         endDate: "9999-12-31",
         userId: 0,
+        ownerName: "No Owner",
+        collaborators: [],
     });
 
     let postLocations = $state([]);
-    let posts = $state([]);
+    let posts: Post[] = $state([]);
     let selectedPost = $state(null);
 
     onMount(() => {
@@ -55,15 +60,18 @@
                     credentials: "include",
                 },
             );
-            const data = await response.json();
 
+            // Check response
             if (!response.ok) {
-                error = data.message || "Failed to fetch trip.";
+                error = "Failed to fetch trip.";
                 return;
             }
+
+            // Parse response
+            const data = await response.json();
             tripObject = data;
         } catch (err) {
-            error = "Failed to fetch trip: " + (err as Error).message;
+            error = "Failed to fetch trip";
         } finally {
             loading = false;
         }
@@ -98,7 +106,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/locations/${params.tripId}` as any),
+                resolve(`/api/trip/locations/${tripId}` as any),
                 {
                     method: "Get",
                     credentials: "include",
@@ -118,7 +126,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/trip/${params.tripId}` as any),
+                resolve(`/api/trip/${tripId}` as any),
                 {
                     method: "DELETE",
                     credentials: "include",
@@ -147,112 +155,119 @@
     function hideConfirmationModal() {
         deletionModalShown = false;
     }
+    /**
+     * Turn on the collaboration modal
+     * If the collaborators are not yet loaded then load them
+     */
+    function showCollaborationModal() {
+        collaborationModalShown = true;
+    }
 </script>
-
-<div class="container trip-page-content">
-    <div class="button-wrapper">
-        <NavigationButton path="/home" text="Back" />
-        <div class="modify-button-wrapper">
-            <AlbumButton tripid={params.tripId} />
-            <EditButton path={`/home/trips/${params.tripId}/edit`} />
-            <DeleteButton deleteAction={showConfirmationModal} />
-        </div>
-    </div>
-    <div class="card mb-2 post-wrapper">
-        <div class="card-header">
-            <div class="title-and-date" style="display: flex; flex-direction: row;">
-                <h1 class="card-subtitle mb-2 h1 user-name">{tripObject.title}</h1>
-                <div class="header-content-item" style="display: flex; align-items: center; flex:1; justify-content: end;">
-                    <div class="bi-calendar-event"></div>
-                    <h6 class="card-subtitle text-muted" style="margin-left: 5px;">
-                        {formatDate(tripObject.startDate)} - {formatDate(
-                            tripObject.endDate,
-                        )}
-                    </h6>
-                </div>
-            </div>
-            {#if tripObject.description.length > 0}
-                <span>{tripObject.description}</span>
-            {:else}
-                <p>No description</p>
-            {/if}
-            <ErrorDisplay errors={[error]} />
-
-        </div>
-        <div class="card-body">
-        <Map locations={postLocations} {posts} {hoveredPostId} bind:selectedPost />
-        </div>
-        <div class="card-footer text-muted images">
-            <PostSection
-                {posts}
-                tripId={tripObject.id}
-                onPostHover={(postId: number) => (hoveredPostId = postId)}
-                onPostLeave={() => (hoveredPostId = null)}
-                {selectedPost}
-            />
-        </div>
-    </div>
-</div>
 
 <ConfirmationModal
     bind:show={deletionModalShown}
     message="Are you sure you want to delete this trip? This action cannot be undone."
-    option1Text="Delete"
-    option2Text="Do not delete"
-    onOption1={deleteTrip}
-    onOption2={hideConfirmationModal}
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={hideConfirmationModal}
+    onOption2={deleteTrip}
 />
+
+<CollaborationModal
+        bind:show={collaborationModalShown}
+        tripOwner={tripObject.ownerName ?? ""}
+        isOwner={tripObject.userId == $user.id}
+        tripCollaborators={tripObject.collaborators}
+        {error}
+/>
+
+{#if !loading && tripObject.id !== -1}
+
+    <div class="container trip-page-content" inert={(collaborationModalShown||deletionModalShown)||null}>
+        <div class="button-wrapper">
+            <NavigationButton path="/home" text="Back" />
+            <div class="modify-button-wrapper">
+                <button
+                    class="btn btn-secondary bi-people-fill"
+                    onclick={() => {
+                        showCollaborationModal();
+                    }}>Collaboration</button
+                >
+                <AlbumButton tripid={params.tripId} />
+                <EditButton path={`/home/trips/${params.tripId}/edit`} />
+                {#if tripObject.userId == $user.id}
+                    <DeleteButton deleteAction={showConfirmationModal} />
+                {/if}
+            </div>
+        </div>
+        <div class="card mb-2 post-wrapper">
+            <div class="card-header">
+                <div
+                    class="title-and-date"
+                    style="display: flex; flex-direction: row;"
+                >
+                    <h1 class="card-subtitle mb-2 h1 user-name">
+                        {tripObject.title}
+                    </h1>
+                    <div
+                        class="header-content-item"
+                        style="display: flex; align-items: center; flex:1; justify-content: end;"
+                    >
+                        <div class="bi-calendar-event"></div>
+
+                        <h6
+                            class="card-subtitle text-muted"
+                            style="margin-left: 5px;"
+                        >
+                            {formatDate(tripObject.startDate)} - {formatDate(
+                                tripObject.endDate,
+                            )}
+                        </h6>
+                    </div>
+                </div>
+                <h4>
+                    <i
+                        >Owned by {tripObject.userId == $user.id
+                            ? "You"
+                            : tripObject.ownerName}</i
+                    >
+                </h4>
+                {#if tripObject.description.length > 0}
+                    <span>{tripObject.description}</span>
+                {:else}
+                    <p>No description</p>
+                {/if}
+                <ErrorDisplay errors={[error]} />
+            </div>
+            <div class="card-body">
+                <Map
+                    locations={postLocations}
+                    {posts}
+                    {hoveredPostId}
+                    bind:selectedPost
+                />
+                <ScrapboardImage {tripId} />
+            </div>
+            <div class="card-footer text-muted images">
+                <PostSection
+                    {posts}
+                    tripId={tripObject.id}
+                    onPostHover={(postId: number) => (hoveredPostId = postId)}
+                    onPostLeave={() => (hoveredPostId = null)}
+                    {selectedPost}
+                />
+            </div>
+        </div>
+    </div>
+{:else if !loading}
+    <NotFound />
+{/if}
 
 <style>
     .button-wrapper {
         display: flex;
         justify-content: space-between;
         margin-bottom: 5px;
-    }
-    .trip-head-grid {
-        align-items: end;
-        display: flex;
-    }
-    .date-object {
-        margin-left: 10px;
-        bottom: 0;
-    }
-
-    .app {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        height: 100%;
-    }
-
-    .search-bar {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .search-bar input {
-        flex: 1;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-    }
-
-    .search-bar button {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 6px;
-        background: #2563eb;
-        color: white;
-        cursor: pointer;
-    }
-
-    .search-bar button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .error {
-        color: #dc2626;
-        font-size: 0.9rem;
     }
 </style>

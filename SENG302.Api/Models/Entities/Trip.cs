@@ -15,10 +15,14 @@ public class Trip
     [MinLength(3)]
     [Required]
     public string Title { get; set; } = string.Empty;
+
+    public bool HasScrapboard { get; set; } = false;
+
     [Required]
     public int UserId { get; set; } // Foreign key to the User that owns this trip
 
     public string Description { get; set; } = string.Empty;
+
     [Required]
     public DateTimeOffset? StartDate
     {
@@ -31,6 +35,7 @@ public class Trip
             field = value?.ToUniversalTime();
         }
     }
+
     [Required]
     public DateTimeOffset? EndDate
     {
@@ -43,4 +48,8 @@ public class Trip
             field = value?.ToUniversalTime();
         }
     }
+
+    public List<int> Collaborators { get; set; } = [];
+
+    public List<string> PendingInvites { get; set; } = [];
 }

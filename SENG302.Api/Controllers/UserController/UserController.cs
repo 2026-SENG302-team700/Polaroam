@@ -51,7 +51,7 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new GetUserResponse
+        return Ok(new UserResponse
         {
             Id = user.Id,
             Email = user.Email,

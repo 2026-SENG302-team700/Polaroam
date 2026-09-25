@@ -19,7 +19,7 @@ public class U70011ClipImageTagging
 {
     private readonly AcceptanceTestFixture _fixture;
     private HttpResponseMessage? _lastResponse;
-    private Post? _post;
+    private PostResponse? _post;
     private int _userId = 1;
 
     public U70011ClipImageTagging(AcceptanceTestFixture fixture)
@@ -103,8 +103,14 @@ public class U70011ClipImageTagging
 
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        _post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+        var postId = await _lastResponse.Content.ReadAsStringAsync();
+
+        postId.ShouldNotBeNull();
+
+        _post = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+
         _post.ShouldNotBeNull();
+        _post.PostId.ShouldBe(int.Parse(postId));
         _post.PhotoIds.ShouldHaveSingleItem();
     }
 
@@ -134,6 +140,7 @@ public class U70011ClipImageTagging
         {
             PostId = 1,
             TripId = 1,
+            CreatorId = 1,
             Title = "My post",
             Content = "",
             PhotoIds = [],
@@ -181,17 +188,17 @@ public class U70011ClipImageTagging
     [When("I view the image in enlarged view")]
     public async Task WhenIViewTheImageInEnlargedView()
     {
-        _lastResponse = await _fixture.HttpClient.GetAsync("/api/image/1/tags");
+        _lastResponse = await _fixture.HttpClient.GetAsync("/api/trips/1/images/1/tags");
     }
 
     [Then("I see an icon with tool-tip letting me know the image has been tagged with AI And I can click a button to retry tagging")]
     public async Task ThenICanClickAButtonToRetryTagging()
     {
         _lastResponse.ShouldNotBeNull();
-        var content = await _lastResponse.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        var content = await _lastResponse.Content.ReadAsStringAsync();
+        _lastResponse.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         content.ShouldNotBeNull();
-        content.Detail.ShouldBe("Tagging failed: Queue was full");
+        content.ShouldBe("Tagging failed: Queue was full");
     }
 
     [Given(@"I have just registered for Polaroam")]

@@ -50,7 +50,7 @@ public class UpdatePasswordController : ControllerBase
         string oneTimeCode = _codeService.GenerateOneTimeCode();
         if (oneTimeCode.Length != 6) return Problem();
 
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false);
+        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false, false);
         if (userUpdated == null) return NotFound(new { message = "No user with that email is registered" });
 
         // Create a dictionary of important values to send in the email, then call function to send email
@@ -98,7 +98,7 @@ public class UpdatePasswordController : ControllerBase
     /// <param name="updatePasswordRequest"></param>
     /// <returns>response to frontend based on status of request</returns>
     [HttpPut]
-    public async Task<ActionResult> updatePassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
+    public async Task<ActionResult> UpdatePassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
     {
         try
         {

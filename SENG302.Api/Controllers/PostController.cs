@@ -6,7 +6,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Responses;
 using SENG302.Api.Services;
-using SENG302.Api.Models.Responses;
 using SENG302.Api.Helpers.Validators;
 namespace SENG302.Api.Controllers;
 
@@ -36,7 +35,7 @@ public class PostController : ControllerBase
     /// <returns>All posts belonging to that user</returns>
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Post>>> GetAllPosts()
+    public async Task<ActionResult<IEnumerable<PostResponse>>> GetAllPosts()
     {
         // get the logged in user id
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -48,7 +47,14 @@ public class PostController : ControllerBase
         try
         {
             var posts = await _postService.GetAllPostsAsync(int.Parse(userIdString));
-            return Ok(posts);
+            var postResponses = new List<PostResponse>();
+
+            foreach (Post post in posts)
+            {
+                postResponses.Add(new PostResponse(post, await _userService.GetUserDisplayName(post.CreatorId)));
+            }
+
+            return Ok(postResponses);
         }
         catch (Exception e)
         {
@@ -61,11 +67,18 @@ public class PostController : ControllerBase
     /// </summary>
     /// <param name="postRequest"></param>
     /// <param name="files"></param>
+    /// <param name="aiTaggingForUpload"></param>
+    /// <param name="acceptLanguage"></param>
     /// <returns></returns>
     [Authorize]
     [HttpPost]
     [RequestSizeLimit(200000000)]
-    public async Task<ActionResult<Post>> CreatePost([FromForm] NewPostRequest postRequest, [FromForm] List<IFormFile>? files, [FromForm] bool aiTaggingForUpload = true)
+    public async Task<ActionResult<Post>> CreatePost(
+        [FromForm] NewPostRequest postRequest,
+        [FromForm] List<IFormFile>? files,
+        [FromForm] bool aiTaggingForUpload = true,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null
+        )
     {
 
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -74,8 +87,10 @@ public class PostController : ControllerBase
 
         try
         {
-            var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload);
-            return Ok(response);
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, postRequest.TripId)) return NotFound();
+
+            var response = await _postService.CreateNewPostAsync(postRequest, userId, files, aiTaggingForUpload, acceptLanguage);
+            return Ok(response.PostId);
         }
         catch (MultipleValidationListException e)
         {
@@ -97,13 +112,20 @@ public class PostController : ControllerBase
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Post>> GetPost(int id)
+    public async Task<ActionResult<PostResponse>> GetPost(int id)
     {
         try
         {
+            // verify the logged in user owns the post
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             var post = await _postService.GetPostAsync(id);
-            if (post == null) return NotFound();
-            return Ok(post);
+
+            if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)) return NotFound();
+
+            var postResponse = new PostResponse(post, await _userService.GetUserDisplayName(post.CreatorId));
+
+            return Ok(postResponse);
         }
         catch (Exception e)
         {
@@ -116,29 +138,35 @@ public class PostController : ControllerBase
     /// to the PostService
     /// </summary>
     /// <param name="postUpdates">updated values for a post</param>
+    /// <param name="files"></param>
+    /// <param name="aiTaggingForUpload"></param>
+    /// <param name="acceptLanguage"></param>
     /// <returns>
-    /// The updated post if ok
+    /// The id of the updated post if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
     [Authorize]
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<Post>> UpdatePost(
+    [RequestSizeLimit(200_000_000)]
+    public async Task<ActionResult<int>> UpdatePost(
         [FromForm] UpdatePostRequest postUpdates,
         [FromForm] List<IFormFile>? files,
-        [FromForm] bool aiTaggingForUpload = true)
+        [FromForm] bool aiTaggingForUpload = true,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null
+        )
     {
+        // verify the user owns the post first
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        User? user = await _userService.GetUserByIdAsync(userId);
+        var post = await _postService.GetPostAsync(postUpdates.Id);
 
-        if (user == null || !await _postService.UserOwnsPost(userId, postUpdates.TripId))
-        {
-            return Unauthorized();
-        }
+        if (post == null) return NotFound();
+
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)!) return NotFound();
 
         try
         {
-            var post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
-            return Ok(post);
+            post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload, acceptLanguage);
+            return Ok(post?.PostId);
         }
         catch (MultipleValidationListException e)
         {
@@ -169,14 +197,10 @@ public class PostController : ControllerBase
     [HttpGet("{postId:int}/images")]
     public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized("You do not have authorisation to view the images in this post");
-        }
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
-        if (post == null)
+        if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
             return NotFound("Post not found");
         }
@@ -196,33 +220,6 @@ public class PostController : ControllerBase
         }
 
         return Ok(photos);
-    }
-
-    /// <summary>
-    /// Returns the users display name from the post id so that it can be displayed with a trip
-    /// </summary>
-    /// <param name="postId"></param>
-    /// <returns></returns>
-    [HttpGet("{postId:int}/user")]
-    public async Task<ActionResult<User>> GetUserNameByPost(int postId)
-    {
-        var post = await _postService.GetPostAsync(postId);
-
-        if (post == null)
-        {
-            return NotFound("Post not found!");
-        }
-        var tripId = post.TripId;
-
-        var trip = await _tripService.GetTripByIdAsync(tripId);
-
-        var user = await _userService.GetUserByIdAsync(trip.UserId);
-
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
-        return Ok(user.DisplayName);
     }
 
     /// <summary>
@@ -250,9 +247,9 @@ public class PostController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        if (!await _postService.UserOwnsPost(userId, post.TripId, id))
         {
-            return Unauthorized();
+            return NotFound();
         }
 
         try
@@ -270,11 +267,7 @@ public class PostController : ControllerBase
     [HttpDelete("{postId:int}/images/{photoId:int}")]
     public async Task<IActionResult> DeletePhotoFromPost(int postId, int photoId)
     {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString))
-        {
-            return Unauthorized();
-        }
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         var post = await _postService.GetPostAsync(postId);
 
@@ -283,11 +276,15 @@ public class PostController : ControllerBase
             return NotFound("Post does not exist");
         }
 
-        var userId = int.Parse(userIdString);
-
-        if (!await _postService.UserOwnsPost(userId, post.TripId))
+        if (!await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId))
         {
-            return Unauthorized();
+            return NotFound();
+        }
+
+        // check the photo belongs to the post
+        if (post.PhotoIds == null || !post.PhotoIds.Contains(photoId))
+        {
+            return NotFound("Photo does not belong to this post");
         }
 
         try
