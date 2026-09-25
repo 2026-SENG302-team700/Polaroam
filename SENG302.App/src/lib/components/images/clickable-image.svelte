@@ -39,17 +39,19 @@
 </script>
 
 <div class="clickable-image-wrapper">
-    <img
-        src={displaySrc}
-        onclick={clicked}
-        alt="Image"
-        class="img-thumbnail clickable-image"
-    />
+    <button tabindex="0" onclick={clicked} class="clickable-image" >
+        <img
+        class="img-thumbnail"
+            src={displaySrc}
+            alt="Image"
+        />
+    </button>
+   
 </div>
 {#if enlarged}
     <FullscreenImage
         {image}
-        {index}
+        {index} 
         {images}
         {photoData}
         {photosData}
@@ -59,7 +61,12 @@
 {/if}
 
 <style>
+    .clickable-image {
+        border: 0px;
+        padding: 0;
+    }
     .img-thumbnail {
+        padding: 0;
         width: 100%;
         cursor: pointer;
         aspect-ratio: 1;
