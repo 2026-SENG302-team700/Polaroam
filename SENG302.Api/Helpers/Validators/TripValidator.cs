@@ -103,12 +103,14 @@ public static class TripValidator
             errors["dateTwo"].Add("Date is invalid");
         }
 
-        if (startDate < new DateTimeOffset(new DateOnly(1900, 1, 1), TimeOnly.MinValue, TimeSpan.Zero))
+        var minimumDate = new DateTime(1900, 1, 1);
+
+        if (startDate?.Date < minimumDate)
         {
             errors["dateOne"].Add("Invalid, date must not be before January 1st 1900");
         }
 
-        if (endDate < new DateTimeOffset(new DateOnly(1900, 1, 1), TimeOnly.MinValue, TimeSpan.Zero))
+        if (endDate?.Date < minimumDate)
         {
             errors["dateTwo"].Add("Invalid, date must not be before January 1st 1900");
         }
