@@ -327,12 +327,17 @@
                         Error: {error}
                     {/if}
                     <h1 class="card-subtitle mb-4 h2 user-name">
-                        Owner: {tripOwner?.displayName}
+                        Collaborators
                     </h1>
+                    <div
+                            class="p-2 collaborators-list"
+                    >
+                        <span class="owner-box collaborator-info">Owner: {tripOwner?.displayName}</span>
+                    </div>
                     {#if !loading}
                         {#each tripCollaborators as collaborator}
                             <div
-                                class="d-flex align-items-center justify-content-between p-2 mb-2 border rounded collaborators-list"
+                                class="p-2 collaborators-list"
                             >
                                 <span class="collaborator-info fw-medium"
                                     >{collaborator.displayName}</span
@@ -530,14 +535,24 @@
     .collaborator-info {
         font-size: 18px;
         font-weight: 500;
+        line-height: 1.2;
     }
 
     .collaborators-list {
         display: flex;
+        border-bottom: 1px solid #000000;
+        align-items: center;
         gap: 5px;
         justify-content: space-between;
-        margin-bottom: 4px;
-        margin-top: 4px;
         flex-wrap: wrap;
+    }
+
+    .collaborators-list .btn-group {
+        margin-bottom: 2px;
+        align-self: center;
+    }
+    
+    .owner-box {
+        font-weight: 700;
     }
 </style>

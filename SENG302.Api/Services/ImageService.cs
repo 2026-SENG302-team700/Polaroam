@@ -48,7 +48,7 @@ public class ImageService : IImageService
 
         // Trip ids owned by this user
         var userTripIds = context.Trips
-            .Where(t => t.UserId == userId)
+            .Where(t => t.UserId == userId || t.Collaborators.Contains(userId))
             .Select(t => t.Id);
 
         // Start the query with albums that this user owns

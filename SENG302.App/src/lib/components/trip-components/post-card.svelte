@@ -58,11 +58,11 @@
     </div>
 
     {#if post.photoIds?.length > 0}
-        <div class="post-images" onclick={(event) => event.stopPropagation()}>
+        <div class="post-images">
             <ImageCarousel {post} />
         </div>
     {/if}
-    <span class="view-post">View post <i class="bi bi-arrow-right"></i></span>
+    <span class="view-post">View post <i class="bi bi-arrow-right" /></span>
 </article>
 
 <style>
@@ -72,10 +72,10 @@
         height: 100%;
         flex-direction: column;
         overflow: hidden;
-        border: 2px solid #686868;
+        border: 2px solid #1f1f1f;
         border-radius: 0.55rem;
         background: #fff8e8;
-        box-shadow: 5px 5px 0 #686868;
+        box-shadow: 5px 5px 0 #1f1f1f;
         cursor: pointer;
         transition:
             transform 120ms ease,
@@ -85,7 +85,7 @@
     .post-card:hover,
     .post-card:focus-visible {
         transform: translate(-2px, -2px);
-        box-shadow: 7px 7px 0 #686868;
+        box-shadow: 7px 7px 0 #1f1f1f;
         outline: none;
     }
 

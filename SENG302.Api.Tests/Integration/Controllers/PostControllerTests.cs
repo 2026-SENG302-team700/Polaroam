@@ -155,7 +155,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         _mockPostService.GetPostAsync(post.PostId).Returns(post);
         _mockTripService.UserHasCollaborationAccessToTrip(1, post.TripId).Returns(false);
 
-        var result = await _controller.GetPost(post.PostId);
+        var result = await _controller.GetPost(post.PostId, post.TripId);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
@@ -392,7 +392,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PutAsync("/api/post/1", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1/trip/1");
         retrievedPost!.PhotoIds.ShouldBe([1]);
     }
 
@@ -429,7 +429,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1/trip/1");
         retrievedPost!.PhotoIds.Count.ShouldBe(1);
     }
 
@@ -450,7 +450,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1/trip/1");
         retrievedPost!.PhotoIds.Count.ShouldBe(2);
         retrievedPost!.PhotoIds.ShouldBeUnique();
 
@@ -473,7 +473,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         postId.ShouldNotBeNull();
 
-        var post = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+        var post = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}/trip/1");
         post!.PhotoIds.ShouldBeEmpty();
     }
 
@@ -573,7 +573,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
         await HttpClient.PutAsync("/api/post/1", uploadForm);
 
-        var response = await HttpClient.GetAsync("/api/post/1/images");
+        var response = await HttpClient.GetAsync("/api/post/1/images/trip/1");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var photos = await response.Content.ReadFromJsonAsync<List<PhotoMetadataResponse>>();
@@ -598,7 +598,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         using var uploadForm = BuildUpdatePostForm(photos: [(file, "panda.webp", "image/webp")]);
         await HttpClient.PutAsync("/api/post/1", uploadForm);
 
-        var response = await HttpClient.GetAsync("/api/post/3/images");
+        var response = await HttpClient.GetAsync("/api/post/3/images/trip/1");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         var photos = await response.Content.ReadAsStringAsync();
@@ -1218,7 +1218,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockTripService.UserHasCollaborationAccessToTrip(1, post.TripId).Returns(true);
 
-        var result = await _controller.GetPost(10);
+        var result = await _controller.GetPost(10, 20);
 
         var okResult = result.Result.ShouldBeOfType<OkObjectResult>();
         okResult.Value.ShouldNotBeNull();
@@ -1286,7 +1286,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(999).Returns((Post?)null);
 
-        var result = await _controller.GetPost(999);
+        var result = await _controller.GetPost(999, 1);
 
         result.Result.ShouldBeOfType<NotFoundResult>();
 
@@ -1329,7 +1329,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(10).Returns(Task.FromException<Post?>(new Exception("Unable to retrieve post")));
 
-        var result = await _controller.GetPost(10);
+        var result = await _controller.GetPost(10, 1);
 
         var badRequest = result.Result.ShouldBeOfType<BadRequestObjectResult>();
 
@@ -1520,7 +1520,8 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task DeletePost_UserDoesNotOwnPost_ReturnsNotFound()
     {
         SetupUserContext("1");
-
+        
+        
         var post = new Post
         {
             CreatorId = 30,
@@ -1535,6 +1536,14 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockPostService.UserOwnsPost(1, 20, 10).Returns(false);
+        _mockTripService.GetTripByIdAsync(20).Returns(new Trip
+        {
+            Id = 20,
+            Title = "Someone else trip",
+            UserId = 30,
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21)
+        });
 
         var result = await _controller.DeletePost(10);
 
@@ -1547,7 +1556,16 @@ public class PostControllerTests : BaseIntegrationTestFixture
     public async Task DeletePost_ServiceCannotFindPost_ReturnsNotFound()
     {
         SetupUserContext("1");
-
+        
+        var trip = new Trip
+        {
+            Title = "Trip!",
+            UserId = 1,
+            Description = "Test",
+            StartDate = DateToDateTimeOffset(2025, 11, 21),
+            EndDate = DateToDateTimeOffset(2025, 12, 21),
+            Collaborators = [2]
+        };
         var post = new Post
         {
             PostId = 10,
@@ -1562,6 +1580,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         _mockPostService.GetPostAsync(10).Returns(post);
         _mockPostService.UserOwnsPost(1, 20, 10).Returns(true);
+        _mockTripService.GetTripByIdAsync(20).Returns(trip);
 
         _mockPostService.DeletePostByIdAsync(10).Returns(Task.FromException(new ArgumentException("Post does not exist")));
 

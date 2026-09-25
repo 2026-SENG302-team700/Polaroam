@@ -13,7 +13,7 @@ namespace SENG302.Api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -169,7 +169,10 @@ public class Program
             });
         }
 
-        _ = InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
+        await InitializeDatabase(
+            app.Services.CreateScope().ServiceProvider,
+            !(app.Environment.IsProduction() || app.Environment.IsStaging())
+        );
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -246,7 +249,10 @@ public class Program
                 await dbContext.Database.MigrateAsync();
             }
 
-            await CreateExampleUsersHelper.CreateExamples(dbContext);
+            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            var fileStoragePath = configuration["FileStorage:BasePath"]
+                ?? throw new InvalidOperationException("File storage path is not configured");
+            await CreateExampleUsersHelper.CreateExamples(dbContext, fileStoragePath);
         }
         catch (Exception e)
         {

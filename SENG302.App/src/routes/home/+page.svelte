@@ -16,8 +16,8 @@
     let searchQuery = $state("");
     let inSearch = $state(false);
 
-    let searchTrips = $state([]);
-    let searchPhotoTrips: TripPhotoGroup[] = $state([]);
+    let searchTrips: Trip[] = $state([]);
+    let photosPerTrip: TripPhotoGroup[] = $state([]);
 
     let tagQuery = $state("");
 
@@ -55,7 +55,7 @@
         }
 
         searchTrips = [];
-        searchPhotoTrips = [];
+        photosPerTrip = [];
 
         inSearch = true;
 
@@ -98,7 +98,7 @@
                     }[];
                 }[] = await photosResponse.json();
 
-                searchPhotoTrips = await Promise.all(
+                photosPerTrip = await Promise.all(
                     groups.map(async (group) => {
                         const photos = await Promise.all(
                             group.photos.map(async (meta) => {
@@ -129,9 +129,7 @@
                 photosError = "Failed to fetch search results.";
             }
 
-            const photoTripIds = new Set(
-                searchPhotoTrips.map((pt) => pt.tripId),
-            );
+            const photoTripIds = new Set(photosPerTrip.map((pt) => pt.tripId));
             searchTrips = searchTrips.filter(
                 (trip) => !photoTripIds.has(trip.id),
             );
@@ -149,7 +147,7 @@
     function clearSearch() {
         tagQuery = "";
         searchTrips = [];
-        searchPhotoTrips = [];
+        photosPerTrip = [];
         inSearch = false;
     }
 </script>
@@ -178,7 +176,7 @@
             {#if inSearch}
                 <SearchView
                     trips={searchTrips}
-                    photoTrips={searchPhotoTrips}
+                    {photosPerTrip}
                     query={tagQuery}
                 />
             {:else if trips.length > 0}

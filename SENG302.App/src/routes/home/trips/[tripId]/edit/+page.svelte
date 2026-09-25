@@ -5,6 +5,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { onMount } from "svelte";
+    import { serializeLocalDate } from "$lib/datepicker/formatDate";
 
     let { params } = $props();
 
@@ -99,8 +100,13 @@
                         Title: tripTitle,
                         Description: tripDescription,
                         StartDate:
-                            startDate == null ? null : startDate.toISOString(),
-                        EndDate: endDate == null ? null : endDate.toISOString(),
+                            startDate == null
+                                ? null
+                                : serializeLocalDate(startDate),
+                        EndDate:
+                            endDate == null
+                                ? null
+                                : serializeLocalDate(endDate),
                     }),
                     credentials: "include",
                 },

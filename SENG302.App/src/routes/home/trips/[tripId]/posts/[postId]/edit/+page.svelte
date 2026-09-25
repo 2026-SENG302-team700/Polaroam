@@ -1,7 +1,6 @@
 <script lang="ts">
     import TitleForm from "$lib/components/forms/title-form.svelte";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import PostForm from "$lib/components/forms/form-wrapper.svelte";
     import ConfirmCancelButton from "$lib/components/buttons/confirmation-cancel-button.svelte";
     import DescriptionForm from "$lib/components/forms/description-form.svelte";
     import CreationButton from "$lib/components/buttons/creation-button.svelte";
@@ -17,7 +16,9 @@
     import { goto } from "$app/navigation";
     import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
+    import { serializeLocalDate } from "$lib/datepicker/formatDate";
 
+    let { params } = $props();
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
@@ -96,7 +97,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${page.params.postId}/images` as any),
+                resolve(`/api/post/${page.params.postId}/images/trip/${page.params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -159,7 +160,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${page.params.postId}` as any),
+                resolve(`/api/post/${page.params.postId}/trip/${page.params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -229,7 +230,7 @@
             form.append("OsmId", location.osmId);
             form.append("OsmType", location.osmType);
             form.append("Content", content);
-            form.append("Date", date?.toISOString() ?? "");
+            form.append("Date", date ? serializeLocalDate(date) : "");
             form.append("NoContentAllowed", noContentAllowed);
             // add the ai tagging option to the form data
             form.append("aiTaggingForUpload", aiTaggingForUpload.toString());

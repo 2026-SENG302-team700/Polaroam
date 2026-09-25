@@ -36,6 +36,17 @@
         creationTime: "9999-12-31",
     });
 
+    let tripObject: Trip = $state({
+        id: -1,
+        title: "No Title",
+        description: "No Description",
+        startDate: "9998-12-31",
+        endDate: "9999-12-31",
+        userId: 0,
+        ownerName: "No Owner",
+        collaborators: [],
+    });
+
     let photos: File[] = $state([]);
     let photosData: TripIdAndPhoto[] = $state([]);
 
@@ -50,7 +61,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/images` as any),
+                resolve(`/api/post/${postId}/images/trip/${params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -105,7 +116,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}` as any),
+                resolve(`/api/post/${postId}/trip/${params.tripId}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -125,6 +136,7 @@
             }
             postObject = data;
             await fetchImages();
+            await fetchTrip();
         } catch (err) {
             error = "Failed to fetch post: " + (err as Error).message;
         } finally {
@@ -161,6 +173,37 @@
         }
     }
 
+    /**
+     * Fetches the trip from the backend corresponding
+     * with the slug value being the trip's id
+     */
+    async function fetchTrip() {
+        try {
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/trip/${postObject.tripId}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+
+            // Check response
+            if (!response.ok) {
+                error = "Failed to fetch trip.";
+                return;
+            }
+
+            // Parse response
+            const data = await response.json();
+            tripObject = data;
+        } catch (err) {
+            error = "Failed to fetch trip";
+        } finally {
+            loading = false;
+        }
+    }
+
     function showConfirmationModal() {
         deletionModalShown = true;
     }
@@ -184,7 +227,7 @@
             <EditButton
                 path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
             />
-            {#if postObject.creatorId == $user.id}
+            {#if postObject.creatorId == $user.id || tripObject.userId == $user.id}
                 <DeleteButton deleteAction={showConfirmationModal} />
             {/if}
             <ErrorDisplay errors={[error]} />

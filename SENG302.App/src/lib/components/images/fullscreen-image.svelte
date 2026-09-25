@@ -317,6 +317,7 @@
                         <div class="image-details">
                             <div class="image-detail btn btn-secondary btn-sm">
                                 <span
+                                        style={imageContext.postId ? "max-width: 50cqw" : "max-width: 85cqw"}
                                     ><strong>Trip:</strong>
                                     {imageContext.tripTitle}</span
                                 >
@@ -440,6 +441,7 @@
         display: flex;
         align-items: center;
         gap: 0.4rem;
+        padding: 4px;
     }
     .image-detail {
         display: inline-flex;
@@ -458,6 +460,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        max-width: 40cqw;
     }
     .detail-divider {
         width: auto;
@@ -470,7 +473,9 @@
         display: flex;
         gap: 0.4rem;
         margin-left: auto;
+        padding: 3px;
     }
+
     .image-toolbar {
         position: absolute;
         top: 0;
@@ -518,6 +523,7 @@
         position: relative;
         width: min(100cqw, 100cqh * var(--aspectRatio, 1));
         height: min(100cqh, 100cqw / var(--aspectRatio, 1));
+        container-type: inline-size;
     }
     .image {
         display: block;

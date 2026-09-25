@@ -15,6 +15,7 @@
     import { onMount } from "svelte";
     import AiTaggingOption from "$lib/components/images/ai-tagging-upload-option.svelte";
     import FormWrapper from "$lib/components/forms/form-wrapper.svelte";
+    import { serializeLocalDate } from "$lib/datepicker/formatDate";
 
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -107,7 +108,7 @@
             form.append("OsmId", location.osmId);
             form.append("OsmType", location.osmType);
             form.append("Content", content);
-            form.append("Date", date?.toISOString() ?? "");
+            form.append("Date", date ? serializeLocalDate(date) : "");
             form.append("NoContentAllowed", noContentAllowed);
             if (files != null) {
                 for (let i = 0; i < files.length; i++) {

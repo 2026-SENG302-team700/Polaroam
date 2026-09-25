@@ -21,10 +21,14 @@ public static class PostValidator
             return errors;
         }
 
-        if (date < new DateTimeOffset(new DateOnly(1900, 1, 1), TimeOnly.MinValue, TimeSpan.Zero))
-            errors.Add("Invalid date, date must not be before January 1st 1900 (UTC)");
+        if (date.Value.Date < new DateTime(1900, 1, 1))
+            errors.Add("Invalid date, date must not be before January 1st 1900");
 
-        if (date > DateTimeOffset.UtcNow) errors.Add("Invalid date, date cannot be in the future");
+        var todayAtSubmittedOffset = DateTimeOffset.UtcNow
+            .ToOffset(date.Value.Offset)
+            .Date;
+        if (date.Value.Date > todayAtSubmittedOffset)
+            errors.Add("Invalid date, date cannot be in the future");
         return errors;
     }
 

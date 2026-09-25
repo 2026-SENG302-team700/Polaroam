@@ -5,6 +5,7 @@
 
     let { post } = $props();
 
+    let error = $state("");
     let index = $state(0);
     let photos: File[] = $state([]);
     let image = <File>$state();
@@ -44,7 +45,9 @@
     async function fetchImages() {
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/post/${post.postId}/images` as any),
+                resolve(
+                    `/api/post/${post.postId}/images/trip/${post.tripId}` as any,
+                ),
                 {
                     method: "GET",
                     credentials: "include",
@@ -54,6 +57,7 @@
                 error = (await response.text()) || "Failed to fetch images.";
                 return;
             }
+            console.log(response);
 
             const metadata: {
                 photoId: number;
@@ -84,6 +88,16 @@
             error = "Failed to fetch images: " + (err as Error).message;
         }
     }
+
+    /**
+     * Handler for carousel buttons click
+     * @param event
+     * @param func
+     */
+    function handleCarouselButtons(event, func: () => {}) {
+        event.stopPropagation();
+        func();
+    }
 </script>
 
 <svelte:window
@@ -103,21 +117,23 @@
     <div class="image-container">
         <div class="close-button-wrapper">
             <img src={imageUrl} alt="Image" class="image" />
-            {#if photos !== null && photos?.length > 1 && index !== photos?.length - 1}
-                <button
-                    type="button"
-                    class="btn btn-secondary bi-arrow-right carousel-arrow right-arrow"
-                    title="Next image"
-                    onclick={moveToRightImage}
-                ></button>
-            {/if}
             {#if photos !== null && photos?.length > 1 && index !== 0}
                 <button
                     type="button"
                     class="btn btn-secondary bi-arrow-left carousel-arrow left-arrow"
                     title="Previous image"
-                    onclick={moveToLeftImage}
-                ></button>
+                    onclick={(event) =>
+                        handleCarouselButtons(event, moveToLeftImage)}
+                />
+            {/if}
+            {#if photos !== null && photos?.length > 1 && index !== photos?.length - 1}
+                <button
+                    type="button"
+                    class="btn btn-secondary bi-arrow-right carousel-arrow right-arrow"
+                    title="Next image"
+                    onclick={(event) =>
+                        handleCarouselButtons(event, moveToRightImage)}
+                />
             {/if}
         </div>
     </div>
@@ -150,11 +166,11 @@
         justify-content: center;
     }
 
- .carousel-arrow {
-    position: absolute;
-    z-index: 2;
-    top: 50%;
- }
+    .carousel-arrow {
+        position: absolute;
+        z-index: 2;
+        top: 50%;
+    }
 
     .left-arrow {
         left: 0.75rem;

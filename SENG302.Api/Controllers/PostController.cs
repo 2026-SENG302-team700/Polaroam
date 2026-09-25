@@ -111,8 +111,8 @@ public class PostController : ControllerBase
     /// <param name="id">The desired post's id</param>
     /// <returns>The posts corresponsing to the Id</returns>
     [Authorize]
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<PostResponse>> GetPost(int id)
+    [HttpGet("{id:int}/trip/{tripId:int}")]
+    public async Task<ActionResult<PostResponse>> GetPost(int id, int tripId)
     {
         try
         {
@@ -121,7 +121,7 @@ public class PostController : ControllerBase
 
             var post = await _postService.GetPostAsync(id);
 
-            if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId)) return NotFound();
+            if (post == null || !await _tripService.UserHasCollaborationAccessToTrip(userId, post.TripId) || post.TripId != tripId) return NotFound();
 
             var postResponse = new PostResponse(post, await _userService.GetUserDisplayName(post.CreatorId));
 
@@ -194,8 +194,8 @@ public class PostController : ControllerBase
     /// <param name="postId">The id of the post</param>
     /// <returns>a list of metadata objects</returns>
     [Authorize]
-    [HttpGet("{postId:int}/images")]
-    public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId)
+    [HttpGet("{postId:int}/images/trip/{tripId:int}")]
+    public async Task<ActionResult<List<PhotoMetadataResponse>>> GetPostPhotos(int postId, int tripId)
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -247,7 +247,19 @@ public class PostController : ControllerBase
 
         var userId = int.Parse(userIdString);
 
-        if (!await _postService.UserOwnsPost(userId, post.TripId, id))
+        Trip trip;
+        try
+        {
+            trip = await _tripService.GetTripByIdAsync(post.TripId);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+
+        
+        
+        if (!await _postService.UserOwnsPost(userId, post.TripId, id) && trip.UserId != userId)
         {
             return NotFound();
         }
