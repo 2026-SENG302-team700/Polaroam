@@ -16,13 +16,14 @@ public class CollaborationController : ControllerBase
     private readonly ITripService _tripService;
     private readonly ICollaborationService _collaborationService;
 
-
-    public CollaborationController(ITripService tripService, ICollaborationService collaborationService)
+    private readonly IUserService _userService;
+    public CollaborationController(ITripService tripService, ICollaborationService collaborationService, IUserService userService)
     {
         _tripService = tripService;
         _collaborationService = collaborationService;
+        _userService = userService;
     }
-    
+
     /// <summary>
     /// Returns all collaborates 
     /// </summary>
@@ -46,14 +47,13 @@ public class CollaborationController : ControllerBase
                     return Unauthorized(
                         "User does not have access to collaborate on the trip and view collaboration details");
                 }
+                var collaborators = await _collaborationService.GetTripCollaborators(tripId);
+                return Ok(collaborators);
             }
             else
             {
                 return Unauthorized("User Id does not exist");
             }
-
-            var collaborators = await _collaborationService.GetTripCollaborators(tripId);
-            return Ok(collaborators);
         }
         catch (KeyNotFoundException e)
         {
@@ -65,6 +65,15 @@ public class CollaborationController : ControllerBase
         }
     }
     
+    /// <summary>
+    /// Leave the collaboration modal
+    /// </summary>
+    /// <param name="tripId">The trip that user wants to leave</param>
+    /// <returns>
+    /// Unauthorized - If User is not logged in or is not a collaborator on the trip
+    /// Bad Request - If the backend failed to remove user from the trip
+    /// No content 204 - If the user is able to leave successfully
+    /// </returns>
     [Authorize]
     [HttpPost("leave")]
     public async Task<ActionResult> LeaveCollaboration(int tripId)
@@ -80,7 +89,7 @@ public class CollaborationController : ControllerBase
             {
                 return Unauthorized("Not a collaborator on the trip");
             }
-            
+
             // Leave collaboration
             await _collaborationService.LeaveCollaboration(userId, tripId);
             return NoContent();
@@ -90,7 +99,7 @@ public class CollaborationController : ControllerBase
             return BadRequest("Failed to leave collaboration");
         }
     }
-    
+
     /// <summary>
     /// End point for posting invite to a user to a trip
     /// </summary>
@@ -155,4 +164,135 @@ public class CollaborationController : ControllerBase
         }
         return Ok();
     }
+
+    /// <summary>
+    /// If a user has been invited to the given trip, then the action provided in collaborationRequest
+    /// will be passed to the backend to have their action performed.
+    /// </summary>
+    /// <param name="tripId"></param>
+    /// <param name="collaborationRequest"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpPost("action")]
+    public async Task<ActionResult> ActionCollaboration(int tripId, [FromBody] CollaborationRequest collaborationRequest)
+    {
+        try
+        {
+            // Check logged in
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Not logged in");
+
+            // Get user and trip
+            var user = await _userService.GetUserByIdAsync(int.Parse(userIdString));
+            if (user == null) return Unauthorized("User not found");
+            var trip = await _tripService.GetTripByIdAsync(tripId);
+
+            // Check for pending invite
+            if (!trip.PendingInvites.Contains(user.Email)) return BadRequest("No pending invites");
+
+            // Reject
+            if (collaborationRequest.Action == 0)
+            {
+                await _collaborationService.ActionRejectAsync(tripId, user);
+                return Ok("successfully rejected");
+            }
+
+            // Accept
+            if (collaborationRequest.Action == 1)
+            {
+                await _collaborationService.ActionAcceptAsync(tripId, user);
+                return Ok("successfully accepted");
+            }
+
+            // Invalid action (not 0 or 1)
+            return BadRequest("Not a valid collaboration action!");
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Kick the user from a given trip
+    /// </summary>
+    /// <param name="tripId">The trip id of the trip to remove user as collaborator from</param>
+    /// <param name="kickedUserId">The id of the user that is going to be kicked</param>
+    /// <returns>
+    /// Ok - If the trip and user id are valid and the user can be kicked. Returns the list of remaining collaborators
+    /// Bad Request - If the trip and user id do not correspond to real trip or user
+    /// Unauthorized - The user is unauthorized and cannot be added to the trip
+    /// </returns>
+    [Authorize]
+    [HttpDelete("kick/{kickedUserId:int}")]
+    public async Task<ActionResult<IEnumerable<CollaboratingUserResponse>>> KickUser(int tripId, int kickedUserId)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("Not logged in");
+        }
+        
+
+        var userId = int.Parse(userIdString);
+        
+        try
+        {
+            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            {
+                return Unauthorized("User does not have permission to kick collaborators from this trip");
+            }
+            
+            await _collaborationService.KickUserAsync(tripId, kickedUserId);
+            
+        }
+        catch (KeyNotFoundException e)
+        {
+            return BadRequest(e.Message);
+        }
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// changes the owner of the trip
+    /// </summary>
+    /// <param name="tripId">id of trip where owner is being swapped</param>
+    /// <param name="newOwnerId">the owner to become owner of the trip</param>
+    /// <returns>
+    /// Unauthorized - Not logged in, user is not owner, owner trying to set owner that isn't a collaborator
+    /// Bad Request - exceptions
+    /// OK - Ownership of trip is transferred to the new owner
+    /// </returns>
+    [Authorize]
+    [HttpPatch("transfer/{newOwnerId:int}")]
+    public async Task<ActionResult> SwapOwnership(int tripId, int newOwnerId)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized("Not logged in");
+            }
+
+            var userId = int.Parse(userIdString);
+            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            {
+                return Unauthorized("User cannot transfer ownership as they are not the current owner");
+            }
+        
+            if (!await _tripService.UserHasCollaborationAccessToTrip(newOwnerId, tripId))
+            {
+                return Unauthorized("New owner does not have access to collaborate on the trip");
+            }
+            await _collaborationService.SwapOwnership(userId, newOwnerId, tripId);
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    } 
 }

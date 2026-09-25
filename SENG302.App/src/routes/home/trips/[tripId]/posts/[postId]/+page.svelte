@@ -10,6 +10,7 @@
     import EditButton from "$lib/components/buttons/edit-button.svelte";
     import PostDisplayCard from "$lib/components/trip-components/post-display-card.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
+    import { user } from "$lib/stores/user.js";
 
     let loading = $state(false);
     let error = $state("");
@@ -19,9 +20,7 @@
     let { params } = $props();
     let postId = params.postId;
 
-    let displayName = $state("");
-
-    let postObject = $state({
+    let postObject: Post = $state({
         postId: 0,
         tripId: 0,
         title: "No Title",
@@ -30,38 +29,20 @@
         date: "9999-12-31",
         photoIds: [],
         osmId: 0,
+        osmType: "",
+        creatorId: 0,
+        creatorDisplayName: "Creator Name",
         locationName: "No Location",
         creationTime: "9999-12-31",
     });
 
     let photos: File[] = $state([]);
-    let photoIds: number[] = $state([]);
+    let photosData: TripIdAndPhoto[] = $state([]);
 
     onMount(() => {
         fetchPost();
-        fetchDisplayName();
     });
 
-    /**
-     * Fetch the display name of the user based on the post
-     */
-    async function fetchDisplayName() {
-        try {
-            loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/post/${postId}/user` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            displayName = await response.text();
-        } catch (err) {
-            error = "Failed to fetch post creator: " + (err as Error).message;
-        } finally {
-            loading = false;
-        }
-    }
     /**
      * Fetch Images
      */
@@ -89,7 +70,9 @@
             photos = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/image/${meta.photoId}` as any),
+                        resolve(
+                            `/api/trips/${postObject.tripId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
                             credentials: "include",
@@ -101,7 +84,12 @@
                     });
                 }),
             );
-            photoIds = metadata.map((meta) => meta.photoId);
+            photosData = metadata.map((meta) => {
+                return {
+                    photoId: meta.photoId,
+                    tripId: postObject.tripId,
+                } as TripIdAndPhoto;
+            });
         } catch (err) {
             error = "Failed to fetch images: " + (err as Error).message;
         } finally {
@@ -196,15 +184,12 @@
             <EditButton
                 path={`/home/trips/${params.tripId}/posts/${params.postId}/edit`}
             />
-            <DeleteButton deleteAction={showConfirmationModal} />
+            {#if postObject.creatorId == $user.id}
+                <DeleteButton deleteAction={showConfirmationModal} />
+            {/if}
             <ErrorDisplay errors={[error]} />
 
-            <PostDisplayCard
-                post={postObject}
-                userName={displayName}
-                {photos}
-                {photoIds}
-            />
+            <PostDisplayCard post={postObject} {photos} {photosData} />
         </div>
     </div>
 {/if}

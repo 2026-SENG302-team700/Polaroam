@@ -1,20 +1,19 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Responses;
 
 namespace SENG302.Api.Services;
 
 public interface INotificationService
 {
     Task AddNotificationAsync(Notification notification);
-    Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count);
+    Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count, int offset = 0);
     Task SetNotificationStatusByIdAsync(int notificationId, bool status);
     Task SetNotificationHandledByIdAsync(int notificationId, bool handled);
     Task<bool> UserOwnsNotification(int notificationId, int userId);
     Task<int> GetUnreadCount(int userId);
-    Task<bool> UserHasMoreThan(int userId, int count);
+    Task<bool> UserHasMoreThan(int userId, int limit, int offset = 0);
+    Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId);
 }
 
 public class NotificationService : INotificationService
@@ -29,10 +28,10 @@ public class NotificationService : INotificationService
     /// <summary>
     /// Add a new notification to the database
     /// </summary>
-    /// <param name="notification">the noitification to add to database</param>
+    /// <param name="notification">the notification to add to database</param>
     public async Task AddNotificationAsync(Notification notification)
     {
-        using var context = await _dbContextFactory.CreateDbContextAsync();
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
         await context.Notifications.AddAsync(notification);
         await context.SaveChangesAsync();
     }
@@ -43,16 +42,20 @@ public class NotificationService : INotificationService
     /// </summary>
     /// <param name="userId">Id of the user to fetch notifications for</param>
     /// <param name="count">How many notifications to select from table and return</param>
+    /// <param name="offset">notifications to skip when loading notifications</param>
     /// <returns>A list of notification responses ordered correctly</returns>
-    public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count)
+    public async Task<List<Notification>> GetNotificationsByUserIdAsync(int userId, int count, int offset = 0)
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();
+        
         var notifications = await context.Notifications
             .Where(n => n.UserId == userId)
             .OrderBy(n => n.ReadStatus)
             .ThenByDescending(n => n.Timestamp)
+            .Skip(offset)
             .Take(count)
             .ToListAsync();
+        
         return notifications;
     }
 
@@ -105,11 +108,34 @@ public class NotificationService : INotificationService
     /// Checks if a user has more notifications (in total) than count
     /// </summary>
     /// <param name="userId">User we are checking</param>
-    /// <param name="count">The count we are wondering if they have more than that</param>
+    /// <param name="limit">The number of rows retrieved </param>
+    /// <param name="offset">offset for skipping notifications already classified</param>
     /// <returns>If the user has more than 'count' notifications</returns>
-    public async Task<bool> UserHasMoreThan(int userId, int count)
+    public async Task<bool> UserHasMoreThan(int userId, int limit, int offset = 0)
     {
         using var context = await _dbContextFactory.CreateDbContextAsync();
-        return await context.Notifications.Where(n => n.UserId == userId).Skip(count).AnyAsync();
+
+        int count = await context.Notifications.Where(n => n.UserId == userId).CountAsync();
+        return offset + limit < count;
+    }
+
+    /// <summary>
+    /// creates an invitation notification for a trip invite and stores it with the given user.
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="invitedUserId"></param>
+    /// <returns></returns>
+    public async Task SendInviteNotificationAsync(string title, int invitedUserId, int tripId)
+    {
+        var inviteNotification = new TripInvitationNotification
+        {
+            TripId = tripId,
+            UserId = invitedUserId,
+            HeaderText = "New Invitation Request",
+            BodyText = $"You have been invited to collaborate on the {title} trip!",
+            Timestamp = DateTimeOffset.UtcNow,
+            NotificationType = "TripInvitation",
+        };
+        await AddNotificationAsync(inviteNotification);
     }
 }

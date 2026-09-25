@@ -128,6 +128,23 @@ namespace SENG302.Api.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.PendingUser", b =>
+                {
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<List<int>>("TripInvites")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.HasKey("Email");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("PendingUsers");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.Post", b =>
                 {
                     b.Property<int>("PostId")
@@ -142,6 +159,9 @@ namespace SENG302.Api.Migrations
 
                     b.Property<DateTimeOffset>("CreationTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatorId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("Date")
                         .HasColumnType("timestamp with time zone");

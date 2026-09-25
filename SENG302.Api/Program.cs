@@ -169,7 +169,7 @@ public class Program
             });
         }
 
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
+        _ = InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -239,7 +239,7 @@ public class Program
         {
             if (isDevelopment)
             {
-                dbContext.Database.EnsureCreated();
+                await dbContext.Database.EnsureCreatedAsync();
             }
             else
             {

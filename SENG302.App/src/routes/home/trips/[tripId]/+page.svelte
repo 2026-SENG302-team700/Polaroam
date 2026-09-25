@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { user } from "$lib/stores/user";
     import NavigationButton from "$lib/components/buttons/navigation-button.svelte";
     import { onMount } from "svelte";
     import { fetchWithCsrf } from "$lib/csrf.js";
@@ -16,45 +15,35 @@
     import AlbumButton from "$lib/components/buttons/album-button.svelte";
     import NotFound from "$lib/components/content/not-found.svelte";
     import ScrapboardImage from "$lib/components/scrapboard/scrapboard-image.svelte";
+    import { user } from "$lib/stores/user.js";
 
     let loading = $state(false);
     let error = $state("");
     let deletionModalShown = $state(false);
     let { params } = $props();
     let tripId = params.tripId;
-    let tripOwner = $state();
     let hoveredPostId: number | null = $state(null);
     let collaborationModalShown: boolean = $state(false);
-    let collaboratingUsersError: string = $state("");
 
-    let tripObject = $state({
+    let tripObject: Trip = $state({
         id: -1,
         title: "No Title",
         description: "No Description",
         startDate: "9998-12-31",
         endDate: "9999-12-31",
         userId: 0,
+        ownerName: "No Owner",
+        collaborators: [],
     });
 
-    let collaboratingUsers: CollaboratingUser[] = $state([]);
-
-    const LoadState = {
-        UNLOADED: 0,
-        LOADING: 1,
-        LOADED: 2,
-    };
-
-    let collaboratingLoadingState: number = $state(LoadState.UNLOADED);
-
     let postLocations = $state([]);
-    let posts = $state([]);
+    let posts: Post[] = $state([]);
     let selectedPost = $state(null);
 
     onMount(() => {
         fetchTrip();
         fetchPosts();
         fetchLocations();
-        fetchUserName();
     });
 
     /**
@@ -71,19 +60,18 @@
                     credentials: "include",
                 },
             );
-            
+
             // Check response
             if (!response.ok) {
                 error = "Failed to fetch trip.";
                 return;
             }
-            
-            // Parse response 
+
+            // Parse response
             const data = await response.json();
             tripObject = data;
-            
         } catch (err) {
-            error = "Failed to fetch trip"
+            error = "Failed to fetch trip";
         } finally {
             loading = false;
         }
@@ -167,76 +155,50 @@
     function hideConfirmationModal() {
         deletionModalShown = false;
     }
-
-    async function fetchUserName() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/user` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            tripOwner = await response.json();
-        } catch (err) {
-            throw new Error(
-                "Failed to fetch trip owner"
-            );
-        }
-    }
-
     /**
      * Turn on the collaboration modal
      * If the collaborators are not yet loaded then load them
      */
     function showCollaborationModal() {
-        if (collaboratingLoadingState === LoadState.UNLOADED) {
-            collaboratingLoadingState = LoadState.LOADING;
-            fetchTripCollaborators()
-                .then(() => {
-                    collaboratingLoadingState = LoadState.LOADED;
-                })
-                .catch((e: Error) => {
-                    collaboratingUsersError = e.message;
-                });
-        }
-
         collaborationModalShown = true;
-    }
-
-    /**
-     * Fetch all collaborators of trip from backend
-     */
-    async function fetchTripCollaborators() {
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/trip/${tripId}/collaboration` as any),
-                {
-                    method: "GET",
-                    credentials: "include",
-                },
-            );
-            collaboratingUsers = await response.json();
-        } catch (err: any) {
-            collaboratingUsersError = err.toString();
-        }
     }
 </script>
 
+<ConfirmationModal
+    bind:show={deletionModalShown}
+    message="Are you sure you want to delete this trip? This action cannot be undone."
+    option1Text="Do not delete"
+    option2Text="Delete"
+    option2Style="danger"
+    onOption1={hideConfirmationModal}
+    onOption2={deleteTrip}
+/>
+
+<CollaborationModal
+        bind:show={collaborationModalShown}
+        tripOwner={tripObject.ownerName ?? ""}
+        isOwner={tripObject.userId == $user.id}
+        tripCollaborators={tripObject.collaborators}
+        {error}
+/>
+
 {#if !loading && tripObject.id !== -1}
-    <div class="container trip-page-content">
+
+    <div class="container trip-page-content" inert={(collaborationModalShown||deletionModalShown)||null}>
         <div class="button-wrapper">
             <NavigationButton path="/home" text="Back" />
             <div class="modify-button-wrapper">
                 <button
-                        class="btn btn-secondary bi-people-fill"
-                        onclick={() => {
-                    showCollaborationModal();
-                }}>Collaboration</button
+                    class="btn btn-secondary bi-people-fill"
+                    onclick={() => {
+                        showCollaborationModal();
+                    }}>Collaboration</button
                 >
                 <AlbumButton tripid={params.tripId} />
                 <EditButton path={`/home/trips/${params.tripId}/edit`} />
-                <DeleteButton deleteAction={showConfirmationModal} />
+                {#if tripObject.userId == $user.id}
+                    <DeleteButton deleteAction={showConfirmationModal} />
+                {/if}
             </div>
         </div>
         <div class="card mb-2 post-wrapper">
@@ -253,6 +215,7 @@
                         style="display: flex; align-items: center; flex:1; justify-content: end;"
                     >
                         <div class="bi-calendar-event"></div>
+
                         <h6
                             class="card-subtitle text-muted"
                             style="margin-left: 5px;"
@@ -263,6 +226,13 @@
                         </h6>
                     </div>
                 </div>
+                <h4>
+                    <i
+                        >Owned by {tripObject.userId == $user.id
+                            ? "You"
+                            : tripObject.ownerName}</i
+                    >
+                </h4>
                 {#if tripObject.description.length > 0}
                     <span>{tripObject.description}</span>
                 {:else}
@@ -277,8 +247,8 @@
                     {hoveredPostId}
                     bind:selectedPost
                 />
-                <ScrapboardImage {tripId}/>
-        </div>
+                <ScrapboardImage {tripId} />
+            </div>
             <div class="card-footer text-muted images">
                 <PostSection
                     {posts}
@@ -293,24 +263,6 @@
 {:else if !loading}
     <NotFound />
 {/if}
-
-<ConfirmationModal
-    bind:show={deletionModalShown}
-    message="Are you sure you want to delete this trip? This action cannot be undone."
-    option1Text="Do not delete"
-    option2Text="Delete"
-    option2Style="danger"
-    onOption1={hideConfirmationModal}
-    onOption2={deleteTrip}
-/>
-
-<CollaborationModal
-    bind:show={collaborationModalShown}
-    isOwner={tripOwner?.id === $user.id}
-    tripOwner={tripOwner ? tripOwner.displayName : ""}
-    tripCollaborators={collaboratingUsers}
-    {error}
-/>
 
 <style>
     .button-wrapper {

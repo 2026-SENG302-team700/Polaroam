@@ -9,10 +9,10 @@ using static SENG302.Api.Helpers.DateHelper;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
-public class ScrapboardControllerTests :BaseIntegrationTestFixture
+public class ScrapboardControllerTests : BaseIntegrationTestFixture
 {
 
-    public ScrapboardControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory){}
+    public ScrapboardControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
     private async Task SetupUserAndTrip(int userId, int tripId)
     {
@@ -27,8 +27,8 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         });
         context.Users.Add(new User
         {
-            Id = userId+1,
-            Email = $"test{userId+1}@test.com",
+            Id = userId + 1,
+            Email = $"test{userId + 1}@test.com",
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country"
@@ -53,9 +53,9 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboard_ValidData_Ok()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 1,
@@ -69,7 +69,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboard_BoardDoesNotExist_NotFound()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         var message = await HttpClient.GetAsync("/api/scrapboard/1");
         message.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -77,7 +77,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboard_TripDoesNotExist_BadRequest()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         var message = await HttpClient.GetAsync("/api/scrapboard/4");
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -87,22 +87,22 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     {
         int userId = 1;
         int tripId = 1;
-        await SetupUserAndTrip(userId,tripId);
+        await SetupUserAndTrip(userId, tripId);
 
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Trips.Add(new Trip
         {
-            Id = tripId+1,
+            Id = tripId + 1,
             Title = "Test List",
-            UserId = userId+1,
+            UserId = userId + 1,
             Description = "Test",
             StartDate = DateToDateTimeOffset(2017, 10, 08),
             EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Scrapboards.Add(new Scrapboard
         {
-            TripId = tripId+1,
+            TripId = tripId + 1,
         });
         await context.SaveChangesAsync();
 
@@ -113,7 +113,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboard_WithFiles_ReturnOk()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
 
         const string fileKey = "a";
@@ -126,14 +126,14 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
             OriginalFileName = "filename.jpeg",
             MimeType = "image/jpeg",
         });
-        
+
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 1,
             Files = [1]
         });
         await context.SaveChangesAsync();
-        
+
         var filePath = Path.Combine(FakeTestDirectory, fileKey);
         await File.WriteAllBytesAsync(filePath, [1, 2, 3, 4]);
 
@@ -144,7 +144,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task CreateScrapboard_ValidData_Ok()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         var newBoard = new NewScrapboardRequest()
         {
             TripId = 1,
@@ -195,22 +195,22 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     {
         int userId = 1;
         int tripId = 1;
-        await SetupUserAndTrip(userId,tripId);
+        await SetupUserAndTrip(userId, tripId);
 
         await using var context = DbContextFactory.CreateDbContext();
-        
+
         context.Trips.Add(new Trip
         {
-            Id = tripId+1,
+            Id = tripId + 1,
             Title = "Test List",
-            UserId = userId+1,
+            UserId = userId + 1,
             Description = "Test",
             StartDate = DateToDateTimeOffset(2017, 10, 08),
             EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Scrapboards.Add(new Scrapboard
         {
-            TripId = tripId+1,
+            TripId = tripId + 1,
         });
         await context.SaveChangesAsync();
         var newBoard = new NewScrapboardRequest
@@ -225,7 +225,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboardThumbnail_ValidData_Ok()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
 
         const string fileKey = "thumb-key";
@@ -259,15 +259,15 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     {
         int userId = 1;
         int tripId = 1;
-        await SetupUserAndTrip(userId,tripId);
+        await SetupUserAndTrip(userId, tripId);
 
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Trips.Add(new Trip
         {
-            Id = tripId+1,
+            Id = tripId + 1,
             Title = "Test List",
-            UserId = userId+1,
+            UserId = userId + 1,
             Description = "Test",
             StartDate = DateToDateTimeOffset(2017, 10, 08),
             EndDate = DateToDateTimeOffset(2017, 10, 21)
@@ -275,14 +275,14 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         context.CustomFiles.Add(new CustomFile
         {
             Id = 1,
-            OwnerId = userId+1,
+            OwnerId = userId + 1,
             FileKey = "thumb-key",
             OriginalFileName = "thumbnail.jpeg",
             MimeType = "image/jpeg",
         });
         context.Scrapboards.Add(new Scrapboard
         {
-            TripId = tripId+1,
+            TripId = tripId + 1,
             Thumbnail = 1,
         });
         await context.SaveChangesAsync();
@@ -294,7 +294,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboardThumbnail_ScrapboardDoesNotExist_BadRequest()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         var message = await HttpClient.GetAsync("/api/scrapboard/1/thumbnail");
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -302,7 +302,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task GetScrapboardThumbnail_FileMissingOnDisk_NotFound()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
 
         context.CustomFiles.Add(new CustomFile
@@ -323,7 +323,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         var message = await HttpClient.GetAsync("/api/scrapboard/1/thumbnail");
         message.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
-    
+
     private static readonly byte[] TinyValidJpegBytes =
     [
         0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
@@ -355,7 +355,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01,
         0x00, 0x00, 0x3F, 0x00, 0xFB, 0xD0, 0xFF, 0xD9
     ];
-    
+
     private static MultipartFormDataContent BuildSaveScrapboardForm(
         int tripId,
         string elements = "[]",
@@ -390,7 +390,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task SaveScrapboard_ValidData_Ok()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         await using var context = DbContextFactory.CreateDbContext();
         context.Scrapboards.Add(new Scrapboard
         {
@@ -412,26 +412,26 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     {
         int userId = 1;
         int tripId = 1;
-        await SetupUserAndTrip(userId,tripId);
+        await SetupUserAndTrip(userId, tripId);
 
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Trips.Add(new Trip
         {
-            Id = tripId+1,
+            Id = tripId + 1,
             Title = "Test List",
-            UserId = userId+1,
+            UserId = userId + 1,
             Description = "Test",
             StartDate = DateToDateTimeOffset(2017, 10, 08),
             EndDate = DateToDateTimeOffset(2017, 10, 21)
         });
         context.Scrapboards.Add(new Scrapboard
         {
-            TripId = tripId+1,
+            TripId = tripId + 1,
         });
         await context.SaveChangesAsync();
 
-        using var form = BuildSaveScrapboardForm(tripId: tripId+1);
+        using var form = BuildSaveScrapboardForm(tripId: tripId + 1);
 
         var message = await HttpClient.PutAsync("/api/scrapboard/save", form);
         message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
@@ -440,7 +440,7 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task SaveScrapboard_ScrapboardDoesNotExist_BadRequest()
     {
-        await SetupUserAndTrip(1,1);
+        await SetupUserAndTrip(1, 1);
         // No scrapboard created for trip 1, so the service should throw
         // KeyNotFoundException -> BadRequest.
         using var form = BuildSaveScrapboardForm(tripId: 1);
@@ -452,15 +452,15 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     [Fact]
     public async Task DeleteScrapboard_ValidData_NoContent()
     {
-        await SetupUserAndTrip(1,1);
-        
+        await SetupUserAndTrip(1, 1);
+
         await using var context = DbContextFactory.CreateDbContext();
         context.Scrapboards.Add(new Scrapboard
         {
             TripId = 1,
             Elements = "fake elements",
             Files = [],
-            Thumbnail = -1 
+            Thumbnail = -1
         });
 
         await context.SaveChangesAsync();
@@ -473,16 +473,16 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
     public async Task DeleteScrapboard_NoScrapboard_BadRequest()
     {
         await SetupUserAndTrip(1, 1);
-        
+
         var message = await HttpClient.DeleteAsync("/api/scrapboard/1");
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task DeleteScrapboard_WrongUserTrip_Unauthorized()
+    public async Task DeleteScrapboard_WrongUserTrip_NotFound()
     {
         await SetupUserAndTrip(1, 1);
-        
+
         await using var context = DbContextFactory.CreateDbContext();
         context.Trips.Add(new Trip
         {
@@ -503,8 +503,8 @@ public class ScrapboardControllerTests :BaseIntegrationTestFixture
         });
 
         await context.SaveChangesAsync();
-        
+
         var message = await HttpClient.DeleteAsync("/api/scrapboard/2");
-        message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        message.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 }

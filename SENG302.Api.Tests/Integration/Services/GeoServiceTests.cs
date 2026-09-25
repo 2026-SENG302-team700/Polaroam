@@ -221,7 +221,9 @@ public class GeoServiceTests : BaseIntegrationTestFixture
         );
         var service = CreateService(handler);
 
-        await service.GetLocationAsync(123, osmType);
+        await service.GetLocationAsync(
+            osmId: 123, 
+            osmType: osmType);
 
         handler.LastRequest.ShouldNotBeNull();
         handler.LastRequest.RequestUri.ShouldNotBeNull();
@@ -241,7 +243,7 @@ public class GeoServiceTests : BaseIntegrationTestFixture
         );
         var service = CreateService(handler);
 
-        var location = await service.GetLocationAsync(123);
+        var location = await service.GetLocationAsync(osmId: 123);
 
         location.ShouldNotBeNull();
         location.OsmId.ShouldBe(expectedLocation.OsmId);
@@ -273,7 +275,7 @@ public class GeoServiceTests : BaseIntegrationTestFixture
         var service = CreateService(handler);
 
         var exception = await Should.ThrowAsync<ArgumentException>(() =>
-            service.GetLocationAsync(123, "invalid")
+            service.GetLocationAsync(123, osmType: "invalid")
         );
 
         exception.Message.ShouldContain("Invalid osmType");

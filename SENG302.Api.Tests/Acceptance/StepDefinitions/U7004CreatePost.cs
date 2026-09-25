@@ -133,14 +133,14 @@ public class U7004CreatePost
         _lastResponse.ShouldNotBeNull();
         _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var post = await _lastResponse.Content.ReadFromJsonAsync<Post>();
+        var postId = await _lastResponse.Content.ReadAsStringAsync();
 
-        post.ShouldNotBeNull();
+        postId.ShouldNotBeNull();
 
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<Post>($"api/post/{post.PostId}/trip/{post.TripId}");
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
 
         retrievedPost.ShouldNotBeNull();
-        retrievedPost.PostId.ShouldBe(post.PostId);
+        retrievedPost.PostId.ShouldBe(int.Parse(postId));
     }
 
     // AC 4

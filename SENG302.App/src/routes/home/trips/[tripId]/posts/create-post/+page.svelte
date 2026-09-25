@@ -139,8 +139,7 @@
 
                 const data = await response.json();
                 errors.title = data.errors?.title ?? data.errors?.Title ?? [];
-                errors.date =
-                    data.errors?.date ?? data.errors?.Date ?? [];
+                errors.date = data.errors?.date ?? data.errors?.Date ?? [];
                 errors.content =
                     data.errors?.content ?? data.errors?.Content ?? [];
                 errors.location =
@@ -163,20 +162,24 @@
                 ) {
                     showConfirmationModal = true;
                 }
-                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
-                
+                errors.content = errors.content.filter(
+                    (e) =>
+                        e !==
+                        "Post contains no content, are you sure you want to create post?",
+                );
+
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {
                     errors.date = ["Invalid date"];
                 } else if (dateState === "empty") {
                     errors.date = ["Date is required"];
                 }
-                
+
                 return;
             }
 
-            const data = await response.json();
-            goto(resolve(`/home/trips/${tripId}/posts/${data.postId}`));
+            const postId = await response.text();
+            goto(resolve(`/home/trips/${tripId}/posts/${postId}`));
         } catch (err) {
             console.error("Failed to create post:", err);
             errors.generic = "Failed to create post: " + (err as Error).message;
@@ -200,7 +203,12 @@
 
     <TitleForm bind:name={title} errors={errors.title} {loading} />
 
-    <DatePicker bind:value={date} bind:inputState={dateState} bind:error={errors.date} disabled={loading} />
+    <DatePicker
+        bind:value={date}
+        bind:inputState={dateState}
+        bind:error={errors.date}
+        disabled={loading}
+    />
 
     <LocationForm
         bind:searchQuery
@@ -246,8 +254,8 @@
     <div class="post-form-actions">
         <ConfirmCancelButton
             path={`/home/trips/${tripId}`}
-            option1Text="Back to your Trip"
-            option2Text="Stay on This Page"
+            option1Text="Stay on This Page"
+            option2Text="Back to Trip"
         />
         <CreationButton onClick={createPost} text="Create Post" {loading} />
     </div>

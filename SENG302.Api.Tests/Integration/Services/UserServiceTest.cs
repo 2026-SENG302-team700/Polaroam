@@ -414,10 +414,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
         context.Users.Add(new User
         {
             Id = 1,
-                Email = "test@example.com",
-                DisplayName = "test",
-                PasswordKey = "P4$$word",
-                Country = "NZ",
+            Email = "test@example.com",
+            DisplayName = "test",
+            PasswordKey = "P4$$word",
+            Country = "NZ",
             AcceptedAiPrivacyPolicy = true,
             AiTaggingEnabled = true
         });
@@ -428,7 +428,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await using var newContext = DbContextFactory.CreateDbContext();
         var user = await newContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
         user!.AiTaggingEnabled.ShouldBeFalse();
-        }
+    }
 
     [Fact]
     public async Task ToggleAiTaggingAsync_CalledTwice_BecomesDisabled()
@@ -513,23 +513,23 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
         result.ShouldBeFalse();
     }
-    
-    [Fact] 
+
+    [Fact]
     public async Task CreateNewUser_ValidInformation_AcceptedAiPrivacyPolicyFalse()
-    { 
+    {
         await ServiceUnderTest.CreateNewUserAsync(
             "jon@bler.com",
-            "Jon Bler", 
+            "Jon Bler",
             "paSSWord123#@%",
-            "paSSWord123#@%", 
+            "paSSWord123#@%",
             "SK");
-    
-        await using var context = await DbContextFactory.CreateDbContextAsync(); 
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
         var singleItemInDB = context.Users.ShouldHaveSingleItem();
-    
+
         singleItemInDB.AcceptedAiPrivacyPolicy.ShouldBeFalse();
     }
-    
+
     [Fact]
     public async Task CreateNewUser_ValidInformation_AiTaggingEnabledFalse()
     {
@@ -539,10 +539,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
             "paSSWord123#@%",
             "paSSWord123#@%",
             "SK");
-    
+
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var singleItemInDB = context.Users.ShouldHaveSingleItem();
-    
+
         singleItemInDB.AiTaggingEnabled.ShouldBeFalse();
     }
 
@@ -555,15 +555,15 @@ public class UserServiceTest : BaseIntegrationTestFixture
             "paSSWord123#@%",
             "paSSWord123#@%",
             "SK");
-        
+
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, true);
         (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeTrue();
-        
+
         await ServiceUnderTest.SetPreferenceMapVisibleAsync(1, false);
         (await ServiceUnderTest.GetPreferenceMapVisibleAsync(1)).ShouldBeFalse();
     }
 
-        [Fact]
+    [Fact]
     public async Task UpdateUser_ValidRequest_ExpectUpdatedUser()
     {
         int userId;
@@ -584,7 +584,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         Assert.Equal("AU", updatedUser.Country);
     }
 
-        [Fact]
+    [Fact]
     public async Task CheckUserCredentials_UnverifiedEmail_ExpectAccountUnverifiedResult()
     {
         var email = "unverified@test.com";
@@ -611,5 +611,68 @@ public class UserServiceTest : BaseIntegrationTestFixture
 
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.Null(result.user);
+    }
+
+    [Fact]
+    public async Task CreateUpdatePendingUser_ValidDetails_PendingUserCreated()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var pendingUser = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == "bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.TripInvites.ShouldContain(1);
+    }
+
+    [Fact]
+    public async Task CreateUpdatePendingUser_ValidUpdatedDetails_PendingUserUpdated()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 2);
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var pendingUser = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == "bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.TripInvites.ShouldContain(1);
+        pendingUser.TripInvites.ShouldContain(2);
+    }
+
+    [Fact]
+    public async Task CreateUpdatePendingUser_PreexistingDetails_NothingChanges()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var pendingUser = await context.PendingUsers.FirstOrDefaultAsync(u => u.Email == "bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.TripInvites.ShouldContain(1);
+        pendingUser.TripInvites.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetPendingUser_ValidDetails_ReturnsUser()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        var pendingUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        pendingUser.Email.ShouldBe("bob@example.com");
+        pendingUser.TripInvites.Count.ShouldBe(1);
+        pendingUser.TripInvites.ShouldContain(1);
+    }
+
+    [Fact]
+    public async Task GetPendingUser_InvalidDetails_ReturnsNull()
+    {
+        var pendingUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        pendingUser.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task RemovePendingUser_ValidUser_RemoveUser()
+    {
+        await ServiceUnderTest.CreateUpdatePendingUserAsync("bob@example.com", 1);
+        var pendingUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        pendingUser.ShouldNotBeNull();
+        await ServiceUnderTest.RemovePendingUserAsync("bob@example.com");
+        var testUser = await ServiceUnderTest.GetPendingUserAsync("bob@example.com");
+        testUser.ShouldBeNull();
     }
 }

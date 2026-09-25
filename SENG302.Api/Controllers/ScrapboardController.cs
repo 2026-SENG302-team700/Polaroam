@@ -45,12 +45,12 @@ public class ScrapboardController : ControllerBase
                 return Unauthorized("Not logged in");
             }
             var userId = int.Parse(userIdString);
-            
+
             if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
             {
                 return Unauthorized();
             }
-            
+
             var scrapboard = await _scrapboardService.GetScrapboardByTripAsync(tripId);
             if (scrapboard == null) return NotFound("Trip has no Scrapboard");
 
@@ -64,11 +64,11 @@ public class ScrapboardController : ControllerBase
                 var excalidrawId = Path.GetFileNameWithoutExtension(customFile.OriginalFileName);
                 files.Add(new ScrapboardFileDto(excalidrawId, mimeType, content));
             }
-            
+
             return Ok(new ScrapboardDto(scrapboard.Elements, files));
         }
         catch (Exception e)
-        {  
+        {
             return BadRequest(e.Message);
         }
     }
@@ -115,7 +115,7 @@ public class ScrapboardController : ControllerBase
             return NotFound(e.Message);
         }
     }
-    
+
     /// <summary>
     /// given a scrapboard request, creates a new scrapboard, assuming the user
     /// is authorised to create the scrapboard for this trip, as well as ensuring 
@@ -135,22 +135,22 @@ public class ScrapboardController : ControllerBase
                 return Unauthorized("Not logged in");
             }
             var userId = int.Parse(userIdString);
-            
+
             if (!await _tripService.UserHasCollaborationAccessToTrip(userId, request.TripId))
             {
                 return Unauthorized();
             }
-            
+
             var scrapboard = await _scrapboardService.CreateScrapboardAsync(request.TripId);
-            
+
             return Ok(scrapboard);
         }
         catch (Exception e)
-        {  
+        {
             return BadRequest(e.Message);
         }
     }
-    
+
     /// <summary>
     /// Takes scrapboard data and saves it into the database
     /// </summary>
@@ -185,7 +185,7 @@ public class ScrapboardController : ControllerBase
                 request.Files,
                 request.Thumbnail
             );
-            
+
             return Ok();
         }
         catch (FileSizeExceededException e)
@@ -219,14 +219,14 @@ public class ScrapboardController : ControllerBase
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
             {
-                return Unauthorized("Not logged in");
+                return NotFound("Not logged in");
             }
 
             var userId = int.Parse(userIdString);
 
-            if (!await _tripService.UserIsOwnerOfTrip(userId, tripId))
+            if (!await _tripService.UserHasCollaborationAccessToTrip(userId, tripId))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
             await _scrapboardService.DeleteScrapboardAsync(tripId);

@@ -49,12 +49,15 @@
         deleteError = "";
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/image/${image.photoId}/context` as any),
+                resolve(
+                    `/api/trips/${tripId}/images/${image.photoId}/context` as any,
+                ),
                 { method: "GET", credentials: "include" },
             );
 
             if (!response.ok) {
-                deleteError = "Failed to check whether the image can be deleted";
+                deleteError =
+                    "Failed to check whether the image can be deleted";
                 return;
             }
 
@@ -101,7 +104,6 @@
                 }
             } catch {
                 deleteError = "Failed to delete image";
-                console.log(deleteError);
             }
 
             pendingDeleteIndex = null;
@@ -131,12 +133,15 @@
                 <div class="position-relative">
                     <LazyClickableImage
                         src={resolve(
-                            `/api/album/${tripId}/images/${image.photoId}`,
+                            `/api/album/${tripId}/images/${image.photoId}` as any,
                         )}
                         {index}
+                        {tripId}
                         viewContext="album"
                         images={imageMetadata.map((m) =>
-                            resolve(`/api/album/${tripId}/images/${m.photoId}`),
+                            resolve(
+                                `/api/album/${tripId}/images/${m.photoId}` as any,
+                            ),
                         )}
                         photoId={image.photoId}
                         {photoIds}

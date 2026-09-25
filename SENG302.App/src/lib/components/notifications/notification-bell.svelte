@@ -3,6 +3,7 @@
     import NotificationList from "./notification-list.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { resolve } from "$app/paths";
+    import { acceptInvite, rejectInvite } from "./invite-actions";
 
     let toggled = $state(false);
 
@@ -13,6 +14,8 @@
     let moreNotificationsExist: boolean = $state(false);
     let notificationsError: string = $state("");
 
+    let offset: number = $state(0);
+
     let notificationListElement: HTMLDivElement | null = $state(null);
     let notificationButtonElement: HTMLButtonElement | null = $state(null);
 
@@ -21,6 +24,7 @@
      */
     function createNotificationData(response: NotificationResponse) {
         var data: NotificationData = {
+            tripId: response.tripId,
             id: response.id,
             isRead: response.readStatus,
             title: response.headerText,
@@ -31,17 +35,20 @@
         };
 
         if (!response.handled) {
-            if (response.notificationType == "TripInvitation") {
+            if (response.notificationType == "TripInvitation" && data.tripId !=undefined) {
+
                 data.leftAction = {
-                    function: () => console.log("Accept"),
+                    function: () => acceptInvite(data.tripId, response.handled),
                     text: "Accept",
                     colour: "btn-success",
+                    toastText: "You have accepted the trip invite!"
                 };
 
                 data.rightAction = {
                     text: "Decline",
-                    function: () => console.log("Decline"),
+                    function: () => rejectInvite(data.tripId, response.handled),
                     colour: "btn-danger",
+                    toastText: "You have rejected the trip invite."
                 };
             }
         }
@@ -104,7 +111,7 @@
 
             if (!response.ok) {
                 notificationsError = await response.text();
-                return
+                return;
             }
 
             var getAllNotificationsResponse =
@@ -121,13 +128,45 @@
         }
     }
 
+    /**
+     * Get a new segment of notifications from the backend
+     */
+    async function getNotificationSegment() {
+        try {
+            let count = notifications.length;
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/notifications?offset=${count}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+
+            if (!response.ok) {
+                notificationsError = await response.text();
+                return
+            }
+
+            var getAllNotificationsResponse =
+                (await response.json()) as GetAllNotificationsResponse;
+
+            notificationUnreadCount = getAllNotificationsResponse.unreadCount;
+            moreNotificationsExist = getAllNotificationsResponse.moreExist;
+            getAllNotificationsResponse.notificationResponses.forEach((n) =>
+                notifications.push(createNotificationData(n)),
+            );
+        } catch (err) {
+            notificationsError = (err as Error).message;
+        }
+    }
+
     onMount(() => {
         document.addEventListener("click", (e) => {
             if (
                 notificationListElement == null ||
                 notificationButtonElement == null
             ) {
-                throw new Error("Cannot find the required elements");
+                return;
             }
             const clickedInsideList = e
                 .composedPath()
@@ -148,7 +187,7 @@
 
 <div class="notification-main">
     <button
-        class="notification-bell-button"
+        class="notification-bell-button btn"
         aria-label="notifications"
         bind:this={notificationButtonElement}
         onclick={() => {
@@ -199,11 +238,17 @@
         </div>
 
         <NotificationList
-            notifications={notifications.slice(0, NOTIFICATION_SHOWN_CAP)}
+            notifications={notifications}
         />
 
         {#if moreNotificationsExist}
-            <span class="see-more">See more...</span>
+            <div class="notification-footer">
+                <button
+                        class="btn btn-outline notification-footer-button"
+                        onclick={getNotificationSegment}>
+                    See more
+                </button> 
+            </div>
         {/if}
     </div>
 </div>
@@ -231,59 +276,45 @@
         position: relative;
     }
 
-    .see-more {
-        text-align: center;
-        padding: 0.5rem 0;
-        color: #1f1f1f;
+    .notification-footer {
+        margin: 0.5rem;
+    }
+    
+    .notification-footer-button {
+        width: 100%;
     }
 
     .icon-centered {
-        width: 100%;
-        height: 100%;
+        display: flex;
+        line-height: 1;
+        vertical-align: 0;
         font-size: 1.4rem;
     }
 
     .notification-bell-button {
-        background-color: white;
         width: 40px;
         height: 40px;
-        border-radius: 0.25rem;
-        align-content: center;
-        border: 2px solid black;
-        box-shadow: 3px 3px 0 #1f1f1f;
-        transition: transform 120ms ease box-shadow 120ms ease background-color
-            120ms ease;
-    }
-
-    .notification-bell-button:hover {
-        background-color: rgb(230, 228, 228);
-        border-color: #1f1f1f;
-        transform: translate(1px, 1px);
-        box-shadow: 2px 2px 0 #1f1f1f;
-        transition: transform 120ms ease box-shadow 120ms ease background-color
-            120ms ease;
-    }
-
-    .notification-bell-button:active,
-    .notification-bell-button:focus:active {
-        background-color: rgb(207, 207, 207);
-        transform: translate(3px, 3px);
-        box-shadow:
-            0px 0px 0 #1f1f1f,
-            1px 1px 0 #1f1f1f inset;
-        transition: transform 120ms ease box-shadow 120ms ease background-color
-            120ms ease;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
     }
 
     .notification-counter {
         position: absolute;
-        transform: translate(15px, -40px);
+        top: -4px;
+        right: -4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background-color: red;
         color: white;
         border-radius: 50%;
         width: 22px;
         height: 22px;
         font-size: smaller;
+        line-height: 1;
     }
 
     .notification-topbar {

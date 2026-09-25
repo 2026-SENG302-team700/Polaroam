@@ -21,7 +21,7 @@
     let title = $state("");
     let content = $state("");
     let date = $state(new Date());
-    let photoIds = $state([]);
+    let photosData = $state([]);
     let photoIdFileMap = new WeakMap();
     let aiTaggingEnabled = $state(false);
     let aiTaggingForUpload = $state(false);
@@ -118,7 +118,9 @@
             files = await Promise.all(
                 metadata.map(async (meta) => {
                     const res = await fetchWithCsrf(
-                        resolve(`/api/image/${meta.photoId}` as any),
+                        resolve(
+                            `/api/trips/${tripId}/images/${meta.photoId}` as any,
+                        ),
                         {
                             method: "GET",
                             credentials: "include",
@@ -179,7 +181,12 @@
             date = new Date(data.date);
             location.osmId = data.osmId;
             location.osmType = data.osmType;
-            photoIds = data.photoIds;
+            photosData = data.photoIds.map((id: number) => {
+                return {
+                    tripId: Number.parseInt(tripId as any),
+                    photoId: id,
+                } as TripIdAndPhoto;
+            });
             searchQuery = data.locationName;
 
             return true;
@@ -273,11 +280,15 @@
                     errors.date.length === 0 &&
                     errors.generic.length === 0 &&
                     errors.location.length === 0 &&
-                    photoIds.length === 0
+                    photosData.length === 0
                 ) {
                     confirmationModalShown = true;
                 }
-                errors.content = errors.content.filter(e => e !== "Post contains no content, are you sure you want to create post?");
+                errors.content = errors.content.filter(
+                    (e) =>
+                        e !==
+                        "Post contains no content, are you sure you want to create post?",
+                );
 
                 // This section of date validation is attributed to Codex gpt-5.6-sol
                 if (dateState === "invalid") {
@@ -288,8 +299,8 @@
                 return;
             }
 
-            const data = await response.json();
-            goto(resolve(`/home/trips/${data.tripId}`));
+            const postId = await response.text();
+            goto(resolve(`/home/trips/${tripId}/posts/${page.params.postId}`));
         } catch (err) {
             errors.generic =
                 `Failed to update trip: ${err}` || "Failed to update trip.";
@@ -328,7 +339,9 @@
                 return;
             }
 
-            photoIds = photoIds.filter((id) => id !== photoId);
+            photosData = photosData.filter(
+                (data: TripIdAndPhoto) => data.photoId !== photoId,
+            );
         } catch (err) {
             errors.photos.push(
                 "Failed to delete image: " + (err as Error).message,
@@ -351,7 +364,7 @@
 
     <ImageDisplay
         bind:images={files}
-        {photoIds}
+        {photosData}
         errors={[...errors.photos, ...fileErrors]}
         letDelete={true}
         ondelete={removePhoto}
@@ -373,9 +386,9 @@
 
     <div class="post-form-actions">
         <ConfirmCancelButton
-            path={`/home/trips/${tripId}`}
-            option1Text="Back to your Trip"
-            option2Text="Stay on This Page"
+            path={`/home/trips/${tripId}/posts/${page.params.postId}`}
+            option2Text="Back to your post"
+            option1Text="Stay on This Page"
         />
 
         <CreationButton onClick={updatePost} text="Update Post" {loading} />
