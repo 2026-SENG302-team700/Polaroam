@@ -15,8 +15,8 @@
         </p>
         <div class="post-form button-wrapper">
             <div class="post-form-actions">
-                <NavigationButton path="/login" text="Login" />
                 <NavigationButton path="/register" text="Register" />
+                <NavigationButton path="/login" text="Login" />
             </div>
         </div>
     </div>
