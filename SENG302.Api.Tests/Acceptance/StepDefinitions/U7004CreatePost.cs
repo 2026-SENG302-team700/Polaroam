@@ -137,7 +137,7 @@ public class U7004CreatePost
 
         postId.ShouldNotBeNull();
 
-        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+        var retrievedPost = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}/trip/1");
 
         retrievedPost.ShouldNotBeNull();
         retrievedPost.PostId.ShouldBe(int.Parse(postId));

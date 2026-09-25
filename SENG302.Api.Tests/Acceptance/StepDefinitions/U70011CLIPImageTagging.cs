@@ -107,7 +107,7 @@ public class U70011ClipImageTagging
 
         postId.ShouldNotBeNull();
 
-        _post = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+        _post = await _fixture.HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}/trip/1");
 
         _post.ShouldNotBeNull();
         _post.PostId.ShouldBe(int.Parse(postId));

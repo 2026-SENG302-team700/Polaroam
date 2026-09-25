@@ -392,7 +392,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PutAsync("/api/post/1", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1/trip/1");
         retrievedPost!.PhotoIds.ShouldBe([1]);
     }
 
@@ -429,7 +429,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1/trip/1");
         retrievedPost!.PhotoIds.Count.ShouldBe(1);
     }
 
@@ -450,7 +450,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
         var response = await HttpClient.PostAsync("/api/post", content);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1");
+        var retrievedPost = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/1/trip/1");
         retrievedPost!.PhotoIds.Count.ShouldBe(2);
         retrievedPost!.PhotoIds.ShouldBeUnique();
 
@@ -473,7 +473,7 @@ public class PostControllerTests : BaseIntegrationTestFixture
 
         postId.ShouldNotBeNull();
 
-        var post = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}");
+        var post = await HttpClient.GetFromJsonAsync<PostResponse>($"api/post/{postId}/trip/1");
         post!.PhotoIds.ShouldBeEmpty();
     }
 
