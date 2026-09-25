@@ -14,7 +14,6 @@ public interface IGeoService
         string? acceptLanguageHeader,
         CancellationToken cancellationToken
     );
-
     Task<GeoLocationSearchResult?> GetLocationAsync(long osmId, string? acceptLanguageHeader = null, string? osmType = "node");
 }
 

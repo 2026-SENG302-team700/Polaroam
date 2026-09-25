@@ -138,6 +138,9 @@ public class PostController : ControllerBase
     /// to the PostService
     /// </summary>
     /// <param name="postUpdates">updated values for a post</param>
+    /// <param name="files"></param>
+    /// <param name="aiTaggingForUpload"></param>
+    /// <param name="acceptLanguage"></param>
     /// <returns>
     /// The id of the updated post if ok
     /// A Bad Request if an error occured within (likely validation fail).
@@ -148,7 +151,9 @@ public class PostController : ControllerBase
     public async Task<ActionResult<int>> UpdatePost(
         [FromForm] UpdatePostRequest postUpdates,
         [FromForm] List<IFormFile>? files,
-        [FromForm] bool aiTaggingForUpload = true)
+        [FromForm] bool aiTaggingForUpload = true,
+        [FromHeader(Name = "Accept-Language")] string? acceptLanguage = null
+        )
     {
         // verify the user owns the post first
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -160,7 +165,7 @@ public class PostController : ControllerBase
 
         try
         {
-            post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload);
+            post = await _postService.UpdatePostAsync(postUpdates, userId, files, aiTaggingForUpload, acceptLanguage);
             return Ok(post?.PostId);
         }
         catch (MultipleValidationListException e)

@@ -17,10 +17,21 @@ public interface IPostService
 {
     Task<IEnumerable<Post>> GetAllPostsAsync(int userId);
     Task<IEnumerable<Post>> GetPostsByTripAsync(int tripId);
-    Task<Post> CreateNewPostAsync(NewPostRequest postRequest, int userId, List<IFormFile>? photos,
-        bool aiTaggingForUpload = true, string? acceptLanguageHeader = null);
+    Task<Post> CreateNewPostAsync(
+        NewPostRequest postRequest, 
+        int userId, 
+        List<IFormFile>? photos,
+        bool aiTaggingForUpload = true, 
+        string? acceptLanguageHeader = null
+        );
     Task<Post?> GetPostAsync(int id);
-    Task<Post?> UpdatePostAsync(UpdatePostRequest postUpdates, int userId, List<IFormFile>? photos, bool aiTaggingForUpload = true);
+    Task<Post?> UpdatePostAsync(
+        UpdatePostRequest postUpdates, 
+        int userId, 
+        List<IFormFile>? photos, 
+        bool aiTaggingForUpload = true, 
+        string? acceptLanguageHeader = null
+        );
     Task<bool> UserOwnsPost(int userId, int tripId, int postId);
     Task DeletePostByIdAsync(int postId);
     Task DeleteAllPostOfTrip(int tripId);
@@ -262,13 +273,15 @@ public class PostService : IPostService
     /// <param name="postUpdates">Incoming Post Item Request</param>
     /// <param name="editorId"></param>
     /// <param name="photos"></param>
+    /// <param name="aiTaggingForUpload"></param>
+    /// <param name="acceptLanguageHeader"></param>
     /// <returns>The updated Post item</returns>
     public async Task<Post?> UpdatePostAsync(
         UpdatePostRequest postUpdates,
         int editorId,
-        List<IFormFile>? photos = null,
-        bool aiTaggingForUpload = true
-        )
+        List<IFormFile>? photos,
+        bool aiTaggingForUpload = true, 
+        string? acceptLanguageHeader = null)
     {
         // Clean Request
         postUpdates.Title = postUpdates.Title.Trim();
@@ -316,7 +329,7 @@ public class PostService : IPostService
 
         if (postUpdates.OsmId != post.OsmId || postUpdates.OsmType != post.OsmType)
         {
-            location = await _geoService.GetLocationAsync(postUpdates.OsmId, osmType: postUpdates.OsmType);
+            location = await _geoService.GetLocationAsync(postUpdates.OsmId, acceptLanguageHeader, postUpdates.OsmType);
             if (location == null)
             {
                 throw new MultipleValidationListException(new Dictionary<string, List<string>>
@@ -327,11 +340,14 @@ public class PostService : IPostService
 
             var postLocation = await context.Locations.FirstOrDefaultAsync(l => l.PostId == post.PostId);
             if (postLocation == null) throw new KeyNotFoundException("Could not find original location");
+            
             postLocation.OsmId = location.OsmId;
             postLocation.OsmType = location.OsmType;
             postLocation.Lat = location.Latitude;
             postLocation.Lon = location.Longitude;
+            postLocation.Name = location.Name;
             postLocation.DisplayName = location.DisplayName;
+            
             await context.SaveChangesAsync();
         }
 
@@ -384,8 +400,9 @@ public class PostService : IPostService
         post.PhotoIds = post.PhotoIds.Count > 0
             ? post.PhotoIds = post.PhotoIds.Concat(customFileIds).ToList()
             : post.PhotoIds = customFileIds;
-        post.LocationName = location != null ? location.Name : post.LocationName;
-
+        
+        post.LocationName = location != null ? location.Name == "" ? location.DisplayName : location.Name : post.LocationName;
+        
         // Save Changes
         context.Posts.Update(post);
         await context.SaveChangesAsync();
