@@ -41,6 +41,7 @@
 <div class="clickable-image-wrapper">
     <img
         src={displaySrc}
+        tabindex="0"
         onclick={clicked}
         alt="Image"
         class="img-thumbnail clickable-image"
