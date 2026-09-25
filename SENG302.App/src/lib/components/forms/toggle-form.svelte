@@ -4,6 +4,17 @@
         checked = $bindable(),
         onchange
     } = $props();
+
+    /**
+     * For handling enter key on input toggle
+     * @param e key being pressed
+     */
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === "Enter") {
+            checked = !checked;
+            onchange();
+        }
+    }
 </script>
 
 <div class="form-check form-switch">
@@ -12,6 +23,7 @@
            role="switch"
            id={id}
            bind:checked
+           onkeydown={(e) => handleKeydown(e)}
            {onchange}
     />
     <label class="form-check-label">
